@@ -1,49 +1,45 @@
 const std = @import("std");
 const ctx = @import("context.zig");
 const wl = @import("wayland.zig");
+const d = @import("dispatchable.zig");
 
 pub fn main() anyerror!void {
-    var l = try wl.socket();
-
+    // Initialise epoll
     var epfd = try std.os.epoll_create1(0);
-    var events: [64]std.os.linux.epoll_event = undefined;
-    var wl_sock: i32 = -1;
+    var events: [256]std.os.linux.epoll_event = undefined;
 
-    if (l.sockfd) |sockfd| {
-        wl_sock = sockfd;
-        std.debug.warn("socket fd {} \n", .{ sockfd });
-        var ev = std.os.linux.epoll_event{
-            .events = std.os.linux.EPOLLIN,
-            .data = std.os.linux.epoll_data {
-                .fd = sockfd,
-            },
-        };
-        try std.os.epoll_ctl(epfd, std.os.EPOLL_CTL_ADD, sockfd, &ev);
-    } else {
-        return;
-    }
+    // Initialise wayland
+    var display = try wl.Display.init();
+    display.dispatchable.container = @ptrToInt(&display);
+    std.debug.warn("Display: {} at {x}\n", .{ display, @ptrToInt(&display) });
+    var wl_sock: i32 = display.server.sockfd orelse return;
+    try addFd(epfd, wl_sock, &display.dispatchable);
 
-    var buffer: [8]u8 = undefined;
-
+    // Let's do this
     while (true) {
         var n = std.os.epoll_wait(epfd, events[0..events.len], -1);
-
+        // std.debug.warn("Got activity: {}\n", .{ n });
         var i: usize = 0;
 
         while (i < n) {
-            if (events[i].data.fd == wl_sock) {
-                var client = try l.accept();
-                std.debug.warn("client connected {} \n", .{ client });
-            }
-
-            // std.debug.warn("buffer {}, len {}\n", .{ &buffer[0], buffer.len });
-            // var nr = try std.os.read(events[i].data.fd, buffer[0..buffer.len]);
-            // std.debug.warn("read {} bytes\n", .{ nr });
-
+            var ev = @intToPtr(*d.Dispatchable, events[i].data.ptr);
+            // std.debug.warn("ev: {}\n", .{ ev });
+            ev.dispatch();
             i = i + 1;
         }
     }
 
-    var c = ctx.Context().init();
+    var c = ctx.Context.init(18);
     try c.fds.writeItem(12);
+}
+
+fn addFd(epfd: i32, fd: i32, dis: *d.Dispatchable) !void {
+    var ev = std.os.linux.epoll_event{
+        .events = std.os.linux.EPOLLIN,
+        .data = std.os.linux.epoll_data {
+            .ptr = @ptrToInt(dis),
+        },
+    };
+
+    try std.os.epoll_ctl(epfd, std.os.EPOLL_CTL_ADD, fd, &ev);
 }
