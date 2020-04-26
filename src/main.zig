@@ -22,12 +22,7 @@ pub fn main() anyerror!void {
 
         while (i < n) {
             epoll.dispatch(i);
-            // var ev = @intToPtr(*d.Dispatchable, events[i].data.ptr);
-            // ev.dispatch();
             i = i + 1;
         }
     }
-
-    // var c = ctx.Context.init(18);
-    // try c.fds.writeItem(12);
 }
