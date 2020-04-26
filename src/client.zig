@@ -1,6 +1,6 @@
-const max_clients = 256;
+const MAX_CLIENTS = 256;
 
-var clients: [max_clients]Client = undefined;
+var clients: [MAX_CLIENTS]Client = undefined;
 
 const Client = struct {
     index: usize,
@@ -16,14 +16,21 @@ const Client = struct {
 };
 
 pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
-    var i: usize = 0;
-    while (i < max_clients) {
-        if (!clients[i].in_use) {
+    comptime {
+        var i: usize = 0;
+        while (i < MAX_CLIENTS) {
             clients[i].index = i;
-            clients[i].in_use = true;
-            clients[i].connection = conn;
             clients[i].dispatchable.container = @ptrToInt(&clients[i]);
             clients[i].dispatchable.impl = dispatch;
+            i = i + 1;
+        }
+    }
+
+    var i: usize = 0;
+    while (i < MAX_CLIENTS) {
+        if (clients[i].in_use == false) {
+            clients[i].connection = conn;
+            clients[i].in_use = true;
             return &clients[i];
         } else {
             i = i + 1;
