@@ -3,6 +3,7 @@ const std = @import("std");
 const fs = std.fs;
 const ndispatch = @import("dispatchable.zig");
 const clients = @import("client.zig");
+const epoll = @import("epoll.zig");
 
 pub const Display = struct {
     server: std.net.StreamServer,
@@ -39,14 +40,23 @@ pub fn socket() !std.net.StreamServer {
     return l;
 }
 
-pub fn dispatch(ptr: usize) void {
+pub fn dispatch(ptr: usize, event_type: usize) void {
     var d = @intToPtr(*Display, ptr);
     
     var conn = d.server.accept() catch |err| {
-        std.debug.warn("Failed to accept conn\n", .{});
+        std.debug.warn("Failed to accept conn for client\n", .{});
         return;
     };
     
-    var client = clients.newClient(conn);
+    var client = clients.newClient(conn) catch |err| {
+        std.debug.warn("Failed to allocate client\n", .{});
+        return;
+    };
+
     std.debug.warn("New client {}\n", .{ client });
+    epoll.addFd(client.connection.file.handle, &client.dispatchable) catch |err| {
+        std.debug.warn("Failed to add client to epoll\n", .{});
+        client.deinit();
+        return;
+    };
 }
