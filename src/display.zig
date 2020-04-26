@@ -47,6 +47,7 @@ pub fn dispatch(ptr: usize, event_type: usize) void {
     
     var client = clients.newClient(conn) catch |err| {
         std.debug.warn("Failed to allocate client\n", .{});
+        std.os.close(conn.file.handle);
         return;
     };
 
