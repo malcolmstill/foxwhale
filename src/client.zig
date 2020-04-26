@@ -18,16 +18,16 @@ const Client = struct {
 pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
     var i: usize = 0;
     while (i < max_clients) {
-        if (clients[i].in_use) {
-            i = i + 1;
-            continue;
-        } else {
+        if (!clients[i].in_use) {
             clients[i].index = i;
             clients[i].in_use = true;
             clients[i].connection = conn;
             clients[i].dispatchable.container = @ptrToInt(&clients[i]);
             clients[i].dispatchable.impl = dispatch;
             return &clients[i];
+        } else {
+            i = i + 1;
+            continue;
         }
     }
 

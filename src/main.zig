@@ -10,20 +10,18 @@ pub fn main() anyerror!void {
 
     // Initialise wayland
     var display = try wl.Display.init();
-    display.dispatchable.container = @ptrToInt(&display);
-    std.debug.warn("Display: {} at {x}\n", .{ display, @ptrToInt(&display) });
+    display.initDispatch();
+
     var wl_sock: i32 = display.server.sockfd orelse return;
     try addFd(epfd, wl_sock, &display.dispatchable);
 
     // Let's do this
     while (true) {
         var n = std.os.epoll_wait(epfd, events[0..events.len], -1);
-        // std.debug.warn("Got activity: {}\n", .{ n });
         var i: usize = 0;
 
         while (i < n) {
             var ev = @intToPtr(*d.Dispatchable, events[i].data.ptr);
-            // std.debug.warn("ev: {}\n", .{ ev });
             ev.dispatch();
             i = i + 1;
         }

@@ -23,6 +23,10 @@ pub const Display = struct {
 
         return d;
     }
+
+    pub fn initDispatch(self: *Self) void {
+        self.dispatchable.container = @ptrToInt(self);
+    }
 };
 
 pub fn socket() !std.net.StreamServer {
