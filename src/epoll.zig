@@ -33,11 +33,18 @@ pub fn removeFd(fd: i32) !void {
     try std.os.epoll_ctl(epfd, std.os.EPOLL_CTL_DEL, fd, &ev);
 }
 
+// For a given event index that has activity
+// call the Dispatchable function
 pub fn dispatch(i: usize) void {
     var ev = @intToPtr(*Dispatchable, events[i].data.ptr);
     ev.dispatch(events[i].events);
 }
 
+// The Dispatchable interface allows for dispatching
+// on epoll activity. A struct containing a Dispatchable
+// can define a function that gets set as impl. The impl
+// will be passed a pointer to container. The container
+// will typically be (a pointer to) the struct itself.
 pub const Dispatchable = struct {
     container: usize,
     impl: fn(usize, usize) void,
