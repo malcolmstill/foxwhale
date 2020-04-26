@@ -1,26 +1,23 @@
 
 const std = @import("std");
 const fs = std.fs;
-const ndispatch = @import("dispatchable.zig");
 const clients = @import("client.zig");
 const epoll = @import("epoll.zig");
 
 pub const Display = struct {
     server: std.net.StreamServer,
-    dispatchable: ndispatch.Dispatchable,
+    dispatchable: epoll.Dispatchable,
 
     const Self = @This();
 
     pub fn init() !Display {
         var d = Display {
-            .dispatchable = ndispatch.Dispatchable {
+            .dispatchable = epoll.Dispatchable {
                 .container = undefined,
                 .impl = dispatch,
             },
             .server = try socket(),
         };
-
-        // d.dispatchable.container = @ptrToInt(&d);
 
         return d;
     }
@@ -53,7 +50,7 @@ pub fn dispatch(ptr: usize, event_type: usize) void {
         return;
     };
 
-    std.debug.warn("New client {}\n", .{ client });
+    std.debug.warn("client {}: connected.\n", .{ client.index });
     epoll.addFd(client.connection.file.handle, &client.dispatchable) catch |err| {
         std.debug.warn("Failed to add client to epoll\n", .{});
         client.deinit();

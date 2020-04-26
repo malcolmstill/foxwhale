@@ -1,5 +1,4 @@
 const std = @import("std");
-const ndispatch = @import("dispatchable.zig");
 const epoll = @import("epoll.zig");
 
 const MAX_CLIENTS = 256;
@@ -10,7 +9,7 @@ const Client = struct {
     index: usize,
     in_use: bool,
     connection: std.net.StreamServer.Connection,
-    dispatchable: ndispatch.Dispatchable,
+    dispatchable: epoll.Dispatchable,
 
     const Self = @This();
 
@@ -50,13 +49,13 @@ fn dispatch(ptr: usize, event_type: usize) void {
     var c = @intToPtr(*Client, ptr);
 
     if (event_type & std.os.linux.EPOLLHUP > 0) {
-        std.debug.warn("got hang up from client {}\n", .{ c.index });
+        std.debug.warn("client {}: hung up.\n", .{ c.index });
         c.deinit();
         return;
     }
 
     var n = std.os.read(c.connection.file.handle, buffer[0..buffer.len]);
-    std.debug.warn("read {} bytes from client {}\n", .{ n, c.index });
+    std.debug.warn("client {}: read {} bytes.\n", .{ c.index, n });
 }
 
 const ClientsError = error {

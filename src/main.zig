@@ -1,7 +1,6 @@
 const std = @import("std");
 const ctx = @import("context.zig");
-const wl = @import("wayland.zig");
-const d = @import("dispatchable.zig");
+const wl = @import("display.zig");
 const epoll = @import("epoll.zig");
 
 pub fn main() anyerror!void {
