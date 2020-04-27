@@ -45,7 +45,7 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
 
 var buffer: [1024]u8 = undefined;
 
-fn dispatch(ptr: usize, event_type: usize) void {
+fn dispatch(ptr: usize, event_type: usize) anyerror!void {
     var c = @intToPtr(*Client, ptr);
 
     if (event_type & std.os.linux.EPOLLHUP > 0) {

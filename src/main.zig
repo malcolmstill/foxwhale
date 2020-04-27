@@ -4,6 +4,7 @@ const wl = @import("display.zig");
 const epoll = @import("epoll.zig");
 
 pub fn main() anyerror!void {
+    std.debug.warn("Booting zig-wayland\n", .{});
     // Initialise epoll
     try epoll.init();
 

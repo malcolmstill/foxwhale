@@ -37,24 +37,15 @@ pub fn socket() !std.net.StreamServer {
     return l;
 }
 
-pub fn dispatch(ptr: usize, event_type: usize) void {
+pub fn dispatch(ptr: usize, event_type: usize) anyerror!void {
     var d = @intToPtr(*Display, ptr);
     
-    var conn = d.server.accept() catch |err| {
-        std.debug.warn("Failed to accept conn for client\n", .{});
-        return;
-    };
+    var conn = try d.server.accept();
+    errdefer { std.os.close(conn.file.handle); }
     
-    var client = clients.newClient(conn) catch |err| {
-        std.debug.warn("Failed to allocate client\n", .{});
-        std.os.close(conn.file.handle);
-        return;
-    };
+    var client = try clients.newClient(conn);
+    errdefer { client.deinit(); }
 
     std.debug.warn("client {}: connected.\n", .{ client.index });
-    epoll.addFd(client.connection.file.handle, &client.dispatchable) catch |err| {
-        std.debug.warn("Failed to add client to epoll\n", .{});
-        client.deinit();
-        return;
-    };
+    try epoll.addFd(client.connection.file.handle, &client.dispatchable);
 }

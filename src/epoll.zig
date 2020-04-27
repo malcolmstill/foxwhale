@@ -47,11 +47,13 @@ pub fn dispatch(i: usize) void {
 // will typically be (a pointer to) the struct itself.
 pub const Dispatchable = struct {
     container: usize,
-    impl: fn(usize, usize) void,
+    impl: fn(usize, usize) anyerror!void,
 
     const Self = @This();
 
     pub fn dispatch(self: *Self, event_type: usize) void {
-        self.impl(self.container, event_type);
+        self.impl(self.container, event_type) catch |err| {
+            std.debug.warn("Error dispatching epoll: {}\n", .{ err });
+        };
     }
 };
