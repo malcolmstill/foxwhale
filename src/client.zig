@@ -29,7 +29,6 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
     while (i < MAX_CLIENTS) {
         if (clients[i].in_use == false) {
             clients[i].index = i;
-            clients[i].dispatchable.container = @ptrToInt(&clients[i]);
             clients[i].dispatchable.impl = dispatch;
             clients[i].connection = conn;
             clients[i].in_use = true;
@@ -45,8 +44,8 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
 
 var buffer: [1024]u8 = undefined;
 
-fn dispatch(ptr: usize, event_type: usize) anyerror!void {
-    var c = @intToPtr(*Client, ptr);
+fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!void {
+    var c = @fieldParentPtr(Client, "dispatchable", dispatchable);
 
     if (event_type & std.os.linux.EPOLLHUP > 0) {
         std.debug.warn("client {}: hung up.\n", .{ c.index });

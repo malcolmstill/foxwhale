@@ -11,19 +11,12 @@ pub const Display = struct {
     const Self = @This();
 
     pub fn init() !Display {
-        var d = Display {
+        return Display {
             .dispatchable = epoll.Dispatchable {
-                .container = undefined,
                 .impl = dispatch,
             },
             .server = try socket(),
         };
-
-        return d;
-    }
-
-    pub fn initDispatch(self: *Self) void {
-        self.dispatchable.container = @ptrToInt(self);
     }
 };
 
@@ -37,8 +30,8 @@ pub fn socket() !std.net.StreamServer {
     return l;
 }
 
-pub fn dispatch(ptr: usize, event_type: usize) anyerror!void {
-    var d = @intToPtr(*Display, ptr);
+pub fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!void {
+    var d = @fieldParentPtr(Display, "dispatchable", dispatchable);
     
     var conn = try d.server.accept();
     errdefer { std.os.close(conn.file.handle); }

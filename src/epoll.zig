@@ -46,13 +46,12 @@ pub fn dispatch(i: usize) void {
 // will be passed a pointer to container. The container
 // will typically be (a pointer to) the struct itself.
 pub const Dispatchable = struct {
-    container: usize,
-    impl: fn(usize, usize) anyerror!void,
+    impl: fn(*Self, usize) anyerror!void,
 
     const Self = @This();
 
     pub fn dispatch(self: *Self, event_type: usize) void {
-        self.impl(self.container, event_type) catch |err| {
+        self.impl(self, event_type) catch |err| {
             std.debug.warn("Error dispatching epoll: {}\n", .{ err });
         };
     }
