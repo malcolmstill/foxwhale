@@ -11,9 +11,6 @@ pub fn main() anyerror!void {
     var display = try wl.Display.init();
     defer { display.deinit(); }
 
-    var wl_sock: i32 = display.server.sockfd orelse return;
-    try epoll.addFd(wl_sock, &display.dispatchable);
-
     // Let's do this
     while (true) {
         var n = epoll.wait(-1);

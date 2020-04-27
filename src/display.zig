@@ -11,12 +11,16 @@ pub const Display = struct {
     const Self = @This();
 
     pub fn init() !Display {
-        return Display {
+        var d = Display {
             .dispatchable = epoll.Dispatchable {
                 .impl = dispatch,
             },
             .server = try socket(),
         };
+
+        try epoll.addFd(d.server.sockfd.?, &d.dispatchable);
+
+        return d;
     }
 
     pub fn deinit(self: *Self) void {
