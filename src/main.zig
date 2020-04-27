@@ -9,6 +9,7 @@ pub fn main() anyerror!void {
     try epoll.init();
 
     var display = try wl.Display.init();
+    defer { display.deinit(); }
 
     var wl_sock: i32 = display.server.sockfd orelse return;
     try epoll.addFd(wl_sock, &display.dispatchable);

@@ -18,16 +18,20 @@ pub const Display = struct {
             .server = try socket(),
         };
     }
+
+    pub fn deinit(self: *Self) void {
+        self.server.close();
+    }
 };
 
 pub fn socket() !std.net.StreamServer {
     var x = std.os.unlink("/run/user/1000/wayland-0");
     var addr = try std.net.Address.initUnix("/run/user/1000/wayland-0");
     
-    var l = std.net.StreamServer.init(.{});
-    try l.listen(addr);
+    var server = std.net.StreamServer.init(.{});
+    try server.listen(addr);
 
-    return l;
+    return server;
 }
 
 pub fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!void {
