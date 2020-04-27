@@ -48,5 +48,4 @@ pub fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!v
     errdefer { client.deinit(); }
 
     std.debug.warn("client {}: connected.\n", .{ client.index });
-    try epoll.addFd(client.connection.file.handle, &client.dispatchable);
 }
