@@ -15,20 +15,18 @@ pub const Context = struct {
     }
 
     pub fn dispatch(self: *Self, fd: i32) !void {
-        std.debug.warn("\nnumber: 0 1 2 3 4 5 6 7 8 9 A B C D E F\n", .{});
         var offset: usize = 0;
         var n = try std.os.read(fd, self.buffer[self.write_offset..self.buffer.len]);
-        n = self.write_offset + n; // how much data we have
+        n = self.write_offset + n;
 
-        std.debug.warn("buffer: {x}, write_offset: {}, offset: {}, n: {}\n", .{self.buffer, self.write_offset, offset, n});
         defer {
             self.write_offset = n-offset;
             std.mem.copy(u8, self.buffer[0..self.write_offset], self.buffer[offset..n]);
-            std.debug.warn("duffer: {x}, write_offset: {}, offset: {}, n: {}\n", .{self.buffer, self.write_offset, offset, n});
         }
 
         while (offset < n) {
             var remaining = n - offset;
+
             // We need to have read at least a header
             if (remaining < @sizeOf(object.MessageHeader)) {
                 return;
