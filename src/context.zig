@@ -2,7 +2,7 @@ const object = @import("object.zig");
 
 pub const Context = struct {
     write_offset: usize = 0,
-    buffer: [16]u8,
+    buffer: [512]u8,
     fds: FifoType,
 
     const Self = @This();
