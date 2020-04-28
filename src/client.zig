@@ -1,5 +1,6 @@
 const std = @import("std");
 const epoll = @import("epoll.zig");
+const context = @import("context.zig");
 
 const MAX_CLIENTS = 256;
 
@@ -10,6 +11,7 @@ const Client = struct {
     in_use: bool,
     connection: std.net.StreamServer.Connection,
     dispatchable: epoll.Dispatchable,
+    ctx: context.Context,
 
     const Self = @This();
 
@@ -45,8 +47,6 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
     return ClientsError.ClientsExhausted;
 }
 
-var buffer: [1024]u8 = undefined;
-
 fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!void {
     var c = @fieldParentPtr(Client, "dispatchable", dispatchable);
 
@@ -56,8 +56,7 @@ fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!void 
         return;
     }
 
-    var n = std.os.read(c.connection.file.handle, buffer[0..buffer.len]);
-    std.debug.warn("client {}: read {} bytes.\n", .{ c.index, n });
+    try c.ctx.dispatch(c.connection.file.handle);
 }
 
 const ClientsError = error {
