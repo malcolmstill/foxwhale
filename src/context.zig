@@ -15,10 +15,10 @@ pub const Context = struct {
     }
 
     pub fn dispatch(self: *Self, fd: i32) !void {
-        var offset: usize = 0;
         var n = try std.os.read(fd, self.buffer[self.write_offset..self.buffer.len]);
         n = self.write_offset + n;
 
+        var offset: usize = 0;
         defer {
             self.write_offset = n-offset;
             std.mem.copy(u8, self.buffer[0..self.write_offset], self.buffer[offset..n]);
