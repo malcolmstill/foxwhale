@@ -1,5 +1,3 @@
-const object = @import("object.zig");
-
 pub const Context = struct {
     write_offset: usize = 0,
     buffer: [512]u8,
@@ -28,23 +26,24 @@ pub const Context = struct {
             var remaining = n - offset;
 
             // We need to have read at least a header
-            if (remaining < @sizeOf(object.MessageHeader)) {
+            if (remaining < @sizeOf(protocol.Header)) {
                 return;
             }
 
-            var h = @ptrCast(*object.MessageHeader, &self.buffer[offset]);
-            std.debug.warn("id: {}\nlength: {}\nopcode: {}\n", .{ h.id, h.length, h.opcode });
+            var header = @ptrCast(*protocol.Header, &self.buffer[offset]);
+            std.debug.warn("{}\n", .{ header });
 
             // We need to have read a full message
-            if (remaining < h.length) {
+            if (remaining < header.length) {
                 return;
             }
 
-            std.debug.warn("paylod: {x}\n", .{ self.buffer[offset..offset+h.length] });
-            offset = offset + h.length;
+            std.debug.warn("paylod: {x}\n", .{ self.buffer[offset..offset+header.length] });
+            offset = offset + header.length;
         }
     }
 };
 
 const std = @import("std");
+const protocol = @import("protocol.zig");
 const fifo = std.fifo;
