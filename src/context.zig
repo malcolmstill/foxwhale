@@ -1,7 +1,7 @@
 const object = @import("object.zig");
 
 pub const Context = struct {
-    saved_offset: usize = 0,
+    write_offset: usize = 0,
     buffer: [16]u8,
     fds: FifoType,
 
@@ -17,14 +17,14 @@ pub const Context = struct {
     pub fn dispatch(self: *Self, fd: i32) !void {
         std.debug.warn("\nnumber: 0 1 2 3 4 5 6 7 8 9 A B C D E F\n", .{});
         var offset: usize = 0;
-        var n = try std.os.read(fd, self.buffer[self.saved_offset..self.buffer.len]);
-        n = self.saved_offset + n; // how much data we have
+        var n = try std.os.read(fd, self.buffer[self.write_offset..self.buffer.len]);
+        n = self.write_offset + n; // how much data we have
 
-        std.debug.warn("buffer: {x}, saved_offset: {}, offset: {}, n: {}\n", .{self.buffer, self.saved_offset, offset, n});
+        std.debug.warn("buffer: {x}, write_offset: {}, offset: {}, n: {}\n", .{self.buffer, self.write_offset, offset, n});
         defer {
-            std.mem.copy(u8, self.buffer[0..(n-offset)], self.buffer[offset..n]);
-            self.saved_offset = n-offset;
-            std.debug.warn("duffer: {x}, saved_offset: {}, offset: {}, n: {}\n", .{self.buffer, self.saved_offset, offset, n});
+            self.write_offset = n-offset;
+            std.mem.copy(u8, self.buffer[0..self.write_offset], self.buffer[offset..n]);
+            std.debug.warn("duffer: {x}, write_offset: {}, offset: {}, n: {}\n", .{self.buffer, self.write_offset, offset, n});
         }
 
         while (offset < n) {
