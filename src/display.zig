@@ -39,9 +39,9 @@ pub fn socket() !std.net.StreamServer {
 }
 
 pub fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!void {
-    var d = @fieldParentPtr(Display, "dispatchable", dispatchable);
+    var display = @fieldParentPtr(Display, "dispatchable", dispatchable);
     
-    var conn = try d.server.accept();
+    var conn = try display.server.accept();
     errdefer { std.os.close(conn.file.handle); }
     
     var client = try clients.newClient(conn);

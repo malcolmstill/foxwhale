@@ -48,15 +48,15 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
 }
 
 fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!void {
-    var c = @fieldParentPtr(Client, "dispatchable", dispatchable);
+    var client = @fieldParentPtr(Client, "dispatchable", dispatchable);
 
     if (event_type & std.os.linux.EPOLLHUP > 0) {
-        std.debug.warn("client {}: hung up.\n\n", .{ c.index });
-        c.deinit();
+        std.debug.warn("client {}: hung up.\n\n", .{ client.index });
+        client.deinit();
         return;
     }
 
-    try c.ctx.dispatch(c.connection.file.handle);
+    try client.ctx.dispatch(client.connection.file.handle);
 }
 
 const ClientsError = error {
