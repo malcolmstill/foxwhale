@@ -20,14 +20,36 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: []i32) !usize {
         .__pad2 = 0,
     };
 
-    var n: usize = linux.recvmsg(fd, &msg, linux.MSG_DONTWAIT | linux.MSG_CMSG_CLOEXEC);
+    var rc: usize = 0;
+    while (true) {
+        rc = linux.recvmsg(fd, &msg, linux.MSG_DONTWAIT | linux.MSG_CMSG_CLOEXEC);
+        switch (linux.getErrno(rc)) {
+            0 => break,
+            linux.EINTR => continue,
+            linux.EINVAL => unreachable,
+            linux.EFAULT => unreachable,
+            linux.EAGAIN => if (std.event.Loop.instance) |loop| {
+                loop.waitUntilFdReadable(fd);
+                continue;
+            } else {
+                return error.WouldBlock;
+            },
+            linux.EBADF => unreachable, // Always a race condition.
+            linux.EIO => return error.InputOutput,
+            linux.EISDIR => return error.IsDir,
+            linux.ENOBUFS => return error.SystemResources,
+            linux.ENOMEM => return error.SystemResources,
+            linux.ECONNRESET => return error.ConnectionResetByPeer,
+            else => |err| return error.Unexpected,
+        }
+    }
 
     var oobn = msg.msg_controllen;
     if (oobn > 0) {
         std.debug.warn("{x}\n", .{ control });
     }
 
-    std.debug.warn("n: {}, oobn: {}\n", .{ n, oobn });
+    std.debug.warn("rc: {}, oobn: {}\n", .{ rc, oobn });
 
-    return n;
+    return @intCast(usize, rc);
 }
