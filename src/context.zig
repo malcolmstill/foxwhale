@@ -13,7 +13,8 @@ pub const Context = struct {
     }
 
     pub fn dispatch(self: *Self, fd: i32) !void {
-        var n = try std.os.read(fd, self.buffer[self.write_offset..self.buffer.len]);
+        var fds: [28]i32 = undefined;
+        var n = try rm.recvMsg(fd, self.buffer[self.write_offset..self.buffer.len], fds[0..fds.len]);
         n = self.write_offset + n;
 
         var offset: usize = 0;
@@ -47,3 +48,4 @@ pub const Context = struct {
 const std = @import("std");
 const protocol = @import("protocol.zig");
 const fifo = std.fifo;
+const rm = @import("recvmsg.zig");
