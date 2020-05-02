@@ -1,6 +1,6 @@
 pub const Context = struct {
     write_offset: usize = 0,
-    recv_fds: [28]i32,
+    recv_fds: [rm.MAX_FDS]i32,
     recv_buf: [512]u8,
     fds: FifoType,
 

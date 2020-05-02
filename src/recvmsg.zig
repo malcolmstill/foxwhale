@@ -1,7 +1,7 @@
 const std = @import("std");
 const linux = std.os.linux;
 
-const MAX_FDS = 28;
+pub const MAX_FDS = 28;
 
 pub fn recvMsg(fd: i32, buffer: []u8, fds: []i32) !usize {
     var iov: linux.iovec = undefined;
