@@ -6,6 +6,7 @@ def generate(file):
     root = tree.getroot()
     print(f'const std = @import("std");')
     print(f'const Context = @import("context.zig").Context;')
+    print(f'const Header = @import("context.zig").Header;')
     print(f'const Object = @import("context.zig").Object;\n')
     if root.tag == "protocol":
         generate_protocol(root)
@@ -52,6 +53,7 @@ def generate_new_object(interface):
     print(f"\tvar object =  Object {{")
     print(f"\t\t.id = id,")
     print(f"\t\t.dispatch = {interface.attrib['name']}_dispatch,")
+    print(f"\t\t.context = context,")
     print(f"\t}};")
     print(f"\tcontext.register(object) catch |err| {{")
     print(f"\t\tstd.debug.warn(\"Couldn't register id: {{}}\\n\", .{{id}});")
@@ -107,7 +109,35 @@ def next_type(type):
         "new_id": "u32",
         "fd": "i32",
         "string": "string",
-        "array": "array"
+        "array": "array",
+        "object": "OBJECT",
+        "fixed": "fixed"
+    }
+    return types[type]
+
+def put_type_arg(type):
+    types = {
+        "int": "i32",
+        "uint": "u32",
+        "new_id": "u32",
+        "fd": "i32",
+        "string": "[]u8",
+        "array": "[]u32",
+        "object": "u32",
+        "fixed": "f32"
+    }
+    return types[type]
+
+def put_type(type):
+    types = {
+        "int": "i32",
+        "uint": "u32",
+        "new_id": "u32",
+        "fd": "i32",
+        "string": "string",
+        "array": "array",
+        "object": "u32",
+        "fixed": "fixed"
     }
     return types[type]
 
@@ -169,7 +199,16 @@ def generate_send(interface):
                     for line in lines:
                         line = line.replace('\t', '')
                         print(f"// {line}")
-            print(f"pub fn {interface.attrib['name']}_send_{child.attrib['name']}(object: Object, context: *Context) void {{")
+            print(f"pub fn {interface.attrib['name']}_send_{child.attrib['name']}(object: Object", end = '')
+            for arg in child:
+                if arg.tag == "arg":
+                    print(f", {arg.attrib['name']}: {put_type_arg(arg.attrib['type'])}", end = '')
+            print(f") void {{")
+            print(f"\tvar offset = object.context.tx_write_offset;")
+            print(f"\tobject.context.tx_write_offset += @sizeOf(Header);")
+            for arg in child:
+                if arg.tag == "arg":
+                    print(f"\tobject.context.put_{put_type(arg.attrib['type'])}({arg.attrib['name']});")
             print(f"}}")
 
 def lookup_type(type, arg):

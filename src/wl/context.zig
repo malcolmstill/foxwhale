@@ -1,23 +1,30 @@
 const std = @import("std");
 const fifo = std.fifo;
 const txrx = @import("txrx.zig");
-// const HashMap = std.hash_map.HashMap;
 const AutoHashMap = std.hash_map.AutoHashMap;
 const MAX_FDS = @import("txrx.zig").MAX_FDS;
+const BUFFER_SIZE = 512;
 
 pub const Context = struct {
     read_offset: usize = 0,
     write_offset: usize = 0,
     recv_fds: [MAX_FDS]i32,
-    recv_buf: [512]u8,
-    // fds: FifoType,
+    recv_buf: [BUFFER_SIZE]u8,
     objects: AutoHashMap(u32, Object),
+    tx_fds: [MAX_FDS]i32,
+    tx_buf: [BUFFER_SIZE]u8,
+    tx_write_offset: usize = 0,
 
     const Self = @This();
-    // const FifoType = std.fifo.LinearFifo(isize, .Dynamic);
 
     pub fn init(self: *Self) void {
         self.objects = AutoHashMap(u32, Object).init(std.heap.page_allocator);
+        self.putU32(12);
+        var s = [_]u8{0x41, 0x41, 0x41, 0x41, 0x00};
+        self.putString(s[0..s.len]);
+        var b = [_]u32{0xDE, 0xAD, 0xBE, 0xEF};
+        self.putArray(b[0..b.len]);
+        std.debug.warn("tx_buf: {x}\n", .{self.tx_buf});
     }
 
     pub fn deinit(self: *Self) void {
@@ -28,10 +35,8 @@ pub const Context = struct {
         var n = try txrx.recvMsg(fd, self.recv_buf[self.write_offset..self.recv_buf.len], self.recv_fds[0..self.recv_fds.len]);
         n = self.write_offset + n;
 
-        // var offset: usize = 0;
         self.read_offset = 0;
         defer {
-            // self.write_offset = n - offset;
             self.write_offset = n - self.read_offset;
             std.mem.copy(u8, self.recv_buf[0..self.write_offset], self.recv_buf[self.read_offset..n]);
         }
@@ -55,11 +60,8 @@ pub const Context = struct {
             // std.debug.warn("paylod: {x}\n", .{ self.recv_buf[offset..offset+header.length] });
             self.read_offset += @sizeOf(Header);
             if (self.objects.get(header.id)) |object| {
-                // std.debug.warn("object: {}\n", .{object});
                 object.value.dispatch(self, header.opcode);
             }
-
-            // offset = offset + header.length;
         }
     }
 
@@ -105,11 +107,59 @@ pub const Context = struct {
         var x = try self.objects.put(object.id, object);
         return;
     }
+
+    pub fn putHeader(self: *Self, opcode: u16, object: Object) void {
+        var h = Header {
+            .id = object.id,
+            .opcode = opcode,
+            .length = 0,
+        };
+    }
+
+    pub fn putU32(self: *Self, value: u32) void {
+        var u32_ptr = @ptrCast(*u32, @alignCast(@alignOf(u32), &self.tx_buf[self.tx_write_offset]));
+        u32_ptr.* = value;
+        self.tx_write_offset += @sizeOf(u32);
+    }
+
+    pub fn putI32(self: *Self, value: i32) void {
+        var i32_ptr = @ptrCast(*i32, @alignCast(@alignOf(i32), &self.tx_buf[self.tx_write_offset]));
+        i32_ptr.* = value;
+        self.tx_write_offset += @sizeOf(i32);
+    }
+
+    pub fn putArray(self: *Self, array: []u32) void {
+        // Write our array length (in bytes) into buffer
+        var len_ptr = @ptrCast(*u32, @alignCast(@alignOf(u32), &self.tx_buf[self.tx_write_offset]));
+        len_ptr.* = @intCast(u32, @sizeOf(u32) * array.len);
+        self.tx_write_offset += @sizeOf(u32);
+
+        // Copy data from array into tx_buf
+        var tx_buf: []u32 = undefined;
+        tx_buf.ptr = @ptrCast([*]u32, @alignCast(@alignOf(u32), &self.tx_buf[self.tx_write_offset]));
+        tx_buf.len = (self.tx_buf.len - self.tx_write_offset)/@sizeOf(u32); 
+
+        std.mem.copy(u32, tx_buf, array[0..array.len]);
+        self.tx_write_offset += @sizeOf(u32) * array.len;
+    }
+
+    // string is assumed to have a null byte within its contents / length
+    pub fn putString(self: *Self, string: []u8) void {
+        // Write our array length (in bytes) into buffer
+        var length = @sizeOf(u32) * @divTrunc(string.len - 1, @sizeOf(u32)) + @sizeOf(u32);
+        var len_ptr = @ptrCast(*u32, @alignCast(@alignOf(u32), &self.tx_buf[self.tx_write_offset]));
+        len_ptr.* = @intCast(u32, length);
+        self.tx_write_offset += @sizeOf(u32);
+
+        std.mem.copy(u8, self.tx_buf[self.tx_write_offset..self.tx_write_offset+string.len], string);
+        self.tx_write_offset += length;
+    }
 };
 
 pub const Object = struct {
     id: u32,
     dispatch: fn(*Context, u16) void,
+    context: *Context,
 };
 
 pub const Header = packed struct {

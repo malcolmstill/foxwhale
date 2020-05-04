@@ -41,7 +41,6 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
             clients[i].ctx.init();
             // try clients[i].ctx.register(wl.new_wl_display(&clients[i].ctx, 1));
             var o = wl.new_wl_display(&clients[i].ctx, 1);
-            std.debug.warn("derp: {}\n", .{o});
 
             try epoll.addFd(conn.file.handle, &clients[i].dispatchable);
 
