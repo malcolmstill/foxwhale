@@ -38,7 +38,7 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
             clients[i].connection = conn;
             clients[i].in_use = true;
             std.debug.warn("init context\n", .{});
-            clients[i].ctx.init();
+            clients[i].ctx.init(conn.file.handle);
 
             var o = wl.new_wl_display(&clients[i].ctx, 1);
             // wl.wl_display_send_delete_id(o, 1);
@@ -68,7 +68,7 @@ fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
         return;
     }
 
-    try client.ctx.dispatch(client.connection.file.handle);
+    try client.ctx.dispatch();
 }
 
 const ClientsError = error {

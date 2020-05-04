@@ -63,7 +63,7 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: []i32) !usize {
 }
 
 pub fn sendMsg(fd: i32, buffer: []u8, fds: []i32) !usize {
-    var iov: linux.iovec = undefined;
+    var iov: linux.iovec_const = undefined;
     iov.iov_base = @ptrCast([*]u8, &buffer[0]);
     iov.iov_len = buffer.len;
 
@@ -71,13 +71,13 @@ pub fn sendMsg(fd: i32, buffer: []u8, fds: []i32) !usize {
 
     std.debug.warn("control.len: {}\n", .{ control.len });
 
-    var msg = linux.msghdr{
+    var msg = linux.msghdr_const{
         .msg_name = null,
         .msg_namelen = 0,
-        .msg_iov = @ptrCast([*]std.os.iovec, &iov),
+        .msg_iov = @ptrCast([*]std.os.iovec_const, &iov),
         .msg_iovlen = 1,
-        .msg_control = &control[0],
-        .msg_controllen = control.len,
+        .msg_control = null, // we'll need to change this when send file descriptor
+        .msg_controllen = 0, // we'll need to change this when we send file desricptor
         .msg_flags = 0,
         .__pad1 = 0,
         .__pad2 = 0,
@@ -108,15 +108,15 @@ pub fn sendMsg(fd: i32, buffer: []u8, fds: []i32) !usize {
     }
 
     // TOOD: we should not assume a single CMSG
-    var maybe_cmsg = cmsg_firsthdr_ng2(&msg);
-    if (maybe_cmsg) |cmsg| {
-        if (cmsg.cmsg_type == SCM_RIGHTS and cmsg.cmsg_level == linux.SOL_SOCKET) {
-            var data: []i32 = undefined;
-            data.ptr = @ptrCast([*]i32, @alignCast(@alignOf(i32), cmsg_data_ng(cmsg)));
-            data.len = (cmsg.cmsg_len - cmsg_len_ng(0))/@sizeOf(i32); 
-            std.mem.copy(i32, fds[0..fds.len], data);
-        }
-    }
+    // var maybe_cmsg = cmsg_firsthdr_ng2_const(&msg);
+    // if (maybe_cmsg) |cmsg| {
+    //     if (cmsg.cmsg_type == SCM_RIGHTS and cmsg.cmsg_level == linux.SOL_SOCKET) {
+    //         var data: []i32 = undefined;
+    //         data.ptr = @ptrCast([*]i32, @alignCast(@alignOf(i32), cmsg_data_ng(cmsg)));
+    //         data.len = (cmsg.cmsg_len - cmsg_len_ng(0))/@sizeOf(i32); 
+    //         std.mem.copy(i32, fds[0..fds.len], data);
+    //     }
+    // }
 
     return @intCast(usize, rc);
 }
@@ -208,6 +208,13 @@ fn __mgdr_end(msg: *linux.msghdr) usize {
 }
 
 fn cmsg_firsthdr_ng2(msg: *linux.msghdr) ?*cmsghdr {
+    if (msg.msg_controllen < @sizeOf(cmsghdr)) {
+        return null;
+    }
+    return @ptrCast(*cmsghdr, @alignCast(@alignOf(cmsghdr), @alignCast(@alignOf(linux.msghdr), msg).msg_control));
+}
+
+fn cmsg_firsthdr_ng2_const(msg: *linux.msghdr_const) ?*cmsghdr {
     if (msg.msg_controllen < @sizeOf(cmsghdr)) {
         return null;
     }

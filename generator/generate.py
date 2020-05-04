@@ -51,7 +51,7 @@ def generate_new_object(interface):
 
 # Generate Dispatch function
 def generate_dispatch_function(interface):
-    print(f"fn {interface.attrib['name']}_dispatch(context: *Context, opcode: u16) void {{")
+    print(f"fn {interface.attrib['name']}_dispatch(object: Object, opcode: u16) void {{")
     print(f"\tswitch(opcode) {{")
     i = 0
     for child in interface:
@@ -69,7 +69,7 @@ def generate_request_dispatch(index, request, interface):
         if arg.tag == "arg":
             generate_next(arg)
     print(f"\t\t\t\tif ({interface.attrib['name'].upper()}.{request.attrib['name']}) |{request.attrib['name']}| {{", end = '')
-    print(f"{request.attrib['name']}(", end = '')
+    print(f"{request.attrib['name']}(object, ", end = '')
     first = True
     for arg in request:
         if arg.tag == "arg":
@@ -86,9 +86,9 @@ def generate_next(arg):
     name = arg.attrib["name"]
     atype = lookup_type(arg.attrib["type"], arg)
     if arg.attrib["type"] == "object":
-        print(f"\t\t\tvar {name}: Object = new_{arg.attrib['interface']}(context, context.next_u32());")
+        print(f"\t\t\tvar {name}: Object = new_{arg.attrib['interface']}(context, object.context.next_u32());")
     else:    
-        print(f"\t\t\t\tvar {name}: {atype} = context.next_{next_type(arg.attrib['type'])}();")
+        print(f"\t\t\t\tvar {name}: {atype} = object.context.next_{next_type(arg.attrib['type'])}();")
 
 def next_type(type):
     types = {
@@ -109,7 +109,7 @@ def put_type_arg(type):
         "uint": "u32",
         "new_id": "u32",
         "fd": "i32",
-        "string": "[]u8",
+        "string": "[]const u8",
         "array": "[]u32",
         "object": "u32",
         "fixed": "f32"
@@ -149,7 +149,7 @@ def generate_interface(interface):
 
 def generate_request(request):
     name = request.attrib["name"]
-    print(f"\t{name}: ?fn(", end = '')
+    print(f"\t{name}: ?fn(Object, ", end = '')
     first = True
     for arg in request:
         if arg.tag == "arg":

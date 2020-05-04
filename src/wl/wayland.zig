@@ -6,8 +6,8 @@ const Object = @import("context.zig").Object;
 // wl_display
 pub const wl_display_interface = struct {
     // core global object
-    sync: ?fn (u32) void,
-    get_registry: ?fn (u32) void,
+    sync: ?fn (Object, u32) void,
+    get_registry: ?fn (Object, u32) void,
 };
 
 pub var WL_DISPLAY = wl_display_interface{
@@ -27,20 +27,20 @@ pub fn new_wl_display(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_display_dispatch(context: *Context, opcode: u16) void {
+fn wl_display_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // sync
         0 => {
-            var callback: u32 = context.next_u32();
+            var callback: u32 = object.context.next_u32();
             if (WL_DISPLAY.sync) |sync| {
-                sync(callback);
+                sync(object, callback);
             }
         },
         // get_registry
         1 => {
-            var registry: u32 = context.next_u32();
+            var registry: u32 = object.context.next_u32();
             if (WL_DISPLAY.get_registry) |get_registry| {
-                get_registry(registry);
+                get_registry(object, registry);
             }
         },
         else => {},
@@ -61,7 +61,7 @@ pub const wl_display_error = enum(u32) {
 // own set of error codes.  The message is a brief description
 // of the error, for (debugging) convenience.
 //
-pub fn wl_display_send_error(object: Object, object_id: u32, code: u32, message: []u8) void {
+pub fn wl_display_send_error(object: Object, object_id: u32, code: u32, message: []const u8) void {
     object.context.startWrite();
     object.context.putU32(object_id);
     object.context.putU32(code);
@@ -83,7 +83,7 @@ pub fn wl_display_send_delete_id(object: Object, id: u32) void {
 // wl_registry
 pub const wl_registry_interface = struct {
     // global registry object
-    bind: ?fn (u32, u32) void,
+    bind: ?fn (Object, u32, u32) void,
 };
 
 pub var WL_REGISTRY = wl_registry_interface{
@@ -102,14 +102,14 @@ pub fn new_wl_registry(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_registry_dispatch(context: *Context, opcode: u16) void {
+fn wl_registry_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // bind
         0 => {
-            var name: u32 = context.next_u32();
-            var id: u32 = context.next_u32();
+            var name: u32 = object.context.next_u32();
+            var id: u32 = object.context.next_u32();
             if (WL_REGISTRY.bind) |bind| {
-                bind(name, id);
+                bind(object, name, id);
             }
         },
         else => {},
@@ -121,7 +121,7 @@ fn wl_registry_dispatch(context: *Context, opcode: u16) void {
 // the given name is now available, and it implements the
 // given version of the given interface.
 //
-pub fn wl_registry_send_global(object: Object, name: u32, interface: []u8, version: u32) void {
+pub fn wl_registry_send_global(object: Object, name: u32, interface: []const u8, version: u32) void {
     object.context.startWrite();
     object.context.putU32(name);
     object.context.putString(interface);
@@ -164,7 +164,7 @@ pub fn new_wl_callback(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_callback_dispatch(context: *Context, opcode: u16) void {
+fn wl_callback_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         else => {},
     }
@@ -180,8 +180,8 @@ pub fn wl_callback_send_done(object: Object, callback_data: u32) void {
 // wl_compositor
 pub const wl_compositor_interface = struct {
     // the compositor singleton
-    create_surface: ?fn (u32) void,
-    create_region: ?fn (u32) void,
+    create_surface: ?fn (Object, u32) void,
+    create_region: ?fn (Object, u32) void,
 };
 
 pub var WL_COMPOSITOR = wl_compositor_interface{
@@ -201,20 +201,20 @@ pub fn new_wl_compositor(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_compositor_dispatch(context: *Context, opcode: u16) void {
+fn wl_compositor_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // create_surface
         0 => {
-            var id: u32 = context.next_u32();
+            var id: u32 = object.context.next_u32();
             if (WL_COMPOSITOR.create_surface) |create_surface| {
-                create_surface(id);
+                create_surface(object, id);
             }
         },
         // create_region
         1 => {
-            var id: u32 = context.next_u32();
+            var id: u32 = object.context.next_u32();
             if (WL_COMPOSITOR.create_region) |create_region| {
-                create_region(id);
+                create_region(object, id);
             }
         },
         else => {},
@@ -224,9 +224,11 @@ fn wl_compositor_dispatch(context: *Context, opcode: u16) void {
 // wl_shm_pool
 pub const wl_shm_pool_interface = struct {
     // a shared memory pool
-    create_buffer: ?fn (u32, i32, i32, i32, i32, u32) void,
-    destroy: ?fn () void,
-    resize: ?fn (i32) void,
+    create_buffer: ?fn (Object, u32, i32, i32, i32, i32, u32) void,
+    destroy: ?fn (
+        Object,
+    ) void,
+    resize: ?fn (Object, i32) void,
 };
 
 pub var WL_SHM_POOL = wl_shm_pool_interface{
@@ -247,31 +249,33 @@ pub fn new_wl_shm_pool(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_shm_pool_dispatch(context: *Context, opcode: u16) void {
+fn wl_shm_pool_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // create_buffer
         0 => {
-            var id: u32 = context.next_u32();
-            var offset: i32 = context.next_i32();
-            var width: i32 = context.next_i32();
-            var height: i32 = context.next_i32();
-            var stride: i32 = context.next_i32();
-            var format: u32 = context.next_u32();
+            var id: u32 = object.context.next_u32();
+            var offset: i32 = object.context.next_i32();
+            var width: i32 = object.context.next_i32();
+            var height: i32 = object.context.next_i32();
+            var stride: i32 = object.context.next_i32();
+            var format: u32 = object.context.next_u32();
             if (WL_SHM_POOL.create_buffer) |create_buffer| {
-                create_buffer(id, offset, width, height, stride, format);
+                create_buffer(object, id, offset, width, height, stride, format);
             }
         },
         // destroy
         1 => {
             if (WL_SHM_POOL.destroy) |destroy| {
-                destroy();
+                destroy(
+                    object,
+                );
             }
         },
         // resize
         2 => {
-            var size: i32 = context.next_i32();
+            var size: i32 = object.context.next_i32();
             if (WL_SHM_POOL.resize) |resize| {
-                resize(size);
+                resize(object, size);
             }
         },
         else => {},
@@ -281,7 +285,7 @@ fn wl_shm_pool_dispatch(context: *Context, opcode: u16) void {
 // wl_shm
 pub const wl_shm_interface = struct {
     // shared memory support
-    create_pool: ?fn (u32, i32, i32) void,
+    create_pool: ?fn (Object, u32, i32, i32) void,
 };
 
 pub var WL_SHM = wl_shm_interface{
@@ -300,15 +304,15 @@ pub fn new_wl_shm(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_shm_dispatch(context: *Context, opcode: u16) void {
+fn wl_shm_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // create_pool
         0 => {
-            var id: u32 = context.next_u32();
-            var fd: i32 = context.next_i32();
-            var size: i32 = context.next_i32();
+            var id: u32 = object.context.next_u32();
+            var fd: i32 = object.context.next_i32();
+            var size: i32 = object.context.next_i32();
             if (WL_SHM.create_pool) |create_pool| {
-                create_pool(id, fd, size);
+                create_pool(object, id, fd, size);
             }
         },
         else => {},
@@ -394,7 +398,9 @@ pub fn wl_shm_send_format(object: Object, format: u32) void {
 // wl_buffer
 pub const wl_buffer_interface = struct {
     // content for a wl_surface
-    destroy: ?fn () void,
+    destroy: ?fn (
+        Object,
+    ) void,
 };
 
 pub var WL_BUFFER = wl_buffer_interface{
@@ -413,12 +419,14 @@ pub fn new_wl_buffer(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_buffer_dispatch(context: *Context, opcode: u16) void {
+fn wl_buffer_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // destroy
         0 => {
             if (WL_BUFFER.destroy) |destroy| {
-                destroy();
+                destroy(
+                    object,
+                );
             }
         },
         else => {},
@@ -445,11 +453,15 @@ pub fn wl_buffer_send_release(object: Object) void {
 // wl_data_offer
 pub const wl_data_offer_interface = struct {
     // offer to transfer data
-    accept: ?fn (u32, []u8) void,
-    receive: ?fn ([]u8, i32) void,
-    destroy: ?fn () void,
-    finish: ?fn () void,
-    set_actions: ?fn (u32, u32) void,
+    accept: ?fn (Object, u32, []u8) void,
+    receive: ?fn (Object, []u8, i32) void,
+    destroy: ?fn (
+        Object,
+    ) void,
+    finish: ?fn (
+        Object,
+    ) void,
+    set_actions: ?fn (Object, u32, u32) void,
 };
 
 pub var WL_DATA_OFFER = wl_data_offer_interface{
@@ -472,42 +484,46 @@ pub fn new_wl_data_offer(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_data_offer_dispatch(context: *Context, opcode: u16) void {
+fn wl_data_offer_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // accept
         0 => {
-            var serial: u32 = context.next_u32();
-            var mime_type: []u8 = context.next_string();
+            var serial: u32 = object.context.next_u32();
+            var mime_type: []u8 = object.context.next_string();
             if (WL_DATA_OFFER.accept) |accept| {
-                accept(serial, mime_type);
+                accept(object, serial, mime_type);
             }
         },
         // receive
         1 => {
-            var mime_type: []u8 = context.next_string();
-            var fd: i32 = context.next_i32();
+            var mime_type: []u8 = object.context.next_string();
+            var fd: i32 = object.context.next_i32();
             if (WL_DATA_OFFER.receive) |receive| {
-                receive(mime_type, fd);
+                receive(object, mime_type, fd);
             }
         },
         // destroy
         2 => {
             if (WL_DATA_OFFER.destroy) |destroy| {
-                destroy();
+                destroy(
+                    object,
+                );
             }
         },
         // finish
         3 => {
             if (WL_DATA_OFFER.finish) |finish| {
-                finish();
+                finish(
+                    object,
+                );
             }
         },
         // set_actions
         4 => {
-            var dnd_actions: u32 = context.next_u32();
-            var preferred_action: u32 = context.next_u32();
+            var dnd_actions: u32 = object.context.next_u32();
+            var preferred_action: u32 = object.context.next_u32();
             if (WL_DATA_OFFER.set_actions) |set_actions| {
-                set_actions(dnd_actions, preferred_action);
+                set_actions(object, dnd_actions, preferred_action);
             }
         },
         else => {},
@@ -523,7 +539,7 @@ pub const wl_data_offer_error = enum(u32) {
 // Sent immediately after creating the wl_data_offer object.  One
 // event per offered mime type.
 //
-pub fn wl_data_offer_send_offer(object: Object, mime_type: []u8) void {
+pub fn wl_data_offer_send_offer(object: Object, mime_type: []const u8) void {
     object.context.startWrite();
     object.context.putString(mime_type);
     object.context.finishWrite(object.id, 0);
@@ -582,9 +598,11 @@ pub fn wl_data_offer_send_action(object: Object, dnd_action: u32) void {
 // wl_data_source
 pub const wl_data_source_interface = struct {
     // offer to transfer data
-    offer: ?fn ([]u8) void,
-    destroy: ?fn () void,
-    set_actions: ?fn (u32) void,
+    offer: ?fn (Object, []u8) void,
+    destroy: ?fn (
+        Object,
+    ) void,
+    set_actions: ?fn (Object, u32) void,
 };
 
 pub var WL_DATA_SOURCE = wl_data_source_interface{
@@ -605,26 +623,28 @@ pub fn new_wl_data_source(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_data_source_dispatch(context: *Context, opcode: u16) void {
+fn wl_data_source_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // offer
         0 => {
-            var mime_type: []u8 = context.next_string();
+            var mime_type: []u8 = object.context.next_string();
             if (WL_DATA_SOURCE.offer) |offer| {
-                offer(mime_type);
+                offer(object, mime_type);
             }
         },
         // destroy
         1 => {
             if (WL_DATA_SOURCE.destroy) |destroy| {
-                destroy();
+                destroy(
+                    object,
+                );
             }
         },
         // set_actions
         2 => {
-            var dnd_actions: u32 = context.next_u32();
+            var dnd_actions: u32 = object.context.next_u32();
             if (WL_DATA_SOURCE.set_actions) |set_actions| {
-                set_actions(dnd_actions);
+                set_actions(object, dnd_actions);
             }
         },
         else => {},
@@ -640,7 +660,7 @@ pub const wl_data_source_error = enum(u32) {
 //
 // Used for feedback during drag-and-drop.
 //
-pub fn wl_data_source_send_target(object: Object, mime_type: []u8) void {
+pub fn wl_data_source_send_target(object: Object, mime_type: []const u8) void {
     object.context.startWrite();
     object.context.putString(mime_type);
     object.context.finishWrite(object.id, 0);
@@ -649,7 +669,7 @@ pub fn wl_data_source_send_target(object: Object, mime_type: []u8) void {
 // specified mime type over the passed file descriptor, then
 // close it.
 //
-pub fn wl_data_source_send_send(object: Object, mime_type: []u8, fd: i32) void {
+pub fn wl_data_source_send_send(object: Object, mime_type: []const u8, fd: i32) void {
     object.context.startWrite();
     object.context.putString(mime_type);
     object.context.putI32(fd);
@@ -740,9 +760,11 @@ pub fn wl_data_source_send_action(object: Object, dnd_action: u32) void {
 // wl_data_device
 pub const wl_data_device_interface = struct {
     // data transfer device
-    start_drag: ?fn (Object, Object, Object, u32) void,
-    set_selection: ?fn (Object, u32) void,
-    release: ?fn () void,
+    start_drag: ?fn (Object, Object, Object, Object, u32) void,
+    set_selection: ?fn (Object, Object, u32) void,
+    release: ?fn (
+        Object,
+    ) void,
 };
 
 pub var WL_DATA_DEVICE = wl_data_device_interface{
@@ -763,30 +785,32 @@ pub fn new_wl_data_device(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_data_device_dispatch(context: *Context, opcode: u16) void {
+fn wl_data_device_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // start_drag
         0 => {
-            var source: Object = new_wl_data_source(context, context.next_u32());
-            var origin: Object = new_wl_surface(context, context.next_u32());
-            var icon: Object = new_wl_surface(context, context.next_u32());
-            var serial: u32 = context.next_u32();
+            var source: Object = new_wl_data_source(context, object.context.next_u32());
+            var origin: Object = new_wl_surface(context, object.context.next_u32());
+            var icon: Object = new_wl_surface(context, object.context.next_u32());
+            var serial: u32 = object.context.next_u32();
             if (WL_DATA_DEVICE.start_drag) |start_drag| {
-                start_drag(source, origin, icon, serial);
+                start_drag(object, source, origin, icon, serial);
             }
         },
         // set_selection
         1 => {
-            var source: Object = new_wl_data_source(context, context.next_u32());
-            var serial: u32 = context.next_u32();
+            var source: Object = new_wl_data_source(context, object.context.next_u32());
+            var serial: u32 = object.context.next_u32();
             if (WL_DATA_DEVICE.set_selection) |set_selection| {
-                set_selection(source, serial);
+                set_selection(object, source, serial);
             }
         },
         // release
         2 => {
             if (WL_DATA_DEVICE.release) |release| {
-                release();
+                release(
+                    object,
+                );
             }
         },
         else => {},
@@ -882,8 +906,8 @@ pub fn wl_data_device_send_selection(object: Object, id: u32) void {
 // wl_data_device_manager
 pub const wl_data_device_manager_interface = struct {
     // data transfer interface
-    create_data_source: ?fn (u32) void,
-    get_data_device: ?fn (u32, Object) void,
+    create_data_source: ?fn (Object, u32) void,
+    get_data_device: ?fn (Object, u32, Object) void,
 };
 
 pub var WL_DATA_DEVICE_MANAGER = wl_data_device_manager_interface{
@@ -903,21 +927,21 @@ pub fn new_wl_data_device_manager(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_data_device_manager_dispatch(context: *Context, opcode: u16) void {
+fn wl_data_device_manager_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // create_data_source
         0 => {
-            var id: u32 = context.next_u32();
+            var id: u32 = object.context.next_u32();
             if (WL_DATA_DEVICE_MANAGER.create_data_source) |create_data_source| {
-                create_data_source(id);
+                create_data_source(object, id);
             }
         },
         // get_data_device
         1 => {
-            var id: u32 = context.next_u32();
-            var seat: Object = new_wl_seat(context, context.next_u32());
+            var id: u32 = object.context.next_u32();
+            var seat: Object = new_wl_seat(context, object.context.next_u32());
             if (WL_DATA_DEVICE_MANAGER.get_data_device) |get_data_device| {
-                get_data_device(id, seat);
+                get_data_device(object, id, seat);
             }
         },
         else => {},
@@ -934,7 +958,7 @@ pub const wl_data_device_manager_dnd_action = enum(u32) {
 // wl_shell
 pub const wl_shell_interface = struct {
     // create desktop-style surfaces
-    get_shell_surface: ?fn (u32, Object) void,
+    get_shell_surface: ?fn (Object, u32, Object) void,
 };
 
 pub var WL_SHELL = wl_shell_interface{
@@ -953,14 +977,14 @@ pub fn new_wl_shell(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_shell_dispatch(context: *Context, opcode: u16) void {
+fn wl_shell_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // get_shell_surface
         0 => {
-            var id: u32 = context.next_u32();
-            var surface: Object = new_wl_surface(context, context.next_u32());
+            var id: u32 = object.context.next_u32();
+            var surface: Object = new_wl_surface(context, object.context.next_u32());
             if (WL_SHELL.get_shell_surface) |get_shell_surface| {
-                get_shell_surface(id, surface);
+                get_shell_surface(object, id, surface);
             }
         },
         else => {},
@@ -974,16 +998,18 @@ pub const wl_shell_error = enum(u32) {
 // wl_shell_surface
 pub const wl_shell_surface_interface = struct {
     // desktop-style metadata interface
-    pong: ?fn (u32) void,
-    move: ?fn (Object, u32) void,
-    resize: ?fn (Object, u32, u32) void,
-    set_toplevel: ?fn () void,
-    set_transient: ?fn (Object, i32, i32, u32) void,
-    set_fullscreen: ?fn (u32, u32, Object) void,
-    set_popup: ?fn (Object, u32, Object, i32, i32, u32) void,
-    set_maximized: ?fn (Object) void,
-    set_title: ?fn ([]u8) void,
-    set_class: ?fn ([]u8) void,
+    pong: ?fn (Object, u32) void,
+    move: ?fn (Object, Object, u32) void,
+    resize: ?fn (Object, Object, u32, u32) void,
+    set_toplevel: ?fn (
+        Object,
+    ) void,
+    set_transient: ?fn (Object, Object, i32, i32, u32) void,
+    set_fullscreen: ?fn (Object, u32, u32, Object) void,
+    set_popup: ?fn (Object, Object, u32, Object, i32, i32, u32) void,
+    set_maximized: ?fn (Object, Object) void,
+    set_title: ?fn (Object, []u8) void,
+    set_class: ?fn (Object, []u8) void,
 };
 
 pub var WL_SHELL_SURFACE = wl_shell_surface_interface{
@@ -1011,88 +1037,90 @@ pub fn new_wl_shell_surface(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_shell_surface_dispatch(context: *Context, opcode: u16) void {
+fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // pong
         0 => {
-            var serial: u32 = context.next_u32();
+            var serial: u32 = object.context.next_u32();
             if (WL_SHELL_SURFACE.pong) |pong| {
-                pong(serial);
+                pong(object, serial);
             }
         },
         // move
         1 => {
-            var seat: Object = new_wl_seat(context, context.next_u32());
-            var serial: u32 = context.next_u32();
+            var seat: Object = new_wl_seat(context, object.context.next_u32());
+            var serial: u32 = object.context.next_u32();
             if (WL_SHELL_SURFACE.move) |move| {
-                move(seat, serial);
+                move(object, seat, serial);
             }
         },
         // resize
         2 => {
-            var seat: Object = new_wl_seat(context, context.next_u32());
-            var serial: u32 = context.next_u32();
-            var edges: u32 = context.next_u32();
+            var seat: Object = new_wl_seat(context, object.context.next_u32());
+            var serial: u32 = object.context.next_u32();
+            var edges: u32 = object.context.next_u32();
             if (WL_SHELL_SURFACE.resize) |resize| {
-                resize(seat, serial, edges);
+                resize(object, seat, serial, edges);
             }
         },
         // set_toplevel
         3 => {
             if (WL_SHELL_SURFACE.set_toplevel) |set_toplevel| {
-                set_toplevel();
+                set_toplevel(
+                    object,
+                );
             }
         },
         // set_transient
         4 => {
-            var parent: Object = new_wl_surface(context, context.next_u32());
-            var x: i32 = context.next_i32();
-            var y: i32 = context.next_i32();
-            var flags: u32 = context.next_u32();
+            var parent: Object = new_wl_surface(context, object.context.next_u32());
+            var x: i32 = object.context.next_i32();
+            var y: i32 = object.context.next_i32();
+            var flags: u32 = object.context.next_u32();
             if (WL_SHELL_SURFACE.set_transient) |set_transient| {
-                set_transient(parent, x, y, flags);
+                set_transient(object, parent, x, y, flags);
             }
         },
         // set_fullscreen
         5 => {
-            var method: u32 = context.next_u32();
-            var framerate: u32 = context.next_u32();
-            var output: Object = new_wl_output(context, context.next_u32());
+            var method: u32 = object.context.next_u32();
+            var framerate: u32 = object.context.next_u32();
+            var output: Object = new_wl_output(context, object.context.next_u32());
             if (WL_SHELL_SURFACE.set_fullscreen) |set_fullscreen| {
-                set_fullscreen(method, framerate, output);
+                set_fullscreen(object, method, framerate, output);
             }
         },
         // set_popup
         6 => {
-            var seat: Object = new_wl_seat(context, context.next_u32());
-            var serial: u32 = context.next_u32();
-            var parent: Object = new_wl_surface(context, context.next_u32());
-            var x: i32 = context.next_i32();
-            var y: i32 = context.next_i32();
-            var flags: u32 = context.next_u32();
+            var seat: Object = new_wl_seat(context, object.context.next_u32());
+            var serial: u32 = object.context.next_u32();
+            var parent: Object = new_wl_surface(context, object.context.next_u32());
+            var x: i32 = object.context.next_i32();
+            var y: i32 = object.context.next_i32();
+            var flags: u32 = object.context.next_u32();
             if (WL_SHELL_SURFACE.set_popup) |set_popup| {
-                set_popup(seat, serial, parent, x, y, flags);
+                set_popup(object, seat, serial, parent, x, y, flags);
             }
         },
         // set_maximized
         7 => {
-            var output: Object = new_wl_output(context, context.next_u32());
+            var output: Object = new_wl_output(context, object.context.next_u32());
             if (WL_SHELL_SURFACE.set_maximized) |set_maximized| {
-                set_maximized(output);
+                set_maximized(object, output);
             }
         },
         // set_title
         8 => {
-            var title: []u8 = context.next_string();
+            var title: []u8 = object.context.next_string();
             if (WL_SHELL_SURFACE.set_title) |set_title| {
-                set_title(title);
+                set_title(object, title);
             }
         },
         // set_class
         9 => {
-            var class_: []u8 = context.next_string();
+            var class_: []u8 = object.context.next_string();
             if (WL_SHELL_SURFACE.set_class) |set_class| {
-                set_class(class_);
+                set_class(object, class_);
             }
         },
         else => {},
@@ -1166,16 +1194,20 @@ pub fn wl_shell_surface_send_popup_done(object: Object) void {
 // wl_surface
 pub const wl_surface_interface = struct {
     // an onscreen surface
-    destroy: ?fn () void,
-    attach: ?fn (Object, i32, i32) void,
-    damage: ?fn (i32, i32, i32, i32) void,
-    frame: ?fn (u32) void,
-    set_opaque_region: ?fn (Object) void,
-    set_input_region: ?fn (Object) void,
-    commit: ?fn () void,
-    set_buffer_transform: ?fn (i32) void,
-    set_buffer_scale: ?fn (i32) void,
-    damage_buffer: ?fn (i32, i32, i32, i32) void,
+    destroy: ?fn (
+        Object,
+    ) void,
+    attach: ?fn (Object, Object, i32, i32) void,
+    damage: ?fn (Object, i32, i32, i32, i32) void,
+    frame: ?fn (Object, u32) void,
+    set_opaque_region: ?fn (Object, Object) void,
+    set_input_region: ?fn (Object, Object) void,
+    commit: ?fn (
+        Object,
+    ) void,
+    set_buffer_transform: ?fn (Object, i32) void,
+    set_buffer_scale: ?fn (Object, i32) void,
+    damage_buffer: ?fn (Object, i32, i32, i32, i32) void,
 };
 
 pub var WL_SURFACE = wl_surface_interface{
@@ -1203,82 +1235,86 @@ pub fn new_wl_surface(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_surface_dispatch(context: *Context, opcode: u16) void {
+fn wl_surface_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // destroy
         0 => {
             if (WL_SURFACE.destroy) |destroy| {
-                destroy();
+                destroy(
+                    object,
+                );
             }
         },
         // attach
         1 => {
-            var buffer: Object = new_wl_buffer(context, context.next_u32());
-            var x: i32 = context.next_i32();
-            var y: i32 = context.next_i32();
+            var buffer: Object = new_wl_buffer(context, object.context.next_u32());
+            var x: i32 = object.context.next_i32();
+            var y: i32 = object.context.next_i32();
             if (WL_SURFACE.attach) |attach| {
-                attach(buffer, x, y);
+                attach(object, buffer, x, y);
             }
         },
         // damage
         2 => {
-            var x: i32 = context.next_i32();
-            var y: i32 = context.next_i32();
-            var width: i32 = context.next_i32();
-            var height: i32 = context.next_i32();
+            var x: i32 = object.context.next_i32();
+            var y: i32 = object.context.next_i32();
+            var width: i32 = object.context.next_i32();
+            var height: i32 = object.context.next_i32();
             if (WL_SURFACE.damage) |damage| {
-                damage(x, y, width, height);
+                damage(object, x, y, width, height);
             }
         },
         // frame
         3 => {
-            var callback: u32 = context.next_u32();
+            var callback: u32 = object.context.next_u32();
             if (WL_SURFACE.frame) |frame| {
-                frame(callback);
+                frame(object, callback);
             }
         },
         // set_opaque_region
         4 => {
-            var region: Object = new_wl_region(context, context.next_u32());
+            var region: Object = new_wl_region(context, object.context.next_u32());
             if (WL_SURFACE.set_opaque_region) |set_opaque_region| {
-                set_opaque_region(region);
+                set_opaque_region(object, region);
             }
         },
         // set_input_region
         5 => {
-            var region: Object = new_wl_region(context, context.next_u32());
+            var region: Object = new_wl_region(context, object.context.next_u32());
             if (WL_SURFACE.set_input_region) |set_input_region| {
-                set_input_region(region);
+                set_input_region(object, region);
             }
         },
         // commit
         6 => {
             if (WL_SURFACE.commit) |commit| {
-                commit();
+                commit(
+                    object,
+                );
             }
         },
         // set_buffer_transform
         7 => {
-            var transform: i32 = context.next_i32();
+            var transform: i32 = object.context.next_i32();
             if (WL_SURFACE.set_buffer_transform) |set_buffer_transform| {
-                set_buffer_transform(transform);
+                set_buffer_transform(object, transform);
             }
         },
         // set_buffer_scale
         8 => {
-            var scale: i32 = context.next_i32();
+            var scale: i32 = object.context.next_i32();
             if (WL_SURFACE.set_buffer_scale) |set_buffer_scale| {
-                set_buffer_scale(scale);
+                set_buffer_scale(object, scale);
             }
         },
         // damage_buffer
         9 => {
-            var x: i32 = context.next_i32();
-            var y: i32 = context.next_i32();
-            var width: i32 = context.next_i32();
-            var height: i32 = context.next_i32();
+            var x: i32 = object.context.next_i32();
+            var y: i32 = object.context.next_i32();
+            var width: i32 = object.context.next_i32();
+            var height: i32 = object.context.next_i32();
             if (WL_SURFACE.damage_buffer) |damage_buffer| {
-                damage_buffer(x, y, width, height);
+                damage_buffer(object, x, y, width, height);
             }
         },
         else => {},
@@ -1313,10 +1349,12 @@ pub fn wl_surface_send_leave(object: Object, output: u32) void {
 // wl_seat
 pub const wl_seat_interface = struct {
     // group of input devices
-    get_pointer: ?fn (u32) void,
-    get_keyboard: ?fn (u32) void,
-    get_touch: ?fn (u32) void,
-    release: ?fn () void,
+    get_pointer: ?fn (Object, u32) void,
+    get_keyboard: ?fn (Object, u32) void,
+    get_touch: ?fn (Object, u32) void,
+    release: ?fn (
+        Object,
+    ) void,
 };
 
 pub var WL_SEAT = wl_seat_interface{
@@ -1338,33 +1376,35 @@ pub fn new_wl_seat(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_seat_dispatch(context: *Context, opcode: u16) void {
+fn wl_seat_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // get_pointer
         0 => {
-            var id: u32 = context.next_u32();
+            var id: u32 = object.context.next_u32();
             if (WL_SEAT.get_pointer) |get_pointer| {
-                get_pointer(id);
+                get_pointer(object, id);
             }
         },
         // get_keyboard
         1 => {
-            var id: u32 = context.next_u32();
+            var id: u32 = object.context.next_u32();
             if (WL_SEAT.get_keyboard) |get_keyboard| {
-                get_keyboard(id);
+                get_keyboard(object, id);
             }
         },
         // get_touch
         2 => {
-            var id: u32 = context.next_u32();
+            var id: u32 = object.context.next_u32();
             if (WL_SEAT.get_touch) |get_touch| {
-                get_touch(id);
+                get_touch(object, id);
             }
         },
         // release
         3 => {
             if (WL_SEAT.release) |release| {
-                release();
+                release(
+                    object,
+                );
             }
         },
         else => {},
@@ -1410,7 +1450,7 @@ pub fn wl_seat_send_capabilities(object: Object, capabilities: u32) void {
 // identify which physical devices the seat represents. Based on
 // the seat configuration used by the compositor.
 //
-pub fn wl_seat_send_name(object: Object, name: []u8) void {
+pub fn wl_seat_send_name(object: Object, name: []const u8) void {
     object.context.startWrite();
     object.context.putString(name);
     object.context.finishWrite(object.id, 1);
@@ -1419,8 +1459,10 @@ pub fn wl_seat_send_name(object: Object, name: []u8) void {
 // wl_pointer
 pub const wl_pointer_interface = struct {
     // pointer input device
-    set_cursor: ?fn (u32, Object, i32, i32) void,
-    release: ?fn () void,
+    set_cursor: ?fn (Object, u32, Object, i32, i32) void,
+    release: ?fn (
+        Object,
+    ) void,
 };
 
 pub var WL_POINTER = wl_pointer_interface{
@@ -1440,22 +1482,24 @@ pub fn new_wl_pointer(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_pointer_dispatch(context: *Context, opcode: u16) void {
+fn wl_pointer_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // set_cursor
         0 => {
-            var serial: u32 = context.next_u32();
-            var surface: Object = new_wl_surface(context, context.next_u32());
-            var hotspot_x: i32 = context.next_i32();
-            var hotspot_y: i32 = context.next_i32();
+            var serial: u32 = object.context.next_u32();
+            var surface: Object = new_wl_surface(context, object.context.next_u32());
+            var hotspot_x: i32 = object.context.next_i32();
+            var hotspot_y: i32 = object.context.next_i32();
             if (WL_POINTER.set_cursor) |set_cursor| {
-                set_cursor(serial, surface, hotspot_x, hotspot_y);
+                set_cursor(object, serial, surface, hotspot_x, hotspot_y);
             }
         },
         // release
         1 => {
             if (WL_POINTER.release) |release| {
-                release();
+                release(
+                    object,
+                );
             }
         },
         else => {},
@@ -1695,7 +1739,9 @@ pub fn wl_pointer_send_axis_discrete(object: Object, axis: u32, discrete: i32) v
 // wl_keyboard
 pub const wl_keyboard_interface = struct {
     // keyboard input device
-    release: ?fn () void,
+    release: ?fn (
+        Object,
+    ) void,
 };
 
 pub var WL_KEYBOARD = wl_keyboard_interface{
@@ -1714,12 +1760,14 @@ pub fn new_wl_keyboard(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_keyboard_dispatch(context: *Context, opcode: u16) void {
+fn wl_keyboard_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // release
         0 => {
             if (WL_KEYBOARD.release) |release| {
-                release();
+                release(
+                    object,
+                );
             }
         },
         else => {},
@@ -1817,7 +1865,9 @@ pub fn wl_keyboard_send_repeat_info(object: Object, rate: i32, delay: i32) void 
 // wl_touch
 pub const wl_touch_interface = struct {
     // touchscreen input device
-    release: ?fn () void,
+    release: ?fn (
+        Object,
+    ) void,
 };
 
 pub var WL_TOUCH = wl_touch_interface{
@@ -1836,12 +1886,14 @@ pub fn new_wl_touch(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_touch_dispatch(context: *Context, opcode: u16) void {
+fn wl_touch_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // release
         0 => {
             if (WL_TOUCH.release) |release| {
-                release();
+                release(
+                    object,
+                );
             }
         },
         else => {},
@@ -1974,7 +2026,9 @@ pub fn wl_touch_send_orientation(object: Object, id: i32, orientation: f32) void
 // wl_output
 pub const wl_output_interface = struct {
     // compositor output region
-    release: ?fn () void,
+    release: ?fn (
+        Object,
+    ) void,
 };
 
 pub var WL_OUTPUT = wl_output_interface{
@@ -1993,12 +2047,14 @@ pub fn new_wl_output(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_output_dispatch(context: *Context, opcode: u16) void {
+fn wl_output_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // release
         0 => {
             if (WL_OUTPUT.release) |release| {
-                release();
+                release(
+                    object,
+                );
             }
         },
         else => {},
@@ -2043,7 +2099,7 @@ pub const wl_output_mode = enum(u32) {
 // should use xdg_output.logical_position. Instead of using make and model,
 // clients should use xdg_output.name and xdg_output.description.
 //
-pub fn wl_output_send_geometry(object: Object, x: i32, y: i32, physical_width: i32, physical_height: i32, subpixel: i32, make: []u8, model: []u8, transform: i32) void {
+pub fn wl_output_send_geometry(object: Object, x: i32, y: i32, physical_width: i32, physical_height: i32, subpixel: i32, make: []const u8, model: []const u8, transform: i32) void {
     object.context.startWrite();
     object.context.putI32(x);
     object.context.putI32(y);
@@ -2125,9 +2181,11 @@ pub fn wl_output_send_scale(object: Object, factor: i32) void {
 // wl_region
 pub const wl_region_interface = struct {
     // region interface
-    destroy: ?fn () void,
-    add: ?fn (i32, i32, i32, i32) void,
-    subtract: ?fn (i32, i32, i32, i32) void,
+    destroy: ?fn (
+        Object,
+    ) void,
+    add: ?fn (Object, i32, i32, i32, i32) void,
+    subtract: ?fn (Object, i32, i32, i32, i32) void,
 };
 
 pub var WL_REGION = wl_region_interface{
@@ -2148,32 +2206,34 @@ pub fn new_wl_region(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_region_dispatch(context: *Context, opcode: u16) void {
+fn wl_region_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // destroy
         0 => {
             if (WL_REGION.destroy) |destroy| {
-                destroy();
+                destroy(
+                    object,
+                );
             }
         },
         // add
         1 => {
-            var x: i32 = context.next_i32();
-            var y: i32 = context.next_i32();
-            var width: i32 = context.next_i32();
-            var height: i32 = context.next_i32();
+            var x: i32 = object.context.next_i32();
+            var y: i32 = object.context.next_i32();
+            var width: i32 = object.context.next_i32();
+            var height: i32 = object.context.next_i32();
             if (WL_REGION.add) |add| {
-                add(x, y, width, height);
+                add(object, x, y, width, height);
             }
         },
         // subtract
         2 => {
-            var x: i32 = context.next_i32();
-            var y: i32 = context.next_i32();
-            var width: i32 = context.next_i32();
-            var height: i32 = context.next_i32();
+            var x: i32 = object.context.next_i32();
+            var y: i32 = object.context.next_i32();
+            var width: i32 = object.context.next_i32();
+            var height: i32 = object.context.next_i32();
             if (WL_REGION.subtract) |subtract| {
-                subtract(x, y, width, height);
+                subtract(object, x, y, width, height);
             }
         },
         else => {},
@@ -2183,8 +2243,10 @@ fn wl_region_dispatch(context: *Context, opcode: u16) void {
 // wl_subcompositor
 pub const wl_subcompositor_interface = struct {
     // sub-surface compositing
-    destroy: ?fn () void,
-    get_subsurface: ?fn (u32, Object, Object) void,
+    destroy: ?fn (
+        Object,
+    ) void,
+    get_subsurface: ?fn (Object, u32, Object, Object) void,
 };
 
 pub var WL_SUBCOMPOSITOR = wl_subcompositor_interface{
@@ -2204,21 +2266,23 @@ pub fn new_wl_subcompositor(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_subcompositor_dispatch(context: *Context, opcode: u16) void {
+fn wl_subcompositor_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // destroy
         0 => {
             if (WL_SUBCOMPOSITOR.destroy) |destroy| {
-                destroy();
+                destroy(
+                    object,
+                );
             }
         },
         // get_subsurface
         1 => {
-            var id: u32 = context.next_u32();
-            var surface: Object = new_wl_surface(context, context.next_u32());
-            var parent: Object = new_wl_surface(context, context.next_u32());
+            var id: u32 = object.context.next_u32();
+            var surface: Object = new_wl_surface(context, object.context.next_u32());
+            var parent: Object = new_wl_surface(context, object.context.next_u32());
             if (WL_SUBCOMPOSITOR.get_subsurface) |get_subsurface| {
-                get_subsurface(id, surface, parent);
+                get_subsurface(object, id, surface, parent);
             }
         },
         else => {},
@@ -2232,12 +2296,18 @@ pub const wl_subcompositor_error = enum(u32) {
 // wl_subsurface
 pub const wl_subsurface_interface = struct {
     // sub-surface interface to a wl_surface
-    destroy: ?fn () void,
-    set_position: ?fn (i32, i32) void,
-    place_above: ?fn (Object) void,
-    place_below: ?fn (Object) void,
-    set_sync: ?fn () void,
-    set_desync: ?fn () void,
+    destroy: ?fn (
+        Object,
+    ) void,
+    set_position: ?fn (Object, i32, i32) void,
+    place_above: ?fn (Object, Object) void,
+    place_below: ?fn (Object, Object) void,
+    set_sync: ?fn (
+        Object,
+    ) void,
+    set_desync: ?fn (
+        Object,
+    ) void,
 };
 
 pub var WL_SUBSURFACE = wl_subsurface_interface{
@@ -2261,46 +2331,52 @@ pub fn new_wl_subsurface(context: *Context, id: u32) Object {
     return object;
 }
 
-fn wl_subsurface_dispatch(context: *Context, opcode: u16) void {
+fn wl_subsurface_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // destroy
         0 => {
             if (WL_SUBSURFACE.destroy) |destroy| {
-                destroy();
+                destroy(
+                    object,
+                );
             }
         },
         // set_position
         1 => {
-            var x: i32 = context.next_i32();
-            var y: i32 = context.next_i32();
+            var x: i32 = object.context.next_i32();
+            var y: i32 = object.context.next_i32();
             if (WL_SUBSURFACE.set_position) |set_position| {
-                set_position(x, y);
+                set_position(object, x, y);
             }
         },
         // place_above
         2 => {
-            var sibling: Object = new_wl_surface(context, context.next_u32());
+            var sibling: Object = new_wl_surface(context, object.context.next_u32());
             if (WL_SUBSURFACE.place_above) |place_above| {
-                place_above(sibling);
+                place_above(object, sibling);
             }
         },
         // place_below
         3 => {
-            var sibling: Object = new_wl_surface(context, context.next_u32());
+            var sibling: Object = new_wl_surface(context, object.context.next_u32());
             if (WL_SUBSURFACE.place_below) |place_below| {
-                place_below(sibling);
+                place_below(object, sibling);
             }
         },
         // set_sync
         4 => {
             if (WL_SUBSURFACE.set_sync) |set_sync| {
-                set_sync();
+                set_sync(
+                    object,
+                );
             }
         },
         // set_desync
         5 => {
             if (WL_SUBSURFACE.set_desync) |set_desync| {
-                set_desync();
+                set_desync(
+                    object,
+                );
             }
         },
         else => {},

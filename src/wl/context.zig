@@ -6,6 +6,7 @@ const MAX_FDS = @import("txrx.zig").MAX_FDS;
 const BUFFER_SIZE = 512;
 
 pub const Context = struct {
+    fd: i32 = -1,
     read_offset: usize = 0,
     write_offset: usize = 0,
     recv_fds: [MAX_FDS]i32,
@@ -17,7 +18,8 @@ pub const Context = struct {
 
     const Self = @This();
 
-    pub fn init(self: *Self) void {
+    pub fn init(self: *Self, fd: i32) void {
+        self.fd = fd;
         self.objects = AutoHashMap(u32, Object).init(std.heap.page_allocator);
         // self.putU32(12);
         // var s = [_]u8{0x41, 0x41, 0x41, 0x41, 0x00};
@@ -31,8 +33,8 @@ pub const Context = struct {
         self.objects.deinit();
     }
 
-    pub fn dispatch(self: *Self, fd: i32) !void {
-        var n = try txrx.recvMsg(fd, self.recv_buf[self.write_offset..self.recv_buf.len], self.recv_fds[0..self.recv_fds.len]);
+    pub fn dispatch(self: *Self) !void {
+        var n = try txrx.recvMsg(self.fd, self.recv_buf[self.write_offset..self.recv_buf.len], self.recv_fds[0..self.recv_fds.len]);
         n = self.write_offset + n;
 
         self.read_offset = 0;
@@ -60,7 +62,7 @@ pub const Context = struct {
             // std.debug.warn("paylod: {x}\n", .{ self.recv_buf[offset..offset+header.length] });
             self.read_offset += @sizeOf(Header);
             if (self.objects.get(header.id)) |object| {
-                object.value.dispatch(self, header.opcode);
+                object.value.dispatch(object.value, header.opcode);
             }
         }
     }
@@ -100,11 +102,22 @@ pub const Context = struct {
         s.ptr = @ptrCast(*u32, @alignCast(@alignOf(u32), &self.recv_buf[self.read_offset]));
         s.len = length/@sizeOf(u32);
         self.read_offset += length;
+        std.debug.warn("next_array read_offset: {}\n", .{self.read_offset});
         return s;
     }
 
     pub fn register(self: *Self, object: Object) !void {
         var x = try self.objects.put(object.id, object);
+        return;
+    }
+
+    pub fn unregister(self: *Self, object: Object) !void {
+        var o = self.objects.remove(object.id);
+        if (o) |x| {
+            std.debug.warn("unregistered: {}\n", .{x.key});
+        } else {
+            std.debug.warn("attempted to deregister object ({}) that didn't exist\n", .{object.id});
+        }
         return;
     }
 
@@ -121,6 +134,7 @@ pub const Context = struct {
         };
         var h_ptr = @ptrCast(*Header, &self.tx_buf[0]);
         h_ptr.* = h;
+        var x = txrx.sendMsg(self.fd, self.tx_buf[0..self.tx_write_offset], self.tx_fds[0..self.tx_fds.len]);
     }
 
     pub fn putU32(self: *Self, value: u32) void {
@@ -151,7 +165,7 @@ pub const Context = struct {
     }
 
     // string is assumed to have a null byte within its contents / length
-    pub fn putString(self: *Self, string: []u8) void {
+    pub fn putString(self: *Self, string: []const u8) void {
         // Write our array length (in bytes) into buffer
         var length = @sizeOf(u32) * @divTrunc(string.len - 1, @sizeOf(u32)) + @sizeOf(u32);
         var len_ptr = @ptrCast(*u32, @alignCast(@alignOf(u32), &self.tx_buf[self.tx_write_offset]));
@@ -165,7 +179,7 @@ pub const Context = struct {
 
 pub const Object = struct {
     id: u32,
-    dispatch: fn(*Context, u16) void,
+    dispatch: fn(Object, u16) void,
     context: *Context,
 };
 

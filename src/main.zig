@@ -15,6 +15,7 @@ pub fn main() anyerror!void {
 
     while (true) {
         var n = epoll.wait(-1);
+        std.debug.warn("\n\nactivity on epoll\n", .{});
         var i: usize = 0;
 
         while (i < n) {
