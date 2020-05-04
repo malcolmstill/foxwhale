@@ -39,8 +39,13 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
             clients[i].in_use = true;
             std.debug.warn("init context\n", .{});
             clients[i].ctx.init();
-            // try clients[i].ctx.register(wl.new_wl_display(&clients[i].ctx, 1));
+
             var o = wl.new_wl_display(&clients[i].ctx, 1);
+            // wl.wl_display_send_delete_id(o, 1);
+            // std.debug.warn("tx_buf after send_delete {x}\n", .{clients[i].ctx.tx_buf});
+            // var s = [_]u8{0x41, 0x41, 0x41, 0x41, 0x00};
+            // wl.wl_display_send_error(o, 1, @enumToInt(wl.wl_display_error.no_memory), s[0..s.len]);
+            // std.debug.warn("tx_buf after send_error {x}\n", .{clients[i].ctx.tx_buf});
 
             try epoll.addFd(conn.file.handle, &clients[i].dispatchable);
 

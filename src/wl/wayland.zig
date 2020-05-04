@@ -47,7 +47,7 @@ fn wl_display_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_display_error = enum {
+pub const wl_display_error = enum(u32) {
     invalid_object = 0,
     invalid_method = 1,
     no_memory = 2,
@@ -62,11 +62,11 @@ const wl_display_error = enum {
 // of the error, for (debugging) convenience.
 //
 pub fn wl_display_send_error(object: Object, object_id: u32, code: u32, message: []u8) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(object_id);
-    object.context.put_u32(code);
-    object.context.put_string(message);
+    object.context.startWrite();
+    object.context.putU32(object_id);
+    object.context.putU32(code);
+    object.context.putString(message);
+    object.context.finishWrite(object.id, 0);
 }
 // This event is used internally by the object ID management
 // logic.  When a client deletes an object, the server will send
@@ -75,9 +75,9 @@ pub fn wl_display_send_error(object: Object, object_id: u32, code: u32, message:
 // safely reuse the object ID.
 //
 pub fn wl_display_send_delete_id(object: Object, id: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(id);
+    object.context.startWrite();
+    object.context.putU32(id);
+    object.context.finishWrite(object.id, 1);
 }
 
 // wl_registry
@@ -122,11 +122,11 @@ fn wl_registry_dispatch(context: *Context, opcode: u16) void {
 // given version of the given interface.
 //
 pub fn wl_registry_send_global(object: Object, name: u32, interface: []u8, version: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(name);
-    object.context.put_string(interface);
-    object.context.put_u32(version);
+    object.context.startWrite();
+    object.context.putU32(name);
+    object.context.putString(interface);
+    object.context.putU32(version);
+    object.context.finishWrite(object.id, 0);
 }
 // Notify the client of removed global objects.
 //
@@ -140,9 +140,9 @@ pub fn wl_registry_send_global(object: Object, name: u32, interface: []u8, versi
 // the global going away and a client sending a request to it.
 //
 pub fn wl_registry_send_global_remove(object: Object, name: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(name);
+    object.context.startWrite();
+    object.context.putU32(name);
+    object.context.finishWrite(object.id, 1);
 }
 
 // wl_callback
@@ -172,9 +172,9 @@ fn wl_callback_dispatch(context: *Context, opcode: u16) void {
 // Notify the client when the related request is done.
 //
 pub fn wl_callback_send_done(object: Object, callback_data: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(callback_data);
+    object.context.startWrite();
+    object.context.putU32(callback_data);
+    object.context.finishWrite(object.id, 0);
 }
 
 // wl_compositor
@@ -315,13 +315,13 @@ fn wl_shm_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_shm_error = enum {
+pub const wl_shm_error = enum(u32) {
     invalid_format = 0,
     invalid_stride = 1,
     invalid_fd = 2,
 };
 
-const wl_shm_format = enum {
+pub const wl_shm_format = enum(u32) {
     argb8888 = 0,
     xrgb8888 = 1,
     c8 = 0x20203843,
@@ -386,9 +386,9 @@ const wl_shm_format = enum {
 // argb8888 and xrgb8888.
 //
 pub fn wl_shm_send_format(object: Object, format: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(format);
+    object.context.startWrite();
+    object.context.putU32(format);
+    object.context.finishWrite(object.id, 0);
 }
 
 // wl_buffer
@@ -438,8 +438,8 @@ fn wl_buffer_dispatch(context: *Context, opcode: u16) void {
 // optimization for GL(ES) compositors with wl_shm clients.
 //
 pub fn wl_buffer_send_release(object: Object) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 0);
 }
 
 // wl_data_offer
@@ -514,7 +514,7 @@ fn wl_data_offer_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_data_offer_error = enum {
+pub const wl_data_offer_error = enum(u32) {
     invalid_finish = 0,
     invalid_action_mask = 1,
     invalid_action = 2,
@@ -524,18 +524,18 @@ const wl_data_offer_error = enum {
 // event per offered mime type.
 //
 pub fn wl_data_offer_send_offer(object: Object, mime_type: []u8) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_string(mime_type);
+    object.context.startWrite();
+    object.context.putString(mime_type);
+    object.context.finishWrite(object.id, 0);
 }
 // This event indicates the actions offered by the data source. It
 // will be sent right after wl_data_device.enter, or anytime the source
 // side changes its offered actions through wl_data_source.set_actions.
 //
 pub fn wl_data_offer_send_source_actions(object: Object, source_actions: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(source_actions);
+    object.context.startWrite();
+    object.context.putU32(source_actions);
+    object.context.finishWrite(object.id, 1);
 }
 // This event indicates the action selected by the compositor after
 // matching the source/destination side actions. Only one action (or
@@ -574,9 +574,9 @@ pub fn wl_data_offer_send_source_actions(object: Object, source_actions: u32) vo
 // must happen before the call to wl_data_offer.finish.
 //
 pub fn wl_data_offer_send_action(object: Object, dnd_action: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(dnd_action);
+    object.context.startWrite();
+    object.context.putU32(dnd_action);
+    object.context.finishWrite(object.id, 2);
 }
 
 // wl_data_source
@@ -631,7 +631,7 @@ fn wl_data_source_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_data_source_error = enum {
+pub const wl_data_source_error = enum(u32) {
     invalid_action_mask = 0,
     invalid_source = 1,
 };
@@ -641,19 +641,19 @@ const wl_data_source_error = enum {
 // Used for feedback during drag-and-drop.
 //
 pub fn wl_data_source_send_target(object: Object, mime_type: []u8) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_string(mime_type);
+    object.context.startWrite();
+    object.context.putString(mime_type);
+    object.context.finishWrite(object.id, 0);
 }
 // Request for data from the client.  Send the data as the
 // specified mime type over the passed file descriptor, then
 // close it.
 //
 pub fn wl_data_source_send_send(object: Object, mime_type: []u8, fd: i32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_string(mime_type);
-    object.context.put_i32(fd);
+    object.context.startWrite();
+    object.context.putString(mime_type);
+    object.context.putI32(fd);
+    object.context.finishWrite(object.id, 1);
 }
 // This data source is no longer valid. There are several reasons why
 // this could happen:
@@ -677,8 +677,8 @@ pub fn wl_data_source_send_send(object: Object, mime_type: []u8, fd: i32) void {
 // source.
 //
 pub fn wl_data_source_send_cancelled(object: Object) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 2);
 }
 // The user performed the drop action. This event does not indicate
 // acceptance, wl_data_source.cancelled may still be emitted afterwards
@@ -691,8 +691,8 @@ pub fn wl_data_source_send_cancelled(object: Object) void {
 // not be destroyed here.
 //
 pub fn wl_data_source_send_dnd_drop_performed(object: Object) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 3);
 }
 // The drop destination finished interoperating with this data
 // source, so the client is now free to destroy this data source and
@@ -702,8 +702,8 @@ pub fn wl_data_source_send_dnd_drop_performed(object: Object) void {
 // source can now delete the transferred data.
 //
 pub fn wl_data_source_send_dnd_finished(object: Object) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 4);
 }
 // This event indicates the action selected by the compositor after
 // matching the source/destination side actions. Only one action (or
@@ -732,9 +732,9 @@ pub fn wl_data_source_send_dnd_finished(object: Object) void {
 // they reflect the current action.
 //
 pub fn wl_data_source_send_action(object: Object, dnd_action: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(dnd_action);
+    object.context.startWrite();
+    object.context.putU32(dnd_action);
+    object.context.finishWrite(object.id, 5);
 }
 
 // wl_data_device
@@ -793,7 +793,7 @@ fn wl_data_device_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_data_device_error = enum {
+pub const wl_data_device_error = enum(u32) {
     role = 0,
 };
 // The data_offer event introduces a new wl_data_offer object,
@@ -805,9 +805,9 @@ const wl_data_device_error = enum {
 // mime types it offers.
 //
 pub fn wl_data_device_send_data_offer(object: Object, id: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(id);
+    object.context.startWrite();
+    object.context.putU32(id);
+    object.context.finishWrite(object.id, 0);
 }
 // This event is sent when an active drag-and-drop pointer enters
 // a surface owned by the client.  The position of the pointer at
@@ -815,21 +815,21 @@ pub fn wl_data_device_send_data_offer(object: Object, id: u32) void {
 // coordinates.
 //
 pub fn wl_data_device_send_enter(object: Object, serial: u32, surface: u32, x: f32, y: f32, id: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(serial);
-    object.context.put_u32(surface);
-    object.context.put_fixed(x);
-    object.context.put_fixed(y);
-    object.context.put_u32(id);
+    object.context.startWrite();
+    object.context.putU32(serial);
+    object.context.putU32(surface);
+    object.context.putFixed(x);
+    object.context.putFixed(y);
+    object.context.putU32(id);
+    object.context.finishWrite(object.id, 1);
 }
 // This event is sent when the drag-and-drop pointer leaves the
 // surface and the session ends.  The client must destroy the
 // wl_data_offer introduced at enter time at this point.
 //
 pub fn wl_data_device_send_leave(object: Object) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 2);
 }
 // This event is sent when the drag-and-drop pointer moves within
 // the currently focused surface. The new position of the pointer
@@ -837,11 +837,11 @@ pub fn wl_data_device_send_leave(object: Object) void {
 // coordinates.
 //
 pub fn wl_data_device_send_motion(object: Object, time: u32, x: f32, y: f32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(time);
-    object.context.put_fixed(x);
-    object.context.put_fixed(y);
+    object.context.startWrite();
+    object.context.putU32(time);
+    object.context.putFixed(x);
+    object.context.putFixed(y);
+    object.context.finishWrite(object.id, 3);
 }
 // The event is sent when a drag-and-drop operation is ended
 // because the implicit grab is removed.
@@ -858,8 +858,8 @@ pub fn wl_data_device_send_motion(object: Object, time: u32, x: f32, y: f32) voi
 // to cancel the operation.
 //
 pub fn wl_data_device_send_drop(object: Object) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 4);
 }
 // The selection event is sent out to notify the client of a new
 // wl_data_offer for the selection for this device.  The
@@ -874,9 +874,9 @@ pub fn wl_data_device_send_drop(object: Object) void {
 // this event.
 //
 pub fn wl_data_device_send_selection(object: Object, id: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(id);
+    object.context.startWrite();
+    object.context.putU32(id);
+    object.context.finishWrite(object.id, 5);
 }
 
 // wl_data_device_manager
@@ -924,7 +924,7 @@ fn wl_data_device_manager_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_data_device_manager_dnd_action = enum {
+pub const wl_data_device_manager_dnd_action = enum(u32) {
     none = 0,
     copy = 1,
     move = 2,
@@ -967,7 +967,7 @@ fn wl_shell_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_shell_error = enum {
+pub const wl_shell_error = enum(u32) {
     role = 0,
 };
 
@@ -1099,7 +1099,7 @@ fn wl_shell_surface_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_shell_surface_resize = enum {
+pub const wl_shell_surface_resize = enum(u32) {
     none = 0,
     top = 1,
     bottom = 2,
@@ -1111,11 +1111,11 @@ const wl_shell_surface_resize = enum {
     bottom_right = 10,
 };
 
-const wl_shell_surface_transient = enum {
+pub const wl_shell_surface_transient = enum(u32) {
     inactive = 0x1,
 };
 
-const wl_shell_surface_fullscreen_method = enum {
+pub const wl_shell_surface_fullscreen_method = enum(u32) {
     default = 0,
     scale = 1,
     driver = 2,
@@ -1125,9 +1125,9 @@ const wl_shell_surface_fullscreen_method = enum {
 // requests. A client is expected to reply with a pong request.
 //
 pub fn wl_shell_surface_send_ping(object: Object, serial: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(serial);
+    object.context.startWrite();
+    object.context.putU32(serial);
+    object.context.finishWrite(object.id, 0);
 }
 // The configure event asks the client to resize its surface.
 //
@@ -1148,19 +1148,19 @@ pub fn wl_shell_surface_send_ping(object: Object, serial: u32) void {
 // in surface-local coordinates.
 //
 pub fn wl_shell_surface_send_configure(object: Object, edges: u32, width: i32, height: i32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(edges);
-    object.context.put_i32(width);
-    object.context.put_i32(height);
+    object.context.startWrite();
+    object.context.putU32(edges);
+    object.context.putI32(width);
+    object.context.putI32(height);
+    object.context.finishWrite(object.id, 1);
 }
 // The popup_done event is sent out when a popup grab is broken,
 // that is, when the user clicks a surface that doesn't belong
 // to the client owning the popup surface.
 //
 pub fn wl_shell_surface_send_popup_done(object: Object) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 2);
 }
 
 // wl_surface
@@ -1285,7 +1285,7 @@ fn wl_surface_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_surface_error = enum {
+pub const wl_surface_error = enum(u32) {
     invalid_scale = 0,
     invalid_transform = 1,
 };
@@ -1296,18 +1296,18 @@ const wl_surface_error = enum {
 // Note that a surface may be overlapping with zero or more outputs.
 //
 pub fn wl_surface_send_enter(object: Object, output: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(output);
+    object.context.startWrite();
+    object.context.putU32(output);
+    object.context.finishWrite(object.id, 0);
 }
 // This is emitted whenever a surface's creation, movement, or resizing
 // results in it no longer having any part of it within the scanout region
 // of an output.
 //
 pub fn wl_surface_send_leave(object: Object, output: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(output);
+    object.context.startWrite();
+    object.context.putU32(output);
+    object.context.finishWrite(object.id, 1);
 }
 
 // wl_seat
@@ -1371,7 +1371,7 @@ fn wl_seat_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_seat_capability = enum {
+pub const wl_seat_capability = enum(u32) {
     pointer = 1,
     keyboard = 2,
     touch = 4,
@@ -1402,18 +1402,18 @@ const wl_seat_capability = enum {
 // keyboard and touch capabilities, respectively.
 //
 pub fn wl_seat_send_capabilities(object: Object, capabilities: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(capabilities);
+    object.context.startWrite();
+    object.context.putU32(capabilities);
+    object.context.finishWrite(object.id, 0);
 }
 // In a multiseat configuration this can be used by the client to help
 // identify which physical devices the seat represents. Based on
 // the seat configuration used by the compositor.
 //
 pub fn wl_seat_send_name(object: Object, name: []u8) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_string(name);
+    object.context.startWrite();
+    object.context.putString(name);
+    object.context.finishWrite(object.id, 1);
 }
 
 // wl_pointer
@@ -1462,21 +1462,21 @@ fn wl_pointer_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_pointer_error = enum {
+pub const wl_pointer_error = enum(u32) {
     role = 0,
 };
 
-const wl_pointer_button_state = enum {
+pub const wl_pointer_button_state = enum(u32) {
     released = 0,
     pressed = 1,
 };
 
-const wl_pointer_axis = enum {
+pub const wl_pointer_axis = enum(u32) {
     vertical_scroll = 0,
     horizontal_scroll = 1,
 };
 
-const wl_pointer_axis_source = enum {
+pub const wl_pointer_axis_source = enum(u32) {
     wheel = 0,
     finger = 1,
     continuous = 2,
@@ -1490,12 +1490,12 @@ const wl_pointer_axis_source = enum {
 // an appropriate pointer image with the set_cursor request.
 //
 pub fn wl_pointer_send_enter(object: Object, serial: u32, surface: u32, surface_x: f32, surface_y: f32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(serial);
-    object.context.put_u32(surface);
-    object.context.put_fixed(surface_x);
-    object.context.put_fixed(surface_y);
+    object.context.startWrite();
+    object.context.putU32(serial);
+    object.context.putU32(surface);
+    object.context.putFixed(surface_x);
+    object.context.putFixed(surface_y);
+    object.context.finishWrite(object.id, 0);
 }
 // Notification that this seat's pointer is no longer focused on
 // a certain surface.
@@ -1504,21 +1504,21 @@ pub fn wl_pointer_send_enter(object: Object, serial: u32, surface: u32, surface_
 // for the new focus.
 //
 pub fn wl_pointer_send_leave(object: Object, serial: u32, surface: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(serial);
-    object.context.put_u32(surface);
+    object.context.startWrite();
+    object.context.putU32(serial);
+    object.context.putU32(surface);
+    object.context.finishWrite(object.id, 1);
 }
 // Notification of pointer location change. The arguments
 // surface_x and surface_y are the location relative to the
 // focused surface.
 //
 pub fn wl_pointer_send_motion(object: Object, time: u32, surface_x: f32, surface_y: f32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(time);
-    object.context.put_fixed(surface_x);
-    object.context.put_fixed(surface_y);
+    object.context.startWrite();
+    object.context.putU32(time);
+    object.context.putFixed(surface_x);
+    object.context.putFixed(surface_y);
+    object.context.finishWrite(object.id, 2);
 }
 // Mouse button click and release notifications.
 //
@@ -1536,12 +1536,12 @@ pub fn wl_pointer_send_motion(object: Object, time: u32, surface_x: f32, surface
 // protocol.
 //
 pub fn wl_pointer_send_button(object: Object, serial: u32, time: u32, button: u32, state: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(serial);
-    object.context.put_u32(time);
-    object.context.put_u32(button);
-    object.context.put_u32(state);
+    object.context.startWrite();
+    object.context.putU32(serial);
+    object.context.putU32(time);
+    object.context.putU32(button);
+    object.context.putU32(state);
+    object.context.finishWrite(object.id, 3);
 }
 // Scroll and other axis notifications.
 //
@@ -1561,11 +1561,11 @@ pub fn wl_pointer_send_button(object: Object, serial: u32, time: u32, button: u3
 // scroll distance.
 //
 pub fn wl_pointer_send_axis(object: Object, time: u32, axis: u32, value: f32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(time);
-    object.context.put_u32(axis);
-    object.context.put_fixed(value);
+    object.context.startWrite();
+    object.context.putU32(time);
+    object.context.putU32(axis);
+    object.context.putFixed(value);
+    object.context.finishWrite(object.id, 4);
 }
 // Indicates the end of a set of events that logically belong together.
 // A client is expected to accumulate the data in all events within the
@@ -1603,8 +1603,8 @@ pub fn wl_pointer_send_axis(object: Object, time: u32, axis: u32, value: f32) vo
 // groups.
 //
 pub fn wl_pointer_send_frame(object: Object) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 5);
 }
 // Source information for scroll and other axes.
 //
@@ -1633,9 +1633,9 @@ pub fn wl_pointer_send_frame(object: Object) void {
 // not guaranteed.
 //
 pub fn wl_pointer_send_axis_source(object: Object, axis_source: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(axis_source);
+    object.context.startWrite();
+    object.context.putU32(axis_source);
+    object.context.finishWrite(object.id, 6);
 }
 // Stop notification for scroll and other axes.
 //
@@ -1653,10 +1653,10 @@ pub fn wl_pointer_send_axis_source(object: Object, axis_source: u32) void {
 // preceding wl_pointer.axis event.
 //
 pub fn wl_pointer_send_axis_stop(object: Object, time: u32, axis: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(time);
-    object.context.put_u32(axis);
+    object.context.startWrite();
+    object.context.putU32(time);
+    object.context.putU32(axis);
+    object.context.finishWrite(object.id, 7);
 }
 // Discrete step information for scroll and other axes.
 //
@@ -1686,10 +1686,10 @@ pub fn wl_pointer_send_axis_stop(object: Object, time: u32, axis: u32) void {
 // not guaranteed.
 //
 pub fn wl_pointer_send_axis_discrete(object: Object, axis: u32, discrete: i32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(axis);
-    object.context.put_i32(discrete);
+    object.context.startWrite();
+    object.context.putU32(axis);
+    object.context.putI32(discrete);
+    object.context.finishWrite(object.id, 8);
 }
 
 // wl_keyboard
@@ -1726,12 +1726,12 @@ fn wl_keyboard_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_keyboard_keymap_format = enum {
+pub const wl_keyboard_keymap_format = enum(u32) {
     no_keymap = 0,
     xkb_v1 = 1,
 };
 
-const wl_keyboard_key_state = enum {
+pub const wl_keyboard_key_state = enum(u32) {
     released = 0,
     pressed = 1,
 };
@@ -1742,21 +1742,21 @@ const wl_keyboard_key_state = enum {
 // the recipient, as MAP_SHARED may fail.
 //
 pub fn wl_keyboard_send_keymap(object: Object, format: u32, fd: i32, size: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(format);
-    object.context.put_i32(fd);
-    object.context.put_u32(size);
+    object.context.startWrite();
+    object.context.putU32(format);
+    object.context.putI32(fd);
+    object.context.putU32(size);
+    object.context.finishWrite(object.id, 0);
 }
 // Notification that this seat's keyboard focus is on a certain
 // surface.
 //
 pub fn wl_keyboard_send_enter(object: Object, serial: u32, surface: u32, keys: []u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(serial);
-    object.context.put_u32(surface);
-    object.context.put_array(keys);
+    object.context.startWrite();
+    object.context.putU32(serial);
+    object.context.putU32(surface);
+    object.context.putArray(keys);
+    object.context.finishWrite(object.id, 1);
 }
 // Notification that this seat's keyboard focus is no longer on
 // a certain surface.
@@ -1765,34 +1765,34 @@ pub fn wl_keyboard_send_enter(object: Object, serial: u32, surface: u32, keys: [
 // for the new focus.
 //
 pub fn wl_keyboard_send_leave(object: Object, serial: u32, surface: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(serial);
-    object.context.put_u32(surface);
+    object.context.startWrite();
+    object.context.putU32(serial);
+    object.context.putU32(surface);
+    object.context.finishWrite(object.id, 2);
 }
 // A key was pressed or released.
 // The time argument is a timestamp with millisecond
 // granularity, with an undefined base.
 //
 pub fn wl_keyboard_send_key(object: Object, serial: u32, time: u32, key: u32, state: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(serial);
-    object.context.put_u32(time);
-    object.context.put_u32(key);
-    object.context.put_u32(state);
+    object.context.startWrite();
+    object.context.putU32(serial);
+    object.context.putU32(time);
+    object.context.putU32(key);
+    object.context.putU32(state);
+    object.context.finishWrite(object.id, 3);
 }
 // Notifies clients that the modifier and/or group state has
 // changed, and it should update its local state.
 //
 pub fn wl_keyboard_send_modifiers(object: Object, serial: u32, mods_depressed: u32, mods_latched: u32, mods_locked: u32, group: u32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(serial);
-    object.context.put_u32(mods_depressed);
-    object.context.put_u32(mods_latched);
-    object.context.put_u32(mods_locked);
-    object.context.put_u32(group);
+    object.context.startWrite();
+    object.context.putU32(serial);
+    object.context.putU32(mods_depressed);
+    object.context.putU32(mods_latched);
+    object.context.putU32(mods_locked);
+    object.context.putU32(group);
+    object.context.finishWrite(object.id, 4);
 }
 // Informs the client about the keyboard's repeat rate and delay.
 //
@@ -1808,10 +1808,10 @@ pub fn wl_keyboard_send_modifiers(object: Object, serial: u32, mods_depressed: u
 // of wl_keyboard.
 //
 pub fn wl_keyboard_send_repeat_info(object: Object, rate: i32, delay: i32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_i32(rate);
-    object.context.put_i32(delay);
+    object.context.startWrite();
+    object.context.putI32(rate);
+    object.context.putI32(delay);
+    object.context.finishWrite(object.id, 5);
 }
 
 // wl_touch
@@ -1853,35 +1853,35 @@ fn wl_touch_dispatch(context: *Context, opcode: u16) void {
 // reused in the future.
 //
 pub fn wl_touch_send_down(object: Object, serial: u32, time: u32, surface: u32, id: i32, x: f32, y: f32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(serial);
-    object.context.put_u32(time);
-    object.context.put_u32(surface);
-    object.context.put_i32(id);
-    object.context.put_fixed(x);
-    object.context.put_fixed(y);
+    object.context.startWrite();
+    object.context.putU32(serial);
+    object.context.putU32(time);
+    object.context.putU32(surface);
+    object.context.putI32(id);
+    object.context.putFixed(x);
+    object.context.putFixed(y);
+    object.context.finishWrite(object.id, 0);
 }
 // The touch point has disappeared. No further events will be sent for
 // this touch point and the touch point's ID is released and may be
 // reused in a future touch down event.
 //
 pub fn wl_touch_send_up(object: Object, serial: u32, time: u32, id: i32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(serial);
-    object.context.put_u32(time);
-    object.context.put_i32(id);
+    object.context.startWrite();
+    object.context.putU32(serial);
+    object.context.putU32(time);
+    object.context.putI32(id);
+    object.context.finishWrite(object.id, 1);
 }
 // A touch point has changed coordinates.
 //
 pub fn wl_touch_send_motion(object: Object, time: u32, id: i32, x: f32, y: f32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(time);
-    object.context.put_i32(id);
-    object.context.put_fixed(x);
-    object.context.put_fixed(y);
+    object.context.startWrite();
+    object.context.putU32(time);
+    object.context.putI32(id);
+    object.context.putFixed(x);
+    object.context.putFixed(y);
+    object.context.finishWrite(object.id, 2);
 }
 // Indicates the end of a set of events that logically belong together.
 // A client is expected to accumulate the data in all events within the
@@ -1893,8 +1893,8 @@ pub fn wl_touch_send_motion(object: Object, time: u32, id: i32, x: f32, y: f32) 
 // previously known state.
 //
 pub fn wl_touch_send_frame(object: Object) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 3);
 }
 // Sent if the compositor decides the touch stream is a global
 // gesture. No further events are sent to the clients from that
@@ -1904,8 +1904,8 @@ pub fn wl_touch_send_frame(object: Object) void {
 // this surface may reuse the touch point ID.
 //
 pub fn wl_touch_send_cancel(object: Object) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 4);
 }
 // Sent when a touchpoint has changed its shape.
 //
@@ -1934,11 +1934,11 @@ pub fn wl_touch_send_cancel(object: Object) void {
 // shape if it did not receive this event.
 //
 pub fn wl_touch_send_shape(object: Object, id: i32, major: f32, minor: f32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_i32(id);
-    object.context.put_fixed(major);
-    object.context.put_fixed(minor);
+    object.context.startWrite();
+    object.context.putI32(id);
+    object.context.putFixed(major);
+    object.context.putFixed(minor);
+    object.context.finishWrite(object.id, 5);
 }
 // Sent when a touchpoint has changed its orientation.
 //
@@ -1965,10 +1965,10 @@ pub fn wl_touch_send_shape(object: Object, id: i32, major: f32, minor: f32) void
 // orientation reports.
 //
 pub fn wl_touch_send_orientation(object: Object, id: i32, orientation: f32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_i32(id);
-    object.context.put_fixed(orientation);
+    object.context.startWrite();
+    object.context.putI32(id);
+    object.context.putFixed(orientation);
+    object.context.finishWrite(object.id, 6);
 }
 
 // wl_output
@@ -2005,7 +2005,7 @@ fn wl_output_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_output_subpixel = enum {
+pub const wl_output_subpixel = enum(u32) {
     unknown = 0,
     none = 1,
     horizontal_rgb = 2,
@@ -2014,7 +2014,7 @@ const wl_output_subpixel = enum {
     vertical_bgr = 5,
 };
 
-const wl_output_transform = enum {
+pub const wl_output_transform = enum(u32) {
     normal = 0,
     @"90" = 1,
     @"180" = 2,
@@ -2025,7 +2025,7 @@ const wl_output_transform = enum {
     flipped_270 = 7,
 };
 
-const wl_output_mode = enum {
+pub const wl_output_mode = enum(u32) {
     current = 0x1,
     preferred = 0x2,
 };
@@ -2044,16 +2044,16 @@ const wl_output_mode = enum {
 // clients should use xdg_output.name and xdg_output.description.
 //
 pub fn wl_output_send_geometry(object: Object, x: i32, y: i32, physical_width: i32, physical_height: i32, subpixel: i32, make: []u8, model: []u8, transform: i32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_i32(x);
-    object.context.put_i32(y);
-    object.context.put_i32(physical_width);
-    object.context.put_i32(physical_height);
-    object.context.put_i32(subpixel);
-    object.context.put_string(make);
-    object.context.put_string(model);
-    object.context.put_i32(transform);
+    object.context.startWrite();
+    object.context.putI32(x);
+    object.context.putI32(y);
+    object.context.putI32(physical_width);
+    object.context.putI32(physical_height);
+    object.context.putI32(subpixel);
+    object.context.putString(make);
+    object.context.putString(model);
+    object.context.putI32(transform);
+    object.context.finishWrite(object.id, 0);
 }
 // The mode event describes an available mode for the output.
 //
@@ -2080,12 +2080,12 @@ pub fn wl_output_send_geometry(object: Object, x: i32, y: i32, physical_width: i
 // refresh rate or the size.
 //
 pub fn wl_output_send_mode(object: Object, flags: u32, width: i32, height: i32, refresh: i32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_u32(flags);
-    object.context.put_i32(width);
-    object.context.put_i32(height);
-    object.context.put_i32(refresh);
+    object.context.startWrite();
+    object.context.putU32(flags);
+    object.context.putI32(width);
+    object.context.putI32(height);
+    object.context.putI32(refresh);
+    object.context.finishWrite(object.id, 1);
 }
 // This event is sent after all other properties have been
 // sent after binding to the output object and after any
@@ -2094,8 +2094,8 @@ pub fn wl_output_send_mode(object: Object, flags: u32, width: i32, height: i32, 
 // atomic, even if they happen via multiple events.
 //
 pub fn wl_output_send_done(object: Object) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 2);
 }
 // This event contains scaling geometry information
 // that is not in the geometry event. It may be sent after
@@ -2117,9 +2117,9 @@ pub fn wl_output_send_done(object: Object) void {
 // a higher detail image.
 //
 pub fn wl_output_send_scale(object: Object, factor: i32) void {
-    var offset = object.context.tx_write_offset;
-    object.context.tx_write_offset += @sizeOf(Header);
-    object.context.put_i32(factor);
+    object.context.startWrite();
+    object.context.putI32(factor);
+    object.context.finishWrite(object.id, 3);
 }
 
 // wl_region
@@ -2225,7 +2225,7 @@ fn wl_subcompositor_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_subcompositor_error = enum {
+pub const wl_subcompositor_error = enum(u32) {
     bad_surface = 0,
 };
 
@@ -2307,6 +2307,6 @@ fn wl_subsurface_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
-const wl_subsurface_error = enum {
+pub const wl_subsurface_error = enum(u32) {
     bad_surface = 0,
 };

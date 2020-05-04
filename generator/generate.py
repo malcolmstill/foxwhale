@@ -21,24 +21,12 @@ def generate_protocol(protocol):
             generate_dispatch_function(child)
             generate_enum(child)
             generate_send(child)
-    # print(f"const TypeTag = enum {{")
-    # for child in protocol:
-    #     if child.tag == "interface":
-    #         interface = child.attrib["name"]
-    #         print(f"\t{interface}_tag,")
-    # print(f"}};")
-    # print(f"const WlResource = union(TypeTag) {{")
-    # for child in protocol:
-    #     if child.tag == "interface":
-    #         interface = child.attrib["name"]
-    #         print(f"\t{interface}_tag: {interface},")
-    # print(f"}};")
 
 # Generate enum
 def generate_enum(interface):
     for child in interface:
         if child.tag == "enum":
-            print(f"\nconst {interface.attrib['name']}_{child.attrib['name']} = enum {{")
+            print(f"\npub const {interface.attrib['name']}_{child.attrib['name']} = enum(u32) {{")
             for value in child:
                 if value.tag == "entry":
                     if value.attrib['name'].isdigit():
@@ -130,14 +118,14 @@ def put_type_arg(type):
 
 def put_type(type):
     types = {
-        "int": "i32",
-        "uint": "u32",
-        "new_id": "u32",
-        "fd": "i32",
-        "string": "string",
-        "array": "array",
-        "object": "u32",
-        "fixed": "fixed"
+        "int": "I32",
+        "uint": "U32",
+        "new_id": "U32",
+        "fd": "I32",
+        "string": "String",
+        "array": "Array",
+        "object": "U32",
+        "fixed": "Fixed"
     }
     return types[type]
 
@@ -190,6 +178,7 @@ def generate_interface_global(interface):
 
 # Generate send
 def generate_send(interface):
+    i = 0
     for child in interface:
         if child.tag == "event":
             for desc in child:
@@ -204,12 +193,13 @@ def generate_send(interface):
                 if arg.tag == "arg":
                     print(f", {arg.attrib['name']}: {put_type_arg(arg.attrib['type'])}", end = '')
             print(f") void {{")
-            print(f"\tvar offset = object.context.tx_write_offset;")
-            print(f"\tobject.context.tx_write_offset += @sizeOf(Header);")
+            print(f"\tobject.context.startWrite();")
             for arg in child:
                 if arg.tag == "arg":
-                    print(f"\tobject.context.put_{put_type(arg.attrib['type'])}({arg.attrib['name']});")
+                    print(f"\tobject.context.put{put_type(arg.attrib['type'])}({arg.attrib['name']});")
+            print(f"\tobject.context.finishWrite(object.id, {i});")
             print(f"}}")
+            i = i + 1
 
 def lookup_type(type, arg):
     if type == "object":

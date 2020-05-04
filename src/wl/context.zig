@@ -19,12 +19,12 @@ pub const Context = struct {
 
     pub fn init(self: *Self) void {
         self.objects = AutoHashMap(u32, Object).init(std.heap.page_allocator);
-        self.putU32(12);
-        var s = [_]u8{0x41, 0x41, 0x41, 0x41, 0x00};
-        self.putString(s[0..s.len]);
-        var b = [_]u32{0xDE, 0xAD, 0xBE, 0xEF};
-        self.putArray(b[0..b.len]);
-        std.debug.warn("tx_buf: {x}\n", .{self.tx_buf});
+        // self.putU32(12);
+        // var s = [_]u8{0x41, 0x41, 0x41, 0x41, 0x00};
+        // self.putString(s[0..s.len]);
+        // var b = [_]u32{0xDE, 0xAD, 0xBE, 0xEF};
+        // self.putArray(b[0..b.len]);
+        // std.debug.warn("tx_buf: {x}\n", .{self.tx_buf});
     }
 
     pub fn deinit(self: *Self) void {
@@ -108,12 +108,19 @@ pub const Context = struct {
         return;
     }
 
-    pub fn putHeader(self: *Self, opcode: u16, object: Object) void {
+    pub fn startWrite(self: *Self) void {
+        self.tx_write_offset = 0;
+        self.tx_write_offset += @sizeOf(Header);
+    }
+
+    pub fn finishWrite(self: *Self, id: u32, opcode: u16) void {
         var h = Header {
-            .id = object.id,
+            .id = id,
             .opcode = opcode,
-            .length = 0,
+            .length = @intCast(u16, self.tx_write_offset),
         };
+        var h_ptr = @ptrCast(*Header, &self.tx_buf[0]);
+        h_ptr.* = h;
     }
 
     pub fn putU32(self: *Self, value: u32) void {
