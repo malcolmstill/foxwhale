@@ -45,6 +45,13 @@ fn wl_display_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
+const wl_display_error = enum {
+    invalid_object = 0,
+    invalid_method = 1,
+    no_memory = 2,
+    implementation = 3,
+};
+
 // wl_registry
 pub const wl_registry_interface = struct {
     // global registry object
@@ -239,6 +246,73 @@ fn wl_shm_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
+const wl_shm_error = enum {
+    invalid_format = 0,
+    invalid_stride = 1,
+    invalid_fd = 2,
+};
+
+const wl_shm_format = enum {
+    argb8888 = 0,
+    xrgb8888 = 1,
+    c8 = 0x20203843,
+    rgb332 = 0x38424752,
+    bgr233 = 0x38524742,
+    xrgb4444 = 0x32315258,
+    xbgr4444 = 0x32314258,
+    rgbx4444 = 0x32315852,
+    bgrx4444 = 0x32315842,
+    argb4444 = 0x32315241,
+    abgr4444 = 0x32314241,
+    rgba4444 = 0x32314152,
+    bgra4444 = 0x32314142,
+    xrgb1555 = 0x35315258,
+    xbgr1555 = 0x35314258,
+    rgbx5551 = 0x35315852,
+    bgrx5551 = 0x35315842,
+    argb1555 = 0x35315241,
+    abgr1555 = 0x35314241,
+    rgba5551 = 0x35314152,
+    bgra5551 = 0x35314142,
+    rgb565 = 0x36314752,
+    bgr565 = 0x36314742,
+    rgb888 = 0x34324752,
+    bgr888 = 0x34324742,
+    xbgr8888 = 0x34324258,
+    rgbx8888 = 0x34325852,
+    bgrx8888 = 0x34325842,
+    abgr8888 = 0x34324241,
+    rgba8888 = 0x34324152,
+    bgra8888 = 0x34324142,
+    xrgb2101010 = 0x30335258,
+    xbgr2101010 = 0x30334258,
+    rgbx1010102 = 0x30335852,
+    bgrx1010102 = 0x30335842,
+    argb2101010 = 0x30335241,
+    abgr2101010 = 0x30334241,
+    rgba1010102 = 0x30334152,
+    bgra1010102 = 0x30334142,
+    yuyv = 0x56595559,
+    yvyu = 0x55595659,
+    uyvy = 0x59565955,
+    vyuy = 0x59555956,
+    ayuv = 0x56555941,
+    nv12 = 0x3231564e,
+    nv21 = 0x3132564e,
+    nv16 = 0x3631564e,
+    nv61 = 0x3136564e,
+    yuv410 = 0x39565559,
+    yvu410 = 0x39555659,
+    yuv411 = 0x31315559,
+    yvu411 = 0x31315659,
+    yuv420 = 0x32315559,
+    yvu420 = 0x32315659,
+    yuv422 = 0x36315559,
+    yvu422 = 0x36315659,
+    yuv444 = 0x34325559,
+    yvu444 = 0x34325659,
+};
+
 // wl_buffer
 pub const wl_buffer_interface = struct {
     // content for a wl_surface
@@ -343,6 +417,13 @@ fn wl_data_offer_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
+const wl_data_offer_error = enum {
+    invalid_finish = 0,
+    invalid_action_mask = 1,
+    invalid_action = 2,
+    invalid_offer = 3,
+};
+
 // wl_data_source
 pub const wl_data_source_interface = struct {
     // offer to transfer data
@@ -393,6 +474,11 @@ fn wl_data_source_dispatch(context: *Context, opcode: u16) void {
         else => {},
     }
 }
+
+const wl_data_source_error = enum {
+    invalid_action_mask = 0,
+    invalid_source = 1,
+};
 
 // wl_data_device
 pub const wl_data_device_interface = struct {
@@ -449,6 +535,10 @@ fn wl_data_device_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
+const wl_data_device_error = enum {
+    role = 0,
+};
+
 // wl_data_device_manager
 pub const wl_data_device_manager_interface = struct {
     // data transfer interface
@@ -493,6 +583,13 @@ fn wl_data_device_manager_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
+const wl_data_device_manager_dnd_action = enum {
+    none = 0,
+    copy = 1,
+    move = 2,
+    ask = 4,
+};
+
 // wl_shell
 pub const wl_shell_interface = struct {
     // create desktop-style surfaces
@@ -527,6 +624,10 @@ fn wl_shell_dispatch(context: *Context, opcode: u16) void {
         else => {},
     }
 }
+
+const wl_shell_error = enum {
+    role = 0,
+};
 
 // wl_shell_surface
 pub const wl_shell_surface_interface = struct {
@@ -655,6 +756,29 @@ fn wl_shell_surface_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
+const wl_shell_surface_resize = enum {
+    none = 0,
+    top = 1,
+    bottom = 2,
+    left = 4,
+    top_left = 5,
+    bottom_left = 6,
+    right = 8,
+    top_right = 9,
+    bottom_right = 10,
+};
+
+const wl_shell_surface_transient = enum {
+    inactive = 0x1,
+};
+
+const wl_shell_surface_fullscreen_method = enum {
+    default = 0,
+    scale = 1,
+    driver = 2,
+    fill = 3,
+};
+
 // wl_surface
 pub const wl_surface_interface = struct {
     // an onscreen surface
@@ -776,6 +900,11 @@ fn wl_surface_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
+const wl_surface_error = enum {
+    invalid_scale = 0,
+    invalid_transform = 1,
+};
+
 // wl_seat
 pub const wl_seat_interface = struct {
     // group of input devices
@@ -836,6 +965,12 @@ fn wl_seat_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
+const wl_seat_capability = enum {
+    pointer = 1,
+    keyboard = 2,
+    touch = 4,
+};
+
 // wl_pointer
 pub const wl_pointer_interface = struct {
     // pointer input device
@@ -881,6 +1016,27 @@ fn wl_pointer_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
+const wl_pointer_error = enum {
+    role = 0,
+};
+
+const wl_pointer_button_state = enum {
+    released = 0,
+    pressed = 1,
+};
+
+const wl_pointer_axis = enum {
+    vertical_scroll = 0,
+    horizontal_scroll = 1,
+};
+
+const wl_pointer_axis_source = enum {
+    wheel = 0,
+    finger = 1,
+    continuous = 2,
+    wheel_tilt = 3,
+};
+
 // wl_keyboard
 pub const wl_keyboard_interface = struct {
     // keyboard input device
@@ -913,6 +1069,16 @@ fn wl_keyboard_dispatch(context: *Context, opcode: u16) void {
         else => {},
     }
 }
+
+const wl_keyboard_keymap_format = enum {
+    no_keymap = 0,
+    xkb_v1 = 1,
+};
+
+const wl_keyboard_key_state = enum {
+    released = 0,
+    pressed = 1,
+};
 
 // wl_touch
 pub const wl_touch_interface = struct {
@@ -979,6 +1145,31 @@ fn wl_output_dispatch(context: *Context, opcode: u16) void {
         else => {},
     }
 }
+
+const wl_output_subpixel = enum {
+    unknown = 0,
+    none = 1,
+    horizontal_rgb = 2,
+    horizontal_bgr = 3,
+    vertical_rgb = 4,
+    vertical_bgr = 5,
+};
+
+const wl_output_transform = enum {
+    normal = 0,
+    @"90" = 1,
+    @"180" = 2,
+    @"270" = 3,
+    flipped = 4,
+    flipped_90 = 5,
+    flipped_180 = 6,
+    flipped_270 = 7,
+};
+
+const wl_output_mode = enum {
+    current = 0x1,
+    preferred = 0x2,
+};
 
 // wl_region
 pub const wl_region_interface = struct {
@@ -1081,6 +1272,10 @@ fn wl_subcompositor_dispatch(context: *Context, opcode: u16) void {
     }
 }
 
+const wl_subcompositor_error = enum {
+    bad_surface = 0,
+};
+
 // wl_subsurface
 pub const wl_subsurface_interface = struct {
     // sub-surface interface to a wl_surface
@@ -1157,6 +1352,10 @@ fn wl_subsurface_dispatch(context: *Context, opcode: u16) void {
         else => {},
     }
 }
+
+const wl_subsurface_error = enum {
+    bad_surface = 0,
+};
 const TypeTag = enum {
     wl_display_tag,
     wl_registry_tag,

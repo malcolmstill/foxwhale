@@ -18,6 +18,7 @@ def generate_protocol(protocol):
             generate_interface_global(child)
             generate_new_object(child)
             generate_object(child)
+            generate_enum(child)
     print(f"const TypeTag = enum {{")
     for child in protocol:
         if child.tag == "interface":
@@ -30,6 +31,19 @@ def generate_protocol(protocol):
             interface = child.attrib["name"]
             print(f"\t{interface}_tag: {interface},")
     print(f"}};")
+
+# Generate enum
+def generate_enum(interface):
+    for child in interface:
+        if child.tag == "enum":
+            print(f"\nconst {interface.attrib['name']}_{child.attrib['name']} = enum {{")
+            for value in child:
+                if value.tag == "entry":
+                    if value.attrib['name'].isdigit():
+                        print(f"\t@\"{value.attrib['name']}\" = {value.attrib['value']},")
+                    else:
+                        print(f"\t{value.attrib['name']} = {value.attrib['value']},")
+            print(f"}};")
 
 # Generate new object
 def generate_new_object(interface):
