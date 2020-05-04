@@ -1,9 +1,9 @@
 const std = @import("std");
 const fifo = std.fifo;
-const rm = @import("recvmsg.zig");
+const txrx = @import("txrx.zig");
 // const HashMap = std.hash_map.HashMap;
 const AutoHashMap = std.hash_map.AutoHashMap;
-const MAX_FDS = @import("recvmsg.zig").MAX_FDS;
+const MAX_FDS = @import("txrx.zig").MAX_FDS;
 
 pub const Context = struct {
     read_offset: usize = 0,
@@ -25,7 +25,7 @@ pub const Context = struct {
     }
 
     pub fn dispatch(self: *Self, fd: i32) !void {
-        var n = try rm.recvMsg(fd, self.recv_buf[self.write_offset..self.recv_buf.len], self.recv_fds[0..self.recv_fds.len]);
+        var n = try txrx.recvMsg(fd, self.recv_buf[self.write_offset..self.recv_buf.len], self.recv_fds[0..self.recv_fds.len]);
         n = self.write_offset + n;
 
         // var offset: usize = 0;
