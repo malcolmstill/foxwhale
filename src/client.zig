@@ -1,6 +1,8 @@
 const std = @import("std");
 const epoll = @import("epoll.zig");
-const context = @import("context.zig");
+const Context = @import("wl/context.zig").Context;
+const wl = @import("wl/wayland.zig");
+const Dispatchable = epoll.Dispatchable;
 
 const MAX_CLIENTS = 256;
 
@@ -10,12 +12,13 @@ const Client = struct {
     index: usize,
     in_use: bool,
     connection: std.net.StreamServer.Connection,
-    dispatchable: epoll.Dispatchable,
-    ctx: context.Context,
+    dispatchable: Dispatchable,
+    ctx: Context,
 
     const Self = @This();
 
     pub fn deinit(self: *Self) void {
+        self.ctx.deinit();
         self.in_use = false;
 
         epoll.removeFd(self.connection.file.handle) catch |err| {
@@ -34,6 +37,11 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
             clients[i].dispatchable.impl = dispatch;
             clients[i].connection = conn;
             clients[i].in_use = true;
+            std.debug.warn("init context\n", .{});
+            clients[i].ctx.init();
+            // try clients[i].ctx.register(wl.new_wl_display(&clients[i].ctx, 1));
+            var o = wl.new_wl_display(&clients[i].ctx, 1);
+            std.debug.warn("derp: {}\n", .{o});
 
             try epoll.addFd(conn.file.handle, &clients[i].dispatchable);
 
@@ -47,7 +55,7 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
     return ClientsError.ClientsExhausted;
 }
 
-fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!void {
+fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
     var client = @fieldParentPtr(Client, "dispatchable", dispatchable);
 
     if (event_type & std.os.linux.EPOLLHUP > 0) {
