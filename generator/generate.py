@@ -17,20 +17,21 @@ def generate_protocol(protocol):
             generate_interface(child)
             generate_interface_global(child)
             generate_new_object(child)
-            generate_object(child)
+            generate_dispatch_function(child)
             generate_enum(child)
-    print(f"const TypeTag = enum {{")
-    for child in protocol:
-        if child.tag == "interface":
-            interface = child.attrib["name"]
-            print(f"\t{interface}_tag,")
-    print(f"}};")
-    print(f"const WlResource = union(TypeTag) {{")
-    for child in protocol:
-        if child.tag == "interface":
-            interface = child.attrib["name"]
-            print(f"\t{interface}_tag: {interface},")
-    print(f"}};")
+            generate_send(child)
+    # print(f"const TypeTag = enum {{")
+    # for child in protocol:
+    #     if child.tag == "interface":
+    #         interface = child.attrib["name"]
+    #         print(f"\t{interface}_tag,")
+    # print(f"}};")
+    # print(f"const WlResource = union(TypeTag) {{")
+    # for child in protocol:
+    #     if child.tag == "interface":
+    #         interface = child.attrib["name"]
+    #         print(f"\t{interface}_tag: {interface},")
+    # print(f"}};")
 
 # Generate enum
 def generate_enum(interface):
@@ -58,8 +59,8 @@ def generate_new_object(interface):
     print(f"\treturn object;")
     print(f"}}\n")
 
-# Generate Object
-def generate_object(interface):
+# Generate Dispatch function
+def generate_dispatch_function(interface):
     print(f"fn {interface.attrib['name']}_dispatch(context: *Context, opcode: u16) void {{")
     print(f"\tswitch(opcode) {{")
     i = 0
@@ -156,6 +157,20 @@ def generate_interface_global(interface):
         if child.tag == "request":
             print(f"\t.{child.attrib['name']} = null,")
     print(f"}};\n")
+
+# Generate send
+def generate_send(interface):
+    for child in interface:
+        if child.tag == "event":
+            for desc in child:
+                if desc.tag == "description":
+                    print(f"\n")
+                    lines = desc.text.split('\n')
+                    for line in lines:
+                        line = line.replace('\t', '')
+                        print(f"// {line}")
+            print(f"pub fn {interface.attrib['name']}_send_{child.attrib['name']}(object: Object, context: *Context) void {{")
+            print(f"}}")
 
 def lookup_type(type, arg):
     if type == "object":
