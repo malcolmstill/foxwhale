@@ -84,6 +84,7 @@ def generate_request_dispatch(index, request, interface):
         if arg.tag == "arg":
             if first:
                 print(f"{arg.attrib['name']}", end = '')
+                first = False
             else:
                 print(f", {arg.attrib['name']}", end = '')
     print(f");")

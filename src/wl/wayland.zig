@@ -80,7 +80,7 @@ fn wl_registry_dispatch(context: *Context, opcode: u16) void {
             var name: u32 = context.next_u32();
             var id: u32 = context.next_u32();
             if (WL_REGISTRY.bind) |bind| {
-                bind(nameid);
+                bind(name, id);
             }
         },
         else => {},
@@ -190,7 +190,7 @@ fn wl_shm_pool_dispatch(context: *Context, opcode: u16) void {
             var stride: i32 = context.next_i32();
             var format: u32 = context.next_u32();
             if (WL_SHM_POOL.create_buffer) |create_buffer| {
-                create_buffer(idoffsetwidthheightstrideformat);
+                create_buffer(id, offset, width, height, stride, format);
             }
         },
         // destroy
@@ -239,7 +239,7 @@ fn wl_shm_dispatch(context: *Context, opcode: u16) void {
             var fd: i32 = context.next_i32();
             var size: i32 = context.next_i32();
             if (WL_SHM.create_pool) |create_pool| {
-                create_pool(idfdsize);
+                create_pool(id, fd, size);
             }
         },
         else => {},
@@ -382,7 +382,7 @@ fn wl_data_offer_dispatch(context: *Context, opcode: u16) void {
             var serial: u32 = context.next_u32();
             var mime_type: []u8 = context.next_string();
             if (WL_DATA_OFFER.accept) |accept| {
-                accept(serialmime_type);
+                accept(serial, mime_type);
             }
         },
         // receive
@@ -390,7 +390,7 @@ fn wl_data_offer_dispatch(context: *Context, opcode: u16) void {
             var mime_type: []u8 = context.next_string();
             var fd: i32 = context.next_i32();
             if (WL_DATA_OFFER.receive) |receive| {
-                receive(mime_typefd);
+                receive(mime_type, fd);
             }
         },
         // destroy
@@ -410,7 +410,7 @@ fn wl_data_offer_dispatch(context: *Context, opcode: u16) void {
             var dnd_actions: u32 = context.next_u32();
             var preferred_action: u32 = context.next_u32();
             if (WL_DATA_OFFER.set_actions) |set_actions| {
-                set_actions(dnd_actionspreferred_action);
+                set_actions(dnd_actions, preferred_action);
             }
         },
         else => {},
@@ -514,7 +514,7 @@ fn wl_data_device_dispatch(context: *Context, opcode: u16) void {
             var icon: Object = new_wl_surface(context, context.next_u32());
             var serial: u32 = context.next_u32();
             if (WL_DATA_DEVICE.start_drag) |start_drag| {
-                start_drag(sourceoriginiconserial);
+                start_drag(source, origin, icon, serial);
             }
         },
         // set_selection
@@ -522,7 +522,7 @@ fn wl_data_device_dispatch(context: *Context, opcode: u16) void {
             var source: Object = new_wl_data_source(context, context.next_u32());
             var serial: u32 = context.next_u32();
             if (WL_DATA_DEVICE.set_selection) |set_selection| {
-                set_selection(sourceserial);
+                set_selection(source, serial);
             }
         },
         // release
@@ -576,7 +576,7 @@ fn wl_data_device_manager_dispatch(context: *Context, opcode: u16) void {
             var id: u32 = context.next_u32();
             var seat: Object = new_wl_seat(context, context.next_u32());
             if (WL_DATA_DEVICE_MANAGER.get_data_device) |get_data_device| {
-                get_data_device(idseat);
+                get_data_device(id, seat);
             }
         },
         else => {},
@@ -618,7 +618,7 @@ fn wl_shell_dispatch(context: *Context, opcode: u16) void {
             var id: u32 = context.next_u32();
             var surface: Object = new_wl_surface(context, context.next_u32());
             if (WL_SHELL.get_shell_surface) |get_shell_surface| {
-                get_shell_surface(idsurface);
+                get_shell_surface(id, surface);
             }
         },
         else => {},
@@ -682,7 +682,7 @@ fn wl_shell_surface_dispatch(context: *Context, opcode: u16) void {
             var seat: Object = new_wl_seat(context, context.next_u32());
             var serial: u32 = context.next_u32();
             if (WL_SHELL_SURFACE.move) |move| {
-                move(seatserial);
+                move(seat, serial);
             }
         },
         // resize
@@ -691,7 +691,7 @@ fn wl_shell_surface_dispatch(context: *Context, opcode: u16) void {
             var serial: u32 = context.next_u32();
             var edges: u32 = context.next_u32();
             if (WL_SHELL_SURFACE.resize) |resize| {
-                resize(seatserialedges);
+                resize(seat, serial, edges);
             }
         },
         // set_toplevel
@@ -707,7 +707,7 @@ fn wl_shell_surface_dispatch(context: *Context, opcode: u16) void {
             var y: i32 = context.next_i32();
             var flags: u32 = context.next_u32();
             if (WL_SHELL_SURFACE.set_transient) |set_transient| {
-                set_transient(parentxyflags);
+                set_transient(parent, x, y, flags);
             }
         },
         // set_fullscreen
@@ -716,7 +716,7 @@ fn wl_shell_surface_dispatch(context: *Context, opcode: u16) void {
             var framerate: u32 = context.next_u32();
             var output: Object = new_wl_output(context, context.next_u32());
             if (WL_SHELL_SURFACE.set_fullscreen) |set_fullscreen| {
-                set_fullscreen(methodframerateoutput);
+                set_fullscreen(method, framerate, output);
             }
         },
         // set_popup
@@ -728,7 +728,7 @@ fn wl_shell_surface_dispatch(context: *Context, opcode: u16) void {
             var y: i32 = context.next_i32();
             var flags: u32 = context.next_u32();
             if (WL_SHELL_SURFACE.set_popup) |set_popup| {
-                set_popup(seatserialparentxyflags);
+                set_popup(seat, serial, parent, x, y, flags);
             }
         },
         // set_maximized
@@ -832,7 +832,7 @@ fn wl_surface_dispatch(context: *Context, opcode: u16) void {
             var x: i32 = context.next_i32();
             var y: i32 = context.next_i32();
             if (WL_SURFACE.attach) |attach| {
-                attach(bufferxy);
+                attach(buffer, x, y);
             }
         },
         // damage
@@ -842,7 +842,7 @@ fn wl_surface_dispatch(context: *Context, opcode: u16) void {
             var width: i32 = context.next_i32();
             var height: i32 = context.next_i32();
             if (WL_SURFACE.damage) |damage| {
-                damage(xywidthheight);
+                damage(x, y, width, height);
             }
         },
         // frame
@@ -893,7 +893,7 @@ fn wl_surface_dispatch(context: *Context, opcode: u16) void {
             var width: i32 = context.next_i32();
             var height: i32 = context.next_i32();
             if (WL_SURFACE.damage_buffer) |damage_buffer| {
-                damage_buffer(xywidthheight);
+                damage_buffer(x, y, width, height);
             }
         },
         else => {},
@@ -1003,7 +1003,7 @@ fn wl_pointer_dispatch(context: *Context, opcode: u16) void {
             var hotspot_x: i32 = context.next_i32();
             var hotspot_y: i32 = context.next_i32();
             if (WL_POINTER.set_cursor) |set_cursor| {
-                set_cursor(serialsurfacehotspot_xhotspot_y);
+                set_cursor(serial, surface, hotspot_x, hotspot_y);
             }
         },
         // release
@@ -1211,7 +1211,7 @@ fn wl_region_dispatch(context: *Context, opcode: u16) void {
             var width: i32 = context.next_i32();
             var height: i32 = context.next_i32();
             if (WL_REGION.add) |add| {
-                add(xywidthheight);
+                add(x, y, width, height);
             }
         },
         // subtract
@@ -1221,7 +1221,7 @@ fn wl_region_dispatch(context: *Context, opcode: u16) void {
             var width: i32 = context.next_i32();
             var height: i32 = context.next_i32();
             if (WL_REGION.subtract) |subtract| {
-                subtract(xywidthheight);
+                subtract(x, y, width, height);
             }
         },
         else => {},
@@ -1265,7 +1265,7 @@ fn wl_subcompositor_dispatch(context: *Context, opcode: u16) void {
             var surface: Object = new_wl_surface(context, context.next_u32());
             var parent: Object = new_wl_surface(context, context.next_u32());
             if (WL_SUBCOMPOSITOR.get_subsurface) |get_subsurface| {
-                get_subsurface(idsurfaceparent);
+                get_subsurface(id, surface, parent);
             }
         },
         else => {},
@@ -1320,7 +1320,7 @@ fn wl_subsurface_dispatch(context: *Context, opcode: u16) void {
             var x: i32 = context.next_i32();
             var y: i32 = context.next_i32();
             if (WL_SUBSURFACE.set_position) |set_position| {
-                set_position(xy);
+                set_position(x, y);
             }
         },
         // place_above
