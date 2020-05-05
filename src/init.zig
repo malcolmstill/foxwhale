@@ -1,5 +1,5 @@
 const std = @import("std");
-const wl = @import("wl/wayland.zig");
+const wl = @import("wl/protocols.zig");
 const Object = @import("wl/context.zig").Object;
 
 pub fn init() void {

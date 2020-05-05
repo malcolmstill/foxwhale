@@ -1,7 +1,7 @@
 const std = @import("std");
 const epoll = @import("epoll.zig");
 const Context = @import("wl/context.zig").Context;
-const wl = @import("wl/wayland.zig");
+const wl = @import("wl/protocols.zig");
 const Dispatchable = epoll.Dispatchable;
 
 const MAX_CLIENTS = 256;
