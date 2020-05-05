@@ -103,7 +103,6 @@ pub const Context = struct {
         s.ptr = @ptrCast(*u32, @alignCast(@alignOf(u32), &self.recv_buf[self.read_offset]));
         s.len = length/@sizeOf(u32);
         self.read_offset += length;
-        std.debug.warn("next_array read_offset: {}\n", .{self.read_offset});
         return s;
     }
 
@@ -113,8 +112,7 @@ pub const Context = struct {
     }
 
     pub fn unregister(self: *Self, object: Object) !void {
-        var o = self.objects.remove(object.id);
-        if (o) |x| {
+        if (self.objects.remove(object.id)) |x| {
             std.debug.warn("unregistered: {}\n", .{x.key});
         } else {
             std.debug.warn("attempted to deregister object ({}) that didn't exist\n", .{object.id});
