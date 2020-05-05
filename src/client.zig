@@ -13,7 +13,7 @@ pub const Client = struct {
     in_use: bool,
     connection: std.net.StreamServer.Connection,
     dispatchable: Dispatchable,
-    ctx: Context,
+    context: Context,
     seat: ?u32,
     compositor: ?u32,
     subcompositor: ?u32,
@@ -21,7 +21,7 @@ pub const Client = struct {
     const Self = @This();
 
     pub fn deinit(self: *Self) void {
-        self.ctx.deinit();
+        self.context.deinit();
         self.in_use = false;
 
         epoll.removeFd(self.connection.file.handle) catch |err| {
@@ -40,14 +40,14 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
             clients[i].dispatchable.impl = dispatch;
             clients[i].connection = conn;
             clients[i].in_use = true;
-            clients[i].ctx.init(conn.file.handle, &clients[i]);
+            clients[i].context.init(conn.file.handle, &clients[i]);
 
-            var o = wl.new_wl_display(&clients[i].ctx, 1);
+            var o = wl.new_wl_display(&clients[i].context, 1);
             // wl.wl_display_send_delete_id(o, 1);
-            // std.debug.warn("tx_buf after send_delete {x}\n", .{clients[i].ctx.tx_buf});
+            // std.debug.warn("tx_buf after send_delete {x}\n", .{clients[i].context.tx_buf});
             // var s = [_]u8{0x41, 0x41, 0x41, 0x41, 0x00};
             // wl.wl_display_send_error(o, 1, @enumToInt(wl.wl_display_error.no_memory), s[0..s.len]);
-            // std.debug.warn("tx_buf after send_error {x}\n", .{clients[i].ctx.tx_buf});
+            // std.debug.warn("tx_buf after send_error {x}\n", .{clients[i].context.tx_buf});
 
             try epoll.addFd(conn.file.handle, &clients[i].dispatchable);
 
@@ -70,7 +70,7 @@ fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
         return;
     }
 
-    try client.ctx.dispatch();
+    try client.context.dispatch();
 }
 
 const ClientsError = error {
