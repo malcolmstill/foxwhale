@@ -44,6 +44,7 @@ fn bind(registry: Object, name: u32, name_string: []u8, version: u32, new_id: u3
 
                 if (registry.context.objects.get(seat.id)) |s| {
                     s.value.version = version;
+                    wl.wl_seat_send_capabilities(s.value, @enumToInt(wl.wl_seat_capability.pointer) | @enumToInt(wl.wl_seat_capability.keyboard));
                 }
 
                 registry.context.client.seat = seat.id;
