@@ -61,7 +61,6 @@ pub const Context = struct {
                 return;
             }
 
-            // std.debug.warn("paylod: {x}\n", .{ self.recv_buf[offset..offset+header.length] });
             self.read_offset += @sizeOf(Header);
             if (self.objects.get(header.id)) |object| {
                 object.value.dispatch(object.value, header.opcode);
