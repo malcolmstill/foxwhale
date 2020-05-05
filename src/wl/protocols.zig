@@ -386,7 +386,7 @@ fn wl_shm_dispatch(object: Object, opcode: u16) void {
         // create_pool
         0 => {
             var id: u32 = object.context.next_u32();
-            var fd: i32 = object.context.next_i32();
+            var fd: i32 = object.context.next_fd();
             var size: i32 = object.context.next_i32();
             if (WL_SHM.create_pool) |create_pool| {
                 create_pool(object, id, fd, size);
@@ -614,7 +614,7 @@ fn wl_data_offer_dispatch(object: Object, opcode: u16) void {
         // receive
         1 => {
             var mime_type: []u8 = object.context.next_string();
-            var fd: i32 = object.context.next_i32();
+            var fd: i32 = object.context.next_fd();
             if (WL_DATA_OFFER.receive) |receive| {
                 receive(object, mime_type, fd);
             }
