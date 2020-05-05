@@ -69,7 +69,17 @@ fn bind(registry: Object, name: u32, name_string: []u8, version: u32, new_id: u3
         5 => {},
         6 => {},
         7 => {},
-        8 => {},
+        8 => {
+            var shm = wl.new_wl_shm(registry.context, new_id);
+
+            if (registry.context.objects.get(shm.id)) |s| {
+                s.value.version = version;
+            }
+
+            wl.wl_shm_send_format(shm, @enumToInt(wl.wl_shm_format.argb8888));
+            wl.wl_shm_send_format(shm, @enumToInt(wl.wl_shm_format.xrgb8888));
+            registry.context.client.shm = shm.id;
+        },
         9 => {},
         10 => {},
         else => {},
