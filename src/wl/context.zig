@@ -107,6 +107,13 @@ pub const Context = struct {
         return s;
     }
 
+    pub fn next_fd(self: *Self) i32 {
+        defer {
+            std.mem.copy(i32, self.rx_fds[0..self.rx_fds.len-1], self.rx_fds[1..self.rx_fds.len]);
+        }
+        return self.rx_fds[0];
+    }
+
     pub fn register(self: *Self, object: Object) !void {
         var x = try self.objects.put(object.id, object);
         return;
