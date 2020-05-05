@@ -36,8 +36,23 @@ fn bind(registry: Object, name: u32, name_string: []u8, version: u32, new_id: u3
     std.debug.warn("bind for {} ({}) with id {} at version {}\n", .{name_string, name, new_id, version});
 
     switch (name) {
-        1 => {},
-        2 => {},
+        1 => {
+            var compositor = wl.new_wl_compositor(registry.context, new_id);
+
+            if (registry.context.objects.get(compositor.id)) |c| {
+                c.value.version = version;
+            }
+
+            registry.context.client.compositor = compositor.id;
+        },
+        2 => {
+            var subcompositor = wl.new_wl_subcompositor(registry.context, new_id);
+
+            if (registry.context.objects.get(subcompositor.id)) |s| {
+                s.value.version = version;
+            }
+
+            registry.context.client.subcompositor = subcompositor.id;},
         3 => {
             if (registry.context.client.seat == null) {
                 var seat = wl.new_wl_seat(registry.context, new_id);

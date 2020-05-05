@@ -15,6 +15,8 @@ pub const Client = struct {
     dispatchable: Dispatchable,
     ctx: Context,
     seat: ?u32,
+    compositor: ?u32,
+    subcompositor: ?u32,
 
     const Self = @This();
 
