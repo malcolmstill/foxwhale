@@ -12,12 +12,14 @@ pub fn init() void {
     wl.XDG_WM_BASE.get_xdg_surface = get_xdg_surface;
     wl.XDG_SURFACE.get_toplevel = get_toplevel;
     wl.XDG_TOPLEVEL.set_title = set_title;
+    wl.WL_SURFACE.commit = commit;
+    wl.WL_SURFACE.damage = damage;
 }
 
 fn sync(object: Object, new_id: u32) void {
     std.debug.warn("sync with id {}\n", .{new_id});
     if(wl.new_wl_callback(object.context, new_id)) |callback| {
-        wl.wl_callback_send_done(callback.*, 0);
+        wl.wl_callback_send_done(callback.*, 120);
         var x = object.context.unregister(callback.*);
         wl.wl_display_send_delete_id(object, callback.id);
     }
@@ -110,6 +112,11 @@ fn get_toplevel(xdg_surface: Object, id: u32) void {
         var window = @intToPtr(*Window, xdg_surface.container);
         window.xdg_toplevel = xdg_toplevel.id;
         xdg_toplevel.container = @ptrToInt(window);
+
+        var array = [_]u32{};
+        var serial = window.client.nextSerial();
+        wl.xdg_toplevel_send_configure(xdg_toplevel.*, 0, 0, array[0..array.len]);
+        wl.xdg_surface_send_configure(xdg_surface, serial);
     }
 }
 
@@ -118,4 +125,12 @@ fn set_title(xdg_toplevel: Object, title: []u8) void {
     var len = std.math.min(window.title.len, title.len);
     std.mem.copy(u8, window.title[0..len], title[0..len]);
     std.debug.warn("window: {}\n", .{window.title});
+}
+
+fn commit(surface: Object) void {
+    std.debug.warn("surface {} committed\n", .{surface.id});
+}
+
+fn damage(object: Object, x: i32, y: i32, width: i32, height: i32) void {
+    std.debug.warn("damage does nothing\n", .{});
 }
