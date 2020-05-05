@@ -37,7 +37,6 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
             clients[i].dispatchable.impl = dispatch;
             clients[i].connection = conn;
             clients[i].in_use = true;
-            std.debug.warn("init context\n", .{});
             clients[i].ctx.init(conn.file.handle);
 
             var o = wl.new_wl_display(&clients[i].ctx, 1);
