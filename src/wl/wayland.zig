@@ -801,9 +801,9 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // start_drag
         0 => {
-            var source: Object = new_wl_data_source(context, object.context.next_u32());
-            var origin: Object = new_wl_surface(context, object.context.next_u32());
-            var icon: Object = new_wl_surface(context, object.context.next_u32());
+            var source: Object = new_wl_data_source(object.context, object.context.next_u32());
+            var origin: Object = new_wl_surface(object.context, object.context.next_u32());
+            var icon: Object = new_wl_surface(object.context, object.context.next_u32());
             var serial: u32 = object.context.next_u32();
             if (WL_DATA_DEVICE.start_drag) |start_drag| {
                 start_drag(object, source, origin, icon, serial);
@@ -811,7 +811,7 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) void {
         },
         // set_selection
         1 => {
-            var source: Object = new_wl_data_source(context, object.context.next_u32());
+            var source: Object = new_wl_data_source(object.context, object.context.next_u32());
             var serial: u32 = object.context.next_u32();
             if (WL_DATA_DEVICE.set_selection) |set_selection| {
                 set_selection(object, source, serial);
@@ -952,7 +952,7 @@ fn wl_data_device_manager_dispatch(object: Object, opcode: u16) void {
         // get_data_device
         1 => {
             var id: u32 = object.context.next_u32();
-            var seat: Object = new_wl_seat(context, object.context.next_u32());
+            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
             if (WL_DATA_DEVICE_MANAGER.get_data_device) |get_data_device| {
                 get_data_device(object, id, seat);
             }
@@ -996,7 +996,7 @@ fn wl_shell_dispatch(object: Object, opcode: u16) void {
         // get_shell_surface
         0 => {
             var id: u32 = object.context.next_u32();
-            var surface: Object = new_wl_surface(context, object.context.next_u32());
+            var surface: Object = new_wl_surface(object.context, object.context.next_u32());
             if (WL_SHELL.get_shell_surface) |get_shell_surface| {
                 get_shell_surface(object, id, surface);
             }
@@ -1063,7 +1063,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
         },
         // move
         1 => {
-            var seat: Object = new_wl_seat(context, object.context.next_u32());
+            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
             var serial: u32 = object.context.next_u32();
             if (WL_SHELL_SURFACE.move) |move| {
                 move(object, seat, serial);
@@ -1071,7 +1071,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
         },
         // resize
         2 => {
-            var seat: Object = new_wl_seat(context, object.context.next_u32());
+            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
             var serial: u32 = object.context.next_u32();
             var edges: u32 = object.context.next_u32();
             if (WL_SHELL_SURFACE.resize) |resize| {
@@ -1088,7 +1088,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
         },
         // set_transient
         4 => {
-            var parent: Object = new_wl_surface(context, object.context.next_u32());
+            var parent: Object = new_wl_surface(object.context, object.context.next_u32());
             var x: i32 = object.context.next_i32();
             var y: i32 = object.context.next_i32();
             var flags: u32 = object.context.next_u32();
@@ -1100,16 +1100,16 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
         5 => {
             var method: u32 = object.context.next_u32();
             var framerate: u32 = object.context.next_u32();
-            var output: Object = new_wl_output(context, object.context.next_u32());
+            var output: Object = new_wl_output(object.context, object.context.next_u32());
             if (WL_SHELL_SURFACE.set_fullscreen) |set_fullscreen| {
                 set_fullscreen(object, method, framerate, output);
             }
         },
         // set_popup
         6 => {
-            var seat: Object = new_wl_seat(context, object.context.next_u32());
+            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
             var serial: u32 = object.context.next_u32();
-            var parent: Object = new_wl_surface(context, object.context.next_u32());
+            var parent: Object = new_wl_surface(object.context, object.context.next_u32());
             var x: i32 = object.context.next_i32();
             var y: i32 = object.context.next_i32();
             var flags: u32 = object.context.next_u32();
@@ -1119,7 +1119,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
         },
         // set_maximized
         7 => {
-            var output: Object = new_wl_output(context, object.context.next_u32());
+            var output: Object = new_wl_output(object.context, object.context.next_u32());
             if (WL_SHELL_SURFACE.set_maximized) |set_maximized| {
                 set_maximized(object, output);
             }
@@ -1263,7 +1263,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) void {
         },
         // attach
         1 => {
-            var buffer: Object = new_wl_buffer(context, object.context.next_u32());
+            var buffer: Object = new_wl_buffer(object.context, object.context.next_u32());
             var x: i32 = object.context.next_i32();
             var y: i32 = object.context.next_i32();
             if (WL_SURFACE.attach) |attach| {
@@ -1289,14 +1289,14 @@ fn wl_surface_dispatch(object: Object, opcode: u16) void {
         },
         // set_opaque_region
         4 => {
-            var region: Object = new_wl_region(context, object.context.next_u32());
+            var region: Object = new_wl_region(object.context, object.context.next_u32());
             if (WL_SURFACE.set_opaque_region) |set_opaque_region| {
                 set_opaque_region(object, region);
             }
         },
         // set_input_region
         5 => {
-            var region: Object = new_wl_region(context, object.context.next_u32());
+            var region: Object = new_wl_region(object.context, object.context.next_u32());
             if (WL_SURFACE.set_input_region) |set_input_region| {
                 set_input_region(object, region);
             }
@@ -1505,7 +1505,7 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) void {
         // set_cursor
         0 => {
             var serial: u32 = object.context.next_u32();
-            var surface: Object = new_wl_surface(context, object.context.next_u32());
+            var surface: Object = new_wl_surface(object.context, object.context.next_u32());
             var hotspot_x: i32 = object.context.next_i32();
             var hotspot_y: i32 = object.context.next_i32();
             if (WL_POINTER.set_cursor) |set_cursor| {
@@ -2302,8 +2302,8 @@ fn wl_subcompositor_dispatch(object: Object, opcode: u16) void {
         // get_subsurface
         1 => {
             var id: u32 = object.context.next_u32();
-            var surface: Object = new_wl_surface(context, object.context.next_u32());
-            var parent: Object = new_wl_surface(context, object.context.next_u32());
+            var surface: Object = new_wl_surface(object.context, object.context.next_u32());
+            var parent: Object = new_wl_surface(object.context, object.context.next_u32());
             if (WL_SUBCOMPOSITOR.get_subsurface) |get_subsurface| {
                 get_subsurface(object, id, surface, parent);
             }
@@ -2375,14 +2375,14 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) void {
         },
         // place_above
         2 => {
-            var sibling: Object = new_wl_surface(context, object.context.next_u32());
+            var sibling: Object = new_wl_surface(object.context, object.context.next_u32());
             if (WL_SUBSURFACE.place_above) |place_above| {
                 place_above(object, sibling);
             }
         },
         // place_below
         3 => {
-            var sibling: Object = new_wl_surface(context, object.context.next_u32());
+            var sibling: Object = new_wl_surface(object.context, object.context.next_u32());
             if (WL_SUBSURFACE.place_below) |place_below| {
                 place_below(object, sibling);
             }
