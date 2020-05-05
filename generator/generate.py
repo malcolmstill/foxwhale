@@ -20,7 +20,7 @@ def generate_protocol(protocol):
         if child.tag == "interface":
             print(f"\n// {child.attrib['name']}")
             generate_interface(child)
-            generate_interface_global(child)
+            generate_interface_global_debug(child)
             generate_new_object(child)
             generate_dispatch_function(child)
             generate_enum(child)
@@ -191,6 +191,24 @@ def generate_event(event):
     1
 
 # Generate Interface global
+def generate_interface_global_debug(interface):
+    for child in interface:
+        if child.tag == "request":
+            print(f"fn {interface.attrib['name']}_{child.attrib['name']}_default(object: Object", end ='')
+            for arg in child:
+                if arg.tag == "arg":
+                    arg_type = lookup_type(arg.attrib["type"], arg)
+                    arg_name = arg.attrib["name"]
+                    print(f", {arg_name}: {arg_type}", end = "")
+            print(f") void")
+            print(f"{{ std.debug.warn(\"{interface.attrib['name']}_{child.attrib['name']} not implemented\\n\", .{{}}); std.os.exit(2);}}\n\n", end='')
+
+    print(f"pub var {interface.attrib['name'].upper()} = {interface.attrib['name']}_interface {{")
+    for child in interface:
+        if child.tag == "request":
+            print(f"\t.{child.attrib['name']} = {interface.attrib['name']}_{child.attrib['name']}_default,")
+    print(f"}};\n")
+
 def generate_interface_global(interface):
     print(f"pub var {interface.attrib['name'].upper()} = {interface.attrib['name']}_interface {{")
     for child in interface:
