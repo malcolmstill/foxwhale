@@ -178,6 +178,7 @@ pub const Object = struct {
     id: u32,
     dispatch: fn(Object, u16) void,
     context: *Context,
+    version: u32,
 };
 
 pub const Header = packed struct {
