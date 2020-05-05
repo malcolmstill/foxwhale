@@ -43,11 +43,6 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
             clients[i].context.init(conn.file.handle, &clients[i]);
 
             var o = wl.new_wl_display(&clients[i].context, 1);
-            // wl.wl_display_send_delete_id(o, 1);
-            // std.debug.warn("tx_buf after send_delete {x}\n", .{clients[i].context.tx_buf});
-            // var s = [_]u8{0x41, 0x41, 0x41, 0x41, 0x00};
-            // wl.wl_display_send_error(o, 1, @enumToInt(wl.wl_display_error.no_memory), s[0..s.len]);
-            // std.debug.warn("tx_buf after send_error {x}\n", .{clients[i].context.tx_buf});
 
             try epoll.addFd(conn.file.handle, &clients[i].dispatchable);
 
