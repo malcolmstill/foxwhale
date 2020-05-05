@@ -45,6 +45,7 @@ def generate_new_object(interface):
     print(f"\t\t.dispatch = {interface.attrib['name']}_dispatch,")
     print(f"\t\t.context = context,")
     print(f"\t\t.version = 0,")
+    print(f"\t\t.container = 0,")
     print(f"\t}};")
     print(f"\tcontext.register(object) catch |err| {{")
     print(f"\t\tstd.debug.warn(\"Couldn't register id: {{}}\\n\", .{{id}});")
