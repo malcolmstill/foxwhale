@@ -40,10 +40,11 @@ def generate_enum(interface):
 # Generate new object
 def generate_new_object(interface):
     print(f"pub fn new_{interface.attrib['name']}(context: *Context, id: u32) Object {{")
-    print(f"\tvar object =  Object {{")
+    print(f"\tvar object = Object {{")
     print(f"\t\t.id = id,")
     print(f"\t\t.dispatch = {interface.attrib['name']}_dispatch,")
     print(f"\t\t.context = context,")
+    print(f"\t\t.version = 0,")
     print(f"\t}};")
     print(f"\tcontext.register(object) catch |err| {{")
     print(f"\t\tstd.debug.warn(\"Couldn't register id: {{}}\\n\", .{{id}});")
