@@ -103,7 +103,7 @@ def generate_next(arg):
     name = arg.attrib["name"]
     atype = lookup_type(arg.attrib["type"], arg)
     if arg.attrib["type"] == "object":
-        print(f"\t\t\tvar {name}: Object = new_{arg.attrib['interface']}(context, object.context.next_u32());")
+        print(f"\t\t\tvar {name}: Object = new_{arg.attrib['interface']}(object.context, object.context.next_u32());")
     else:    
         print(f"\t\t\t\tvar {name}: {atype} = object.context.next_{next_type(arg.attrib['type'])}();")
 
