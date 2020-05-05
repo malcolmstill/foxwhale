@@ -175,9 +175,10 @@ pub const Context = struct {
 };
 
 pub const Object = struct {
-    id: u32,
     dispatch: fn(Object, u16) void,
     context: *Context,
+    container: usize,
+    id: u32,
     version: u32,
 };
 
