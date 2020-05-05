@@ -11,8 +11,8 @@ pub const Context = struct {
     fd: i32 = -1,
     read_offset: usize = 0,
     write_offset: usize = 0,
-    recv_fds: [MAX_FDS]i32,
-    recv_buf: [BUFFER_SIZE]u8,
+    rx_fds: [MAX_FDS]i32,
+    rx_buf: [BUFFER_SIZE]u8,
     objects: AutoHashMap(u32, Object),
     tx_fds: [MAX_FDS]i32,
     tx_buf: [BUFFER_SIZE]u8,
@@ -33,13 +33,13 @@ pub const Context = struct {
     }
 
     pub fn dispatch(self: *Self) !void {
-        var n = try txrx.recvMsg(self.fd, self.recv_buf[self.write_offset..self.recv_buf.len], self.recv_fds[0..self.recv_fds.len]);
+        var n = try txrx.recvMsg(self.fd, self.rx_buf[self.write_offset..self.rx_buf.len], self.rx_fds[0..self.rx_fds.len]);
         n = self.write_offset + n;
 
         self.read_offset = 0;
         defer {
             self.write_offset = n - self.read_offset;
-            std.mem.copy(u8, self.recv_buf[0..self.write_offset], self.recv_buf[self.read_offset..n]);
+            std.mem.copy(u8, self.rx_buf[0..self.write_offset], self.rx_buf[self.read_offset..n]);
         }
 
         while (self.read_offset < n) {
@@ -50,7 +50,7 @@ pub const Context = struct {
                 return;
             }
 
-            var header = @ptrCast(*Header, &self.recv_buf[self.read_offset]);
+            var header = @ptrCast(*Header, &self.rx_buf[self.read_offset]);
             std.debug.warn("{}\n", .{ header });
 
             // We need to have read a full message
@@ -71,15 +71,15 @@ pub const Context = struct {
 
     pub fn next_u32(self: *Self) u32 {
         defer { self.read_offset += @sizeOf(u32); }
-        return @ptrCast(*u32, @alignCast(@alignOf(u32), &self.recv_buf[self.read_offset])).*;
+        return @ptrCast(*u32, @alignCast(@alignOf(u32), &self.rx_buf[self.read_offset])).*;
     }
 
     pub fn next_i32(self: *Self) i32 {
         defer { self.read_offset += @sizeOf(i32); }
-        return @ptrCast(*i32, @alignCast(@alignOf(i32), &self.recv_buf[self.read_offset])).*;
+        return @ptrCast(*i32, @alignCast(@alignOf(i32), &self.rx_buf[self.read_offset])).*;
     }
 
-    // we just expose a pointer to the recv_buf for the
+    // we just expose a pointer to the rx_buf for the
     // extent of the dispatch call. This will become invalid
     // after the dispatch function returns and so we cannot
     // hang on to this pointer. If we want to retain the string
@@ -87,13 +87,13 @@ pub const Context = struct {
     pub fn next_string(self: *Self) []u8 {
         var length = self.next_u32();
         var s: []u8 = undefined;
-        s.ptr = @ptrCast([*]u8, &self.recv_buf[self.read_offset]);
+        s.ptr = @ptrCast([*]u8, &self.rx_buf[self.read_offset]);
         s.len = length;
         self.read_offset += @sizeOf(u32) * @divTrunc(length - 1, @sizeOf(u32)) + @sizeOf(u32);
         return s;
     }
 
-    // we just expose a pointer to the recv_buf for the
+    // we just expose a pointer to the rx_buf for the
     // extent of the dispatch call. This will become invalid
     // after the dispatch function returns and so we cannot
     // hang on to this pointer. If we want to retain the array
@@ -101,7 +101,7 @@ pub const Context = struct {
     pub fn next_array(self: *Self) []u32 {
         var length = self.next_u32();
         var s: []32 = undefined;
-        s.ptr = @ptrCast(*u32, @alignCast(@alignOf(u32), &self.recv_buf[self.read_offset]));
+        s.ptr = @ptrCast(*u32, @alignCast(@alignOf(u32), &self.rx_buf[self.read_offset]));
         s.len = length/@sizeOf(u32);
         self.read_offset += length;
         return s;
