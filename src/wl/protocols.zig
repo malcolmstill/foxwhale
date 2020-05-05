@@ -2432,3 +2432,661 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) void {
 pub const wl_subsurface_error = enum(u32) {
     bad_surface = 0,
 };
+
+// xdg_wm_base
+pub const xdg_wm_base_interface = struct {
+    // create desktop-style surfaces
+    destroy: ?fn (
+        Object,
+    ) void,
+    create_positioner: ?fn (Object, u32) void,
+    get_xdg_surface: ?fn (Object, u32, Object) void,
+    pong: ?fn (Object, u32) void,
+};
+
+pub var XDG_WM_BASE = xdg_wm_base_interface{
+    .destroy = null,
+    .create_positioner = null,
+    .get_xdg_surface = null,
+    .pong = null,
+};
+
+pub fn new_xdg_wm_base(context: *Context, id: u32) Object {
+    var object = Object{
+        .id = id,
+        .dispatch = xdg_wm_base_dispatch,
+        .context = context,
+        .version = 0,
+        .container = 0,
+    };
+    context.register(object) catch |err| {
+        std.debug.warn("Couldn't register id: {}\n", .{id});
+    };
+    return object;
+}
+
+fn xdg_wm_base_dispatch(object: Object, opcode: u16) void {
+    switch (opcode) {
+        // destroy
+        0 => {
+            if (XDG_WM_BASE.destroy) |destroy| {
+                destroy(
+                    object,
+                );
+            }
+        },
+        // create_positioner
+        1 => {
+            var id: u32 = object.context.next_u32();
+            if (XDG_WM_BASE.create_positioner) |create_positioner| {
+                create_positioner(object, id);
+            }
+        },
+        // get_xdg_surface
+        2 => {
+            var id: u32 = object.context.next_u32();
+            var surface: Object = new_wl_surface(object.context, object.context.next_u32());
+            if (XDG_WM_BASE.get_xdg_surface) |get_xdg_surface| {
+                get_xdg_surface(object, id, surface);
+            }
+        },
+        // pong
+        3 => {
+            var serial: u32 = object.context.next_u32();
+            if (XDG_WM_BASE.pong) |pong| {
+                pong(object, serial);
+            }
+        },
+        else => {},
+    }
+}
+
+pub const xdg_wm_base_error = enum(u32) {
+    role = 0,
+    defunct_surfaces = 1,
+    not_the_topmost_popup = 2,
+    invalid_popup_parent = 3,
+    invalid_surface_state = 4,
+    invalid_positioner = 5,
+};
+// The ping event asks the client if it's still alive. Pass the
+// serial specified in the event back to the compositor by sending
+// a "pong" request back with the specified serial. See xdg_wm_base.pong.
+//
+// Compositors can use this to determine if the client is still
+// alive. It's unspecified what will happen if the client doesn't
+// respond to the ping request, or in what timeframe. Clients should
+// try to respond in a reasonable amount of time.
+//
+// A compositor is free to ping in any way it wants, but a client must
+// always respond to any xdg_wm_base object it created.
+//
+pub fn xdg_wm_base_send_ping(object: Object, serial: u32) void {
+    object.context.startWrite();
+    object.context.putU32(serial);
+    object.context.finishWrite(object.id, 0);
+}
+
+// xdg_positioner
+pub const xdg_positioner_interface = struct {
+    // child surface positioner
+    destroy: ?fn (
+        Object,
+    ) void,
+    set_size: ?fn (Object, i32, i32) void,
+    set_anchor_rect: ?fn (Object, i32, i32, i32, i32) void,
+    set_anchor: ?fn (Object, u32) void,
+    set_gravity: ?fn (Object, u32) void,
+    set_constraint_adjustment: ?fn (Object, u32) void,
+    set_offset: ?fn (Object, i32, i32) void,
+};
+
+pub var XDG_POSITIONER = xdg_positioner_interface{
+    .destroy = null,
+    .set_size = null,
+    .set_anchor_rect = null,
+    .set_anchor = null,
+    .set_gravity = null,
+    .set_constraint_adjustment = null,
+    .set_offset = null,
+};
+
+pub fn new_xdg_positioner(context: *Context, id: u32) Object {
+    var object = Object{
+        .id = id,
+        .dispatch = xdg_positioner_dispatch,
+        .context = context,
+        .version = 0,
+        .container = 0,
+    };
+    context.register(object) catch |err| {
+        std.debug.warn("Couldn't register id: {}\n", .{id});
+    };
+    return object;
+}
+
+fn xdg_positioner_dispatch(object: Object, opcode: u16) void {
+    switch (opcode) {
+        // destroy
+        0 => {
+            if (XDG_POSITIONER.destroy) |destroy| {
+                destroy(
+                    object,
+                );
+            }
+        },
+        // set_size
+        1 => {
+            var width: i32 = object.context.next_i32();
+            var height: i32 = object.context.next_i32();
+            if (XDG_POSITIONER.set_size) |set_size| {
+                set_size(object, width, height);
+            }
+        },
+        // set_anchor_rect
+        2 => {
+            var x: i32 = object.context.next_i32();
+            var y: i32 = object.context.next_i32();
+            var width: i32 = object.context.next_i32();
+            var height: i32 = object.context.next_i32();
+            if (XDG_POSITIONER.set_anchor_rect) |set_anchor_rect| {
+                set_anchor_rect(object, x, y, width, height);
+            }
+        },
+        // set_anchor
+        3 => {
+            var anchor: u32 = object.context.next_u32();
+            if (XDG_POSITIONER.set_anchor) |set_anchor| {
+                set_anchor(object, anchor);
+            }
+        },
+        // set_gravity
+        4 => {
+            var gravity: u32 = object.context.next_u32();
+            if (XDG_POSITIONER.set_gravity) |set_gravity| {
+                set_gravity(object, gravity);
+            }
+        },
+        // set_constraint_adjustment
+        5 => {
+            var constraint_adjustment: u32 = object.context.next_u32();
+            if (XDG_POSITIONER.set_constraint_adjustment) |set_constraint_adjustment| {
+                set_constraint_adjustment(object, constraint_adjustment);
+            }
+        },
+        // set_offset
+        6 => {
+            var x: i32 = object.context.next_i32();
+            var y: i32 = object.context.next_i32();
+            if (XDG_POSITIONER.set_offset) |set_offset| {
+                set_offset(object, x, y);
+            }
+        },
+        else => {},
+    }
+}
+
+pub const xdg_positioner_error = enum(u32) {
+    invalid_input = 0,
+};
+
+pub const xdg_positioner_anchor = enum(u32) {
+    none = 0,
+    top = 1,
+    bottom = 2,
+    left = 3,
+    right = 4,
+    top_left = 5,
+    bottom_left = 6,
+    top_right = 7,
+    bottom_right = 8,
+};
+
+pub const xdg_positioner_gravity = enum(u32) {
+    none = 0,
+    top = 1,
+    bottom = 2,
+    left = 3,
+    right = 4,
+    top_left = 5,
+    bottom_left = 6,
+    top_right = 7,
+    bottom_right = 8,
+};
+
+pub const xdg_positioner_constraint_adjustment = enum(u32) {
+    none = 0,
+    slide_x = 1,
+    slide_y = 2,
+    flip_x = 4,
+    flip_y = 8,
+    resize_x = 16,
+    resize_y = 32,
+};
+
+// xdg_surface
+pub const xdg_surface_interface = struct {
+    // desktop user interface surface base interface
+    destroy: ?fn (
+        Object,
+    ) void,
+    get_toplevel: ?fn (Object, u32) void,
+    get_popup: ?fn (Object, u32, Object, Object) void,
+    set_window_geometry: ?fn (Object, i32, i32, i32, i32) void,
+    ack_configure: ?fn (Object, u32) void,
+};
+
+pub var XDG_SURFACE = xdg_surface_interface{
+    .destroy = null,
+    .get_toplevel = null,
+    .get_popup = null,
+    .set_window_geometry = null,
+    .ack_configure = null,
+};
+
+pub fn new_xdg_surface(context: *Context, id: u32) Object {
+    var object = Object{
+        .id = id,
+        .dispatch = xdg_surface_dispatch,
+        .context = context,
+        .version = 0,
+        .container = 0,
+    };
+    context.register(object) catch |err| {
+        std.debug.warn("Couldn't register id: {}\n", .{id});
+    };
+    return object;
+}
+
+fn xdg_surface_dispatch(object: Object, opcode: u16) void {
+    switch (opcode) {
+        // destroy
+        0 => {
+            if (XDG_SURFACE.destroy) |destroy| {
+                destroy(
+                    object,
+                );
+            }
+        },
+        // get_toplevel
+        1 => {
+            var id: u32 = object.context.next_u32();
+            if (XDG_SURFACE.get_toplevel) |get_toplevel| {
+                get_toplevel(object, id);
+            }
+        },
+        // get_popup
+        2 => {
+            var id: u32 = object.context.next_u32();
+            var parent: Object = new_xdg_surface(object.context, object.context.next_u32());
+            var positioner: Object = new_xdg_positioner(object.context, object.context.next_u32());
+            if (XDG_SURFACE.get_popup) |get_popup| {
+                get_popup(object, id, parent, positioner);
+            }
+        },
+        // set_window_geometry
+        3 => {
+            var x: i32 = object.context.next_i32();
+            var y: i32 = object.context.next_i32();
+            var width: i32 = object.context.next_i32();
+            var height: i32 = object.context.next_i32();
+            if (XDG_SURFACE.set_window_geometry) |set_window_geometry| {
+                set_window_geometry(object, x, y, width, height);
+            }
+        },
+        // ack_configure
+        4 => {
+            var serial: u32 = object.context.next_u32();
+            if (XDG_SURFACE.ack_configure) |ack_configure| {
+                ack_configure(object, serial);
+            }
+        },
+        else => {},
+    }
+}
+
+pub const xdg_surface_error = enum(u32) {
+    not_constructed = 1,
+    already_constructed = 2,
+    unconfigured_buffer = 3,
+};
+// The configure event marks the end of a configure sequence. A configure
+// sequence is a set of one or more events configuring the state of the
+// xdg_surface, including the final xdg_surface.configure event.
+//
+// Where applicable, xdg_surface surface roles will during a configure
+// sequence extend this event as a latched state sent as events before the
+// xdg_surface.configure event. Such events should be considered to make up
+// a set of atomically applied configuration states, where the
+// xdg_surface.configure commits the accumulated state.
+//
+// Clients should arrange their surface for the new states, and then send
+// an ack_configure request with the serial sent in this configure event at
+// some point before committing the new surface.
+//
+// If the client receives multiple configure events before it can respond
+// to one, it is free to discard all but the last event it received.
+//
+pub fn xdg_surface_send_configure(object: Object, serial: u32) void {
+    object.context.startWrite();
+    object.context.putU32(serial);
+    object.context.finishWrite(object.id, 0);
+}
+
+// xdg_toplevel
+pub const xdg_toplevel_interface = struct {
+    // toplevel surface
+    destroy: ?fn (
+        Object,
+    ) void,
+    set_parent: ?fn (Object, Object) void,
+    set_title: ?fn (Object, []u8) void,
+    set_app_id: ?fn (Object, []u8) void,
+    show_window_menu: ?fn (Object, Object, u32, i32, i32) void,
+    move: ?fn (Object, Object, u32) void,
+    resize: ?fn (Object, Object, u32, u32) void,
+    set_max_size: ?fn (Object, i32, i32) void,
+    set_min_size: ?fn (Object, i32, i32) void,
+    set_maximized: ?fn (
+        Object,
+    ) void,
+    unset_maximized: ?fn (
+        Object,
+    ) void,
+    set_fullscreen: ?fn (Object, Object) void,
+    unset_fullscreen: ?fn (
+        Object,
+    ) void,
+    set_minimized: ?fn (
+        Object,
+    ) void,
+};
+
+pub var XDG_TOPLEVEL = xdg_toplevel_interface{
+    .destroy = null,
+    .set_parent = null,
+    .set_title = null,
+    .set_app_id = null,
+    .show_window_menu = null,
+    .move = null,
+    .resize = null,
+    .set_max_size = null,
+    .set_min_size = null,
+    .set_maximized = null,
+    .unset_maximized = null,
+    .set_fullscreen = null,
+    .unset_fullscreen = null,
+    .set_minimized = null,
+};
+
+pub fn new_xdg_toplevel(context: *Context, id: u32) Object {
+    var object = Object{
+        .id = id,
+        .dispatch = xdg_toplevel_dispatch,
+        .context = context,
+        .version = 0,
+        .container = 0,
+    };
+    context.register(object) catch |err| {
+        std.debug.warn("Couldn't register id: {}\n", .{id});
+    };
+    return object;
+}
+
+fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
+    switch (opcode) {
+        // destroy
+        0 => {
+            if (XDG_TOPLEVEL.destroy) |destroy| {
+                destroy(
+                    object,
+                );
+            }
+        },
+        // set_parent
+        1 => {
+            var parent: Object = new_xdg_toplevel(object.context, object.context.next_u32());
+            if (XDG_TOPLEVEL.set_parent) |set_parent| {
+                set_parent(object, parent);
+            }
+        },
+        // set_title
+        2 => {
+            var title: []u8 = object.context.next_string();
+            if (XDG_TOPLEVEL.set_title) |set_title| {
+                set_title(object, title);
+            }
+        },
+        // set_app_id
+        3 => {
+            var app_id: []u8 = object.context.next_string();
+            if (XDG_TOPLEVEL.set_app_id) |set_app_id| {
+                set_app_id(object, app_id);
+            }
+        },
+        // show_window_menu
+        4 => {
+            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
+            var serial: u32 = object.context.next_u32();
+            var x: i32 = object.context.next_i32();
+            var y: i32 = object.context.next_i32();
+            if (XDG_TOPLEVEL.show_window_menu) |show_window_menu| {
+                show_window_menu(object, seat, serial, x, y);
+            }
+        },
+        // move
+        5 => {
+            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
+            var serial: u32 = object.context.next_u32();
+            if (XDG_TOPLEVEL.move) |move| {
+                move(object, seat, serial);
+            }
+        },
+        // resize
+        6 => {
+            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
+            var serial: u32 = object.context.next_u32();
+            var edges: u32 = object.context.next_u32();
+            if (XDG_TOPLEVEL.resize) |resize| {
+                resize(object, seat, serial, edges);
+            }
+        },
+        // set_max_size
+        7 => {
+            var width: i32 = object.context.next_i32();
+            var height: i32 = object.context.next_i32();
+            if (XDG_TOPLEVEL.set_max_size) |set_max_size| {
+                set_max_size(object, width, height);
+            }
+        },
+        // set_min_size
+        8 => {
+            var width: i32 = object.context.next_i32();
+            var height: i32 = object.context.next_i32();
+            if (XDG_TOPLEVEL.set_min_size) |set_min_size| {
+                set_min_size(object, width, height);
+            }
+        },
+        // set_maximized
+        9 => {
+            if (XDG_TOPLEVEL.set_maximized) |set_maximized| {
+                set_maximized(
+                    object,
+                );
+            }
+        },
+        // unset_maximized
+        10 => {
+            if (XDG_TOPLEVEL.unset_maximized) |unset_maximized| {
+                unset_maximized(
+                    object,
+                );
+            }
+        },
+        // set_fullscreen
+        11 => {
+            var output: Object = new_wl_output(object.context, object.context.next_u32());
+            if (XDG_TOPLEVEL.set_fullscreen) |set_fullscreen| {
+                set_fullscreen(object, output);
+            }
+        },
+        // unset_fullscreen
+        12 => {
+            if (XDG_TOPLEVEL.unset_fullscreen) |unset_fullscreen| {
+                unset_fullscreen(
+                    object,
+                );
+            }
+        },
+        // set_minimized
+        13 => {
+            if (XDG_TOPLEVEL.set_minimized) |set_minimized| {
+                set_minimized(
+                    object,
+                );
+            }
+        },
+        else => {},
+    }
+}
+
+pub const xdg_toplevel_resize_edge = enum(u32) {
+    none = 0,
+    top = 1,
+    bottom = 2,
+    left = 4,
+    top_left = 5,
+    bottom_left = 6,
+    right = 8,
+    top_right = 9,
+    bottom_right = 10,
+};
+
+pub const xdg_toplevel_state = enum(u32) {
+    maximized = 1,
+    fullscreen = 2,
+    resizing = 3,
+    activated = 4,
+    tiled_left = 5,
+    tiled_right = 6,
+    tiled_top = 7,
+    tiled_bottom = 8,
+};
+// This configure event asks the client to resize its toplevel surface or
+// to change its state. The configured state should not be applied
+// immediately. See xdg_surface.configure for details.
+//
+// The width and height arguments specify a hint to the window
+// about how its surface should be resized in window geometry
+// coordinates. See set_window_geometry.
+//
+// If the width or height arguments are zero, it means the client
+// should decide its own window dimension. This may happen when the
+// compositor needs to configure the state of the surface but doesn't
+// have any information about any previous or expected dimension.
+//
+// The states listed in the event specify how the width/height
+// arguments should be interpreted, and possibly how it should be
+// drawn.
+//
+// Clients must send an ack_configure in response to this event. See
+// xdg_surface.configure and xdg_surface.ack_configure for details.
+//
+pub fn xdg_toplevel_send_configure(object: Object, width: i32, height: i32, states: []u32) void {
+    object.context.startWrite();
+    object.context.putI32(width);
+    object.context.putI32(height);
+    object.context.putArray(states);
+    object.context.finishWrite(object.id, 0);
+}
+// The close event is sent by the compositor when the user
+// wants the surface to be closed. This should be equivalent to
+// the user clicking the close button in client-side decorations,
+// if your application has any.
+//
+// This is only a request that the user intends to close the
+// window. The client may choose to ignore this request, or show
+// a dialog to ask the user to save their data, etc.
+//
+pub fn xdg_toplevel_send_close(object: Object) void {
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 1);
+}
+
+// xdg_popup
+pub const xdg_popup_interface = struct {
+    // short-lived, popup surfaces for menus
+    destroy: ?fn (
+        Object,
+    ) void,
+    grab: ?fn (Object, Object, u32) void,
+};
+
+pub var XDG_POPUP = xdg_popup_interface{
+    .destroy = null,
+    .grab = null,
+};
+
+pub fn new_xdg_popup(context: *Context, id: u32) Object {
+    var object = Object{
+        .id = id,
+        .dispatch = xdg_popup_dispatch,
+        .context = context,
+        .version = 0,
+        .container = 0,
+    };
+    context.register(object) catch |err| {
+        std.debug.warn("Couldn't register id: {}\n", .{id});
+    };
+    return object;
+}
+
+fn xdg_popup_dispatch(object: Object, opcode: u16) void {
+    switch (opcode) {
+        // destroy
+        0 => {
+            if (XDG_POPUP.destroy) |destroy| {
+                destroy(
+                    object,
+                );
+            }
+        },
+        // grab
+        1 => {
+            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
+            var serial: u32 = object.context.next_u32();
+            if (XDG_POPUP.grab) |grab| {
+                grab(object, seat, serial);
+            }
+        },
+        else => {},
+    }
+}
+
+pub const xdg_popup_error = enum(u32) {
+    invalid_grab = 0,
+};
+// This event asks the popup surface to configure itself given the
+// configuration. The configured state should not be applied immediately.
+// See xdg_surface.configure for details.
+//
+// The x and y arguments represent the position the popup was placed at
+// given the xdg_positioner rule, relative to the upper left corner of the
+// window geometry of the parent surface.
+//
+pub fn xdg_popup_send_configure(object: Object, x: i32, y: i32, width: i32, height: i32) void {
+    object.context.startWrite();
+    object.context.putI32(x);
+    object.context.putI32(y);
+    object.context.putI32(width);
+    object.context.putI32(height);
+    object.context.finishWrite(object.id, 0);
+}
+// The popup_done event is sent out when a popup is dismissed by the
+// compositor. The client should destroy the xdg_popup object at this
+// point.
+//
+pub fn xdg_popup_send_popup_done(object: Object) void {
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 1);
+}
