@@ -32,7 +32,7 @@ pub const Context = struct {
         self.objects.deinit();
     }
 
-    pub fn dispatch(self: *Self) !void {
+    pub fn dispatch(self: *Self) anyerror!void {
         var n = try txrx.recvMsg(self.fd, self.rx_buf[self.write_offset..self.rx_buf.len], self.rx_fds[0..self.rx_fds.len]);
         n = self.write_offset + n;
 
@@ -61,7 +61,7 @@ pub const Context = struct {
             self.read_offset += @sizeOf(Header);
             if (self.objects.get(header.id)) |object| {
                 std.debug.warn("got id: {}\n", .{object.value.id});
-                object.value.dispatch(object.value, header.opcode);
+                try object.value.dispatch(object.value, header.opcode);
             } else {
                 std.debug.warn("couldn't find id: {}\n", .{header.id});
                 std.os.exit(2);
@@ -186,7 +186,7 @@ pub const Context = struct {
 };
 
 pub const Object = struct {
-    dispatch: fn(Object, u16) void,
+    dispatch: fn(Object, u16) anyerror!void,
     context: *Context,
     container: usize,
     id: u32,
