@@ -19,6 +19,7 @@ pub const Client = struct {
     compositor: ?u32,
     subcompositor: ?u32,
     shm: ?u32,
+    xdg_wm_base: ?u32,
 
     const Self = @This();
 

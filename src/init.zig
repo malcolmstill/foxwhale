@@ -10,6 +10,8 @@ pub fn init() void {
     wl.WL_REGISTRY.bind = bind;
     wl.WL_COMPOSITOR.create_surface = create_surface;
     wl.XDG_WM_BASE.get_xdg_surface = get_xdg_surface;
+    wl.XDG_SURFACE.get_toplevel = get_toplevel;
+    wl.XDG_TOPLEVEL.set_title = set_title;
 }
 
 fn sync(object: Object, new_id: u32) void {
@@ -62,7 +64,12 @@ fn bind(registry: Object, name: u32, name_string: []u8, version: u32, new_id: u3
                 }
             }
         },
-        4 => {},
+        4 => {
+            if (wl.new_xdg_wm_base(registry.context, new_id)) |base| {
+                base.version = version;
+                registry.context.client.xdg_wm_base = base.id;
+            }
+        },
         5 => {},
         6 => {},
         7 => {},
@@ -82,18 +89,33 @@ fn bind(registry: Object, name: u32, name_string: []u8, version: u32, new_id: u3
 }
 
 fn create_surface(compositor: Object, id: u32) void {
-    var surface = wl.new_wl_surface(compositor.context, id);
-    var x = win.newWindow(compositor.context.client, id) ; // why can't I catch this?
-
-    return;
+    std.debug.warn("create_surface: {}\n", .{id});
+    if (wl.new_wl_surface(compositor.context, id)) |surface| {
+        var x = win.newWindow(compositor.context.client, id);
+    }
 }
 
 fn get_xdg_surface(base: Object, id: u32, surface: Object) void {
+    std.debug.warn("get_xdg_surface: {}\n", .{id});
     if (wl.new_xdg_surface(base.context, id)) |xdg_surface| {
         var window = @intToPtr(*Window, surface.container);
         window.xdg_surface = xdg_surface.id;
         xdg_surface.container = @ptrToInt(window);
     }
+}
 
-    return;
+fn get_toplevel(xdg_surface: Object, id: u32) void {
+    std.debug.warn("get_toplevel: {}\n", .{id});
+    if (wl.new_xdg_toplevel(xdg_surface.context, id)) |xdg_toplevel| {
+        var window = @intToPtr(*Window, xdg_surface.container);
+        window.xdg_toplevel = xdg_toplevel.id;
+        xdg_toplevel.container = @ptrToInt(window);
+    }
+}
+
+fn set_title(xdg_toplevel: Object, title: []u8) void {
+    var window = @intToPtr(*Window, xdg_toplevel.container);
+    var len = std.math.min(window.title.len, title.len);
+    std.mem.copy(u8, window.title[0..len], title[0..len]);
+    std.debug.warn("window: {}\n", .{window.title});
 }

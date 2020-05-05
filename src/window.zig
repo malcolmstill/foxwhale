@@ -11,8 +11,10 @@ pub const Window = struct {
     buffer: u1 = 0,
     surface: u32,
     xdg_surface: ?u32,
+    xdg_toplevel: ?u32,
     client: *Client,
     geometry: [24]f32 = undefined,
+    title: [128]u8 = undefined,
 
     const Self = @This();
 
