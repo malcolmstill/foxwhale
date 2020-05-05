@@ -23,12 +23,6 @@ pub const Context = struct {
         self.read_offset = 0;
         self.write_offset = 0;
         self.objects = AutoHashMap(u32, Object).init(std.heap.page_allocator);
-        // self.putU32(12);
-        // var s = [_]u8{0x41, 0x41, 0x41, 0x41, 0x00};
-        // self.putString(s[0..s.len]);
-        // var b = [_]u32{0xDE, 0xAD, 0xBE, 0xEF};
-        // self.putArray(b[0..b.len]);
-        // std.debug.warn("tx_buf: {x}\n", .{self.tx_buf});
     }
 
     pub fn deinit(self: *Self) void {
