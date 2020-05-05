@@ -3,15 +3,17 @@ import sys
 
 wl_registry_fixed = False
 
-def generate(file):
-    tree = Tree.parse(file)
-    root = tree.getroot()
+def generate(files):
     print(f'const std = @import("std");')
     print(f'const Context = @import("context.zig").Context;')
     print(f'const Header = @import("context.zig").Header;')
     print(f'const Object = @import("context.zig").Object;\n')
-    if root.tag == "protocol":
-        generate_protocol(root)
+
+    for file in files:
+        tree = Tree.parse(file)
+        protocol = tree.getroot()
+        if protocol.tag == "protocol":
+            generate_protocol(protocol)
 
 def generate_protocol(protocol):
     for child in protocol:
@@ -235,4 +237,4 @@ def lookup_type(type, arg):
         }
         return types[type]
 
-generate(sys.argv[1])
+generate(sys.argv[1:])
