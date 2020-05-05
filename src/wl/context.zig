@@ -86,9 +86,9 @@ pub const Context = struct {
     pub fn next_string(self: *Self) []u8 {
         var length = self.next_u32();
         var s: []u8 = undefined;
-        s.ptr = &self.recv_buf[self.read_offset];
+        s.ptr = @ptrCast([*]u8, &self.recv_buf[self.read_offset]);
         s.len = length;
-        self.read_offset += length;
+        self.read_offset += @sizeOf(u32) * @divTrunc(length - 1, @sizeOf(u32)) + @sizeOf(u32);
         return s;
     }
 
