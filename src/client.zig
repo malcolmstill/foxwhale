@@ -14,6 +14,7 @@ pub const Client = struct {
     connection: std.net.StreamServer.Connection,
     dispatchable: Dispatchable,
     context: Context,
+    display: ?u32,
     seat: ?u32,
     compositor: ?u32,
     subcompositor: ?u32,
@@ -43,7 +44,9 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
             clients[i].in_use = true;
             clients[i].context.init(conn.file.handle, &clients[i]);
 
-            var o = wl.new_wl_display(&clients[i].context, 1);
+            if (wl.new_wl_display(&clients[i].context, 1)) |o| {
+                clients[i].display = o.id;
+            }
 
             try epoll.addFd(conn.file.handle, &clients[i].dispatchable);
 
