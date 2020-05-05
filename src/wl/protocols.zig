@@ -15,7 +15,7 @@ pub var WL_DISPLAY = wl_display_interface{
     .get_registry = null,
 };
 
-pub fn new_wl_display(context: *Context, id: u32) Object {
+pub fn new_wl_display(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_display_dispatch,
@@ -26,7 +26,10 @@ pub fn new_wl_display(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_display_dispatch(object: Object, opcode: u16) void {
@@ -92,7 +95,7 @@ pub var WL_REGISTRY = wl_registry_interface{
     .bind = null,
 };
 
-pub fn new_wl_registry(context: *Context, id: u32) Object {
+pub fn new_wl_registry(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_registry_dispatch,
@@ -103,7 +106,10 @@ pub fn new_wl_registry(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_registry_dispatch(object: Object, opcode: u16) void {
@@ -158,7 +164,7 @@ pub const wl_callback_interface = struct {
 
 pub var WL_CALLBACK = wl_callback_interface{};
 
-pub fn new_wl_callback(context: *Context, id: u32) Object {
+pub fn new_wl_callback(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_callback_dispatch,
@@ -169,7 +175,10 @@ pub fn new_wl_callback(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_callback_dispatch(object: Object, opcode: u16) void {
@@ -197,7 +206,7 @@ pub var WL_COMPOSITOR = wl_compositor_interface{
     .create_region = null,
 };
 
-pub fn new_wl_compositor(context: *Context, id: u32) Object {
+pub fn new_wl_compositor(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_compositor_dispatch,
@@ -208,7 +217,10 @@ pub fn new_wl_compositor(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_compositor_dispatch(object: Object, opcode: u16) void {
@@ -247,7 +259,7 @@ pub var WL_SHM_POOL = wl_shm_pool_interface{
     .resize = null,
 };
 
-pub fn new_wl_shm_pool(context: *Context, id: u32) Object {
+pub fn new_wl_shm_pool(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_shm_pool_dispatch,
@@ -258,7 +270,10 @@ pub fn new_wl_shm_pool(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_shm_pool_dispatch(object: Object, opcode: u16) void {
@@ -304,7 +319,7 @@ pub var WL_SHM = wl_shm_interface{
     .create_pool = null,
 };
 
-pub fn new_wl_shm(context: *Context, id: u32) Object {
+pub fn new_wl_shm(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_shm_dispatch,
@@ -315,7 +330,10 @@ pub fn new_wl_shm(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_shm_dispatch(object: Object, opcode: u16) void {
@@ -421,7 +439,7 @@ pub var WL_BUFFER = wl_buffer_interface{
     .destroy = null,
 };
 
-pub fn new_wl_buffer(context: *Context, id: u32) Object {
+pub fn new_wl_buffer(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_buffer_dispatch,
@@ -432,7 +450,10 @@ pub fn new_wl_buffer(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_buffer_dispatch(object: Object, opcode: u16) void {
@@ -488,7 +509,7 @@ pub var WL_DATA_OFFER = wl_data_offer_interface{
     .set_actions = null,
 };
 
-pub fn new_wl_data_offer(context: *Context, id: u32) Object {
+pub fn new_wl_data_offer(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_data_offer_dispatch,
@@ -499,7 +520,10 @@ pub fn new_wl_data_offer(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_data_offer_dispatch(object: Object, opcode: u16) void {
@@ -629,7 +653,7 @@ pub var WL_DATA_SOURCE = wl_data_source_interface{
     .set_actions = null,
 };
 
-pub fn new_wl_data_source(context: *Context, id: u32) Object {
+pub fn new_wl_data_source(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_data_source_dispatch,
@@ -640,7 +664,10 @@ pub fn new_wl_data_source(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_data_source_dispatch(object: Object, opcode: u16) void {
@@ -793,7 +820,7 @@ pub var WL_DATA_DEVICE = wl_data_device_interface{
     .release = null,
 };
 
-pub fn new_wl_data_device(context: *Context, id: u32) Object {
+pub fn new_wl_data_device(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_data_device_dispatch,
@@ -804,16 +831,19 @@ pub fn new_wl_data_device(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_data_device_dispatch(object: Object, opcode: u16) void {
     switch (opcode) {
         // start_drag
         0 => {
-            var source: Object = new_wl_data_source(object.context, object.context.next_u32());
-            var origin: Object = new_wl_surface(object.context, object.context.next_u32());
-            var icon: Object = new_wl_surface(object.context, object.context.next_u32());
+            var source: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var origin: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var icon: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var serial: u32 = object.context.next_u32();
             if (WL_DATA_DEVICE.start_drag) |start_drag| {
                 start_drag(object, source, origin, icon, serial);
@@ -821,7 +851,7 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) void {
         },
         // set_selection
         1 => {
-            var source: Object = new_wl_data_source(object.context, object.context.next_u32());
+            var source: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var serial: u32 = object.context.next_u32();
             if (WL_DATA_DEVICE.set_selection) |set_selection| {
                 set_selection(object, source, serial);
@@ -937,7 +967,7 @@ pub var WL_DATA_DEVICE_MANAGER = wl_data_device_manager_interface{
     .get_data_device = null,
 };
 
-pub fn new_wl_data_device_manager(context: *Context, id: u32) Object {
+pub fn new_wl_data_device_manager(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_data_device_manager_dispatch,
@@ -948,7 +978,10 @@ pub fn new_wl_data_device_manager(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_data_device_manager_dispatch(object: Object, opcode: u16) void {
@@ -963,7 +996,7 @@ fn wl_data_device_manager_dispatch(object: Object, opcode: u16) void {
         // get_data_device
         1 => {
             var id: u32 = object.context.next_u32();
-            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
+            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_DATA_DEVICE_MANAGER.get_data_device) |get_data_device| {
                 get_data_device(object, id, seat);
             }
@@ -989,7 +1022,7 @@ pub var WL_SHELL = wl_shell_interface{
     .get_shell_surface = null,
 };
 
-pub fn new_wl_shell(context: *Context, id: u32) Object {
+pub fn new_wl_shell(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_shell_dispatch,
@@ -1000,7 +1033,10 @@ pub fn new_wl_shell(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_shell_dispatch(object: Object, opcode: u16) void {
@@ -1008,7 +1044,7 @@ fn wl_shell_dispatch(object: Object, opcode: u16) void {
         // get_shell_surface
         0 => {
             var id: u32 = object.context.next_u32();
-            var surface: Object = new_wl_surface(object.context, object.context.next_u32());
+            var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SHELL.get_shell_surface) |get_shell_surface| {
                 get_shell_surface(object, id, surface);
             }
@@ -1051,7 +1087,7 @@ pub var WL_SHELL_SURFACE = wl_shell_surface_interface{
     .set_class = null,
 };
 
-pub fn new_wl_shell_surface(context: *Context, id: u32) Object {
+pub fn new_wl_shell_surface(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_shell_surface_dispatch,
@@ -1062,7 +1098,10 @@ pub fn new_wl_shell_surface(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
@@ -1076,7 +1115,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
         },
         // move
         1 => {
-            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
+            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var serial: u32 = object.context.next_u32();
             if (WL_SHELL_SURFACE.move) |move| {
                 move(object, seat, serial);
@@ -1084,7 +1123,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
         },
         // resize
         2 => {
-            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
+            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var serial: u32 = object.context.next_u32();
             var edges: u32 = object.context.next_u32();
             if (WL_SHELL_SURFACE.resize) |resize| {
@@ -1101,7 +1140,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
         },
         // set_transient
         4 => {
-            var parent: Object = new_wl_surface(object.context, object.context.next_u32());
+            var parent: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var x: i32 = object.context.next_i32();
             var y: i32 = object.context.next_i32();
             var flags: u32 = object.context.next_u32();
@@ -1113,16 +1152,16 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
         5 => {
             var method: u32 = object.context.next_u32();
             var framerate: u32 = object.context.next_u32();
-            var output: Object = new_wl_output(object.context, object.context.next_u32());
+            var output: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SHELL_SURFACE.set_fullscreen) |set_fullscreen| {
                 set_fullscreen(object, method, framerate, output);
             }
         },
         // set_popup
         6 => {
-            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
+            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var serial: u32 = object.context.next_u32();
-            var parent: Object = new_wl_surface(object.context, object.context.next_u32());
+            var parent: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var x: i32 = object.context.next_i32();
             var y: i32 = object.context.next_i32();
             var flags: u32 = object.context.next_u32();
@@ -1132,7 +1171,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
         },
         // set_maximized
         7 => {
-            var output: Object = new_wl_output(object.context, object.context.next_u32());
+            var output: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SHELL_SURFACE.set_maximized) |set_maximized| {
                 set_maximized(object, output);
             }
@@ -1251,7 +1290,7 @@ pub var WL_SURFACE = wl_surface_interface{
     .damage_buffer = null,
 };
 
-pub fn new_wl_surface(context: *Context, id: u32) Object {
+pub fn new_wl_surface(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_surface_dispatch,
@@ -1262,7 +1301,10 @@ pub fn new_wl_surface(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_surface_dispatch(object: Object, opcode: u16) void {
@@ -1277,7 +1319,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) void {
         },
         // attach
         1 => {
-            var buffer: Object = new_wl_buffer(object.context, object.context.next_u32());
+            var buffer: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var x: i32 = object.context.next_i32();
             var y: i32 = object.context.next_i32();
             if (WL_SURFACE.attach) |attach| {
@@ -1303,14 +1345,14 @@ fn wl_surface_dispatch(object: Object, opcode: u16) void {
         },
         // set_opaque_region
         4 => {
-            var region: Object = new_wl_region(object.context, object.context.next_u32());
+            var region: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SURFACE.set_opaque_region) |set_opaque_region| {
                 set_opaque_region(object, region);
             }
         },
         // set_input_region
         5 => {
-            var region: Object = new_wl_region(object.context, object.context.next_u32());
+            var region: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SURFACE.set_input_region) |set_input_region| {
                 set_input_region(object, region);
             }
@@ -1394,7 +1436,7 @@ pub var WL_SEAT = wl_seat_interface{
     .release = null,
 };
 
-pub fn new_wl_seat(context: *Context, id: u32) Object {
+pub fn new_wl_seat(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_seat_dispatch,
@@ -1405,7 +1447,10 @@ pub fn new_wl_seat(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_seat_dispatch(object: Object, opcode: u16) void {
@@ -1502,7 +1547,7 @@ pub var WL_POINTER = wl_pointer_interface{
     .release = null,
 };
 
-pub fn new_wl_pointer(context: *Context, id: u32) Object {
+pub fn new_wl_pointer(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_pointer_dispatch,
@@ -1513,7 +1558,10 @@ pub fn new_wl_pointer(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_pointer_dispatch(object: Object, opcode: u16) void {
@@ -1521,7 +1569,7 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) void {
         // set_cursor
         0 => {
             var serial: u32 = object.context.next_u32();
-            var surface: Object = new_wl_surface(object.context, object.context.next_u32());
+            var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var hotspot_x: i32 = object.context.next_i32();
             var hotspot_y: i32 = object.context.next_i32();
             if (WL_POINTER.set_cursor) |set_cursor| {
@@ -1782,7 +1830,7 @@ pub var WL_KEYBOARD = wl_keyboard_interface{
     .release = null,
 };
 
-pub fn new_wl_keyboard(context: *Context, id: u32) Object {
+pub fn new_wl_keyboard(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_keyboard_dispatch,
@@ -1793,7 +1841,10 @@ pub fn new_wl_keyboard(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_keyboard_dispatch(object: Object, opcode: u16) void {
@@ -1910,7 +1961,7 @@ pub var WL_TOUCH = wl_touch_interface{
     .release = null,
 };
 
-pub fn new_wl_touch(context: *Context, id: u32) Object {
+pub fn new_wl_touch(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_touch_dispatch,
@@ -1921,7 +1972,10 @@ pub fn new_wl_touch(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_touch_dispatch(object: Object, opcode: u16) void {
@@ -2073,7 +2127,7 @@ pub var WL_OUTPUT = wl_output_interface{
     .release = null,
 };
 
-pub fn new_wl_output(context: *Context, id: u32) Object {
+pub fn new_wl_output(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_output_dispatch,
@@ -2084,7 +2138,10 @@ pub fn new_wl_output(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_output_dispatch(object: Object, opcode: u16) void {
@@ -2234,7 +2291,7 @@ pub var WL_REGION = wl_region_interface{
     .subtract = null,
 };
 
-pub fn new_wl_region(context: *Context, id: u32) Object {
+pub fn new_wl_region(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_region_dispatch,
@@ -2245,7 +2302,10 @@ pub fn new_wl_region(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_region_dispatch(object: Object, opcode: u16) void {
@@ -2296,7 +2356,7 @@ pub var WL_SUBCOMPOSITOR = wl_subcompositor_interface{
     .get_subsurface = null,
 };
 
-pub fn new_wl_subcompositor(context: *Context, id: u32) Object {
+pub fn new_wl_subcompositor(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_subcompositor_dispatch,
@@ -2307,7 +2367,10 @@ pub fn new_wl_subcompositor(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_subcompositor_dispatch(object: Object, opcode: u16) void {
@@ -2323,8 +2386,8 @@ fn wl_subcompositor_dispatch(object: Object, opcode: u16) void {
         // get_subsurface
         1 => {
             var id: u32 = object.context.next_u32();
-            var surface: Object = new_wl_surface(object.context, object.context.next_u32());
-            var parent: Object = new_wl_surface(object.context, object.context.next_u32());
+            var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var parent: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SUBCOMPOSITOR.get_subsurface) |get_subsurface| {
                 get_subsurface(object, id, surface, parent);
             }
@@ -2363,7 +2426,7 @@ pub var WL_SUBSURFACE = wl_subsurface_interface{
     .set_desync = null,
 };
 
-pub fn new_wl_subsurface(context: *Context, id: u32) Object {
+pub fn new_wl_subsurface(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = wl_subsurface_dispatch,
@@ -2374,7 +2437,10 @@ pub fn new_wl_subsurface(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn wl_subsurface_dispatch(object: Object, opcode: u16) void {
@@ -2397,14 +2463,14 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) void {
         },
         // place_above
         2 => {
-            var sibling: Object = new_wl_surface(object.context, object.context.next_u32());
+            var sibling: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SUBSURFACE.place_above) |place_above| {
                 place_above(object, sibling);
             }
         },
         // place_below
         3 => {
-            var sibling: Object = new_wl_surface(object.context, object.context.next_u32());
+            var sibling: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SUBSURFACE.place_below) |place_below| {
                 place_below(object, sibling);
             }
@@ -2451,7 +2517,7 @@ pub var XDG_WM_BASE = xdg_wm_base_interface{
     .pong = null,
 };
 
-pub fn new_xdg_wm_base(context: *Context, id: u32) Object {
+pub fn new_xdg_wm_base(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = xdg_wm_base_dispatch,
@@ -2462,7 +2528,10 @@ pub fn new_xdg_wm_base(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn xdg_wm_base_dispatch(object: Object, opcode: u16) void {
@@ -2485,7 +2554,7 @@ fn xdg_wm_base_dispatch(object: Object, opcode: u16) void {
         // get_xdg_surface
         2 => {
             var id: u32 = object.context.next_u32();
-            var surface: Object = new_wl_surface(object.context, object.context.next_u32());
+            var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (XDG_WM_BASE.get_xdg_surface) |get_xdg_surface| {
                 get_xdg_surface(object, id, surface);
             }
@@ -2551,7 +2620,7 @@ pub var XDG_POSITIONER = xdg_positioner_interface{
     .set_offset = null,
 };
 
-pub fn new_xdg_positioner(context: *Context, id: u32) Object {
+pub fn new_xdg_positioner(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = xdg_positioner_dispatch,
@@ -2562,7 +2631,10 @@ pub fn new_xdg_positioner(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn xdg_positioner_dispatch(object: Object, opcode: u16) void {
@@ -2684,7 +2756,7 @@ pub var XDG_SURFACE = xdg_surface_interface{
     .ack_configure = null,
 };
 
-pub fn new_xdg_surface(context: *Context, id: u32) Object {
+pub fn new_xdg_surface(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = xdg_surface_dispatch,
@@ -2695,7 +2767,10 @@ pub fn new_xdg_surface(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn xdg_surface_dispatch(object: Object, opcode: u16) void {
@@ -2718,8 +2793,8 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) void {
         // get_popup
         2 => {
             var id: u32 = object.context.next_u32();
-            var parent: Object = new_xdg_surface(object.context, object.context.next_u32());
-            var positioner: Object = new_xdg_positioner(object.context, object.context.next_u32());
+            var parent: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var positioner: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (XDG_SURFACE.get_popup) |get_popup| {
                 get_popup(object, id, parent, positioner);
             }
@@ -2819,7 +2894,7 @@ pub var XDG_TOPLEVEL = xdg_toplevel_interface{
     .set_minimized = null,
 };
 
-pub fn new_xdg_toplevel(context: *Context, id: u32) Object {
+pub fn new_xdg_toplevel(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = xdg_toplevel_dispatch,
@@ -2830,7 +2905,10 @@ pub fn new_xdg_toplevel(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
@@ -2845,7 +2923,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
         },
         // set_parent
         1 => {
-            var parent: Object = new_xdg_toplevel(object.context, object.context.next_u32());
+            var parent: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (XDG_TOPLEVEL.set_parent) |set_parent| {
                 set_parent(object, parent);
             }
@@ -2866,7 +2944,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
         },
         // show_window_menu
         4 => {
-            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
+            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var serial: u32 = object.context.next_u32();
             var x: i32 = object.context.next_i32();
             var y: i32 = object.context.next_i32();
@@ -2876,7 +2954,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
         },
         // move
         5 => {
-            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
+            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var serial: u32 = object.context.next_u32();
             if (XDG_TOPLEVEL.move) |move| {
                 move(object, seat, serial);
@@ -2884,7 +2962,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
         },
         // resize
         6 => {
-            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
+            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var serial: u32 = object.context.next_u32();
             var edges: u32 = object.context.next_u32();
             if (XDG_TOPLEVEL.resize) |resize| {
@@ -2925,7 +3003,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
         },
         // set_fullscreen
         11 => {
-            var output: Object = new_wl_output(object.context, object.context.next_u32());
+            var output: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (XDG_TOPLEVEL.set_fullscreen) |set_fullscreen| {
                 set_fullscreen(object, output);
             }
@@ -3027,7 +3105,7 @@ pub var XDG_POPUP = xdg_popup_interface{
     .grab = null,
 };
 
-pub fn new_xdg_popup(context: *Context, id: u32) Object {
+pub fn new_xdg_popup(context: *Context, id: u32) ?*Object {
     var object = Object{
         .id = id,
         .dispatch = xdg_popup_dispatch,
@@ -3038,7 +3116,10 @@ pub fn new_xdg_popup(context: *Context, id: u32) Object {
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
     };
-    return object;
+    if (context.objects.get(id)) |o| {
+        return &o.value;
+    }
+    return null;
 }
 
 fn xdg_popup_dispatch(object: Object, opcode: u16) void {
@@ -3053,7 +3134,7 @@ fn xdg_popup_dispatch(object: Object, opcode: u16) void {
         },
         // grab
         1 => {
-            var seat: Object = new_wl_seat(object.context, object.context.next_u32());
+            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var serial: u32 = object.context.next_u32();
             if (XDG_POPUP.grab) |grab| {
                 grab(object, seat, serial);
