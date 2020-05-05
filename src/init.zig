@@ -5,6 +5,7 @@ const Object = @import("wl/context.zig").Object;
 pub fn init() void {
     wl.WL_DISPLAY.sync = sync;
     wl.WL_DISPLAY.get_registry = get_registry;
+    wl.WL_REGISTRY.bind = bind;
 }
 
 fn sync(object: Object, new_id: u32) void {
@@ -19,8 +20,18 @@ fn get_registry(object: Object, new_id: u32) void {
     std.debug.warn("get_registry with id {}\n", .{new_id});
     var registry = wl.new_wl_registry(object.context, new_id);
 
-    var name: []const u8 = "wl_compositor\x00";
-    // var name = &[_]namex;
-    wl.wl_registry_send_global(registry, 1, name[0..name.len], 4);
-    // std.debug.warn("tx_buf after wl_registry_send_global {x}\n", .{registry.context.tx_buf});
+    wl.wl_registry_send_global(registry, 1, "wl_compositor\x00", 4);
+    wl.wl_registry_send_global(registry, 2, "wl_subcompositor\x00", 1);
+    wl.wl_registry_send_global(registry, 3, "wl_seat\x00", 4);
+    wl.wl_registry_send_global(registry, 4, "xdg_wm_base\x00", 1);
+    wl.wl_registry_send_global(registry, 5, "wl_output\x00", 2);
+    wl.wl_registry_send_global(registry, 6, "wl_data_device_manager\x00", 3);
+    wl.wl_registry_send_global(registry, 7, "wl_shell\x00", 1);
+    wl.wl_registry_send_global(registry, 8, "wl_shm\x00", 1);
+    wl.wl_registry_send_global(registry, 9, "zxdg_decoration_manager_v1\x00", 1);
+    wl.wl_registry_send_global(registry, 10, "zwp_linux_dmabuf_v1\x00", 3);
+}
+
+fn bind(object: Object, name: u32, name_string: []u8, version: u32, new_id: u32) void {
+    std.debug.warn("bind for {} ({}) with id {} at version {}\n", .{name_string, name, new_id, version});
 }
