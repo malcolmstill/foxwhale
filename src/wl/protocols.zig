@@ -6,16 +6,16 @@ const Object = @import("context.zig").Object;
 // wl_display
 pub const wl_display_interface = struct {
     // core global object
-    sync: ?fn (Object, u32) void,
-    get_registry: ?fn (Object, u32) void,
+    sync: ?fn (Object, u32) anyerror!void,
+    get_registry: ?fn (Object, u32) anyerror!void,
 };
 
-fn wl_display_sync_default(object: Object, callback: u32) void {
+fn wl_display_sync_default(object: Object, callback: u32) anyerror!void {
     std.debug.warn("wl_display_sync not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_display_get_registry_default(object: Object, registry: u32) void {
+fn wl_display_get_registry_default(object: Object, registry: u32) anyerror!void {
     std.debug.warn("wl_display_get_registry not implemented\n", .{});
     std.os.exit(2);
 }
@@ -42,20 +42,20 @@ pub fn new_wl_display(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_display_dispatch(object: Object, opcode: u16) void {
+fn wl_display_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // sync
         0 => {
             var callback: u32 = object.context.next_u32();
             if (WL_DISPLAY.sync) |sync| {
-                sync(object, callback);
+                try sync(object, callback);
             }
         },
         // get_registry
         1 => {
             var registry: u32 = object.context.next_u32();
             if (WL_DISPLAY.get_registry) |get_registry| {
-                get_registry(object, registry);
+                try get_registry(object, registry);
             }
         },
         else => {},
@@ -76,7 +76,7 @@ pub const wl_display_error = enum(u32) {
 // own set of error codes.  The message is a brief description
 // of the error, for (debugging) convenience.
 //
-pub fn wl_display_send_error(object: Object, object_id: u32, code: u32, message: []const u8) void {
+pub fn wl_display_send_error(object: Object, object_id: u32, code: u32, message: []const u8) anyerror!void {
     object.context.startWrite();
     object.context.putU32(object_id);
     object.context.putU32(code);
@@ -89,7 +89,7 @@ pub fn wl_display_send_error(object: Object, object_id: u32, code: u32, message:
 // When the client receives this event, it will know that it can
 // safely reuse the object ID.
 //
-pub fn wl_display_send_delete_id(object: Object, id: u32) void {
+pub fn wl_display_send_delete_id(object: Object, id: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(id);
     object.context.finishWrite(object.id, 1);
@@ -98,10 +98,10 @@ pub fn wl_display_send_delete_id(object: Object, id: u32) void {
 // wl_registry
 pub const wl_registry_interface = struct {
     // global registry object
-    bind: ?fn (Object, u32, []u8, u32, u32) void,
+    bind: ?fn (Object, u32, []u8, u32, u32) anyerror!void,
 };
 
-fn wl_registry_bind_default(object: Object, name: u32, name_string: []u8, version: u32, id: u32) void {
+fn wl_registry_bind_default(object: Object, name: u32, name_string: []u8, version: u32, id: u32) anyerror!void {
     std.debug.warn("wl_registry_bind not implemented\n", .{});
     std.os.exit(2);
 }
@@ -127,7 +127,7 @@ pub fn new_wl_registry(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_registry_dispatch(object: Object, opcode: u16) void {
+fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // bind
         0 => {
@@ -136,7 +136,7 @@ fn wl_registry_dispatch(object: Object, opcode: u16) void {
             var version: u32 = object.context.next_u32();
             var id: u32 = object.context.next_u32();
             if (WL_REGISTRY.bind) |bind| {
-                bind(object, name, name_string, version, id);
+                try bind(object, name, name_string, version, id);
             }
         },
         else => {},
@@ -148,7 +148,7 @@ fn wl_registry_dispatch(object: Object, opcode: u16) void {
 // the given name is now available, and it implements the
 // given version of the given interface.
 //
-pub fn wl_registry_send_global(object: Object, name: u32, interface: []const u8, version: u32) void {
+pub fn wl_registry_send_global(object: Object, name: u32, interface: []const u8, version: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(name);
     object.context.putString(interface);
@@ -166,7 +166,7 @@ pub fn wl_registry_send_global(object: Object, name: u32, interface: []const u8,
 // ignored until the client destroys it, to avoid races between
 // the global going away and a client sending a request to it.
 //
-pub fn wl_registry_send_global_remove(object: Object, name: u32) void {
+pub fn wl_registry_send_global_remove(object: Object, name: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(name);
     object.context.finishWrite(object.id, 1);
@@ -196,14 +196,14 @@ pub fn new_wl_callback(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_callback_dispatch(object: Object, opcode: u16) void {
+fn wl_callback_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         else => {},
     }
 }
 // Notify the client when the related request is done.
 //
-pub fn wl_callback_send_done(object: Object, callback_data: u32) void {
+pub fn wl_callback_send_done(object: Object, callback_data: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(callback_data);
     object.context.finishWrite(object.id, 0);
@@ -212,16 +212,16 @@ pub fn wl_callback_send_done(object: Object, callback_data: u32) void {
 // wl_compositor
 pub const wl_compositor_interface = struct {
     // the compositor singleton
-    create_surface: ?fn (Object, u32) void,
-    create_region: ?fn (Object, u32) void,
+    create_surface: ?fn (Object, u32) anyerror!void,
+    create_region: ?fn (Object, u32) anyerror!void,
 };
 
-fn wl_compositor_create_surface_default(object: Object, id: u32) void {
+fn wl_compositor_create_surface_default(object: Object, id: u32) anyerror!void {
     std.debug.warn("wl_compositor_create_surface not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_compositor_create_region_default(object: Object, id: u32) void {
+fn wl_compositor_create_region_default(object: Object, id: u32) anyerror!void {
     std.debug.warn("wl_compositor_create_region not implemented\n", .{});
     std.os.exit(2);
 }
@@ -248,20 +248,20 @@ pub fn new_wl_compositor(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_compositor_dispatch(object: Object, opcode: u16) void {
+fn wl_compositor_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // create_surface
         0 => {
             var id: u32 = object.context.next_u32();
             if (WL_COMPOSITOR.create_surface) |create_surface| {
-                create_surface(object, id);
+                try create_surface(object, id);
             }
         },
         // create_region
         1 => {
             var id: u32 = object.context.next_u32();
             if (WL_COMPOSITOR.create_region) |create_region| {
-                create_region(object, id);
+                try create_region(object, id);
             }
         },
         else => {},
@@ -271,24 +271,24 @@ fn wl_compositor_dispatch(object: Object, opcode: u16) void {
 // wl_shm_pool
 pub const wl_shm_pool_interface = struct {
     // a shared memory pool
-    create_buffer: ?fn (Object, u32, i32, i32, i32, i32, u32) void,
+    create_buffer: ?fn (Object, u32, i32, i32, i32, i32, u32) anyerror!void,
     destroy: ?fn (
         Object,
-    ) void,
-    resize: ?fn (Object, i32) void,
+    ) anyerror!void,
+    resize: ?fn (Object, i32) anyerror!void,
 };
 
-fn wl_shm_pool_create_buffer_default(object: Object, id: u32, offset: i32, width: i32, height: i32, stride: i32, format: u32) void {
+fn wl_shm_pool_create_buffer_default(object: Object, id: u32, offset: i32, width: i32, height: i32, stride: i32, format: u32) anyerror!void {
     std.debug.warn("wl_shm_pool_create_buffer not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_shm_pool_destroy_default(object: Object) void {
+fn wl_shm_pool_destroy_default(object: Object) anyerror!void {
     std.debug.warn("wl_shm_pool_destroy not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_shm_pool_resize_default(object: Object, size: i32) void {
+fn wl_shm_pool_resize_default(object: Object, size: i32) anyerror!void {
     std.debug.warn("wl_shm_pool_resize not implemented\n", .{});
     std.os.exit(2);
 }
@@ -316,7 +316,7 @@ pub fn new_wl_shm_pool(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_shm_pool_dispatch(object: Object, opcode: u16) void {
+fn wl_shm_pool_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // create_buffer
         0 => {
@@ -327,13 +327,13 @@ fn wl_shm_pool_dispatch(object: Object, opcode: u16) void {
             var stride: i32 = object.context.next_i32();
             var format: u32 = object.context.next_u32();
             if (WL_SHM_POOL.create_buffer) |create_buffer| {
-                create_buffer(object, id, offset, width, height, stride, format);
+                try create_buffer(object, id, offset, width, height, stride, format);
             }
         },
         // destroy
         1 => {
             if (WL_SHM_POOL.destroy) |destroy| {
-                destroy(
+                try destroy(
                     object,
                 );
             }
@@ -342,7 +342,7 @@ fn wl_shm_pool_dispatch(object: Object, opcode: u16) void {
         2 => {
             var size: i32 = object.context.next_i32();
             if (WL_SHM_POOL.resize) |resize| {
-                resize(object, size);
+                try resize(object, size);
             }
         },
         else => {},
@@ -352,10 +352,10 @@ fn wl_shm_pool_dispatch(object: Object, opcode: u16) void {
 // wl_shm
 pub const wl_shm_interface = struct {
     // shared memory support
-    create_pool: ?fn (Object, u32, i32, i32) void,
+    create_pool: ?fn (Object, u32, i32, i32) anyerror!void,
 };
 
-fn wl_shm_create_pool_default(object: Object, id: u32, fd: i32, size: i32) void {
+fn wl_shm_create_pool_default(object: Object, id: u32, fd: i32, size: i32) anyerror!void {
     std.debug.warn("wl_shm_create_pool not implemented\n", .{});
     std.os.exit(2);
 }
@@ -381,7 +381,7 @@ pub fn new_wl_shm(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_shm_dispatch(object: Object, opcode: u16) void {
+fn wl_shm_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // create_pool
         0 => {
@@ -389,7 +389,7 @@ fn wl_shm_dispatch(object: Object, opcode: u16) void {
             var fd: i32 = object.context.next_fd();
             var size: i32 = object.context.next_i32();
             if (WL_SHM.create_pool) |create_pool| {
-                create_pool(object, id, fd, size);
+                try create_pool(object, id, fd, size);
             }
         },
         else => {},
@@ -466,7 +466,7 @@ pub const wl_shm_format = enum(u32) {
 // can be used for buffers. Known formats include
 // argb8888 and xrgb8888.
 //
-pub fn wl_shm_send_format(object: Object, format: u32) void {
+pub fn wl_shm_send_format(object: Object, format: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(format);
     object.context.finishWrite(object.id, 0);
@@ -477,10 +477,10 @@ pub const wl_buffer_interface = struct {
     // content for a wl_surface
     destroy: ?fn (
         Object,
-    ) void,
+    ) anyerror!void,
 };
 
-fn wl_buffer_destroy_default(object: Object) void {
+fn wl_buffer_destroy_default(object: Object) anyerror!void {
     std.debug.warn("wl_buffer_destroy not implemented\n", .{});
     std.os.exit(2);
 }
@@ -506,12 +506,12 @@ pub fn new_wl_buffer(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_buffer_dispatch(object: Object, opcode: u16) void {
+fn wl_buffer_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // destroy
         0 => {
             if (WL_BUFFER.destroy) |destroy| {
-                destroy(
+                try destroy(
                     object,
                 );
             }
@@ -532,7 +532,7 @@ fn wl_buffer_dispatch(object: Object, opcode: u16) void {
 // wl_surface contents, e.g. as a GL texture. This is an important
 // optimization for GL(ES) compositors with wl_shm clients.
 //
-pub fn wl_buffer_send_release(object: Object) void {
+pub fn wl_buffer_send_release(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 0);
 }
@@ -540,38 +540,38 @@ pub fn wl_buffer_send_release(object: Object) void {
 // wl_data_offer
 pub const wl_data_offer_interface = struct {
     // offer to transfer data
-    accept: ?fn (Object, u32, []u8) void,
-    receive: ?fn (Object, []u8, i32) void,
+    accept: ?fn (Object, u32, []u8) anyerror!void,
+    receive: ?fn (Object, []u8, i32) anyerror!void,
     destroy: ?fn (
         Object,
-    ) void,
+    ) anyerror!void,
     finish: ?fn (
         Object,
-    ) void,
-    set_actions: ?fn (Object, u32, u32) void,
+    ) anyerror!void,
+    set_actions: ?fn (Object, u32, u32) anyerror!void,
 };
 
-fn wl_data_offer_accept_default(object: Object, serial: u32, mime_type: []u8) void {
+fn wl_data_offer_accept_default(object: Object, serial: u32, mime_type: []u8) anyerror!void {
     std.debug.warn("wl_data_offer_accept not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_data_offer_receive_default(object: Object, mime_type: []u8, fd: i32) void {
+fn wl_data_offer_receive_default(object: Object, mime_type: []u8, fd: i32) anyerror!void {
     std.debug.warn("wl_data_offer_receive not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_data_offer_destroy_default(object: Object) void {
+fn wl_data_offer_destroy_default(object: Object) anyerror!void {
     std.debug.warn("wl_data_offer_destroy not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_data_offer_finish_default(object: Object) void {
+fn wl_data_offer_finish_default(object: Object) anyerror!void {
     std.debug.warn("wl_data_offer_finish not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_data_offer_set_actions_default(object: Object, dnd_actions: u32, preferred_action: u32) void {
+fn wl_data_offer_set_actions_default(object: Object, dnd_actions: u32, preferred_action: u32) anyerror!void {
     std.debug.warn("wl_data_offer_set_actions not implemented\n", .{});
     std.os.exit(2);
 }
@@ -601,14 +601,14 @@ pub fn new_wl_data_offer(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_data_offer_dispatch(object: Object, opcode: u16) void {
+fn wl_data_offer_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // accept
         0 => {
             var serial: u32 = object.context.next_u32();
             var mime_type: []u8 = object.context.next_string();
             if (WL_DATA_OFFER.accept) |accept| {
-                accept(object, serial, mime_type);
+                try accept(object, serial, mime_type);
             }
         },
         // receive
@@ -616,13 +616,13 @@ fn wl_data_offer_dispatch(object: Object, opcode: u16) void {
             var mime_type: []u8 = object.context.next_string();
             var fd: i32 = object.context.next_fd();
             if (WL_DATA_OFFER.receive) |receive| {
-                receive(object, mime_type, fd);
+                try receive(object, mime_type, fd);
             }
         },
         // destroy
         2 => {
             if (WL_DATA_OFFER.destroy) |destroy| {
-                destroy(
+                try destroy(
                     object,
                 );
             }
@@ -630,7 +630,7 @@ fn wl_data_offer_dispatch(object: Object, opcode: u16) void {
         // finish
         3 => {
             if (WL_DATA_OFFER.finish) |finish| {
-                finish(
+                try finish(
                     object,
                 );
             }
@@ -640,7 +640,7 @@ fn wl_data_offer_dispatch(object: Object, opcode: u16) void {
             var dnd_actions: u32 = object.context.next_u32();
             var preferred_action: u32 = object.context.next_u32();
             if (WL_DATA_OFFER.set_actions) |set_actions| {
-                set_actions(object, dnd_actions, preferred_action);
+                try set_actions(object, dnd_actions, preferred_action);
             }
         },
         else => {},
@@ -656,7 +656,7 @@ pub const wl_data_offer_error = enum(u32) {
 // Sent immediately after creating the wl_data_offer object.  One
 // event per offered mime type.
 //
-pub fn wl_data_offer_send_offer(object: Object, mime_type: []const u8) void {
+pub fn wl_data_offer_send_offer(object: Object, mime_type: []const u8) anyerror!void {
     object.context.startWrite();
     object.context.putString(mime_type);
     object.context.finishWrite(object.id, 0);
@@ -665,7 +665,7 @@ pub fn wl_data_offer_send_offer(object: Object, mime_type: []const u8) void {
 // will be sent right after wl_data_device.enter, or anytime the source
 // side changes its offered actions through wl_data_source.set_actions.
 //
-pub fn wl_data_offer_send_source_actions(object: Object, source_actions: u32) void {
+pub fn wl_data_offer_send_source_actions(object: Object, source_actions: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(source_actions);
     object.context.finishWrite(object.id, 1);
@@ -706,7 +706,7 @@ pub fn wl_data_offer_send_source_actions(object: Object, source_actions: u32) vo
 // final wl_data_offer.set_actions and wl_data_offer.accept requests
 // must happen before the call to wl_data_offer.finish.
 //
-pub fn wl_data_offer_send_action(object: Object, dnd_action: u32) void {
+pub fn wl_data_offer_send_action(object: Object, dnd_action: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(dnd_action);
     object.context.finishWrite(object.id, 2);
@@ -715,24 +715,24 @@ pub fn wl_data_offer_send_action(object: Object, dnd_action: u32) void {
 // wl_data_source
 pub const wl_data_source_interface = struct {
     // offer to transfer data
-    offer: ?fn (Object, []u8) void,
+    offer: ?fn (Object, []u8) anyerror!void,
     destroy: ?fn (
         Object,
-    ) void,
-    set_actions: ?fn (Object, u32) void,
+    ) anyerror!void,
+    set_actions: ?fn (Object, u32) anyerror!void,
 };
 
-fn wl_data_source_offer_default(object: Object, mime_type: []u8) void {
+fn wl_data_source_offer_default(object: Object, mime_type: []u8) anyerror!void {
     std.debug.warn("wl_data_source_offer not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_data_source_destroy_default(object: Object) void {
+fn wl_data_source_destroy_default(object: Object) anyerror!void {
     std.debug.warn("wl_data_source_destroy not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_data_source_set_actions_default(object: Object, dnd_actions: u32) void {
+fn wl_data_source_set_actions_default(object: Object, dnd_actions: u32) anyerror!void {
     std.debug.warn("wl_data_source_set_actions not implemented\n", .{});
     std.os.exit(2);
 }
@@ -760,19 +760,19 @@ pub fn new_wl_data_source(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_data_source_dispatch(object: Object, opcode: u16) void {
+fn wl_data_source_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // offer
         0 => {
             var mime_type: []u8 = object.context.next_string();
             if (WL_DATA_SOURCE.offer) |offer| {
-                offer(object, mime_type);
+                try offer(object, mime_type);
             }
         },
         // destroy
         1 => {
             if (WL_DATA_SOURCE.destroy) |destroy| {
-                destroy(
+                try destroy(
                     object,
                 );
             }
@@ -781,7 +781,7 @@ fn wl_data_source_dispatch(object: Object, opcode: u16) void {
         2 => {
             var dnd_actions: u32 = object.context.next_u32();
             if (WL_DATA_SOURCE.set_actions) |set_actions| {
-                set_actions(object, dnd_actions);
+                try set_actions(object, dnd_actions);
             }
         },
         else => {},
@@ -797,7 +797,7 @@ pub const wl_data_source_error = enum(u32) {
 //
 // Used for feedback during drag-and-drop.
 //
-pub fn wl_data_source_send_target(object: Object, mime_type: []const u8) void {
+pub fn wl_data_source_send_target(object: Object, mime_type: []const u8) anyerror!void {
     object.context.startWrite();
     object.context.putString(mime_type);
     object.context.finishWrite(object.id, 0);
@@ -806,7 +806,7 @@ pub fn wl_data_source_send_target(object: Object, mime_type: []const u8) void {
 // specified mime type over the passed file descriptor, then
 // close it.
 //
-pub fn wl_data_source_send_send(object: Object, mime_type: []const u8, fd: i32) void {
+pub fn wl_data_source_send_send(object: Object, mime_type: []const u8, fd: i32) anyerror!void {
     object.context.startWrite();
     object.context.putString(mime_type);
     object.context.putI32(fd);
@@ -833,7 +833,7 @@ pub fn wl_data_source_send_send(object: Object, mime_type: []const u8, fd: i32) 
 // only be emitted if the data source was replaced by another data
 // source.
 //
-pub fn wl_data_source_send_cancelled(object: Object) void {
+pub fn wl_data_source_send_cancelled(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 2);
 }
@@ -847,7 +847,7 @@ pub fn wl_data_source_send_cancelled(object: Object) void {
 // Note that the data_source may still be used in the future and should
 // not be destroyed here.
 //
-pub fn wl_data_source_send_dnd_drop_performed(object: Object) void {
+pub fn wl_data_source_send_dnd_drop_performed(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 3);
 }
@@ -858,7 +858,7 @@ pub fn wl_data_source_send_dnd_drop_performed(object: Object) void {
 // If the action used to perform the operation was "move", the
 // source can now delete the transferred data.
 //
-pub fn wl_data_source_send_dnd_finished(object: Object) void {
+pub fn wl_data_source_send_dnd_finished(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 4);
 }
@@ -888,7 +888,7 @@ pub fn wl_data_source_send_dnd_finished(object: Object) void {
 // Clients can trigger cursor surface changes from this point, so
 // they reflect the current action.
 //
-pub fn wl_data_source_send_action(object: Object, dnd_action: u32) void {
+pub fn wl_data_source_send_action(object: Object, dnd_action: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(dnd_action);
     object.context.finishWrite(object.id, 5);
@@ -897,24 +897,24 @@ pub fn wl_data_source_send_action(object: Object, dnd_action: u32) void {
 // wl_data_device
 pub const wl_data_device_interface = struct {
     // data transfer device
-    start_drag: ?fn (Object, Object, Object, Object, u32) void,
-    set_selection: ?fn (Object, Object, u32) void,
+    start_drag: ?fn (Object, Object, Object, Object, u32) anyerror!void,
+    set_selection: ?fn (Object, Object, u32) anyerror!void,
     release: ?fn (
         Object,
-    ) void,
+    ) anyerror!void,
 };
 
-fn wl_data_device_start_drag_default(object: Object, source: Object, origin: Object, icon: Object, serial: u32) void {
+fn wl_data_device_start_drag_default(object: Object, source: Object, origin: Object, icon: Object, serial: u32) anyerror!void {
     std.debug.warn("wl_data_device_start_drag not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_data_device_set_selection_default(object: Object, source: Object, serial: u32) void {
+fn wl_data_device_set_selection_default(object: Object, source: Object, serial: u32) anyerror!void {
     std.debug.warn("wl_data_device_set_selection not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_data_device_release_default(object: Object) void {
+fn wl_data_device_release_default(object: Object) anyerror!void {
     std.debug.warn("wl_data_device_release not implemented\n", .{});
     std.os.exit(2);
 }
@@ -942,7 +942,7 @@ pub fn new_wl_data_device(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_data_device_dispatch(object: Object, opcode: u16) void {
+fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // start_drag
         0 => {
@@ -951,7 +951,7 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) void {
             var icon: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var serial: u32 = object.context.next_u32();
             if (WL_DATA_DEVICE.start_drag) |start_drag| {
-                start_drag(object, source, origin, icon, serial);
+                try start_drag(object, source, origin, icon, serial);
             }
         },
         // set_selection
@@ -959,13 +959,13 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) void {
             var source: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var serial: u32 = object.context.next_u32();
             if (WL_DATA_DEVICE.set_selection) |set_selection| {
-                set_selection(object, source, serial);
+                try set_selection(object, source, serial);
             }
         },
         // release
         2 => {
             if (WL_DATA_DEVICE.release) |release| {
-                release(
+                try release(
                     object,
                 );
             }
@@ -985,7 +985,7 @@ pub const wl_data_device_error = enum(u32) {
 // object will send out data_offer.offer events to describe the
 // mime types it offers.
 //
-pub fn wl_data_device_send_data_offer(object: Object, id: u32) void {
+pub fn wl_data_device_send_data_offer(object: Object, id: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(id);
     object.context.finishWrite(object.id, 0);
@@ -995,7 +995,7 @@ pub fn wl_data_device_send_data_offer(object: Object, id: u32) void {
 // enter time is provided by the x and y arguments, in surface-local
 // coordinates.
 //
-pub fn wl_data_device_send_enter(object: Object, serial: u32, surface: u32, x: f32, y: f32, id: u32) void {
+pub fn wl_data_device_send_enter(object: Object, serial: u32, surface: u32, x: f32, y: f32, id: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.putU32(surface);
@@ -1008,7 +1008,7 @@ pub fn wl_data_device_send_enter(object: Object, serial: u32, surface: u32, x: f
 // surface and the session ends.  The client must destroy the
 // wl_data_offer introduced at enter time at this point.
 //
-pub fn wl_data_device_send_leave(object: Object) void {
+pub fn wl_data_device_send_leave(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 2);
 }
@@ -1017,7 +1017,7 @@ pub fn wl_data_device_send_leave(object: Object) void {
 // is provided by the x and y arguments, in surface-local
 // coordinates.
 //
-pub fn wl_data_device_send_motion(object: Object, time: u32, x: f32, y: f32) void {
+pub fn wl_data_device_send_motion(object: Object, time: u32, x: f32, y: f32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(time);
     object.context.putFixed(x);
@@ -1038,7 +1038,7 @@ pub fn wl_data_device_send_motion(object: Object, time: u32, x: f32, y: f32) voi
 // wl_data_offer.set_actions request, or wl_data_offer.destroy in order
 // to cancel the operation.
 //
-pub fn wl_data_device_send_drop(object: Object) void {
+pub fn wl_data_device_send_drop(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 4);
 }
@@ -1054,7 +1054,7 @@ pub fn wl_data_device_send_drop(object: Object) void {
 // destroy the previous selection data_offer, if any, upon receiving
 // this event.
 //
-pub fn wl_data_device_send_selection(object: Object, id: u32) void {
+pub fn wl_data_device_send_selection(object: Object, id: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(id);
     object.context.finishWrite(object.id, 5);
@@ -1063,16 +1063,16 @@ pub fn wl_data_device_send_selection(object: Object, id: u32) void {
 // wl_data_device_manager
 pub const wl_data_device_manager_interface = struct {
     // data transfer interface
-    create_data_source: ?fn (Object, u32) void,
-    get_data_device: ?fn (Object, u32, Object) void,
+    create_data_source: ?fn (Object, u32) anyerror!void,
+    get_data_device: ?fn (Object, u32, Object) anyerror!void,
 };
 
-fn wl_data_device_manager_create_data_source_default(object: Object, id: u32) void {
+fn wl_data_device_manager_create_data_source_default(object: Object, id: u32) anyerror!void {
     std.debug.warn("wl_data_device_manager_create_data_source not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_data_device_manager_get_data_device_default(object: Object, id: u32, seat: Object) void {
+fn wl_data_device_manager_get_data_device_default(object: Object, id: u32, seat: Object) anyerror!void {
     std.debug.warn("wl_data_device_manager_get_data_device not implemented\n", .{});
     std.os.exit(2);
 }
@@ -1099,13 +1099,13 @@ pub fn new_wl_data_device_manager(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_data_device_manager_dispatch(object: Object, opcode: u16) void {
+fn wl_data_device_manager_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // create_data_source
         0 => {
             var id: u32 = object.context.next_u32();
             if (WL_DATA_DEVICE_MANAGER.create_data_source) |create_data_source| {
-                create_data_source(object, id);
+                try create_data_source(object, id);
             }
         },
         // get_data_device
@@ -1113,7 +1113,7 @@ fn wl_data_device_manager_dispatch(object: Object, opcode: u16) void {
             var id: u32 = object.context.next_u32();
             var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_DATA_DEVICE_MANAGER.get_data_device) |get_data_device| {
-                get_data_device(object, id, seat);
+                try get_data_device(object, id, seat);
             }
         },
         else => {},
@@ -1130,10 +1130,10 @@ pub const wl_data_device_manager_dnd_action = enum(u32) {
 // wl_shell
 pub const wl_shell_interface = struct {
     // create desktop-style surfaces
-    get_shell_surface: ?fn (Object, u32, Object) void,
+    get_shell_surface: ?fn (Object, u32, Object) anyerror!void,
 };
 
-fn wl_shell_get_shell_surface_default(object: Object, id: u32, surface: Object) void {
+fn wl_shell_get_shell_surface_default(object: Object, id: u32, surface: Object) anyerror!void {
     std.debug.warn("wl_shell_get_shell_surface not implemented\n", .{});
     std.os.exit(2);
 }
@@ -1159,14 +1159,14 @@ pub fn new_wl_shell(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_shell_dispatch(object: Object, opcode: u16) void {
+fn wl_shell_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // get_shell_surface
         0 => {
             var id: u32 = object.context.next_u32();
             var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SHELL.get_shell_surface) |get_shell_surface| {
-                get_shell_surface(object, id, surface);
+                try get_shell_surface(object, id, surface);
             }
         },
         else => {},
@@ -1180,66 +1180,66 @@ pub const wl_shell_error = enum(u32) {
 // wl_shell_surface
 pub const wl_shell_surface_interface = struct {
     // desktop-style metadata interface
-    pong: ?fn (Object, u32) void,
-    move: ?fn (Object, Object, u32) void,
-    resize: ?fn (Object, Object, u32, u32) void,
+    pong: ?fn (Object, u32) anyerror!void,
+    move: ?fn (Object, Object, u32) anyerror!void,
+    resize: ?fn (Object, Object, u32, u32) anyerror!void,
     set_toplevel: ?fn (
         Object,
-    ) void,
-    set_transient: ?fn (Object, Object, i32, i32, u32) void,
-    set_fullscreen: ?fn (Object, u32, u32, Object) void,
-    set_popup: ?fn (Object, Object, u32, Object, i32, i32, u32) void,
-    set_maximized: ?fn (Object, Object) void,
-    set_title: ?fn (Object, []u8) void,
-    set_class: ?fn (Object, []u8) void,
+    ) anyerror!void,
+    set_transient: ?fn (Object, Object, i32, i32, u32) anyerror!void,
+    set_fullscreen: ?fn (Object, u32, u32, Object) anyerror!void,
+    set_popup: ?fn (Object, Object, u32, Object, i32, i32, u32) anyerror!void,
+    set_maximized: ?fn (Object, Object) anyerror!void,
+    set_title: ?fn (Object, []u8) anyerror!void,
+    set_class: ?fn (Object, []u8) anyerror!void,
 };
 
-fn wl_shell_surface_pong_default(object: Object, serial: u32) void {
+fn wl_shell_surface_pong_default(object: Object, serial: u32) anyerror!void {
     std.debug.warn("wl_shell_surface_pong not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_shell_surface_move_default(object: Object, seat: Object, serial: u32) void {
+fn wl_shell_surface_move_default(object: Object, seat: Object, serial: u32) anyerror!void {
     std.debug.warn("wl_shell_surface_move not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_shell_surface_resize_default(object: Object, seat: Object, serial: u32, edges: u32) void {
+fn wl_shell_surface_resize_default(object: Object, seat: Object, serial: u32, edges: u32) anyerror!void {
     std.debug.warn("wl_shell_surface_resize not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_shell_surface_set_toplevel_default(object: Object) void {
+fn wl_shell_surface_set_toplevel_default(object: Object) anyerror!void {
     std.debug.warn("wl_shell_surface_set_toplevel not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_shell_surface_set_transient_default(object: Object, parent: Object, x: i32, y: i32, flags: u32) void {
+fn wl_shell_surface_set_transient_default(object: Object, parent: Object, x: i32, y: i32, flags: u32) anyerror!void {
     std.debug.warn("wl_shell_surface_set_transient not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_shell_surface_set_fullscreen_default(object: Object, method: u32, framerate: u32, output: Object) void {
+fn wl_shell_surface_set_fullscreen_default(object: Object, method: u32, framerate: u32, output: Object) anyerror!void {
     std.debug.warn("wl_shell_surface_set_fullscreen not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_shell_surface_set_popup_default(object: Object, seat: Object, serial: u32, parent: Object, x: i32, y: i32, flags: u32) void {
+fn wl_shell_surface_set_popup_default(object: Object, seat: Object, serial: u32, parent: Object, x: i32, y: i32, flags: u32) anyerror!void {
     std.debug.warn("wl_shell_surface_set_popup not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_shell_surface_set_maximized_default(object: Object, output: Object) void {
+fn wl_shell_surface_set_maximized_default(object: Object, output: Object) anyerror!void {
     std.debug.warn("wl_shell_surface_set_maximized not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_shell_surface_set_title_default(object: Object, title: []u8) void {
+fn wl_shell_surface_set_title_default(object: Object, title: []u8) anyerror!void {
     std.debug.warn("wl_shell_surface_set_title not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_shell_surface_set_class_default(object: Object, class_: []u8) void {
+fn wl_shell_surface_set_class_default(object: Object, class_: []u8) anyerror!void {
     std.debug.warn("wl_shell_surface_set_class not implemented\n", .{});
     std.os.exit(2);
 }
@@ -1274,13 +1274,13 @@ pub fn new_wl_shell_surface(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
+fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // pong
         0 => {
             var serial: u32 = object.context.next_u32();
             if (WL_SHELL_SURFACE.pong) |pong| {
-                pong(object, serial);
+                try pong(object, serial);
             }
         },
         // move
@@ -1288,7 +1288,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
             var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var serial: u32 = object.context.next_u32();
             if (WL_SHELL_SURFACE.move) |move| {
-                move(object, seat, serial);
+                try move(object, seat, serial);
             }
         },
         // resize
@@ -1297,13 +1297,13 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
             var serial: u32 = object.context.next_u32();
             var edges: u32 = object.context.next_u32();
             if (WL_SHELL_SURFACE.resize) |resize| {
-                resize(object, seat, serial, edges);
+                try resize(object, seat, serial, edges);
             }
         },
         // set_toplevel
         3 => {
             if (WL_SHELL_SURFACE.set_toplevel) |set_toplevel| {
-                set_toplevel(
+                try set_toplevel(
                     object,
                 );
             }
@@ -1315,7 +1315,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
             var y: i32 = object.context.next_i32();
             var flags: u32 = object.context.next_u32();
             if (WL_SHELL_SURFACE.set_transient) |set_transient| {
-                set_transient(object, parent, x, y, flags);
+                try set_transient(object, parent, x, y, flags);
             }
         },
         // set_fullscreen
@@ -1324,7 +1324,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
             var framerate: u32 = object.context.next_u32();
             var output: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SHELL_SURFACE.set_fullscreen) |set_fullscreen| {
-                set_fullscreen(object, method, framerate, output);
+                try set_fullscreen(object, method, framerate, output);
             }
         },
         // set_popup
@@ -1336,28 +1336,28 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) void {
             var y: i32 = object.context.next_i32();
             var flags: u32 = object.context.next_u32();
             if (WL_SHELL_SURFACE.set_popup) |set_popup| {
-                set_popup(object, seat, serial, parent, x, y, flags);
+                try set_popup(object, seat, serial, parent, x, y, flags);
             }
         },
         // set_maximized
         7 => {
             var output: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SHELL_SURFACE.set_maximized) |set_maximized| {
-                set_maximized(object, output);
+                try set_maximized(object, output);
             }
         },
         // set_title
         8 => {
             var title: []u8 = object.context.next_string();
             if (WL_SHELL_SURFACE.set_title) |set_title| {
-                set_title(object, title);
+                try set_title(object, title);
             }
         },
         // set_class
         9 => {
             var class_: []u8 = object.context.next_string();
             if (WL_SHELL_SURFACE.set_class) |set_class| {
-                set_class(object, class_);
+                try set_class(object, class_);
             }
         },
         else => {},
@@ -1389,7 +1389,7 @@ pub const wl_shell_surface_fullscreen_method = enum(u32) {
 // Ping a client to check if it is receiving events and sending
 // requests. A client is expected to reply with a pong request.
 //
-pub fn wl_shell_surface_send_ping(object: Object, serial: u32) void {
+pub fn wl_shell_surface_send_ping(object: Object, serial: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.finishWrite(object.id, 0);
@@ -1412,7 +1412,7 @@ pub fn wl_shell_surface_send_ping(object: Object, serial: u32) void {
 // The width and height arguments specify the size of the window
 // in surface-local coordinates.
 //
-pub fn wl_shell_surface_send_configure(object: Object, edges: u32, width: i32, height: i32) void {
+pub fn wl_shell_surface_send_configure(object: Object, edges: u32, width: i32, height: i32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(edges);
     object.context.putI32(width);
@@ -1423,7 +1423,7 @@ pub fn wl_shell_surface_send_configure(object: Object, edges: u32, width: i32, h
 // that is, when the user clicks a surface that doesn't belong
 // to the client owning the popup surface.
 //
-pub fn wl_shell_surface_send_popup_done(object: Object) void {
+pub fn wl_shell_surface_send_popup_done(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 2);
 }
@@ -1433,66 +1433,66 @@ pub const wl_surface_interface = struct {
     // an onscreen surface
     destroy: ?fn (
         Object,
-    ) void,
-    attach: ?fn (Object, Object, i32, i32) void,
-    damage: ?fn (Object, i32, i32, i32, i32) void,
-    frame: ?fn (Object, u32) void,
-    set_opaque_region: ?fn (Object, Object) void,
-    set_input_region: ?fn (Object, Object) void,
+    ) anyerror!void,
+    attach: ?fn (Object, Object, i32, i32) anyerror!void,
+    damage: ?fn (Object, i32, i32, i32, i32) anyerror!void,
+    frame: ?fn (Object, u32) anyerror!void,
+    set_opaque_region: ?fn (Object, Object) anyerror!void,
+    set_input_region: ?fn (Object, Object) anyerror!void,
     commit: ?fn (
         Object,
-    ) void,
-    set_buffer_transform: ?fn (Object, i32) void,
-    set_buffer_scale: ?fn (Object, i32) void,
-    damage_buffer: ?fn (Object, i32, i32, i32, i32) void,
+    ) anyerror!void,
+    set_buffer_transform: ?fn (Object, i32) anyerror!void,
+    set_buffer_scale: ?fn (Object, i32) anyerror!void,
+    damage_buffer: ?fn (Object, i32, i32, i32, i32) anyerror!void,
 };
 
-fn wl_surface_destroy_default(object: Object) void {
+fn wl_surface_destroy_default(object: Object) anyerror!void {
     std.debug.warn("wl_surface_destroy not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_surface_attach_default(object: Object, buffer: Object, x: i32, y: i32) void {
+fn wl_surface_attach_default(object: Object, buffer: Object, x: i32, y: i32) anyerror!void {
     std.debug.warn("wl_surface_attach not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_surface_damage_default(object: Object, x: i32, y: i32, width: i32, height: i32) void {
+fn wl_surface_damage_default(object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     std.debug.warn("wl_surface_damage not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_surface_frame_default(object: Object, callback: u32) void {
+fn wl_surface_frame_default(object: Object, callback: u32) anyerror!void {
     std.debug.warn("wl_surface_frame not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_surface_set_opaque_region_default(object: Object, region: Object) void {
+fn wl_surface_set_opaque_region_default(object: Object, region: Object) anyerror!void {
     std.debug.warn("wl_surface_set_opaque_region not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_surface_set_input_region_default(object: Object, region: Object) void {
+fn wl_surface_set_input_region_default(object: Object, region: Object) anyerror!void {
     std.debug.warn("wl_surface_set_input_region not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_surface_commit_default(object: Object) void {
+fn wl_surface_commit_default(object: Object) anyerror!void {
     std.debug.warn("wl_surface_commit not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_surface_set_buffer_transform_default(object: Object, transform: i32) void {
+fn wl_surface_set_buffer_transform_default(object: Object, transform: i32) anyerror!void {
     std.debug.warn("wl_surface_set_buffer_transform not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_surface_set_buffer_scale_default(object: Object, scale: i32) void {
+fn wl_surface_set_buffer_scale_default(object: Object, scale: i32) anyerror!void {
     std.debug.warn("wl_surface_set_buffer_scale not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_surface_damage_buffer_default(object: Object, x: i32, y: i32, width: i32, height: i32) void {
+fn wl_surface_damage_buffer_default(object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     std.debug.warn("wl_surface_damage_buffer not implemented\n", .{});
     std.os.exit(2);
 }
@@ -1527,12 +1527,12 @@ pub fn new_wl_surface(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_surface_dispatch(object: Object, opcode: u16) void {
+fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // destroy
         0 => {
             if (WL_SURFACE.destroy) |destroy| {
-                destroy(
+                try destroy(
                     object,
                 );
             }
@@ -1543,7 +1543,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) void {
             var x: i32 = object.context.next_i32();
             var y: i32 = object.context.next_i32();
             if (WL_SURFACE.attach) |attach| {
-                attach(object, buffer, x, y);
+                try attach(object, buffer, x, y);
             }
         },
         // damage
@@ -1553,34 +1553,34 @@ fn wl_surface_dispatch(object: Object, opcode: u16) void {
             var width: i32 = object.context.next_i32();
             var height: i32 = object.context.next_i32();
             if (WL_SURFACE.damage) |damage| {
-                damage(object, x, y, width, height);
+                try damage(object, x, y, width, height);
             }
         },
         // frame
         3 => {
             var callback: u32 = object.context.next_u32();
             if (WL_SURFACE.frame) |frame| {
-                frame(object, callback);
+                try frame(object, callback);
             }
         },
         // set_opaque_region
         4 => {
             var region: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SURFACE.set_opaque_region) |set_opaque_region| {
-                set_opaque_region(object, region);
+                try set_opaque_region(object, region);
             }
         },
         // set_input_region
         5 => {
             var region: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SURFACE.set_input_region) |set_input_region| {
-                set_input_region(object, region);
+                try set_input_region(object, region);
             }
         },
         // commit
         6 => {
             if (WL_SURFACE.commit) |commit| {
-                commit(
+                try commit(
                     object,
                 );
             }
@@ -1589,14 +1589,14 @@ fn wl_surface_dispatch(object: Object, opcode: u16) void {
         7 => {
             var transform: i32 = object.context.next_i32();
             if (WL_SURFACE.set_buffer_transform) |set_buffer_transform| {
-                set_buffer_transform(object, transform);
+                try set_buffer_transform(object, transform);
             }
         },
         // set_buffer_scale
         8 => {
             var scale: i32 = object.context.next_i32();
             if (WL_SURFACE.set_buffer_scale) |set_buffer_scale| {
-                set_buffer_scale(object, scale);
+                try set_buffer_scale(object, scale);
             }
         },
         // damage_buffer
@@ -1606,7 +1606,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) void {
             var width: i32 = object.context.next_i32();
             var height: i32 = object.context.next_i32();
             if (WL_SURFACE.damage_buffer) |damage_buffer| {
-                damage_buffer(object, x, y, width, height);
+                try damage_buffer(object, x, y, width, height);
             }
         },
         else => {},
@@ -1623,7 +1623,7 @@ pub const wl_surface_error = enum(u32) {
 //
 // Note that a surface may be overlapping with zero or more outputs.
 //
-pub fn wl_surface_send_enter(object: Object, output: u32) void {
+pub fn wl_surface_send_enter(object: Object, output: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(output);
     object.context.finishWrite(object.id, 0);
@@ -1632,7 +1632,7 @@ pub fn wl_surface_send_enter(object: Object, output: u32) void {
 // results in it no longer having any part of it within the scanout region
 // of an output.
 //
-pub fn wl_surface_send_leave(object: Object, output: u32) void {
+pub fn wl_surface_send_leave(object: Object, output: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(output);
     object.context.finishWrite(object.id, 1);
@@ -1641,30 +1641,30 @@ pub fn wl_surface_send_leave(object: Object, output: u32) void {
 // wl_seat
 pub const wl_seat_interface = struct {
     // group of input devices
-    get_pointer: ?fn (Object, u32) void,
-    get_keyboard: ?fn (Object, u32) void,
-    get_touch: ?fn (Object, u32) void,
+    get_pointer: ?fn (Object, u32) anyerror!void,
+    get_keyboard: ?fn (Object, u32) anyerror!void,
+    get_touch: ?fn (Object, u32) anyerror!void,
     release: ?fn (
         Object,
-    ) void,
+    ) anyerror!void,
 };
 
-fn wl_seat_get_pointer_default(object: Object, id: u32) void {
+fn wl_seat_get_pointer_default(object: Object, id: u32) anyerror!void {
     std.debug.warn("wl_seat_get_pointer not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_seat_get_keyboard_default(object: Object, id: u32) void {
+fn wl_seat_get_keyboard_default(object: Object, id: u32) anyerror!void {
     std.debug.warn("wl_seat_get_keyboard not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_seat_get_touch_default(object: Object, id: u32) void {
+fn wl_seat_get_touch_default(object: Object, id: u32) anyerror!void {
     std.debug.warn("wl_seat_get_touch not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_seat_release_default(object: Object) void {
+fn wl_seat_release_default(object: Object) anyerror!void {
     std.debug.warn("wl_seat_release not implemented\n", .{});
     std.os.exit(2);
 }
@@ -1693,33 +1693,33 @@ pub fn new_wl_seat(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_seat_dispatch(object: Object, opcode: u16) void {
+fn wl_seat_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // get_pointer
         0 => {
             var id: u32 = object.context.next_u32();
             if (WL_SEAT.get_pointer) |get_pointer| {
-                get_pointer(object, id);
+                try get_pointer(object, id);
             }
         },
         // get_keyboard
         1 => {
             var id: u32 = object.context.next_u32();
             if (WL_SEAT.get_keyboard) |get_keyboard| {
-                get_keyboard(object, id);
+                try get_keyboard(object, id);
             }
         },
         // get_touch
         2 => {
             var id: u32 = object.context.next_u32();
             if (WL_SEAT.get_touch) |get_touch| {
-                get_touch(object, id);
+                try get_touch(object, id);
             }
         },
         // release
         3 => {
             if (WL_SEAT.release) |release| {
-                release(
+                try release(
                     object,
                 );
             }
@@ -1758,7 +1758,7 @@ pub const wl_seat_capability = enum(u32) {
 // The above behavior also applies to wl_keyboard and wl_touch with the
 // keyboard and touch capabilities, respectively.
 //
-pub fn wl_seat_send_capabilities(object: Object, capabilities: u32) void {
+pub fn wl_seat_send_capabilities(object: Object, capabilities: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(capabilities);
     object.context.finishWrite(object.id, 0);
@@ -1767,7 +1767,7 @@ pub fn wl_seat_send_capabilities(object: Object, capabilities: u32) void {
 // identify which physical devices the seat represents. Based on
 // the seat configuration used by the compositor.
 //
-pub fn wl_seat_send_name(object: Object, name: []const u8) void {
+pub fn wl_seat_send_name(object: Object, name: []const u8) anyerror!void {
     object.context.startWrite();
     object.context.putString(name);
     object.context.finishWrite(object.id, 1);
@@ -1776,18 +1776,18 @@ pub fn wl_seat_send_name(object: Object, name: []const u8) void {
 // wl_pointer
 pub const wl_pointer_interface = struct {
     // pointer input device
-    set_cursor: ?fn (Object, u32, Object, i32, i32) void,
+    set_cursor: ?fn (Object, u32, Object, i32, i32) anyerror!void,
     release: ?fn (
         Object,
-    ) void,
+    ) anyerror!void,
 };
 
-fn wl_pointer_set_cursor_default(object: Object, serial: u32, surface: Object, hotspot_x: i32, hotspot_y: i32) void {
+fn wl_pointer_set_cursor_default(object: Object, serial: u32, surface: Object, hotspot_x: i32, hotspot_y: i32) anyerror!void {
     std.debug.warn("wl_pointer_set_cursor not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_pointer_release_default(object: Object) void {
+fn wl_pointer_release_default(object: Object) anyerror!void {
     std.debug.warn("wl_pointer_release not implemented\n", .{});
     std.os.exit(2);
 }
@@ -1814,7 +1814,7 @@ pub fn new_wl_pointer(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_pointer_dispatch(object: Object, opcode: u16) void {
+fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // set_cursor
         0 => {
@@ -1823,13 +1823,13 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) void {
             var hotspot_x: i32 = object.context.next_i32();
             var hotspot_y: i32 = object.context.next_i32();
             if (WL_POINTER.set_cursor) |set_cursor| {
-                set_cursor(object, serial, surface, hotspot_x, hotspot_y);
+                try set_cursor(object, serial, surface, hotspot_x, hotspot_y);
             }
         },
         // release
         1 => {
             if (WL_POINTER.release) |release| {
-                release(
+                try release(
                     object,
                 );
             }
@@ -1865,7 +1865,7 @@ pub const wl_pointer_axis_source = enum(u32) {
 // is undefined and a client should respond to this event by setting
 // an appropriate pointer image with the set_cursor request.
 //
-pub fn wl_pointer_send_enter(object: Object, serial: u32, surface: u32, surface_x: f32, surface_y: f32) void {
+pub fn wl_pointer_send_enter(object: Object, serial: u32, surface: u32, surface_x: f32, surface_y: f32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.putU32(surface);
@@ -1879,7 +1879,7 @@ pub fn wl_pointer_send_enter(object: Object, serial: u32, surface: u32, surface_
 // The leave notification is sent before the enter notification
 // for the new focus.
 //
-pub fn wl_pointer_send_leave(object: Object, serial: u32, surface: u32) void {
+pub fn wl_pointer_send_leave(object: Object, serial: u32, surface: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.putU32(surface);
@@ -1889,7 +1889,7 @@ pub fn wl_pointer_send_leave(object: Object, serial: u32, surface: u32) void {
 // surface_x and surface_y are the location relative to the
 // focused surface.
 //
-pub fn wl_pointer_send_motion(object: Object, time: u32, surface_x: f32, surface_y: f32) void {
+pub fn wl_pointer_send_motion(object: Object, time: u32, surface_x: f32, surface_y: f32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(time);
     object.context.putFixed(surface_x);
@@ -1911,7 +1911,7 @@ pub fn wl_pointer_send_motion(object: Object, time: u32, surface_x: f32, surface
 // currently undefined but may be used in future versions of this
 // protocol.
 //
-pub fn wl_pointer_send_button(object: Object, serial: u32, time: u32, button: u32, state: u32) void {
+pub fn wl_pointer_send_button(object: Object, serial: u32, time: u32, button: u32, state: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.putU32(time);
@@ -1936,7 +1936,7 @@ pub fn wl_pointer_send_button(object: Object, serial: u32, time: u32, button: u3
 // When applicable, a client can transform its content relative to the
 // scroll distance.
 //
-pub fn wl_pointer_send_axis(object: Object, time: u32, axis: u32, value: f32) void {
+pub fn wl_pointer_send_axis(object: Object, time: u32, axis: u32, value: f32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(time);
     object.context.putU32(axis);
@@ -1978,7 +1978,7 @@ pub fn wl_pointer_send_axis(object: Object, time: u32, axis: u32, value: f32) vo
 // wl_pointer.enter event being split across multiple wl_pointer.frame
 // groups.
 //
-pub fn wl_pointer_send_frame(object: Object) void {
+pub fn wl_pointer_send_frame(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 5);
 }
@@ -2008,7 +2008,7 @@ pub fn wl_pointer_send_frame(object: Object) void {
 // The order of wl_pointer.axis_discrete and wl_pointer.axis_source is
 // not guaranteed.
 //
-pub fn wl_pointer_send_axis_source(object: Object, axis_source: u32) void {
+pub fn wl_pointer_send_axis_source(object: Object, axis_source: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(axis_source);
     object.context.finishWrite(object.id, 6);
@@ -2028,7 +2028,7 @@ pub fn wl_pointer_send_axis_source(object: Object, axis_source: u32) void {
 // wl_pointer.axis event. The timestamp value may be the same as a
 // preceding wl_pointer.axis event.
 //
-pub fn wl_pointer_send_axis_stop(object: Object, time: u32, axis: u32) void {
+pub fn wl_pointer_send_axis_stop(object: Object, time: u32, axis: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(time);
     object.context.putU32(axis);
@@ -2061,7 +2061,7 @@ pub fn wl_pointer_send_axis_stop(object: Object, time: u32, axis: u32) void {
 // The order of wl_pointer.axis_discrete and wl_pointer.axis_source is
 // not guaranteed.
 //
-pub fn wl_pointer_send_axis_discrete(object: Object, axis: u32, discrete: i32) void {
+pub fn wl_pointer_send_axis_discrete(object: Object, axis: u32, discrete: i32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(axis);
     object.context.putI32(discrete);
@@ -2073,10 +2073,10 @@ pub const wl_keyboard_interface = struct {
     // keyboard input device
     release: ?fn (
         Object,
-    ) void,
+    ) anyerror!void,
 };
 
-fn wl_keyboard_release_default(object: Object) void {
+fn wl_keyboard_release_default(object: Object) anyerror!void {
     std.debug.warn("wl_keyboard_release not implemented\n", .{});
     std.os.exit(2);
 }
@@ -2102,12 +2102,12 @@ pub fn new_wl_keyboard(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_keyboard_dispatch(object: Object, opcode: u16) void {
+fn wl_keyboard_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // release
         0 => {
             if (WL_KEYBOARD.release) |release| {
-                release(
+                try release(
                     object,
                 );
             }
@@ -2131,7 +2131,7 @@ pub const wl_keyboard_key_state = enum(u32) {
 // From version 7 onwards, the fd must be mapped with MAP_PRIVATE by
 // the recipient, as MAP_SHARED may fail.
 //
-pub fn wl_keyboard_send_keymap(object: Object, format: u32, fd: i32, size: u32) void {
+pub fn wl_keyboard_send_keymap(object: Object, format: u32, fd: i32, size: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(format);
     object.context.putI32(fd);
@@ -2141,7 +2141,7 @@ pub fn wl_keyboard_send_keymap(object: Object, format: u32, fd: i32, size: u32) 
 // Notification that this seat's keyboard focus is on a certain
 // surface.
 //
-pub fn wl_keyboard_send_enter(object: Object, serial: u32, surface: u32, keys: []u32) void {
+pub fn wl_keyboard_send_enter(object: Object, serial: u32, surface: u32, keys: []u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.putU32(surface);
@@ -2154,7 +2154,7 @@ pub fn wl_keyboard_send_enter(object: Object, serial: u32, surface: u32, keys: [
 // The leave notification is sent before the enter notification
 // for the new focus.
 //
-pub fn wl_keyboard_send_leave(object: Object, serial: u32, surface: u32) void {
+pub fn wl_keyboard_send_leave(object: Object, serial: u32, surface: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.putU32(surface);
@@ -2164,7 +2164,7 @@ pub fn wl_keyboard_send_leave(object: Object, serial: u32, surface: u32) void {
 // The time argument is a timestamp with millisecond
 // granularity, with an undefined base.
 //
-pub fn wl_keyboard_send_key(object: Object, serial: u32, time: u32, key: u32, state: u32) void {
+pub fn wl_keyboard_send_key(object: Object, serial: u32, time: u32, key: u32, state: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.putU32(time);
@@ -2175,7 +2175,7 @@ pub fn wl_keyboard_send_key(object: Object, serial: u32, time: u32, key: u32, st
 // Notifies clients that the modifier and/or group state has
 // changed, and it should update its local state.
 //
-pub fn wl_keyboard_send_modifiers(object: Object, serial: u32, mods_depressed: u32, mods_latched: u32, mods_locked: u32, group: u32) void {
+pub fn wl_keyboard_send_modifiers(object: Object, serial: u32, mods_depressed: u32, mods_latched: u32, mods_locked: u32, group: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.putU32(mods_depressed);
@@ -2197,7 +2197,7 @@ pub fn wl_keyboard_send_modifiers(object: Object, serial: u32, mods_depressed: u
 // so clients should continue listening for the event past the creation
 // of wl_keyboard.
 //
-pub fn wl_keyboard_send_repeat_info(object: Object, rate: i32, delay: i32) void {
+pub fn wl_keyboard_send_repeat_info(object: Object, rate: i32, delay: i32) anyerror!void {
     object.context.startWrite();
     object.context.putI32(rate);
     object.context.putI32(delay);
@@ -2209,10 +2209,10 @@ pub const wl_touch_interface = struct {
     // touchscreen input device
     release: ?fn (
         Object,
-    ) void,
+    ) anyerror!void,
 };
 
-fn wl_touch_release_default(object: Object) void {
+fn wl_touch_release_default(object: Object) anyerror!void {
     std.debug.warn("wl_touch_release not implemented\n", .{});
     std.os.exit(2);
 }
@@ -2238,12 +2238,12 @@ pub fn new_wl_touch(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_touch_dispatch(object: Object, opcode: u16) void {
+fn wl_touch_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // release
         0 => {
             if (WL_TOUCH.release) |release| {
-                release(
+                try release(
                     object,
                 );
             }
@@ -2256,7 +2256,7 @@ fn wl_touch_dispatch(object: Object, opcode: u16) void {
 // this ID. The ID ceases to be valid after a touch up event and may be
 // reused in the future.
 //
-pub fn wl_touch_send_down(object: Object, serial: u32, time: u32, surface: u32, id: i32, x: f32, y: f32) void {
+pub fn wl_touch_send_down(object: Object, serial: u32, time: u32, surface: u32, id: i32, x: f32, y: f32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.putU32(time);
@@ -2270,7 +2270,7 @@ pub fn wl_touch_send_down(object: Object, serial: u32, time: u32, surface: u32, 
 // this touch point and the touch point's ID is released and may be
 // reused in a future touch down event.
 //
-pub fn wl_touch_send_up(object: Object, serial: u32, time: u32, id: i32) void {
+pub fn wl_touch_send_up(object: Object, serial: u32, time: u32, id: i32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.putU32(time);
@@ -2279,7 +2279,7 @@ pub fn wl_touch_send_up(object: Object, serial: u32, time: u32, id: i32) void {
 }
 // A touch point has changed coordinates.
 //
-pub fn wl_touch_send_motion(object: Object, time: u32, id: i32, x: f32, y: f32) void {
+pub fn wl_touch_send_motion(object: Object, time: u32, id: i32, x: f32, y: f32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(time);
     object.context.putI32(id);
@@ -2296,7 +2296,7 @@ pub fn wl_touch_send_motion(object: Object, time: u32, id: i32, x: f32, y: f32) 
 // must assume that any state not updated in a frame is unchanged from the
 // previously known state.
 //
-pub fn wl_touch_send_frame(object: Object) void {
+pub fn wl_touch_send_frame(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 3);
 }
@@ -2307,7 +2307,7 @@ pub fn wl_touch_send_frame(object: Object) void {
 // responsible for finalizing the touch points, future touch points on
 // this surface may reuse the touch point ID.
 //
-pub fn wl_touch_send_cancel(object: Object) void {
+pub fn wl_touch_send_cancel(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 4);
 }
@@ -2337,7 +2337,7 @@ pub fn wl_touch_send_cancel(object: Object) void {
 // shape reports. The client has to make reasonable assumptions about the
 // shape if it did not receive this event.
 //
-pub fn wl_touch_send_shape(object: Object, id: i32, major: f32, minor: f32) void {
+pub fn wl_touch_send_shape(object: Object, id: i32, major: f32, minor: f32) anyerror!void {
     object.context.startWrite();
     object.context.putI32(id);
     object.context.putFixed(major);
@@ -2368,7 +2368,7 @@ pub fn wl_touch_send_shape(object: Object, id: i32, major: f32, minor: f32) void
 // This event is only sent by the compositor if the touch device supports
 // orientation reports.
 //
-pub fn wl_touch_send_orientation(object: Object, id: i32, orientation: f32) void {
+pub fn wl_touch_send_orientation(object: Object, id: i32, orientation: f32) anyerror!void {
     object.context.startWrite();
     object.context.putI32(id);
     object.context.putFixed(orientation);
@@ -2380,10 +2380,10 @@ pub const wl_output_interface = struct {
     // compositor output region
     release: ?fn (
         Object,
-    ) void,
+    ) anyerror!void,
 };
 
-fn wl_output_release_default(object: Object) void {
+fn wl_output_release_default(object: Object) anyerror!void {
     std.debug.warn("wl_output_release not implemented\n", .{});
     std.os.exit(2);
 }
@@ -2409,12 +2409,12 @@ pub fn new_wl_output(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_output_dispatch(object: Object, opcode: u16) void {
+fn wl_output_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // release
         0 => {
             if (WL_OUTPUT.release) |release| {
-                release(
+                try release(
                     object,
                 );
             }
@@ -2461,7 +2461,7 @@ pub const wl_output_mode = enum(u32) {
 // should use xdg_output.logical_position. Instead of using make and model,
 // clients should use xdg_output.name and xdg_output.description.
 //
-pub fn wl_output_send_geometry(object: Object, x: i32, y: i32, physical_width: i32, physical_height: i32, subpixel: i32, make: []const u8, model: []const u8, transform: i32) void {
+pub fn wl_output_send_geometry(object: Object, x: i32, y: i32, physical_width: i32, physical_height: i32, subpixel: i32, make: []const u8, model: []const u8, transform: i32) anyerror!void {
     object.context.startWrite();
     object.context.putI32(x);
     object.context.putI32(y);
@@ -2497,7 +2497,7 @@ pub fn wl_output_send_geometry(object: Object, x: i32, y: i32, physical_width: i
 // compositors, such as those exposing virtual outputs, might fake the
 // refresh rate or the size.
 //
-pub fn wl_output_send_mode(object: Object, flags: u32, width: i32, height: i32, refresh: i32) void {
+pub fn wl_output_send_mode(object: Object, flags: u32, width: i32, height: i32, refresh: i32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(flags);
     object.context.putI32(width);
@@ -2511,7 +2511,7 @@ pub fn wl_output_send_mode(object: Object, flags: u32, width: i32, height: i32, 
 // changes to the output properties to be seen as
 // atomic, even if they happen via multiple events.
 //
-pub fn wl_output_send_done(object: Object) void {
+pub fn wl_output_send_done(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 2);
 }
@@ -2534,7 +2534,7 @@ pub fn wl_output_send_done(object: Object) void {
 // avoid scaling the surface, and the client can supply
 // a higher detail image.
 //
-pub fn wl_output_send_scale(object: Object, factor: i32) void {
+pub fn wl_output_send_scale(object: Object, factor: i32) anyerror!void {
     object.context.startWrite();
     object.context.putI32(factor);
     object.context.finishWrite(object.id, 3);
@@ -2545,22 +2545,22 @@ pub const wl_region_interface = struct {
     // region interface
     destroy: ?fn (
         Object,
-    ) void,
-    add: ?fn (Object, i32, i32, i32, i32) void,
-    subtract: ?fn (Object, i32, i32, i32, i32) void,
+    ) anyerror!void,
+    add: ?fn (Object, i32, i32, i32, i32) anyerror!void,
+    subtract: ?fn (Object, i32, i32, i32, i32) anyerror!void,
 };
 
-fn wl_region_destroy_default(object: Object) void {
+fn wl_region_destroy_default(object: Object) anyerror!void {
     std.debug.warn("wl_region_destroy not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_region_add_default(object: Object, x: i32, y: i32, width: i32, height: i32) void {
+fn wl_region_add_default(object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     std.debug.warn("wl_region_add not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_region_subtract_default(object: Object, x: i32, y: i32, width: i32, height: i32) void {
+fn wl_region_subtract_default(object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     std.debug.warn("wl_region_subtract not implemented\n", .{});
     std.os.exit(2);
 }
@@ -2588,12 +2588,12 @@ pub fn new_wl_region(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_region_dispatch(object: Object, opcode: u16) void {
+fn wl_region_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // destroy
         0 => {
             if (WL_REGION.destroy) |destroy| {
-                destroy(
+                try destroy(
                     object,
                 );
             }
@@ -2605,7 +2605,7 @@ fn wl_region_dispatch(object: Object, opcode: u16) void {
             var width: i32 = object.context.next_i32();
             var height: i32 = object.context.next_i32();
             if (WL_REGION.add) |add| {
-                add(object, x, y, width, height);
+                try add(object, x, y, width, height);
             }
         },
         // subtract
@@ -2615,7 +2615,7 @@ fn wl_region_dispatch(object: Object, opcode: u16) void {
             var width: i32 = object.context.next_i32();
             var height: i32 = object.context.next_i32();
             if (WL_REGION.subtract) |subtract| {
-                subtract(object, x, y, width, height);
+                try subtract(object, x, y, width, height);
             }
         },
         else => {},
@@ -2627,16 +2627,16 @@ pub const wl_subcompositor_interface = struct {
     // sub-surface compositing
     destroy: ?fn (
         Object,
-    ) void,
-    get_subsurface: ?fn (Object, u32, Object, Object) void,
+    ) anyerror!void,
+    get_subsurface: ?fn (Object, u32, Object, Object) anyerror!void,
 };
 
-fn wl_subcompositor_destroy_default(object: Object) void {
+fn wl_subcompositor_destroy_default(object: Object) anyerror!void {
     std.debug.warn("wl_subcompositor_destroy not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_subcompositor_get_subsurface_default(object: Object, id: u32, surface: Object, parent: Object) void {
+fn wl_subcompositor_get_subsurface_default(object: Object, id: u32, surface: Object, parent: Object) anyerror!void {
     std.debug.warn("wl_subcompositor_get_subsurface not implemented\n", .{});
     std.os.exit(2);
 }
@@ -2663,12 +2663,12 @@ pub fn new_wl_subcompositor(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_subcompositor_dispatch(object: Object, opcode: u16) void {
+fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // destroy
         0 => {
             if (WL_SUBCOMPOSITOR.destroy) |destroy| {
-                destroy(
+                try destroy(
                     object,
                 );
             }
@@ -2679,7 +2679,7 @@ fn wl_subcompositor_dispatch(object: Object, opcode: u16) void {
             var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var parent: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SUBCOMPOSITOR.get_subsurface) |get_subsurface| {
-                get_subsurface(object, id, surface, parent);
+                try get_subsurface(object, id, surface, parent);
             }
         },
         else => {},
@@ -2695,44 +2695,44 @@ pub const wl_subsurface_interface = struct {
     // sub-surface interface to a wl_surface
     destroy: ?fn (
         Object,
-    ) void,
-    set_position: ?fn (Object, i32, i32) void,
-    place_above: ?fn (Object, Object) void,
-    place_below: ?fn (Object, Object) void,
+    ) anyerror!void,
+    set_position: ?fn (Object, i32, i32) anyerror!void,
+    place_above: ?fn (Object, Object) anyerror!void,
+    place_below: ?fn (Object, Object) anyerror!void,
     set_sync: ?fn (
         Object,
-    ) void,
+    ) anyerror!void,
     set_desync: ?fn (
         Object,
-    ) void,
+    ) anyerror!void,
 };
 
-fn wl_subsurface_destroy_default(object: Object) void {
+fn wl_subsurface_destroy_default(object: Object) anyerror!void {
     std.debug.warn("wl_subsurface_destroy not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_subsurface_set_position_default(object: Object, x: i32, y: i32) void {
+fn wl_subsurface_set_position_default(object: Object, x: i32, y: i32) anyerror!void {
     std.debug.warn("wl_subsurface_set_position not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_subsurface_place_above_default(object: Object, sibling: Object) void {
+fn wl_subsurface_place_above_default(object: Object, sibling: Object) anyerror!void {
     std.debug.warn("wl_subsurface_place_above not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_subsurface_place_below_default(object: Object, sibling: Object) void {
+fn wl_subsurface_place_below_default(object: Object, sibling: Object) anyerror!void {
     std.debug.warn("wl_subsurface_place_below not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_subsurface_set_sync_default(object: Object) void {
+fn wl_subsurface_set_sync_default(object: Object) anyerror!void {
     std.debug.warn("wl_subsurface_set_sync not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn wl_subsurface_set_desync_default(object: Object) void {
+fn wl_subsurface_set_desync_default(object: Object) anyerror!void {
     std.debug.warn("wl_subsurface_set_desync not implemented\n", .{});
     std.os.exit(2);
 }
@@ -2763,12 +2763,12 @@ pub fn new_wl_subsurface(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn wl_subsurface_dispatch(object: Object, opcode: u16) void {
+fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // destroy
         0 => {
             if (WL_SUBSURFACE.destroy) |destroy| {
-                destroy(
+                try destroy(
                     object,
                 );
             }
@@ -2778,27 +2778,27 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) void {
             var x: i32 = object.context.next_i32();
             var y: i32 = object.context.next_i32();
             if (WL_SUBSURFACE.set_position) |set_position| {
-                set_position(object, x, y);
+                try set_position(object, x, y);
             }
         },
         // place_above
         2 => {
             var sibling: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SUBSURFACE.place_above) |place_above| {
-                place_above(object, sibling);
+                try place_above(object, sibling);
             }
         },
         // place_below
         3 => {
             var sibling: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (WL_SUBSURFACE.place_below) |place_below| {
-                place_below(object, sibling);
+                try place_below(object, sibling);
             }
         },
         // set_sync
         4 => {
             if (WL_SUBSURFACE.set_sync) |set_sync| {
-                set_sync(
+                try set_sync(
                     object,
                 );
             }
@@ -2806,7 +2806,7 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) void {
         // set_desync
         5 => {
             if (WL_SUBSURFACE.set_desync) |set_desync| {
-                set_desync(
+                try set_desync(
                     object,
                 );
             }
@@ -2824,28 +2824,28 @@ pub const xdg_wm_base_interface = struct {
     // create desktop-style surfaces
     destroy: ?fn (
         Object,
-    ) void,
-    create_positioner: ?fn (Object, u32) void,
-    get_xdg_surface: ?fn (Object, u32, Object) void,
-    pong: ?fn (Object, u32) void,
+    ) anyerror!void,
+    create_positioner: ?fn (Object, u32) anyerror!void,
+    get_xdg_surface: ?fn (Object, u32, Object) anyerror!void,
+    pong: ?fn (Object, u32) anyerror!void,
 };
 
-fn xdg_wm_base_destroy_default(object: Object) void {
+fn xdg_wm_base_destroy_default(object: Object) anyerror!void {
     std.debug.warn("xdg_wm_base_destroy not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_wm_base_create_positioner_default(object: Object, id: u32) void {
+fn xdg_wm_base_create_positioner_default(object: Object, id: u32) anyerror!void {
     std.debug.warn("xdg_wm_base_create_positioner not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_wm_base_get_xdg_surface_default(object: Object, id: u32, surface: Object) void {
+fn xdg_wm_base_get_xdg_surface_default(object: Object, id: u32, surface: Object) anyerror!void {
     std.debug.warn("xdg_wm_base_get_xdg_surface not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_wm_base_pong_default(object: Object, serial: u32) void {
+fn xdg_wm_base_pong_default(object: Object, serial: u32) anyerror!void {
     std.debug.warn("xdg_wm_base_pong not implemented\n", .{});
     std.os.exit(2);
 }
@@ -2874,12 +2874,12 @@ pub fn new_xdg_wm_base(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn xdg_wm_base_dispatch(object: Object, opcode: u16) void {
+fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // destroy
         0 => {
             if (XDG_WM_BASE.destroy) |destroy| {
-                destroy(
+                try destroy(
                     object,
                 );
             }
@@ -2888,7 +2888,7 @@ fn xdg_wm_base_dispatch(object: Object, opcode: u16) void {
         1 => {
             var id: u32 = object.context.next_u32();
             if (XDG_WM_BASE.create_positioner) |create_positioner| {
-                create_positioner(object, id);
+                try create_positioner(object, id);
             }
         },
         // get_xdg_surface
@@ -2896,14 +2896,14 @@ fn xdg_wm_base_dispatch(object: Object, opcode: u16) void {
             var id: u32 = object.context.next_u32();
             var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (XDG_WM_BASE.get_xdg_surface) |get_xdg_surface| {
-                get_xdg_surface(object, id, surface);
+                try get_xdg_surface(object, id, surface);
             }
         },
         // pong
         3 => {
             var serial: u32 = object.context.next_u32();
             if (XDG_WM_BASE.pong) |pong| {
-                pong(object, serial);
+                try pong(object, serial);
             }
         },
         else => {},
@@ -2930,7 +2930,7 @@ pub const xdg_wm_base_error = enum(u32) {
 // A compositor is free to ping in any way it wants, but a client must
 // always respond to any xdg_wm_base object it created.
 //
-pub fn xdg_wm_base_send_ping(object: Object, serial: u32) void {
+pub fn xdg_wm_base_send_ping(object: Object, serial: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.finishWrite(object.id, 0);
@@ -2941,46 +2941,46 @@ pub const xdg_positioner_interface = struct {
     // child surface positioner
     destroy: ?fn (
         Object,
-    ) void,
-    set_size: ?fn (Object, i32, i32) void,
-    set_anchor_rect: ?fn (Object, i32, i32, i32, i32) void,
-    set_anchor: ?fn (Object, u32) void,
-    set_gravity: ?fn (Object, u32) void,
-    set_constraint_adjustment: ?fn (Object, u32) void,
-    set_offset: ?fn (Object, i32, i32) void,
+    ) anyerror!void,
+    set_size: ?fn (Object, i32, i32) anyerror!void,
+    set_anchor_rect: ?fn (Object, i32, i32, i32, i32) anyerror!void,
+    set_anchor: ?fn (Object, u32) anyerror!void,
+    set_gravity: ?fn (Object, u32) anyerror!void,
+    set_constraint_adjustment: ?fn (Object, u32) anyerror!void,
+    set_offset: ?fn (Object, i32, i32) anyerror!void,
 };
 
-fn xdg_positioner_destroy_default(object: Object) void {
+fn xdg_positioner_destroy_default(object: Object) anyerror!void {
     std.debug.warn("xdg_positioner_destroy not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_positioner_set_size_default(object: Object, width: i32, height: i32) void {
+fn xdg_positioner_set_size_default(object: Object, width: i32, height: i32) anyerror!void {
     std.debug.warn("xdg_positioner_set_size not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_positioner_set_anchor_rect_default(object: Object, x: i32, y: i32, width: i32, height: i32) void {
+fn xdg_positioner_set_anchor_rect_default(object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     std.debug.warn("xdg_positioner_set_anchor_rect not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_positioner_set_anchor_default(object: Object, anchor: u32) void {
+fn xdg_positioner_set_anchor_default(object: Object, anchor: u32) anyerror!void {
     std.debug.warn("xdg_positioner_set_anchor not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_positioner_set_gravity_default(object: Object, gravity: u32) void {
+fn xdg_positioner_set_gravity_default(object: Object, gravity: u32) anyerror!void {
     std.debug.warn("xdg_positioner_set_gravity not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_positioner_set_constraint_adjustment_default(object: Object, constraint_adjustment: u32) void {
+fn xdg_positioner_set_constraint_adjustment_default(object: Object, constraint_adjustment: u32) anyerror!void {
     std.debug.warn("xdg_positioner_set_constraint_adjustment not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_positioner_set_offset_default(object: Object, x: i32, y: i32) void {
+fn xdg_positioner_set_offset_default(object: Object, x: i32, y: i32) anyerror!void {
     std.debug.warn("xdg_positioner_set_offset not implemented\n", .{});
     std.os.exit(2);
 }
@@ -3012,12 +3012,12 @@ pub fn new_xdg_positioner(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn xdg_positioner_dispatch(object: Object, opcode: u16) void {
+fn xdg_positioner_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // destroy
         0 => {
             if (XDG_POSITIONER.destroy) |destroy| {
-                destroy(
+                try destroy(
                     object,
                 );
             }
@@ -3027,7 +3027,7 @@ fn xdg_positioner_dispatch(object: Object, opcode: u16) void {
             var width: i32 = object.context.next_i32();
             var height: i32 = object.context.next_i32();
             if (XDG_POSITIONER.set_size) |set_size| {
-                set_size(object, width, height);
+                try set_size(object, width, height);
             }
         },
         // set_anchor_rect
@@ -3037,28 +3037,28 @@ fn xdg_positioner_dispatch(object: Object, opcode: u16) void {
             var width: i32 = object.context.next_i32();
             var height: i32 = object.context.next_i32();
             if (XDG_POSITIONER.set_anchor_rect) |set_anchor_rect| {
-                set_anchor_rect(object, x, y, width, height);
+                try set_anchor_rect(object, x, y, width, height);
             }
         },
         // set_anchor
         3 => {
             var anchor: u32 = object.context.next_u32();
             if (XDG_POSITIONER.set_anchor) |set_anchor| {
-                set_anchor(object, anchor);
+                try set_anchor(object, anchor);
             }
         },
         // set_gravity
         4 => {
             var gravity: u32 = object.context.next_u32();
             if (XDG_POSITIONER.set_gravity) |set_gravity| {
-                set_gravity(object, gravity);
+                try set_gravity(object, gravity);
             }
         },
         // set_constraint_adjustment
         5 => {
             var constraint_adjustment: u32 = object.context.next_u32();
             if (XDG_POSITIONER.set_constraint_adjustment) |set_constraint_adjustment| {
-                set_constraint_adjustment(object, constraint_adjustment);
+                try set_constraint_adjustment(object, constraint_adjustment);
             }
         },
         // set_offset
@@ -3066,7 +3066,7 @@ fn xdg_positioner_dispatch(object: Object, opcode: u16) void {
             var x: i32 = object.context.next_i32();
             var y: i32 = object.context.next_i32();
             if (XDG_POSITIONER.set_offset) |set_offset| {
-                set_offset(object, x, y);
+                try set_offset(object, x, y);
             }
         },
         else => {},
@@ -3116,34 +3116,34 @@ pub const xdg_surface_interface = struct {
     // desktop user interface surface base interface
     destroy: ?fn (
         Object,
-    ) void,
-    get_toplevel: ?fn (Object, u32) void,
-    get_popup: ?fn (Object, u32, Object, Object) void,
-    set_window_geometry: ?fn (Object, i32, i32, i32, i32) void,
-    ack_configure: ?fn (Object, u32) void,
+    ) anyerror!void,
+    get_toplevel: ?fn (Object, u32) anyerror!void,
+    get_popup: ?fn (Object, u32, Object, Object) anyerror!void,
+    set_window_geometry: ?fn (Object, i32, i32, i32, i32) anyerror!void,
+    ack_configure: ?fn (Object, u32) anyerror!void,
 };
 
-fn xdg_surface_destroy_default(object: Object) void {
+fn xdg_surface_destroy_default(object: Object) anyerror!void {
     std.debug.warn("xdg_surface_destroy not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_surface_get_toplevel_default(object: Object, id: u32) void {
+fn xdg_surface_get_toplevel_default(object: Object, id: u32) anyerror!void {
     std.debug.warn("xdg_surface_get_toplevel not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_surface_get_popup_default(object: Object, id: u32, parent: Object, positioner: Object) void {
+fn xdg_surface_get_popup_default(object: Object, id: u32, parent: Object, positioner: Object) anyerror!void {
     std.debug.warn("xdg_surface_get_popup not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_surface_set_window_geometry_default(object: Object, x: i32, y: i32, width: i32, height: i32) void {
+fn xdg_surface_set_window_geometry_default(object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     std.debug.warn("xdg_surface_set_window_geometry not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_surface_ack_configure_default(object: Object, serial: u32) void {
+fn xdg_surface_ack_configure_default(object: Object, serial: u32) anyerror!void {
     std.debug.warn("xdg_surface_ack_configure not implemented\n", .{});
     std.os.exit(2);
 }
@@ -3173,12 +3173,12 @@ pub fn new_xdg_surface(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn xdg_surface_dispatch(object: Object, opcode: u16) void {
+fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // destroy
         0 => {
             if (XDG_SURFACE.destroy) |destroy| {
-                destroy(
+                try destroy(
                     object,
                 );
             }
@@ -3187,7 +3187,7 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) void {
         1 => {
             var id: u32 = object.context.next_u32();
             if (XDG_SURFACE.get_toplevel) |get_toplevel| {
-                get_toplevel(object, id);
+                try get_toplevel(object, id);
             }
         },
         // get_popup
@@ -3196,7 +3196,7 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) void {
             var parent: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var positioner: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (XDG_SURFACE.get_popup) |get_popup| {
-                get_popup(object, id, parent, positioner);
+                try get_popup(object, id, parent, positioner);
             }
         },
         // set_window_geometry
@@ -3206,14 +3206,14 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) void {
             var width: i32 = object.context.next_i32();
             var height: i32 = object.context.next_i32();
             if (XDG_SURFACE.set_window_geometry) |set_window_geometry| {
-                set_window_geometry(object, x, y, width, height);
+                try set_window_geometry(object, x, y, width, height);
             }
         },
         // ack_configure
         4 => {
             var serial: u32 = object.context.next_u32();
             if (XDG_SURFACE.ack_configure) |ack_configure| {
-                ack_configure(object, serial);
+                try ack_configure(object, serial);
             }
         },
         else => {},
@@ -3242,7 +3242,7 @@ pub const xdg_surface_error = enum(u32) {
 // If the client receives multiple configure events before it can respond
 // to one, it is free to discard all but the last event it received.
 //
-pub fn xdg_surface_send_configure(object: Object, serial: u32) void {
+pub fn xdg_surface_send_configure(object: Object, serial: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.finishWrite(object.id, 0);
@@ -3253,96 +3253,96 @@ pub const xdg_toplevel_interface = struct {
     // toplevel surface
     destroy: ?fn (
         Object,
-    ) void,
-    set_parent: ?fn (Object, Object) void,
-    set_title: ?fn (Object, []u8) void,
-    set_app_id: ?fn (Object, []u8) void,
-    show_window_menu: ?fn (Object, Object, u32, i32, i32) void,
-    move: ?fn (Object, Object, u32) void,
-    resize: ?fn (Object, Object, u32, u32) void,
-    set_max_size: ?fn (Object, i32, i32) void,
-    set_min_size: ?fn (Object, i32, i32) void,
+    ) anyerror!void,
+    set_parent: ?fn (Object, Object) anyerror!void,
+    set_title: ?fn (Object, []u8) anyerror!void,
+    set_app_id: ?fn (Object, []u8) anyerror!void,
+    show_window_menu: ?fn (Object, Object, u32, i32, i32) anyerror!void,
+    move: ?fn (Object, Object, u32) anyerror!void,
+    resize: ?fn (Object, Object, u32, u32) anyerror!void,
+    set_max_size: ?fn (Object, i32, i32) anyerror!void,
+    set_min_size: ?fn (Object, i32, i32) anyerror!void,
     set_maximized: ?fn (
         Object,
-    ) void,
+    ) anyerror!void,
     unset_maximized: ?fn (
         Object,
-    ) void,
-    set_fullscreen: ?fn (Object, Object) void,
+    ) anyerror!void,
+    set_fullscreen: ?fn (Object, Object) anyerror!void,
     unset_fullscreen: ?fn (
         Object,
-    ) void,
+    ) anyerror!void,
     set_minimized: ?fn (
         Object,
-    ) void,
+    ) anyerror!void,
 };
 
-fn xdg_toplevel_destroy_default(object: Object) void {
+fn xdg_toplevel_destroy_default(object: Object) anyerror!void {
     std.debug.warn("xdg_toplevel_destroy not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_toplevel_set_parent_default(object: Object, parent: Object) void {
+fn xdg_toplevel_set_parent_default(object: Object, parent: Object) anyerror!void {
     std.debug.warn("xdg_toplevel_set_parent not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_toplevel_set_title_default(object: Object, title: []u8) void {
+fn xdg_toplevel_set_title_default(object: Object, title: []u8) anyerror!void {
     std.debug.warn("xdg_toplevel_set_title not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_toplevel_set_app_id_default(object: Object, app_id: []u8) void {
+fn xdg_toplevel_set_app_id_default(object: Object, app_id: []u8) anyerror!void {
     std.debug.warn("xdg_toplevel_set_app_id not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_toplevel_show_window_menu_default(object: Object, seat: Object, serial: u32, x: i32, y: i32) void {
+fn xdg_toplevel_show_window_menu_default(object: Object, seat: Object, serial: u32, x: i32, y: i32) anyerror!void {
     std.debug.warn("xdg_toplevel_show_window_menu not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_toplevel_move_default(object: Object, seat: Object, serial: u32) void {
+fn xdg_toplevel_move_default(object: Object, seat: Object, serial: u32) anyerror!void {
     std.debug.warn("xdg_toplevel_move not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_toplevel_resize_default(object: Object, seat: Object, serial: u32, edges: u32) void {
+fn xdg_toplevel_resize_default(object: Object, seat: Object, serial: u32, edges: u32) anyerror!void {
     std.debug.warn("xdg_toplevel_resize not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_toplevel_set_max_size_default(object: Object, width: i32, height: i32) void {
+fn xdg_toplevel_set_max_size_default(object: Object, width: i32, height: i32) anyerror!void {
     std.debug.warn("xdg_toplevel_set_max_size not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_toplevel_set_min_size_default(object: Object, width: i32, height: i32) void {
+fn xdg_toplevel_set_min_size_default(object: Object, width: i32, height: i32) anyerror!void {
     std.debug.warn("xdg_toplevel_set_min_size not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_toplevel_set_maximized_default(object: Object) void {
+fn xdg_toplevel_set_maximized_default(object: Object) anyerror!void {
     std.debug.warn("xdg_toplevel_set_maximized not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_toplevel_unset_maximized_default(object: Object) void {
+fn xdg_toplevel_unset_maximized_default(object: Object) anyerror!void {
     std.debug.warn("xdg_toplevel_unset_maximized not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_toplevel_set_fullscreen_default(object: Object, output: Object) void {
+fn xdg_toplevel_set_fullscreen_default(object: Object, output: Object) anyerror!void {
     std.debug.warn("xdg_toplevel_set_fullscreen not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_toplevel_unset_fullscreen_default(object: Object) void {
+fn xdg_toplevel_unset_fullscreen_default(object: Object) anyerror!void {
     std.debug.warn("xdg_toplevel_unset_fullscreen not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_toplevel_set_minimized_default(object: Object) void {
+fn xdg_toplevel_set_minimized_default(object: Object) anyerror!void {
     std.debug.warn("xdg_toplevel_set_minimized not implemented\n", .{});
     std.os.exit(2);
 }
@@ -3381,12 +3381,12 @@ pub fn new_xdg_toplevel(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
+fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // destroy
         0 => {
             if (XDG_TOPLEVEL.destroy) |destroy| {
-                destroy(
+                try destroy(
                     object,
                 );
             }
@@ -3395,21 +3395,21 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
         1 => {
             var parent: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (XDG_TOPLEVEL.set_parent) |set_parent| {
-                set_parent(object, parent);
+                try set_parent(object, parent);
             }
         },
         // set_title
         2 => {
             var title: []u8 = object.context.next_string();
             if (XDG_TOPLEVEL.set_title) |set_title| {
-                set_title(object, title);
+                try set_title(object, title);
             }
         },
         // set_app_id
         3 => {
             var app_id: []u8 = object.context.next_string();
             if (XDG_TOPLEVEL.set_app_id) |set_app_id| {
-                set_app_id(object, app_id);
+                try set_app_id(object, app_id);
             }
         },
         // show_window_menu
@@ -3419,7 +3419,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
             var x: i32 = object.context.next_i32();
             var y: i32 = object.context.next_i32();
             if (XDG_TOPLEVEL.show_window_menu) |show_window_menu| {
-                show_window_menu(object, seat, serial, x, y);
+                try show_window_menu(object, seat, serial, x, y);
             }
         },
         // move
@@ -3427,7 +3427,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
             var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var serial: u32 = object.context.next_u32();
             if (XDG_TOPLEVEL.move) |move| {
-                move(object, seat, serial);
+                try move(object, seat, serial);
             }
         },
         // resize
@@ -3436,7 +3436,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
             var serial: u32 = object.context.next_u32();
             var edges: u32 = object.context.next_u32();
             if (XDG_TOPLEVEL.resize) |resize| {
-                resize(object, seat, serial, edges);
+                try resize(object, seat, serial, edges);
             }
         },
         // set_max_size
@@ -3444,7 +3444,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
             var width: i32 = object.context.next_i32();
             var height: i32 = object.context.next_i32();
             if (XDG_TOPLEVEL.set_max_size) |set_max_size| {
-                set_max_size(object, width, height);
+                try set_max_size(object, width, height);
             }
         },
         // set_min_size
@@ -3452,13 +3452,13 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
             var width: i32 = object.context.next_i32();
             var height: i32 = object.context.next_i32();
             if (XDG_TOPLEVEL.set_min_size) |set_min_size| {
-                set_min_size(object, width, height);
+                try set_min_size(object, width, height);
             }
         },
         // set_maximized
         9 => {
             if (XDG_TOPLEVEL.set_maximized) |set_maximized| {
-                set_maximized(
+                try set_maximized(
                     object,
                 );
             }
@@ -3466,7 +3466,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
         // unset_maximized
         10 => {
             if (XDG_TOPLEVEL.unset_maximized) |unset_maximized| {
-                unset_maximized(
+                try unset_maximized(
                     object,
                 );
             }
@@ -3475,13 +3475,13 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
         11 => {
             var output: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (XDG_TOPLEVEL.set_fullscreen) |set_fullscreen| {
-                set_fullscreen(object, output);
+                try set_fullscreen(object, output);
             }
         },
         // unset_fullscreen
         12 => {
             if (XDG_TOPLEVEL.unset_fullscreen) |unset_fullscreen| {
-                unset_fullscreen(
+                try unset_fullscreen(
                     object,
                 );
             }
@@ -3489,7 +3489,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) void {
         // set_minimized
         13 => {
             if (XDG_TOPLEVEL.set_minimized) |set_minimized| {
-                set_minimized(
+                try set_minimized(
                     object,
                 );
             }
@@ -3540,7 +3540,7 @@ pub const xdg_toplevel_state = enum(u32) {
 // Clients must send an ack_configure in response to this event. See
 // xdg_surface.configure and xdg_surface.ack_configure for details.
 //
-pub fn xdg_toplevel_send_configure(object: Object, width: i32, height: i32, states: []u32) void {
+pub fn xdg_toplevel_send_configure(object: Object, width: i32, height: i32, states: []u32) anyerror!void {
     object.context.startWrite();
     object.context.putI32(width);
     object.context.putI32(height);
@@ -3556,7 +3556,7 @@ pub fn xdg_toplevel_send_configure(object: Object, width: i32, height: i32, stat
 // window. The client may choose to ignore this request, or show
 // a dialog to ask the user to save their data, etc.
 //
-pub fn xdg_toplevel_send_close(object: Object) void {
+pub fn xdg_toplevel_send_close(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 1);
 }
@@ -3566,16 +3566,16 @@ pub const xdg_popup_interface = struct {
     // short-lived, popup surfaces for menus
     destroy: ?fn (
         Object,
-    ) void,
-    grab: ?fn (Object, Object, u32) void,
+    ) anyerror!void,
+    grab: ?fn (Object, Object, u32) anyerror!void,
 };
 
-fn xdg_popup_destroy_default(object: Object) void {
+fn xdg_popup_destroy_default(object: Object) anyerror!void {
     std.debug.warn("xdg_popup_destroy not implemented\n", .{});
     std.os.exit(2);
 }
 
-fn xdg_popup_grab_default(object: Object, seat: Object, serial: u32) void {
+fn xdg_popup_grab_default(object: Object, seat: Object, serial: u32) anyerror!void {
     std.debug.warn("xdg_popup_grab not implemented\n", .{});
     std.os.exit(2);
 }
@@ -3602,12 +3602,12 @@ pub fn new_xdg_popup(context: *Context, id: u32) ?*Object {
     return null;
 }
 
-fn xdg_popup_dispatch(object: Object, opcode: u16) void {
+fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // destroy
         0 => {
             if (XDG_POPUP.destroy) |destroy| {
-                destroy(
+                try destroy(
                     object,
                 );
             }
@@ -3617,7 +3617,7 @@ fn xdg_popup_dispatch(object: Object, opcode: u16) void {
             var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
             var serial: u32 = object.context.next_u32();
             if (XDG_POPUP.grab) |grab| {
-                grab(object, seat, serial);
+                try grab(object, seat, serial);
             }
         },
         else => {},
@@ -3635,7 +3635,7 @@ pub const xdg_popup_error = enum(u32) {
 // given the xdg_positioner rule, relative to the upper left corner of the
 // window geometry of the parent surface.
 //
-pub fn xdg_popup_send_configure(object: Object, x: i32, y: i32, width: i32, height: i32) void {
+pub fn xdg_popup_send_configure(object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     object.context.startWrite();
     object.context.putI32(x);
     object.context.putI32(y);
@@ -3647,7 +3647,7 @@ pub fn xdg_popup_send_configure(object: Object, x: i32, y: i32, width: i32, heig
 // compositor. The client should destroy the xdg_popup object at this
 // point.
 //
-pub fn xdg_popup_send_popup_done(object: Object) void {
+pub fn xdg_popup_send_popup_done(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 1);
 }
