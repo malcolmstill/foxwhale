@@ -83,7 +83,7 @@ pub fn wl_display_send_delete_id(object: Object, id: u32) void {
 // wl_registry
 pub const wl_registry_interface = struct {
     // global registry object
-    bind: ?fn (Object, u32, u32) void,
+    bind: ?fn (Object, u32, []u8, u32, u32) void,
 };
 
 pub var WL_REGISTRY = wl_registry_interface{
@@ -107,9 +107,11 @@ fn wl_registry_dispatch(object: Object, opcode: u16) void {
         // bind
         0 => {
             var name: u32 = object.context.next_u32();
+            var name_string: []u8 = object.context.next_string();
+            var version: u32 = object.context.next_u32();
             var id: u32 = object.context.next_u32();
             if (WL_REGISTRY.bind) |bind| {
-                bind(object, name, id);
+                bind(object, name, name_string, version, id);
             }
         },
         else => {},
