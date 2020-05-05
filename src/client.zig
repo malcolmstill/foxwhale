@@ -8,7 +8,7 @@ const MAX_CLIENTS = 256;
 
 var clients: [MAX_CLIENTS]Client = undefined;
 
-const Client = struct {
+pub const Client = struct {
     index: usize,
     in_use: bool,
     connection: std.net.StreamServer.Connection,
@@ -37,7 +37,7 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
             clients[i].dispatchable.impl = dispatch;
             clients[i].connection = conn;
             clients[i].in_use = true;
-            clients[i].ctx.init(conn.file.handle);
+            clients[i].ctx.init(conn.file.handle, &clients[i]);
 
             var o = wl.new_wl_display(&clients[i].ctx, 1);
             // wl.wl_display_send_delete_id(o, 1);

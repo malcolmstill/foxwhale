@@ -1,11 +1,13 @@
 const std = @import("std");
 const fifo = std.fifo;
+const Client = @import("../client.zig").Client;
 const txrx = @import("txrx.zig");
 const AutoHashMap = std.hash_map.AutoHashMap;
 const MAX_FDS = @import("txrx.zig").MAX_FDS;
 const BUFFER_SIZE = 512;
 
 pub const Context = struct {
+    client: *Client,
     fd: i32 = -1,
     read_offset: usize = 0,
     write_offset: usize = 0,
@@ -18,8 +20,9 @@ pub const Context = struct {
 
     const Self = @This();
 
-    pub fn init(self: *Self, fd: i32) void {
+    pub fn init(self: *Self, fd: i32, client: *Client) void {
         self.fd = fd;
+        self.client = client;
         self.read_offset = 0;
         self.write_offset = 0;
         self.objects = AutoHashMap(u32, Object).init(std.heap.page_allocator);
