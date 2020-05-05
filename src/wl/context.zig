@@ -20,6 +20,8 @@ pub const Context = struct {
 
     pub fn init(self: *Self, fd: i32) void {
         self.fd = fd;
+        self.read_offset = 0;
+        self.write_offset = 0;
         self.objects = AutoHashMap(u32, Object).init(std.heap.page_allocator);
         // self.putU32(12);
         // var s = [_]u8{0x41, 0x41, 0x41, 0x41, 0x00};
