@@ -116,7 +116,7 @@ def next_type(type):
         "int": "i32",
         "uint": "u32",
         "new_id": "u32",
-        "fd": "i32",
+        "fd": "fd",
         "string": "string",
         "array": "array",
         "object": "OBJECT",
