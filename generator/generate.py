@@ -41,7 +41,7 @@ def generate_enum(interface):
 
 # Generate new object
 def generate_new_object(interface):
-    print(f"pub fn new_{interface.attrib['name']}(context: *Context, id: u32) Object {{")
+    print(f"pub fn new_{interface.attrib['name']}(context: *Context, id: u32) ?*Object {{")
     print(f"\tvar object = Object {{")
     print(f"\t\t.id = id,")
     print(f"\t\t.dispatch = {interface.attrib['name']}_dispatch,")
@@ -52,7 +52,8 @@ def generate_new_object(interface):
     print(f"\tcontext.register(object) catch |err| {{")
     print(f"\t\tstd.debug.warn(\"Couldn't register id: {{}}\\n\", .{{id}});")
     print(f"\t}};")
-    print(f"\treturn object;")
+    print(f"\tif (context.objects.get(id)) |o| {{ return &o.value; }}")
+    print(f"\treturn null;")
     print(f"}}\n")
 
 # Generate Dispatch function
@@ -106,7 +107,7 @@ def generate_next(arg):
     name = arg.attrib["name"]
     atype = lookup_type(arg.attrib["type"], arg)
     if arg.attrib["type"] == "object":
-        print(f"\t\t\tvar {name}: Object = new_{arg.attrib['interface']}(object.context, object.context.next_u32());")
+        print(f"\t\t\tvar {name}: Object = object.context.objects.getValue(object.context.next_u32()).?;")
     else:    
         print(f"\t\t\t\tvar {name}: {atype} = object.context.next_{next_type(arg.attrib['type'])}();")
 
