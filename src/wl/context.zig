@@ -48,7 +48,7 @@ pub const Context = struct {
             }
 
             var header = @ptrCast(*Header, &self.recv_buf[self.read_offset]);
-            std.debug.warn("{}\n", .{ header });
+            // std.debug.warn("{}\n", .{ header });
 
             // We need to have read a full message
             if (remaining < header.length) {
