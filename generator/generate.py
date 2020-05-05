@@ -1,6 +1,8 @@
 import xml.etree.ElementTree as Tree
 import sys
 
+wl_registry_fixed = False
+
 def generate(file):
     tree = Tree.parse(file)
     root = tree.getroot()
@@ -56,11 +58,25 @@ def generate_dispatch_function(interface):
     i = 0
     for child in interface:
         if child.tag == "request":
+            fix_wl_registry(interface, child)
             generate_request_dispatch(i, child, interface)
             i = i + 1
     print(f"\t\telse => {{}},")
     print(f"\t}}")
     print(f"}}")
+
+def fix_wl_registry(interface, request):
+    global wl_registry_fixed
+    if not wl_registry_fixed and interface.attrib['name'] == 'wl_registry' and request.attrib['name'] == 'bind':
+        c = Tree.Element("arg")
+        c.attrib['name'] = 'name_string'
+        c.attrib['type'] = 'string'
+        request.insert(2, c)
+        c = Tree.Element("arg")
+        c.attrib['name'] = 'version'
+        c.attrib['type'] = 'uint'
+        request.insert(3, c)
+        wl_registry_fixed = True
 
 def generate_request_dispatch(index, request, interface):
     print(f"\t\t\t// {request.attrib['name']}")
@@ -142,12 +158,13 @@ def generate_interface(interface):
         if child.tag == "description":
             generate_description(child)
         if child.tag == "request":
-            generate_request(child)
+            generate_request(interface, child)
         if child.tag == "event":
             generate_event(child)
     print(f"}};\n")
 
-def generate_request(request):
+def generate_request(interface, request):
+    fix_wl_registry(interface, request)
     name = request.attrib["name"]
     print(f"\t{name}: ?fn(Object, ", end = '')
     first = True
