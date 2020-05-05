@@ -20,6 +20,7 @@ pub fn new_wl_display(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_display_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -95,6 +96,7 @@ pub fn new_wl_registry(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_registry_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -159,6 +161,7 @@ pub fn new_wl_callback(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_callback_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -196,6 +199,7 @@ pub fn new_wl_compositor(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_compositor_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -244,6 +248,7 @@ pub fn new_wl_shm_pool(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_shm_pool_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -299,6 +304,7 @@ pub fn new_wl_shm(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_shm_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -414,6 +420,7 @@ pub fn new_wl_buffer(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_buffer_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -479,6 +486,7 @@ pub fn new_wl_data_offer(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_data_offer_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -618,6 +626,7 @@ pub fn new_wl_data_source(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_data_source_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -780,6 +789,7 @@ pub fn new_wl_data_device(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_data_device_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -922,6 +932,7 @@ pub fn new_wl_data_device_manager(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_data_device_manager_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -972,6 +983,7 @@ pub fn new_wl_shell(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_shell_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -1032,6 +1044,7 @@ pub fn new_wl_shell_surface(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_shell_surface_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -1230,6 +1243,7 @@ pub fn new_wl_surface(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_surface_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -1371,6 +1385,7 @@ pub fn new_wl_seat(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_seat_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -1477,6 +1492,7 @@ pub fn new_wl_pointer(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_pointer_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -1755,6 +1771,7 @@ pub fn new_wl_keyboard(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_keyboard_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -1881,6 +1898,7 @@ pub fn new_wl_touch(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_touch_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -2042,6 +2060,7 @@ pub fn new_wl_output(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_output_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -2201,6 +2220,7 @@ pub fn new_wl_region(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_region_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -2261,6 +2281,7 @@ pub fn new_wl_subcompositor(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_subcompositor_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
@@ -2326,6 +2347,7 @@ pub fn new_wl_subsurface(context: *Context, id: u32) Object {
         .id = id,
         .dispatch = wl_subsurface_dispatch,
         .context = context,
+        .version = 0,
     };
     context.register(object) catch |err| {
         std.debug.warn("Couldn't register id: {}\n", .{id});
