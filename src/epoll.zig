@@ -1,10 +1,11 @@
 const std = @import("std");
+const linux = std.os.linux;
 
 var epfd: i32 = -1;
 var events: [256]std.os.linux.epoll_event = undefined;
 
 pub fn init() !void {
-    epfd = try std.os.epoll_create1(0);
+    epfd = try std.os.epoll_create1(linux.EPOLL_CLOEXEC);
 }
 
 pub fn wait(timeout: i32) usize {
@@ -12,9 +13,9 @@ pub fn wait(timeout: i32) usize {
 }
  
 pub fn addFd(fd: i32, dis: *Dispatchable) !void {
-    var ev = std.os.linux.epoll_event{
-        .events = std.os.linux.EPOLLIN,
-        .data = std.os.linux.epoll_data {
+    var ev = linux.epoll_event{
+        .events = linux.EPOLLIN,
+        .data = linux.epoll_data {
             .ptr = @ptrToInt(dis),
         },
     };
