@@ -172,6 +172,7 @@ pub const Context = struct {
         self.tx_write_offset += @sizeOf(u32);
 
         std.mem.copy(u8, self.tx_buf[self.tx_write_offset..self.tx_write_offset+string.len], string);
+        std.mem.set(u8, self.tx_buf[self.tx_write_offset+string.len..self.tx_write_offset+length], 0);
         self.tx_write_offset += length;
     }
 };
