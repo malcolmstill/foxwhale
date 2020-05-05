@@ -14,6 +14,7 @@ pub const Client = struct {
     connection: std.net.StreamServer.Connection,
     dispatchable: Dispatchable,
     ctx: Context,
+    seat: ?u32,
 
     const Self = @This();
 

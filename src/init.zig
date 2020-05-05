@@ -32,6 +32,30 @@ fn get_registry(object: Object, new_id: u32) void {
     wl.wl_registry_send_global(registry, 10, "zwp_linux_dmabuf_v1\x00", 3);
 }
 
-fn bind(object: Object, name: u32, name_string: []u8, version: u32, new_id: u32) void {
+fn bind(registry: Object, name: u32, name_string: []u8, version: u32, new_id: u32) void {
     std.debug.warn("bind for {} ({}) with id {} at version {}\n", .{name_string, name, new_id, version});
+
+    switch (name) {
+        1 => {},
+        2 => {},
+        3 => {
+            if (registry.context.client.seat == null) {
+                var seat = wl.new_wl_seat(registry.context, new_id);
+
+                if (registry.context.objects.get(seat.id)) |s| {
+                    s.value.version = version;
+                }
+
+                registry.context.client.seat = seat.id;
+            }
+        },
+        4 => {},
+        5 => {},
+        6 => {},
+        7 => {},
+        8 => {},
+        9 => {},
+        10 => {},
+        else => {},
+    }
 }
