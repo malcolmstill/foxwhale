@@ -10,8 +10,6 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: []i32) !usize {
 
     var control: [cmsg_space(MAX_FDS*@sizeOf(i32))]u8 = undefined;
 
-    std.debug.warn("control.len: {}\n", .{ control.len });
-
     var msg = linux.msghdr{
         .msg_name = null,
         .msg_namelen = 0,
@@ -69,8 +67,6 @@ pub fn sendMsg(fd: i32, buffer: []u8, fds: []i32) !usize {
 
     var control: [cmsg_space(MAX_FDS*@sizeOf(i32))]u8 = undefined;
 
-    std.debug.warn("control.len: {}\n", .{ control.len });
-
     var msg = linux.msghdr_const{
         .msg_name = null,
         .msg_namelen = 0,
@@ -85,7 +81,7 @@ pub fn sendMsg(fd: i32, buffer: []u8, fds: []i32) !usize {
 
     var rc: usize = 0;
     while (true) {
-        rc = linux.sendmsg(fd, &msg, 0);
+        rc = linux.sendmsg(fd, &msg, linux.MSG_NOSIGNAL);
         switch (linux.getErrno(rc)) {
             0 => break,
             linux.EINTR => continue,
