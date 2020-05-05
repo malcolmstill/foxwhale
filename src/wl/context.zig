@@ -51,7 +51,7 @@ pub const Context = struct {
             }
 
             var header = @ptrCast(*Header, &self.recv_buf[self.read_offset]);
-            // std.debug.warn("{}\n", .{ header });
+            std.debug.warn("{}\n", .{ header });
 
             // We need to have read a full message
             if (remaining < header.length) {
@@ -60,7 +60,11 @@ pub const Context = struct {
 
             self.read_offset += @sizeOf(Header);
             if (self.objects.get(header.id)) |object| {
+                std.debug.warn("got id: {}\n", .{object.value.id});
                 object.value.dispatch(object.value, header.opcode);
+            } else {
+                std.debug.warn("couldn't find id: {}\n", .{header.id});
+                std.os.exit(2);
             }
         }
     }
