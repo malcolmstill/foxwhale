@@ -22,9 +22,11 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
         }
     }
 
+    std.time.sleep(16000000);
+
     while(window.callbacks.readItem()) |callback_id| {
         if (context.get(callback_id)) |callback| {
-            try wl.wl_callback_send_done(callback.*, 1000);
+            try wl.wl_callback_send_done(callback.*, @intCast(u32, std.time.timestamp()));
             try context.unregister(callback.*);
             try wl.wl_display_send_delete_id(window.client.display, callback_id);
         } else {

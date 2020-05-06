@@ -30,7 +30,7 @@ fn sync(context: *Context, display: Object, new_id: u32) anyerror!void {
     std.debug.warn("sync with id {}\n", .{new_id});
 
     var callback = wl.new_wl_callback(new_id, display.context, 0);
-    try wl.wl_callback_send_done(callback, 120);
+    try wl.wl_callback_send_done(callback, @intCast(u32, std.time.timestamp()));
     try wl.wl_display_send_delete_id(display, callback.id);
 }
 
