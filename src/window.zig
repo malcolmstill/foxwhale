@@ -44,9 +44,6 @@ pub fn newWindow(client: *Client, surface: u32) !*Window {
             WINDOWS[i].in_use = true;
             WINDOWS[i].client = client;
             WINDOWS[i].wl_surface = surface;
-            if (client.context.objects.get(surface)) |s| {
-                s.value.container = @ptrToInt(&WINDOWS[i]);
-            }
 
             return &WINDOWS[i];
         } else {

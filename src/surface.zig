@@ -14,8 +14,6 @@ pub fn init() void {
 
 fn commit(context: *Context, surface: Object) anyerror!void {
     var window = @intToPtr(*Window, surface.container);
-    var display_id = window.client.display orelse return error.NoDisplayId;
-    var display = surface.context.get(display_id) orelse return error.NoDisplay;
 
     if (window.wl_buffer) |buffer_id| {
         if (surface.context.get(buffer_id)) |buffer| {
@@ -27,7 +25,7 @@ fn commit(context: *Context, surface: Object) anyerror!void {
         if (surface.context.get(callback_id)) |callback| {
             try wl.wl_callback_send_done(callback.*, 1000);
             try surface.context.unregister(callback.*);
-            try wl.wl_display_send_delete_id(display.*, callback_id);
+            try wl.wl_display_send_delete_id(window.client.display, callback_id);
         } else {
             return error.CallbackIdNotFound;
         }
@@ -44,21 +42,10 @@ fn attach(context: *Context, surface: Object, buffer: Object, x: i32, y: i32) an
     window.wl_buffer = buffer.id;
 }
 
-fn frame(context: *Context, surface: Object, new_callback_id: u32) anyerror!void {
-    var container = surface.container;
-    // Note: we explicitly save surface.container in this variable.
-    //
-    // I've just spent some hours figuring out a SIGSEGV / incorrect alignment
-    // issue because:
-    // a) the incoming Object is, under the hood, a pointer to the Object
-    //    in the Object hashmap
-    // b) the call to new_wl_callback can potentially cause a reallocation of
-    //    Objects in said hashmap. This will invalidate the data inside surface.
-    //
-    // Ideally, we'd want the incoming Object structs to be copies.
+fn frame(context: *Context, surface: Object, new_id: u32) anyerror!void {
+    var window = @alignCast(@alignOf(Window), @intToPtr(*Window, surface.container));
+    try window.callbacks.writeItem(new_id);
 
-    if (wl.new_wl_callback(surface.context, new_callback_id)) |callback| {
-        var window = @alignCast(@alignOf(Window), @intToPtr(*Window, container));
-        try window.callbacks.writeItem(new_callback_id);
-    }
+    var callback = wl.new_wl_callback(new_id, context, 0);
+    try context.register(callback);
 }

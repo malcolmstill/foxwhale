@@ -1,5 +1,6 @@
 const std = @import("std");
 const epoll = @import("epoll.zig");
+const Object = @import("wl/context.zig").Object;
 const Context = @import("wl/context.zig").Context;
 const wl = @import("wl/protocols.zig");
 const Dispatchable = epoll.Dispatchable;
@@ -15,7 +16,7 @@ pub const Client = struct {
     dispatchable: Dispatchable,
     context: Context,
     serial: u32 = 0,
-    display: ?u32,
+    display: Object,
     seat: ?u32,
     compositor: ?u32,
     subcompositor: ?u32,
@@ -44,20 +45,20 @@ pub const Client = struct {
 pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
     var i: usize = 0;
     while (i < MAX_CLIENTS) {
-        if (clients[i].in_use == false) {
-            clients[i].index = i;
-            clients[i].dispatchable.impl = dispatch;
-            clients[i].connection = conn;
-            clients[i].in_use = true;
-            clients[i].context.init(conn.file.handle, &clients[i]);
+        var client = &clients[i];
+        if (client.in_use == false) {
+            client.index = i;
+            client.dispatchable.impl = dispatch;
+            client.connection = conn;
+            client.in_use = true;
+            client.context.init(conn.file.handle, client);
 
-            if (wl.new_wl_display(&clients[i].context, 1)) |o| {
-                clients[i].display = o.id;
-            }
+            client.display = wl.new_wl_display(1, &client.context, 0);
+            try client.context.register(client.display);
 
-            try epoll.addFd(conn.file.handle, &clients[i].dispatchable);
+            try epoll.addFd(conn.file.handle, &client.dispatchable);
 
-            return &clients[i];
+            return client;
         } else {
             i = i + 1;
             continue;

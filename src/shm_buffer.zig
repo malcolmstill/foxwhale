@@ -12,29 +12,28 @@ pub fn init() void {
     wl.WL_BUFFER.destroy = destroy;
 }
 
-fn create_buffer(context: *Context, shm_pool: Object, id: u32, offset: i32, width: i32, height: i32, stride: i32, format: u32) anyerror!void {
-    var pool = @intToPtr(*ShmPool, shm_pool.container);
+fn create_buffer(context: *Context, shm_pool: Object, new_id: u32, offset: i32, width: i32, height: i32, stride: i32, format: u32) anyerror!void {
+    var buffer = try newShmBuffer(context.client, new_id, shm_pool, offset, width, height, stride, format);
 
-    if (wl.new_wl_buffer(context, id)) |wl_buffer| {
-        var buffer = try newShmBuffer(context.client, id, pool, offset, width, height, stride, format);
-        wl_buffer.container = @ptrToInt(buffer);
-        pool.incrementRefCount();
-    }
+    var wl_buffer = wl.new_wl_buffer(new_id, context, @ptrToInt(buffer));
+    try context.register(wl_buffer);
 }
 
-pub fn newShmBuffer(client: *Client, id: u32, pool: *ShmPool, offset: i32, width: i32, height: i32, stride: i32, format: u32) !*ShmBuffer {
+pub fn newShmBuffer(client: *Client, id: u32, wl_shm_pool: Object, offset: i32, width: i32, height: i32, stride: i32, format: u32) !*ShmBuffer {
     var i: usize = 0;
     while (i < MAX_SHM_BUFFERS) {
         if (SHM_BUFFERS[i].in_use == false) {
             SHM_BUFFERS[i].index = i;
             SHM_BUFFERS[i].in_use = true;
-            SHM_BUFFERS[i].pool = pool;
+            SHM_BUFFERS[i].pool = @intToPtr(*ShmPool, wl_shm_pool.container);
             SHM_BUFFERS[i].offset = offset;
             SHM_BUFFERS[i].width = width;
             SHM_BUFFERS[i].height = height;
             SHM_BUFFERS[i].stride = stride;
             SHM_BUFFERS[i].format = format;
             SHM_BUFFERS[i].wl_buffer_id = id;
+
+            SHM_BUFFERS[i].pool.incrementRefCount();
 
             return &SHM_BUFFERS[i];
         } else {

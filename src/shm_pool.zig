@@ -12,11 +12,11 @@ pub fn init() void {
     wl.WL_SHM_POOL.destroy = destroy;
 }
 
-fn create_pool(context: *Context, shm: Object, id: u32, fd: i32, size: i32) anyerror!void {
-    if (wl.new_wl_shm_pool(shm.context, id)) |wl_pool| {
-        var pool = try newShmPool(context.client, fd, id);
-        wl_pool.container = @ptrToInt(pool);
-    }
+fn create_pool(context: *Context, shm: Object, new_id: u32, fd: i32, size: i32) anyerror!void {
+    var pool = try newShmPool(context.client, fd, new_id);
+
+    var wl_pool = wl.new_wl_shm_pool(new_id, context, @ptrToInt(pool));
+    try context.register(wl_pool);
 }
 
 fn destroy(context: *Context, shm_pool: Object) anyerror!void {

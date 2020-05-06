@@ -25,27 +25,30 @@ pub fn init() void {
 
 fn sync(context: *Context, display: Object, new_id: u32) anyerror!void {
     std.debug.warn("sync with id {}\n", .{new_id});
-    if(wl.new_wl_callback(display.context, new_id)) |callback| {
-        try wl.wl_callback_send_done(callback.*, 120);
-        var x = display.context.unregister(callback.*);
-        try wl.wl_display_send_delete_id(display, callback.id);
-    }
+
+    var callback = wl.new_wl_callback(new_id, display.context, 0);
+    try wl.wl_callback_send_done(callback, 120);
+    try wl.wl_display_send_delete_id(display, callback.id);
 }
 
-fn get_registry(context: *Context, object: Object, new_id: u32) anyerror!void {
-    std.debug.warn("get_registry with id {}\n", .{new_id});
-    if (wl.new_wl_registry(object.context, new_id)) |registry| {
-        try wl.wl_registry_send_global(registry.*, 1, "wl_compositor\x00", 4);
-        try wl.wl_registry_send_global(registry.*, 2, "wl_subcompositor\x00", 1);
-        try wl.wl_registry_send_global(registry.*, 3, "wl_seat\x00", 4);
-        try wl.wl_registry_send_global(registry.*, 4, "xdg_wm_base\x00", 1);
-        try wl.wl_registry_send_global(registry.*, 5, "wl_output\x00", 2);
-        try wl.wl_registry_send_global(registry.*, 6, "wl_data_device_manager\x00", 3);
-        try wl.wl_registry_send_global(registry.*, 7, "wl_shell\x00", 1);
-        try wl.wl_registry_send_global(registry.*, 8, "wl_shm\x00", 1);
-        try wl.wl_registry_send_global(registry.*, 9, "zxdg_decoration_manager_v1\x00", 1);
-        try wl.wl_registry_send_global(registry.*, 10, "zwp_linux_dmabuf_v1\x00", 3);
-    }
+fn get_registry(context: *Context, display: Object, new_id: u32) anyerror!void {
+    std.debug.warn("get_registry with id {} {}\n", .{new_id, display});
+
+    var registry = wl.new_wl_registry(new_id, context, 0);
+    std.debug.warn("wl_registry: {}\n", .{registry});
+
+    try wl.wl_registry_send_global(registry, 1, "wl_compositor\x00", 4);
+    try wl.wl_registry_send_global(registry, 2, "wl_subcompositor\x00", 1);
+    try wl.wl_registry_send_global(registry, 3, "wl_seat\x00", 4);
+    try wl.wl_registry_send_global(registry, 4, "xdg_wm_base\x00", 1);
+    try wl.wl_registry_send_global(registry, 5, "wl_output\x00", 2);
+    try wl.wl_registry_send_global(registry, 6, "wl_data_device_manager\x00", 3);
+    try wl.wl_registry_send_global(registry, 7, "wl_shell\x00", 1);
+    try wl.wl_registry_send_global(registry, 8, "wl_shm\x00", 1);
+    try wl.wl_registry_send_global(registry, 9, "zxdg_decoration_manager_v1\x00", 1);
+    try wl.wl_registry_send_global(registry, 10, "zwp_linux_dmabuf_v1\x00", 3);
+
+    try context.register(registry);
 }
 
 fn bind(context: *Context, registry: Object, name: u32, name_string: []u8, version: u32, new_id: u32) anyerror!void {
@@ -53,43 +56,50 @@ fn bind(context: *Context, registry: Object, name: u32, name_string: []u8, versi
 
     switch (name) {
         1 => {
-            if(wl.new_wl_compositor(context, new_id)) |compositor| {
-                compositor.version = version;
-                context.client.compositor = compositor.id;
-            }
+            var compositor = wl.new_wl_compositor(new_id, context, 0);
+            compositor.version = version;
+            context.client.compositor = compositor.id;
+
+            try context.register(compositor);
         },
         2 => {
-            if(wl.new_wl_subcompositor(context, new_id)) |subcompositor| {
-                subcompositor.version = version;
-                context.client.subcompositor = subcompositor.id;
-            }
+            var subcompositor = wl.new_wl_subcompositor(new_id, context, 0);
+            subcompositor.version = version;
+            context.client.subcompositor = subcompositor.id;
+
+            try context.register(subcompositor);
         },
         3 => {
-            if (context.client.seat == null) {
-                if (wl.new_wl_seat(context, new_id)) |seat| {
-                    seat.version = version;
-                    try wl.wl_seat_send_capabilities(seat.*, @enumToInt(wl.wl_seat_capability.pointer) | @enumToInt(wl.wl_seat_capability.keyboard));
-                    context.client.seat = seat.id;
-                }
+            if (context.client.seat != null) {
+                return;
             }
+
+            var seat = wl.new_wl_seat(new_id, context, 0);
+            seat.version = version;
+            try wl.wl_seat_send_capabilities(seat, @enumToInt(wl.wl_seat_capability.pointer) | @enumToInt(wl.wl_seat_capability.keyboard));
+            context.client.seat = seat.id;
+
+            try context.register(seat);
         },
         4 => {
-            if (wl.new_xdg_wm_base(context, new_id)) |base| {
-                base.version = version;
-                context.client.xdg_wm_base = base.id;
-            }
+            var base = wl.new_xdg_wm_base(new_id, context, 0);
+            base.version = version;
+            context.client.xdg_wm_base = base.id;
+
+            try context.register(base);
         },
         5 => {},
         6 => {},
         7 => {},
         8 => {
-            if(wl.new_wl_shm(context, new_id)) |shm| {
-                shm.version = version;
-                context.client.shm = shm.id;
+            var shm = wl.new_wl_shm(new_id, context, 0);
+            shm.version = version;
+            context.client.shm = shm.id;
 
-                try wl.wl_shm_send_format(shm.*, @enumToInt(wl.wl_shm_format.argb8888));
-                try wl.wl_shm_send_format(shm.*, @enumToInt(wl.wl_shm_format.xrgb8888));
-            }
+            try wl.wl_shm_send_format(shm, @enumToInt(wl.wl_shm_format.argb8888));
+            try wl.wl_shm_send_format(shm, @enumToInt(wl.wl_shm_format.xrgb8888));
+
+            try context.register(shm);
         },
         9 => {},
         10 => {},
@@ -97,34 +107,39 @@ fn bind(context: *Context, registry: Object, name: u32, name_string: []u8, versi
     }
 }
 
-fn create_surface(context: *Context, compositor: Object, new_surface_id: u32) anyerror!void {
-    std.debug.warn("create_surface: {}\n", .{new_surface_id});
-    if (wl.new_wl_surface(context, new_surface_id)) |surface| {
-        var window = try win.newWindow(context.client, new_surface_id);
-    }
+fn create_surface(context: *Context, compositor: Object, new_id: u32) anyerror!void {
+    std.debug.warn("create_surface: {}\n", .{new_id});
+
+    var window = try win.newWindow(context.client, new_id);
+
+    var surface = wl.new_wl_surface(new_id, context, @ptrToInt(window));
+    try context.register(surface);
 }
 
-fn get_xdg_surface(context: *Context, base: Object, id: u32, surface: Object) anyerror!void {
+fn get_xdg_surface(context: *Context, base: Object, new_id: u32, surface: Object) anyerror!void {
+    std.debug.warn("get_xdg_surface: {}\n", .{new_id});
+
     var window = @intToPtr(*Window, surface.container);
-    std.debug.warn("get_xdg_surface: {}\n", .{id});
-    if (wl.new_xdg_surface(base.context, id)) |xdg_surface| {
-        window.xdg_surface = xdg_surface.id;
-        xdg_surface.container = @ptrToInt(window);
-    }
+    window.xdg_surface = new_id;
+
+    var xdg_surface = wl.new_xdg_surface(new_id, context, @ptrToInt(window));
+    try context.register(xdg_surface);
 }
 
-fn get_toplevel(context: *Context, xdg_surface: Object, id: u32) anyerror!void {
-    std.debug.warn("get_toplevel: {}\n", .{id});
-    if (wl.new_xdg_toplevel(xdg_surface.context, id)) |xdg_toplevel| {
-        var window = @intToPtr(*Window, xdg_surface.container);
-        window.xdg_toplevel = xdg_toplevel.id;
-        xdg_toplevel.container = @ptrToInt(window);
+fn get_toplevel(context: *Context, xdg_surface: Object, new_id: u32) anyerror!void {
+    std.debug.warn("get_toplevel: {}\n", .{new_id});
 
-        var array = [_]u32{};
-        var serial = window.client.nextSerial();
-        try wl.xdg_toplevel_send_configure(xdg_toplevel.*, 0, 0, array[0..array.len]);
-        try wl.xdg_surface_send_configure(xdg_surface, serial);
-    }
+    var window = @intToPtr(*Window, xdg_surface.container);
+    window.xdg_toplevel = new_id;
+
+    var xdg_toplevel = wl.new_xdg_toplevel(new_id, context, @ptrToInt(window));
+
+    var array = [_]u32{};
+    var serial = window.client.nextSerial();
+    try wl.xdg_toplevel_send_configure(xdg_toplevel, 0, 0, array[0..array.len]);
+    try wl.xdg_surface_send_configure(xdg_surface, serial);
+
+    try context.register(xdg_toplevel);
 }
 
 fn set_title(context: *Context, xdg_toplevel: Object, title: []u8) anyerror!void {
