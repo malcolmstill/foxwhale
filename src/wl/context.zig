@@ -51,7 +51,6 @@ pub const Context = struct {
             }
 
             var header = @ptrCast(*Header, &self.rx_buf[self.read_offset]);
-            std.debug.warn("{}\n", .{ header });
 
             // We need to have read a full message
             if (remaining < header.length) {
@@ -128,7 +127,7 @@ pub const Context = struct {
 
     pub fn unregister(self: *Self, object: Object) !void {
         if (self.objects.remove(object.id)) |x| {
-            std.debug.warn("unregistered: {}\n", .{x.key});
+            // std.debug.warn("unregistered: {}\n", .{x.key});
         } else {
             std.debug.warn("attempted to deregister object ({}) that didn't exist\n", .{object.id});
         }
