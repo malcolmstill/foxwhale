@@ -12,9 +12,10 @@ pub fn init() void {
 }
 
 fn create_pool(shm: Object, id: u32, fd: i32, size: i32) anyerror!void {
-    if (wl.new_wl_shm_pool(shm.context, id)) |pool| {
-        var new_pool = try newShmPool(shm.context.client, fd, id);
-        pool.container = @ptrToInt(new_pool);
+    var context = shm.context;
+    if (wl.new_wl_shm_pool(shm.context, id)) |wl_pool| {
+        var pool = try newShmPool(context.client, fd, id);
+        wl_pool.container = @ptrToInt(pool);
     }
 }
 
@@ -42,7 +43,7 @@ pub const ShmPool = struct {
     }
 
     pub fn incrementRefCount(self: *Self) void {
-        ref_count += 1;
+        self.ref_count += 1;
     }
 
     pub fn decrementRefCount(self: *Self) void {

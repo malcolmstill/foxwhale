@@ -49,42 +49,43 @@ fn get_registry(object: Object, new_id: u32) anyerror!void {
 
 fn bind(registry: Object, name: u32, name_string: []u8, version: u32, new_id: u32) anyerror!void {
     std.debug.warn("bind for {} ({}) with id {} at version {}\n", .{name_string, name, new_id, version});
+    var context = registry.context;
 
     switch (name) {
         1 => {
-            if(wl.new_wl_compositor(registry.context, new_id)) |compositor| {
+            if(wl.new_wl_compositor(context, new_id)) |compositor| {
                 compositor.version = version;
-                registry.context.client.compositor = compositor.id;
+                context.client.compositor = compositor.id;
             }
         },
         2 => {
-            if(wl.new_wl_subcompositor(registry.context, new_id)) |subcompositor| {
+            if(wl.new_wl_subcompositor(context, new_id)) |subcompositor| {
                 subcompositor.version = version;
-                registry.context.client.subcompositor = subcompositor.id;
+                context.client.subcompositor = subcompositor.id;
             }
         },
         3 => {
-            if (registry.context.client.seat == null) {
-                if (wl.new_wl_seat(registry.context, new_id)) |seat| {
+            if (context.client.seat == null) {
+                if (wl.new_wl_seat(context, new_id)) |seat| {
                     seat.version = version;
                     try wl.wl_seat_send_capabilities(seat.*, @enumToInt(wl.wl_seat_capability.pointer) | @enumToInt(wl.wl_seat_capability.keyboard));
-                    registry.context.client.seat = seat.id;
+                    context.client.seat = seat.id;
                 }
             }
         },
         4 => {
-            if (wl.new_xdg_wm_base(registry.context, new_id)) |base| {
+            if (wl.new_xdg_wm_base(context, new_id)) |base| {
                 base.version = version;
-                registry.context.client.xdg_wm_base = base.id;
+                context.client.xdg_wm_base = base.id;
             }
         },
         5 => {},
         6 => {},
         7 => {},
         8 => {
-            if(wl.new_wl_shm(registry.context, new_id)) |shm| {
+            if(wl.new_wl_shm(context, new_id)) |shm| {
                 shm.version = version;
-                registry.context.client.shm = shm.id;
+                context.client.shm = shm.id;
 
                 try wl.wl_shm_send_format(shm.*, @enumToInt(wl.wl_shm_format.argb8888));
                 try wl.wl_shm_send_format(shm.*, @enumToInt(wl.wl_shm_format.xrgb8888));
@@ -97,16 +98,17 @@ fn bind(registry: Object, name: u32, name_string: []u8, version: u32, new_id: u3
 }
 
 fn create_surface(compositor: Object, new_surface_id: u32) anyerror!void {
+    var context = compositor.context;
     std.debug.warn("create_surface: {}\n", .{new_surface_id});
-    if (wl.new_wl_surface(compositor.context, new_surface_id)) |surface| {
-        var window = try win.newWindow(compositor.context.client, new_surface_id);
+    if (wl.new_wl_surface(context, new_surface_id)) |surface| {
+        var window = try win.newWindow(context.client, new_surface_id);
     }
 }
 
 fn get_xdg_surface(base: Object, id: u32, surface: Object) anyerror!void {
+    var window = @intToPtr(*Window, surface.container);
     std.debug.warn("get_xdg_surface: {}\n", .{id});
     if (wl.new_xdg_surface(base.context, id)) |xdg_surface| {
-        var window = @intToPtr(*Window, surface.container);
         window.xdg_surface = xdg_surface.id;
         xdg_surface.container = @ptrToInt(window);
     }
