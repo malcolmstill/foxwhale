@@ -3,6 +3,9 @@ const epoll = @import("epoll.zig");
 const Object = @import("wl/context.zig").Object;
 const Context = @import("wl/context.zig").Context;
 const wl = @import("wl/protocols.zig");
+const wl_shm_pool = @import("wl_shm_pool.zig");
+const wl_shm_buffer = @import("wl_shm_buffer.zig");
+const window = @import("window.zig");
 const Dispatchable = epoll.Dispatchable;
 
 const MAX_CLIENTS = 256;
@@ -29,6 +32,10 @@ pub const Client = struct {
     pub fn deinit(self: *Self) void {
         self.context.deinit();
         self.in_use = false;
+
+        wl_shm_pool.releaseShmPools(self);
+        wl_shm_buffer.releaseShmBuffers(self);
+        window.releaseWindows(self);
 
         epoll.removeFd(self.connection.file.handle) catch |err| {
             std.debug.warn("Client not removed from epoll: {}\n", .{ self.index });

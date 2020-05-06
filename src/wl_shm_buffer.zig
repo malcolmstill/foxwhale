@@ -25,6 +25,7 @@ pub fn newShmBuffer(client: *Client, id: u32, wl_shm_pool: Object, offset: i32, 
     while (i < MAX_SHM_BUFFERS) {
         if (SHM_BUFFERS[i].in_use == false) {
             SHM_BUFFERS[i].index = i;
+            SHM_BUFFERS[i].client = client;
             SHM_BUFFERS[i].in_use = true;
             SHM_BUFFERS[i].pool = @intToPtr(*ShmPool, wl_shm_pool.container);
             SHM_BUFFERS[i].offset = offset;
@@ -73,6 +74,16 @@ fn destroy(context: *Context, wl_shm_buffer: Object) anyerror!void {
     try wl.wl_display_send_delete_id(context.client.display, wl_shm_buffer.id);
 
     try context.unregister(wl_shm_buffer);
+}
+
+pub fn releaseShmBuffers(client: *Client) void {
+    var i: usize = 0;
+    while (i < MAX_SHM_BUFFERS) {
+        if (SHM_BUFFERS[i].client == client) {
+            SHM_BUFFERS[i].deinit();
+        }
+        i = i + 1;
+    }
 }
 
 const ShmBuffersError = error{ShmBuffersExhausted};

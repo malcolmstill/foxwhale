@@ -65,3 +65,13 @@ const BufferedState = struct {
 const WindowsError = error {
     WindowsExhausted,
 };
+
+pub fn releaseWindows(client: *Client) void {
+    var i: usize = 0;
+    while (i < MAX_WINDOWS) {
+        if (WINDOWS[i].client == client) {
+            WINDOWS[i].deinit();
+        }
+        i = i + 1;
+    }
+}

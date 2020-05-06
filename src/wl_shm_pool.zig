@@ -81,6 +81,16 @@ pub fn newShmPool(client: *Client, fd: i32, pool: u32, size: i32) !*ShmPool {
     return ShmPoolsError.ShmPoolsExhausted;
 }
 
+pub fn releaseShmPools(client: *Client) void {
+    var i: usize = 0;
+    while (i < MAX_SHM_POOLS) {
+        if (pools[i].client == client) {
+            pools[i].deinit();
+        }
+        i = i + 1;
+    }
+}
+
 const ShmPoolsError = error {
     ShmPoolsExhausted,
 };
