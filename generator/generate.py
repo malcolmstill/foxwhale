@@ -41,19 +41,14 @@ def generate_enum(interface):
 
 # Generate new object
 def generate_new_object(interface):
-    print(f"pub fn new_{interface.attrib['name']}(context: *Context, id: u32) ?*Object {{")
-    print(f"\tvar object = Object {{")
+    print(f"pub fn new_{interface.attrib['name']}(id: u32, context: *Context, container: usize) Object {{")
+    print(f"\treturn Object {{")
     print(f"\t\t.id = id,")
     print(f"\t\t.dispatch = {interface.attrib['name']}_dispatch,")
     print(f"\t\t.context = context,")
     print(f"\t\t.version = 0,")
-    print(f"\t\t.container = 0,")
+    print(f"\t\t.container = container,")
     print(f"\t}};")
-    print(f"\tcontext.register(object) catch |err| {{")
-    print(f"\t\tstd.debug.warn(\"Couldn't register id: {{}}\\n\", .{{id}});")
-    print(f"\t}};")
-    print(f"\tif (context.objects.get(id)) |o| {{ return &o.value; }}")
-    print(f"\treturn null;")
     print(f"}}\n")
 
 # Generate Dispatch function
