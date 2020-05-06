@@ -15,6 +15,6 @@ fn get_keyboard(context: *Context, wl_seat: Object, new_id: u32) anyerror!void {
 }
 
 pub fn init() void {
-    prot.WL_SEAT.get_pointer = get_po?inter;
+    prot.WL_SEAT.get_pointer = get_pointer;
     prot.WL_SEAT.get_keyboard = get_keyboard;
 }
