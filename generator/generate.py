@@ -196,7 +196,7 @@ def generate_interface_global_debug(interface):
                     arg_name = arg.attrib["name"]
                     print(f", {arg_name}: {arg_type}", end = "")
             print(f") anyerror!void")
-            print(f"{{ std.debug.warn(\"{interface.attrib['name']}_{child.attrib['name']} not implemented\\n\", .{{}}); std.os.exit(2);}}\n\n", end='')
+            print(f"{{ return error.DebugFunctionNotImplemented;}}\n\n", end='')
 
     print(f"pub var {interface.attrib['name'].upper()} = {interface.attrib['name']}_interface {{")
     for child in interface:
