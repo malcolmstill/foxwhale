@@ -11,21 +11,22 @@ var SHM_BUFFERS: [MAX_SHM_BUFFERS]ShmBuffer = undefined;
 pub fn newShmBuffer(client: *Client, id: u32, wl_shm_pool: Object, offset: i32, width: i32, height: i32, stride: i32, format: u32) !*ShmBuffer {
     var i: usize = 0;
     while (i < MAX_SHM_BUFFERS) {
-        if (SHM_BUFFERS[i].in_use == false) {
-            SHM_BUFFERS[i].index = i;
-            SHM_BUFFERS[i].client = client;
-            SHM_BUFFERS[i].in_use = true;
-            SHM_BUFFERS[i].shm_pool = @intToPtr(*ShmPool, wl_shm_pool.container);
-            SHM_BUFFERS[i].offset = offset;
-            SHM_BUFFERS[i].width = width;
-            SHM_BUFFERS[i].height = height;
-            SHM_BUFFERS[i].stride = stride;
-            SHM_BUFFERS[i].format = format;
-            SHM_BUFFERS[i].wl_buffer_id = id;
+        var shm_buffer: *ShmBuffer = &SHM_BUFFERS[i];
+        if (shm_buffer.in_use == false) {
+            shm_buffer.index = i;
+            shm_buffer.client = client;
+            shm_buffer.in_use = true;
+            shm_buffer.shm_pool = @intToPtr(*ShmPool, wl_shm_pool.container);
+            shm_buffer.offset = offset;
+            shm_buffer.width = width;
+            shm_buffer.height = height;
+            shm_buffer.stride = stride;
+            shm_buffer.format = format;
+            shm_buffer.wl_buffer_id = id;
 
-            SHM_BUFFERS[i].shm_pool.incrementRefCount();
+            shm_buffer.shm_pool.incrementRefCount();
 
-            return &SHM_BUFFERS[i];
+            return shm_buffer;
         } else {
             i = i + 1;
             continue;
@@ -58,8 +59,9 @@ pub const ShmBuffer = struct {
 pub fn releaseShmBuffers(client: *Client) void {
     var i: usize = 0;
     while (i < MAX_SHM_BUFFERS) {
-        if (SHM_BUFFERS[i].client == client) {
-            SHM_BUFFERS[i].deinit();
+        var shm_buffer: *ShmBuffer = &SHM_BUFFERS[i];
+        if (shm_buffer.client == client) {
+            shm_buffer.deinit();
         }
         i = i + 1;
     }
