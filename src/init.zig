@@ -90,7 +90,18 @@ fn bind(context: *Context, registry: Object, name: u32, name_string: []u8, versi
 
             try context.register(base);
         },
-        5 => {},
+        5 => {
+            var wl_output = wl.new_wl_output(new_id, context, 0);
+            wl_output.version = version;
+            context.client.wl_output = wl_output.id;
+
+            try wl.wl_output_send_geometry(wl_output, 0, 0, 267, 200, @enumToInt(wl.wl_output_subpixel.none), "unknown", "unknown", @enumToInt(wl.wl_output_transform.normal));
+            try wl.wl_output_send_mode(wl_output, @enumToInt(wl.wl_output_mode.current), 640, 480, 60000);
+            try wl.wl_output_send_scale(wl_output, 1);
+            try wl.wl_output_send_done(wl_output);
+
+            try context.register(wl_output);
+        },
         6 => {},
         7 => {},
         8 => {

@@ -17,6 +17,7 @@ pub const Client = struct {
     context: Context,
     serial: u32 = 0,
     display: Object,
+    wl_output: ?u32,
     seat: ?u32,
     compositor: ?u32,
     subcompositor: ?u32,
