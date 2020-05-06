@@ -51,9 +51,21 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: []i32) !usize {
     if (maybe_cmsg) |cmsg| {
         if (cmsg.cmsg_type == SCM_RIGHTS and cmsg.cmsg_level == linux.SOL_SOCKET) {
             var data: []i32 = undefined;
+
+            // std.debug.warn("address: {}, mod 4: {}. Just cmsg: {}\n", .{&cmsg_data_ng(cmsg), @mod(@ptrToInt(&cmsg_data_ng(cmsg)), 4), cmsg_data_ng(cmsg)});
+            // var i: usize = 0;
+            // while(i < 128) {
+            //     std.debug.warn("{x} ", .{control[i]});
+            //     i = i + 1;
+            // }
+
             data.ptr = @ptrCast([*]i32, @alignCast(@alignOf(i32), cmsg_data_ng(cmsg)));
             data.len = (cmsg.cmsg_len - cmsg_len_ng(0))/@sizeOf(i32); 
             std.mem.copy(i32, fds[0..fds.len], data);
+
+            // for (fds) |fd_in| {
+            //     std.debug.warn("{} ", .{fd_in});
+            // }
         }
     }
 
@@ -187,8 +199,10 @@ fn cmsg_nxthdr_ng(mhdr: *linux.msghdr, cmsg: *cmsghdr) ?*cmsghdr {
 }
 
 fn cmsg_data_ng(cmsg: *cmsghdr) *u8 {
-    // return @ptrCast(*u8, (@ptrToInt(cmsg) + 1));
-    return @intToPtr(*u8, @ptrToInt(cmsg) + 1);
+    // currently only written for x86_64 linux...compatibility coming later
+    // in the case of x86_64 linux the header is 16 bytes which is itself
+    // align(4) and therefore there is no padding between header and data
+    return @intToPtr(*u8, @ptrToInt(cmsg) + @sizeOf(cmsghdr));
 }
 
 fn __cmsg_next(cmsg: *cmsghdr) *u8 {

@@ -14,11 +14,13 @@ pub const Client = struct {
     connection: std.net.StreamServer.Connection,
     dispatchable: Dispatchable,
     context: Context,
+    serial: u32 = 0,
     display: ?u32,
     seat: ?u32,
     compositor: ?u32,
     subcompositor: ?u32,
     shm: ?u32,
+    xdg_wm_base: ?u32,
 
     const Self = @This();
 
@@ -31,6 +33,11 @@ pub const Client = struct {
         };
 
         std.os.close(self.connection.file.handle);
+    }
+
+    pub fn nextSerial(self: *Self) u32 {
+        self.serial += 1;
+        return self.serial;
     }
 };
 

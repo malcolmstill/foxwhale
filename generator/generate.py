@@ -20,7 +20,7 @@ def generate_protocol(protocol):
         if child.tag == "interface":
             print(f"\n// {child.attrib['name']}")
             generate_interface(child)
-            generate_interface_global(child)
+            generate_interface_global_debug(child)
             generate_new_object(child)
             generate_dispatch_function(child)
             generate_enum(child)
@@ -58,7 +58,7 @@ def generate_new_object(interface):
 
 # Generate Dispatch function
 def generate_dispatch_function(interface):
-    print(f"fn {interface.attrib['name']}_dispatch(object: Object, opcode: u16) void {{")
+    print(f"fn {interface.attrib['name']}_dispatch(object: Object, opcode: u16) anyerror!void {{")
     print(f"\tswitch(opcode) {{")
     i = 0
     for child in interface:
@@ -90,7 +90,7 @@ def generate_request_dispatch(index, request, interface):
         if arg.tag == "arg":
             generate_next(arg)
     print(f"\t\t\t\tif ({interface.attrib['name'].upper()}.{request.attrib['name']}) |{request.attrib['name']}| {{", end = '')
-    print(f"{request.attrib['name']}(object, ", end = '')
+    print(f"try {request.attrib['name']}(object, ", end = '')
     first = True
     for arg in request:
         if arg.tag == "arg":
@@ -116,7 +116,7 @@ def next_type(type):
         "int": "i32",
         "uint": "u32",
         "new_id": "u32",
-        "fd": "i32",
+        "fd": "fd",
         "string": "string",
         "array": "array",
         "object": "OBJECT",
@@ -178,7 +178,7 @@ def generate_request(interface, request):
             generate_request_arg(arg, first)
             if first == True:
                 first = False
-    print(") void,")
+    print(") anyerror!void,")
 
 def generate_request_arg(arg, first):
     arg_type = lookup_type(arg.attrib["type"], arg)
@@ -191,6 +191,24 @@ def generate_event(event):
     1
 
 # Generate Interface global
+def generate_interface_global_debug(interface):
+    for child in interface:
+        if child.tag == "request":
+            print(f"fn {interface.attrib['name']}_{child.attrib['name']}_default(object: Object", end ='')
+            for arg in child:
+                if arg.tag == "arg":
+                    arg_type = lookup_type(arg.attrib["type"], arg)
+                    arg_name = arg.attrib["name"]
+                    print(f", {arg_name}: {arg_type}", end = "")
+            print(f") anyerror!void")
+            print(f"{{ std.debug.warn(\"{interface.attrib['name']}_{child.attrib['name']} not implemented\\n\", .{{}}); std.os.exit(2);}}\n\n", end='')
+
+    print(f"pub var {interface.attrib['name'].upper()} = {interface.attrib['name']}_interface {{")
+    for child in interface:
+        if child.tag == "request":
+            print(f"\t.{child.attrib['name']} = {interface.attrib['name']}_{child.attrib['name']}_default,")
+    print(f"}};\n")
+
 def generate_interface_global(interface):
     print(f"pub var {interface.attrib['name'].upper()} = {interface.attrib['name']}_interface {{")
     for child in interface:
@@ -214,7 +232,7 @@ def generate_send(interface):
             for arg in child:
                 if arg.tag == "arg":
                     print(f", {arg.attrib['name']}: {put_type_arg(arg.attrib['type'])}", end = '')
-            print(f") void {{")
+            print(f") anyerror!void {{")
             print(f"\tobject.context.startWrite();")
             for arg in child:
                 if arg.tag == "arg":
