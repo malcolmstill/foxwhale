@@ -1,5 +1,6 @@
 const std = @import("std");
 const wl = @import("wl/protocols.zig");
+const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
 const Client = @import("client.zig").Client;
 
@@ -11,15 +12,14 @@ pub fn init() void {
     wl.WL_SHM_POOL.destroy = destroy;
 }
 
-fn create_pool(shm: Object, id: u32, fd: i32, size: i32) anyerror!void {
-    var context = shm.context;
+fn create_pool(context: *Context, shm: Object, id: u32, fd: i32, size: i32) anyerror!void {
     if (wl.new_wl_shm_pool(shm.context, id)) |wl_pool| {
         var pool = try newShmPool(context.client, fd, id);
         wl_pool.container = @ptrToInt(pool);
     }
 }
 
-fn destroy(shm_pool: Object) anyerror!void {
+fn destroy(context: *Context, shm_pool: Object) anyerror!void {
     var pool = @intToPtr(*ShmPool, shm_pool.container);
     pool.to_be_destroyed = true;
 }

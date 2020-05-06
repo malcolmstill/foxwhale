@@ -1,5 +1,6 @@
 const std = @import("std");
 const wl = @import("wl/protocols.zig");
+const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
 const win = @import("window.zig");
 const Window = @import("window.zig").Window;
@@ -22,7 +23,7 @@ pub fn init() void {
     shm_buffer_impl.init();
 }
 
-fn sync(display: Object, new_id: u32) anyerror!void {
+fn sync(context: *Context, display: Object, new_id: u32) anyerror!void {
     std.debug.warn("sync with id {}\n", .{new_id});
     if(wl.new_wl_callback(display.context, new_id)) |callback| {
         try wl.wl_callback_send_done(callback.*, 120);
@@ -31,7 +32,7 @@ fn sync(display: Object, new_id: u32) anyerror!void {
     }
 }
 
-fn get_registry(object: Object, new_id: u32) anyerror!void {
+fn get_registry(context: *Context, object: Object, new_id: u32) anyerror!void {
     std.debug.warn("get_registry with id {}\n", .{new_id});
     if (wl.new_wl_registry(object.context, new_id)) |registry| {
         try wl.wl_registry_send_global(registry.*, 1, "wl_compositor\x00", 4);
@@ -47,9 +48,8 @@ fn get_registry(object: Object, new_id: u32) anyerror!void {
     }
 }
 
-fn bind(registry: Object, name: u32, name_string: []u8, version: u32, new_id: u32) anyerror!void {
+fn bind(context: *Context, registry: Object, name: u32, name_string: []u8, version: u32, new_id: u32) anyerror!void {
     std.debug.warn("bind for {} ({}) with id {} at version {}\n", .{name_string, name, new_id, version});
-    var context = registry.context;
 
     switch (name) {
         1 => {
@@ -97,15 +97,14 @@ fn bind(registry: Object, name: u32, name_string: []u8, version: u32, new_id: u3
     }
 }
 
-fn create_surface(compositor: Object, new_surface_id: u32) anyerror!void {
-    var context = compositor.context;
+fn create_surface(context: *Context, compositor: Object, new_surface_id: u32) anyerror!void {
     std.debug.warn("create_surface: {}\n", .{new_surface_id});
     if (wl.new_wl_surface(context, new_surface_id)) |surface| {
         var window = try win.newWindow(context.client, new_surface_id);
     }
 }
 
-fn get_xdg_surface(base: Object, id: u32, surface: Object) anyerror!void {
+fn get_xdg_surface(context: *Context, base: Object, id: u32, surface: Object) anyerror!void {
     var window = @intToPtr(*Window, surface.container);
     std.debug.warn("get_xdg_surface: {}\n", .{id});
     if (wl.new_xdg_surface(base.context, id)) |xdg_surface| {
@@ -114,7 +113,7 @@ fn get_xdg_surface(base: Object, id: u32, surface: Object) anyerror!void {
     }
 }
 
-fn get_toplevel(xdg_surface: Object, id: u32) anyerror!void {
+fn get_toplevel(context: *Context, xdg_surface: Object, id: u32) anyerror!void {
     std.debug.warn("get_toplevel: {}\n", .{id});
     if (wl.new_xdg_toplevel(xdg_surface.context, id)) |xdg_toplevel| {
         var window = @intToPtr(*Window, xdg_surface.container);
@@ -128,7 +127,7 @@ fn get_toplevel(xdg_surface: Object, id: u32) anyerror!void {
     }
 }
 
-fn set_title(xdg_toplevel: Object, title: []u8) anyerror!void {
+fn set_title(context: *Context, xdg_toplevel: Object, title: []u8) anyerror!void {
     var window = @intToPtr(*Window, xdg_toplevel.container);
     var len = std.math.min(window.title.len, title.len);
     std.mem.copy(u8, window.title[0..len], title[0..len]);
@@ -136,6 +135,6 @@ fn set_title(xdg_toplevel: Object, title: []u8) anyerror!void {
 }
 
 
-fn ack_configure(object: Object, serial: u32) anyerror!void {
+fn ack_configure(context: *Context, object: Object, serial: u32) anyerror!void {
     std.debug.warn("ack_configure empty implementation\n", .{});
 }

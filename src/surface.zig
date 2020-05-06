@@ -1,5 +1,6 @@
 const std = @import("std");
 const wl = @import("wl/protocols.zig");
+const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
 const Client = @import("client.zig").Client;
 const Window = @import("window.zig").Window;
@@ -11,7 +12,7 @@ pub fn init() void {
     wl.WL_SURFACE.frame = frame;
 }
 
-fn commit(surface: Object) anyerror!void {
+fn commit(context: *Context, surface: Object) anyerror!void {
     var window = @intToPtr(*Window, surface.container);
     var display_id = window.client.display orelse return error.NoDisplayId;
     var display = surface.context.get(display_id) orelse return error.NoDisplay;
@@ -33,17 +34,17 @@ fn commit(surface: Object) anyerror!void {
     } else |err| {}
 }
 
-fn damage(surface: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
+fn damage(context: *Context, surface: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     std.debug.warn("damage does nothing\n", .{});
 }
 
-fn attach(surface: Object, buffer: Object, x: i32, y: i32) anyerror!void {
+fn attach(context: *Context, surface: Object, buffer: Object, x: i32, y: i32) anyerror!void {
     var window = @intToPtr(*Window, surface.container);
     // window.pending = true;
     window.wl_buffer = buffer.id;
 }
 
-fn frame(surface: Object, new_callback_id: u32) anyerror!void {
+fn frame(context: *Context, surface: Object, new_callback_id: u32) anyerror!void {
     var container = surface.container;
     // Note: we explicitly save surface.container in this variable.
     //

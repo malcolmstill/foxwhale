@@ -1,5 +1,6 @@
 const std = @import("std");
 const Object = @import("wl/context.zig").Object;
+const Context = @import("wl/context.zig").Context;
 const Client = @import("client.zig").Client;
 const ShmPool = @import("shm_pool.zig").ShmPool;
 const wl = @import("wl/protocols.zig");
@@ -11,9 +12,8 @@ pub fn init() void {
     wl.WL_BUFFER.destroy = destroy;
 }
 
-fn create_buffer(shm_pool: Object, id: u32, offset: i32, width: i32, height: i32, stride: i32, format: u32) anyerror!void {
+fn create_buffer(context: *Context, shm_pool: Object, id: u32, offset: i32, width: i32, height: i32, stride: i32, format: u32) anyerror!void {
     var pool = @intToPtr(*ShmPool, shm_pool.container);
-    var context = shm_pool.context;
 
     if (wl.new_wl_buffer(context, id)) |wl_buffer| {
         var buffer = try newShmBuffer(context.client, id, pool, offset, width, height, stride, format);
@@ -59,8 +59,7 @@ pub const ShmBuffer = struct {
     format: u32,
 };
 
-fn destroy(shm_buffer: Object) anyerror!void {
-    var context = shm_buffer.context;
+fn destroy(context: *Context, shm_buffer: Object) anyerror!void {
     var buffer = @intToPtr(*ShmBuffer, shm_buffer.container);
     buffer.pool.decrementRefCount();
     if (context.get(1)) |display| {
