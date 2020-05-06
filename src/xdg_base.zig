@@ -8,7 +8,7 @@ fn get_xdg_surface(context: *Context, xdg_wm_base: Object, new_id: u32, surface:
     std.debug.warn("get_xdg_surface: {}\n", .{new_id});
 
     var window = @intToPtr(*Window, surface.container);
-    window.xdg_surface = new_id;
+    window.xdg_surface_id = new_id;
 
     var xdg_surface = prot.new_xdg_surface(new_id, context, @ptrToInt(window));
     try context.register(xdg_surface);

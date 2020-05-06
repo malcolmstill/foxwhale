@@ -8,8 +8,8 @@ const Window = @import("window.zig").Window;
 fn commit(context: *Context, wl_surface: Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
 
-    if (window.wl_buffer) |buffer_id| {
-        if (context.get(buffer_id)) |wl_buffer| {
+    if (window.wl_buffer_id) |wl_buffer_id| {
+        if (context.get(wl_buffer_id)) |wl_buffer| {
             try prot.wl_buffer_send_release(wl_buffer.*);
         }
     }
@@ -33,10 +33,10 @@ fn damage(context: *Context, wl_surface: Object, x: i32, y: i32, width: i32, hei
     // std.debug.warn("damage does nothing\n", .{});
 }
 
-fn attach(context: *Context, wl_surface: Object, buffer: Object, x: i32, y: i32) anyerror!void {
+fn attach(context: *Context, wl_surface: Object, wl_buffer: Object, x: i32, y: i32) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     // window.pending = true;
-    window.wl_buffer = buffer.id;
+    window.wl_buffer_id = wl_buffer.id;
 }
 
 fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {

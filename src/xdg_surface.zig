@@ -8,7 +8,7 @@ fn get_toplevel(context: *Context, xdg_surface: Object, new_id: u32) anyerror!vo
     std.debug.warn("get_toplevel: {}\n", .{new_id});
 
     var window = @intToPtr(*Window, xdg_surface.container);
-    window.xdg_toplevel = new_id;
+    window.xdg_toplevel_id = new_id;
 
     var xdg_toplevel = prot.new_xdg_toplevel(new_id, context, @ptrToInt(window));
 
@@ -26,7 +26,7 @@ fn ack_configure(context: *Context, xdg_surface: Object, serial: u32) anyerror!v
 
 fn destroy(context: *Context, xdg_surface: Object) anyerror!void {
     var window = @intToPtr(*Window, xdg_surface.container);
-    window.xdg_surface = null;
+    window.xdg_surface_id = null;
 
     try prot.wl_display_send_delete_id(context.client.display, xdg_surface.id);
     try context.unregister(xdg_surface);

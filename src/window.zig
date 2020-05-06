@@ -11,10 +11,10 @@ pub const Window = struct {
     in_use: bool = false,
     state: [2]BufferedState = undefined,
     stateIndex: u1 = 0,
-    wl_surface: u32,
-    wl_buffer: ?u32,
-    xdg_surface: ?u32,
-    xdg_toplevel: ?u32,
+    wl_surface_id: u32,
+    wl_buffer_id: ?u32,
+    xdg_surface_id: ?u32,
+    xdg_toplevel_id: ?u32,
     client: *Client,
     geometry: [24]f32 = undefined,
     title: [128]u8 = undefined,
@@ -37,14 +37,14 @@ pub const Window = struct {
     }
 };
 
-pub fn newWindow(client: *Client, surface: u32) !*Window {
+pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
     var i: usize = 0;
     while (i < MAX_WINDOWS) {
         if (WINDOWS[i].in_use == false) {
             WINDOWS[i].index = i;
             WINDOWS[i].in_use = true;
             WINDOWS[i].client = client;
-            WINDOWS[i].wl_surface = surface;
+            WINDOWS[i].wl_surface_id = wl_surface_id;
 
             return &WINDOWS[i];
         } else {

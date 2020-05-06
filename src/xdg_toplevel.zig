@@ -13,7 +13,7 @@ fn set_title(context: *Context, xdg_toplevel: Object, title: []u8) anyerror!void
 
 fn destroy(context: *Context, xdg_toplevel: Object) anyerror!void {
     var window = @intToPtr(*Window, xdg_toplevel.container);
-    window.xdg_toplevel = null;
+    window.xdg_toplevel_id = null;
 
     try prot.wl_display_send_delete_id(context.client.display, xdg_toplevel.id);
     try context.unregister(xdg_toplevel);
