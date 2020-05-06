@@ -57,15 +57,22 @@ pub const ShmBuffer = struct {
     height: i32,
     stride: i32,
     format: u32,
+
+    const Self = @This();
+
+    pub fn deinit(self: *Self) void {
+        self.in_use = false;
+    }
 };
 
-fn destroy(context: *Context, shm_buffer: Object) anyerror!void {
-    var buffer = @intToPtr(*ShmBuffer, shm_buffer.container);
-    buffer.pool.decrementRefCount();
+fn destroy(context: *Context, wl_shm_buffer: Object) anyerror!void {
+    var shm_buffer = @intToPtr(*ShmBuffer, wl_shm_buffer.container);
+    shm_buffer.pool.decrementRefCount();
+    shm_buffer.deinit();
 
-    try wl.wl_display_send_delete_id(context.client.display, shm_buffer.id);
+    try wl.wl_display_send_delete_id(context.client.display, wl_shm_buffer.id);
 
-    try context.unregister(shm_buffer);
+    try context.unregister(wl_shm_buffer);
 }
 
 const ShmBuffersError = error{ShmBuffersExhausted};
