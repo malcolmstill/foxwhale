@@ -11,13 +11,11 @@ pub const wl_display_interface = struct {
 };
 
 fn wl_display_sync_default(context: *Context, object: Object, callback: u32) anyerror!void {
-    std.debug.warn("wl_display_sync not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_display_get_registry_default(context: *Context, object: Object, registry: u32) anyerror!void {
-    std.debug.warn("wl_display_get_registry not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_DISPLAY = wl_display_interface{
@@ -95,8 +93,7 @@ pub const wl_registry_interface = struct {
 };
 
 fn wl_registry_bind_default(context: *Context, object: Object, name: u32, name_string: []u8, version: u32, id: u32) anyerror!void {
-    std.debug.warn("wl_registry_bind not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_REGISTRY = wl_registry_interface{
@@ -196,13 +193,11 @@ pub const wl_compositor_interface = struct {
 };
 
 fn wl_compositor_create_surface_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.debug.warn("wl_compositor_create_surface not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_compositor_create_region_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.debug.warn("wl_compositor_create_region not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_COMPOSITOR = wl_compositor_interface{
@@ -252,18 +247,15 @@ pub const wl_shm_pool_interface = struct {
 };
 
 fn wl_shm_pool_create_buffer_default(context: *Context, object: Object, id: u32, offset: i32, width: i32, height: i32, stride: i32, format: u32) anyerror!void {
-    std.debug.warn("wl_shm_pool_create_buffer not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_shm_pool_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_shm_pool_destroy not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_shm_pool_resize_default(context: *Context, object: Object, size: i32) anyerror!void {
-    std.debug.warn("wl_shm_pool_resize not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_SHM_POOL = wl_shm_pool_interface{
@@ -323,8 +315,7 @@ pub const wl_shm_interface = struct {
 };
 
 fn wl_shm_create_pool_default(context: *Context, object: Object, id: u32, fd: i32, size: i32) anyerror!void {
-    std.debug.warn("wl_shm_create_pool not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_SHM = wl_shm_interface{
@@ -442,8 +433,7 @@ pub const wl_buffer_interface = struct {
 };
 
 fn wl_buffer_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_buffer_destroy not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_BUFFER = wl_buffer_interface{
@@ -509,28 +499,23 @@ pub const wl_data_offer_interface = struct {
 };
 
 fn wl_data_offer_accept_default(context: *Context, object: Object, serial: u32, mime_type: []u8) anyerror!void {
-    std.debug.warn("wl_data_offer_accept not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_data_offer_receive_default(context: *Context, object: Object, mime_type: []u8, fd: i32) anyerror!void {
-    std.debug.warn("wl_data_offer_receive not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_data_offer_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_data_offer_destroy not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_data_offer_finish_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_data_offer_finish not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_data_offer_set_actions_default(context: *Context, object: Object, dnd_actions: u32, preferred_action: u32) anyerror!void {
-    std.debug.warn("wl_data_offer_set_actions not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_DATA_OFFER = wl_data_offer_interface{
@@ -676,18 +661,15 @@ pub const wl_data_source_interface = struct {
 };
 
 fn wl_data_source_offer_default(context: *Context, object: Object, mime_type: []u8) anyerror!void {
-    std.debug.warn("wl_data_source_offer not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_data_source_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_data_source_destroy not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_data_source_set_actions_default(context: *Context, object: Object, dnd_actions: u32) anyerror!void {
-    std.debug.warn("wl_data_source_set_actions not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_DATA_SOURCE = wl_data_source_interface{
@@ -853,18 +835,15 @@ pub const wl_data_device_interface = struct {
 };
 
 fn wl_data_device_start_drag_default(context: *Context, object: Object, source: Object, origin: Object, icon: Object, serial: u32) anyerror!void {
-    std.debug.warn("wl_data_device_start_drag not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_data_device_set_selection_default(context: *Context, object: Object, source: Object, serial: u32) anyerror!void {
-    std.debug.warn("wl_data_device_set_selection not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_data_device_release_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_data_device_release not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_DATA_DEVICE = wl_data_device_interface{
@@ -1010,13 +989,11 @@ pub const wl_data_device_manager_interface = struct {
 };
 
 fn wl_data_device_manager_create_data_source_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.debug.warn("wl_data_device_manager_create_data_source not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_data_device_manager_get_data_device_default(context: *Context, object: Object, id: u32, seat: Object) anyerror!void {
-    std.debug.warn("wl_data_device_manager_get_data_device not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_DATA_DEVICE_MANAGER = wl_data_device_manager_interface{
@@ -1069,8 +1046,7 @@ pub const wl_shell_interface = struct {
 };
 
 fn wl_shell_get_shell_surface_default(context: *Context, object: Object, id: u32, surface: Object) anyerror!void {
-    std.debug.warn("wl_shell_get_shell_surface not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_SHELL = wl_shell_interface{
@@ -1124,53 +1100,43 @@ pub const wl_shell_surface_interface = struct {
 };
 
 fn wl_shell_surface_pong_default(context: *Context, object: Object, serial: u32) anyerror!void {
-    std.debug.warn("wl_shell_surface_pong not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_shell_surface_move_default(context: *Context, object: Object, seat: Object, serial: u32) anyerror!void {
-    std.debug.warn("wl_shell_surface_move not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_shell_surface_resize_default(context: *Context, object: Object, seat: Object, serial: u32, edges: u32) anyerror!void {
-    std.debug.warn("wl_shell_surface_resize not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_shell_surface_set_toplevel_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_shell_surface_set_toplevel not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_shell_surface_set_transient_default(context: *Context, object: Object, parent: Object, x: i32, y: i32, flags: u32) anyerror!void {
-    std.debug.warn("wl_shell_surface_set_transient not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_shell_surface_set_fullscreen_default(context: *Context, object: Object, method: u32, framerate: u32, output: Object) anyerror!void {
-    std.debug.warn("wl_shell_surface_set_fullscreen not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_shell_surface_set_popup_default(context: *Context, object: Object, seat: Object, serial: u32, parent: Object, x: i32, y: i32, flags: u32) anyerror!void {
-    std.debug.warn("wl_shell_surface_set_popup not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_shell_surface_set_maximized_default(context: *Context, object: Object, output: Object) anyerror!void {
-    std.debug.warn("wl_shell_surface_set_maximized not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_shell_surface_set_title_default(context: *Context, object: Object, title: []u8) anyerror!void {
-    std.debug.warn("wl_shell_surface_set_title not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_shell_surface_set_class_default(context: *Context, object: Object, class_: []u8) anyerror!void {
-    std.debug.warn("wl_shell_surface_set_class not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_SHELL_SURFACE = wl_shell_surface_interface{
@@ -1373,53 +1339,43 @@ pub const wl_surface_interface = struct {
 };
 
 fn wl_surface_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_surface_destroy not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_surface_attach_default(context: *Context, object: Object, buffer: Object, x: i32, y: i32) anyerror!void {
-    std.debug.warn("wl_surface_attach not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_surface_damage_default(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    std.debug.warn("wl_surface_damage not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_surface_frame_default(context: *Context, object: Object, callback: u32) anyerror!void {
-    std.debug.warn("wl_surface_frame not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_surface_set_opaque_region_default(context: *Context, object: Object, region: Object) anyerror!void {
-    std.debug.warn("wl_surface_set_opaque_region not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_surface_set_input_region_default(context: *Context, object: Object, region: Object) anyerror!void {
-    std.debug.warn("wl_surface_set_input_region not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_surface_commit_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_surface_commit not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_surface_set_buffer_transform_default(context: *Context, object: Object, transform: i32) anyerror!void {
-    std.debug.warn("wl_surface_set_buffer_transform not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_surface_set_buffer_scale_default(context: *Context, object: Object, scale: i32) anyerror!void {
-    std.debug.warn("wl_surface_set_buffer_scale not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_surface_damage_buffer_default(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    std.debug.warn("wl_surface_damage_buffer not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_SURFACE = wl_surface_interface{
@@ -1571,23 +1527,19 @@ pub const wl_seat_interface = struct {
 };
 
 fn wl_seat_get_pointer_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.debug.warn("wl_seat_get_pointer not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_seat_get_keyboard_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.debug.warn("wl_seat_get_keyboard not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_seat_get_touch_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.debug.warn("wl_seat_get_touch not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_seat_release_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_seat_release not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_SEAT = wl_seat_interface{
@@ -1699,13 +1651,11 @@ pub const wl_pointer_interface = struct {
 };
 
 fn wl_pointer_set_cursor_default(context: *Context, object: Object, serial: u32, surface: Object, hotspot_x: i32, hotspot_y: i32) anyerror!void {
-    std.debug.warn("wl_pointer_set_cursor not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_pointer_release_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_pointer_release not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_POINTER = wl_pointer_interface{
@@ -1988,8 +1938,7 @@ pub const wl_keyboard_interface = struct {
 };
 
 fn wl_keyboard_release_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_keyboard_release not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_KEYBOARD = wl_keyboard_interface{
@@ -2119,8 +2068,7 @@ pub const wl_touch_interface = struct {
 };
 
 fn wl_touch_release_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_touch_release not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_TOUCH = wl_touch_interface{
@@ -2285,8 +2233,7 @@ pub const wl_output_interface = struct {
 };
 
 fn wl_output_release_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_output_release not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_OUTPUT = wl_output_interface{
@@ -2447,18 +2394,15 @@ pub const wl_region_interface = struct {
 };
 
 fn wl_region_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_region_destroy not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_region_add_default(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    std.debug.warn("wl_region_add not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_region_subtract_default(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    std.debug.warn("wl_region_subtract not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_REGION = wl_region_interface{
@@ -2523,13 +2467,11 @@ pub const wl_subcompositor_interface = struct {
 };
 
 fn wl_subcompositor_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_subcompositor_destroy not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_subcompositor_get_subsurface_default(context: *Context, object: Object, id: u32, surface: Object, parent: Object) anyerror!void {
-    std.debug.warn("wl_subcompositor_get_subsurface not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_SUBCOMPOSITOR = wl_subcompositor_interface{
@@ -2596,33 +2538,27 @@ pub const wl_subsurface_interface = struct {
 };
 
 fn wl_subsurface_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_subsurface_destroy not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_subsurface_set_position_default(context: *Context, object: Object, x: i32, y: i32) anyerror!void {
-    std.debug.warn("wl_subsurface_set_position not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_subsurface_place_above_default(context: *Context, object: Object, sibling: Object) anyerror!void {
-    std.debug.warn("wl_subsurface_place_above not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_subsurface_place_below_default(context: *Context, object: Object, sibling: Object) anyerror!void {
-    std.debug.warn("wl_subsurface_place_below not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_subsurface_set_sync_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_subsurface_set_sync not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn wl_subsurface_set_desync_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("wl_subsurface_set_desync not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var WL_SUBSURFACE = wl_subsurface_interface{
@@ -2716,23 +2652,19 @@ pub const xdg_wm_base_interface = struct {
 };
 
 fn xdg_wm_base_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("xdg_wm_base_destroy not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_wm_base_create_positioner_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.debug.warn("xdg_wm_base_create_positioner not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_wm_base_get_xdg_surface_default(context: *Context, object: Object, id: u32, surface: Object) anyerror!void {
-    std.debug.warn("xdg_wm_base_get_xdg_surface not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_wm_base_pong_default(context: *Context, object: Object, serial: u32) anyerror!void {
-    std.debug.warn("xdg_wm_base_pong not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var XDG_WM_BASE = xdg_wm_base_interface{
@@ -2831,38 +2763,31 @@ pub const xdg_positioner_interface = struct {
 };
 
 fn xdg_positioner_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("xdg_positioner_destroy not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_positioner_set_size_default(context: *Context, object: Object, width: i32, height: i32) anyerror!void {
-    std.debug.warn("xdg_positioner_set_size not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_positioner_set_anchor_rect_default(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    std.debug.warn("xdg_positioner_set_anchor_rect not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_positioner_set_anchor_default(context: *Context, object: Object, anchor: u32) anyerror!void {
-    std.debug.warn("xdg_positioner_set_anchor not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_positioner_set_gravity_default(context: *Context, object: Object, gravity: u32) anyerror!void {
-    std.debug.warn("xdg_positioner_set_gravity not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_positioner_set_constraint_adjustment_default(context: *Context, object: Object, constraint_adjustment: u32) anyerror!void {
-    std.debug.warn("xdg_positioner_set_constraint_adjustment not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_positioner_set_offset_default(context: *Context, object: Object, x: i32, y: i32) anyerror!void {
-    std.debug.warn("xdg_positioner_set_offset not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var XDG_POSITIONER = xdg_positioner_interface{
@@ -2999,28 +2924,23 @@ pub const xdg_surface_interface = struct {
 };
 
 fn xdg_surface_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("xdg_surface_destroy not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_surface_get_toplevel_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.debug.warn("xdg_surface_get_toplevel not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_surface_get_popup_default(context: *Context, object: Object, id: u32, parent: Object, positioner: Object) anyerror!void {
-    std.debug.warn("xdg_surface_get_popup not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_surface_set_window_geometry_default(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    std.debug.warn("xdg_surface_set_window_geometry not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_surface_ack_configure_default(context: *Context, object: Object, serial: u32) anyerror!void {
-    std.debug.warn("xdg_surface_ack_configure not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var XDG_SURFACE = xdg_surface_interface{
@@ -3152,73 +3072,59 @@ pub const xdg_toplevel_interface = struct {
 };
 
 fn xdg_toplevel_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("xdg_toplevel_destroy not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_toplevel_set_parent_default(context: *Context, object: Object, parent: Object) anyerror!void {
-    std.debug.warn("xdg_toplevel_set_parent not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_toplevel_set_title_default(context: *Context, object: Object, title: []u8) anyerror!void {
-    std.debug.warn("xdg_toplevel_set_title not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_toplevel_set_app_id_default(context: *Context, object: Object, app_id: []u8) anyerror!void {
-    std.debug.warn("xdg_toplevel_set_app_id not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_toplevel_show_window_menu_default(context: *Context, object: Object, seat: Object, serial: u32, x: i32, y: i32) anyerror!void {
-    std.debug.warn("xdg_toplevel_show_window_menu not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_toplevel_move_default(context: *Context, object: Object, seat: Object, serial: u32) anyerror!void {
-    std.debug.warn("xdg_toplevel_move not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_toplevel_resize_default(context: *Context, object: Object, seat: Object, serial: u32, edges: u32) anyerror!void {
-    std.debug.warn("xdg_toplevel_resize not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_toplevel_set_max_size_default(context: *Context, object: Object, width: i32, height: i32) anyerror!void {
-    std.debug.warn("xdg_toplevel_set_max_size not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_toplevel_set_min_size_default(context: *Context, object: Object, width: i32, height: i32) anyerror!void {
-    std.debug.warn("xdg_toplevel_set_min_size not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_toplevel_set_maximized_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("xdg_toplevel_set_maximized not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_toplevel_unset_maximized_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("xdg_toplevel_unset_maximized not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_toplevel_set_fullscreen_default(context: *Context, object: Object, output: Object) anyerror!void {
-    std.debug.warn("xdg_toplevel_set_fullscreen not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_toplevel_unset_fullscreen_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("xdg_toplevel_unset_fullscreen not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_toplevel_set_minimized_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("xdg_toplevel_set_minimized not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var XDG_TOPLEVEL = xdg_toplevel_interface{
@@ -3444,13 +3350,11 @@ pub const xdg_popup_interface = struct {
 };
 
 fn xdg_popup_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.debug.warn("xdg_popup_destroy not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 fn xdg_popup_grab_default(context: *Context, object: Object, seat: Object, serial: u32) anyerror!void {
-    std.debug.warn("xdg_popup_grab not implemented\n", .{});
-    std.os.exit(2);
+    return error.DebugFunctionNotImplemented;
 }
 
 pub var XDG_POPUP = xdg_popup_interface{
