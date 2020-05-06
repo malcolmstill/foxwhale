@@ -9,7 +9,7 @@ pub fn init() void {
     wl.WL_COMPOSITOR.create_surface = create_surface;
 }
 
-fn create_surface(context: *Context, compositor: Object, new_id: u32) anyerror!void {
+fn create_surface(context: *Context, wl_compositor: Object, new_id: u32) anyerror!void {
     std.debug.warn("create_surface: {}\n", .{new_id});
 
     var window = try win.newWindow(context.client, new_id);
