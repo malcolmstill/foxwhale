@@ -3,7 +3,7 @@ const epoll = @import("epoll.zig");
 const Object = @import("wl/context.zig").Object;
 const Context = @import("wl/context.zig").Context;
 const wl = @import("wl/protocols.zig");
-const wl_shm_pool = @import("wl_shm_pool.zig");
+const shm_pool = @import("shm_pool.zig");
 const wl_shm_buffer = @import("wl_shm_buffer.zig");
 const window = @import("window.zig");
 const Dispatchable = epoll.Dispatchable;
@@ -33,7 +33,7 @@ pub const Client = struct {
         self.context.deinit();
         self.in_use = false;
 
-        wl_shm_pool.releaseShmPools(self);
+        shm_pool.releaseShmPools(self);
         wl_shm_buffer.releaseShmBuffers(self);
         window.releaseWindows(self);
 
