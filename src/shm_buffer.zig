@@ -60,7 +60,7 @@ pub fn releaseShmBuffers(client: *Client) void {
     var i: usize = 0;
     while (i < MAX_SHM_BUFFERS) {
         var shm_buffer: *ShmBuffer = &SHM_BUFFERS[i];
-        if (shm_buffer.client == client) {
+        if (shm_buffer.in_use and shm_buffer.client == client) {
             shm_buffer.deinit();
         }
         i = i + 1;
