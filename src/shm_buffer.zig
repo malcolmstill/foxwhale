@@ -103,6 +103,5 @@ const sigbus_handler_reset = linux.Sigaction{
 
 fn sigbus_handler(sig: i32, info: *linux.siginfo_t, data: ?*c_void) callconv(.C) void {
     SIGBUS_ERROR = true;
-    var replaced = linux.mmap(CURRENT_POOL_ADDRESS, CURRENT_POOL_SIZE, linux.PROT_READ|linux.PROT_WRITE, linux.MAP_FIXED | linux.MAP_PRIVATE | linux.MAP_ANONYMOUS, -1, 0);
-    return;
+    _ = linux.mmap(CURRENT_POOL_ADDRESS, CURRENT_POOL_SIZE, linux.PROT_READ|linux.PROT_WRITE, linux.MAP_FIXED | linux.MAP_PRIVATE | linux.MAP_ANONYMOUS, -1, 0);
 }
