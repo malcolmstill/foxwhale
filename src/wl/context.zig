@@ -64,7 +64,7 @@ pub const Context = struct {
                 try object.value.dispatch(object.value, header.opcode);
             } else {
                 std.debug.warn("couldn't find id: {}\n", .{header.id});
-                std.os.exit(2);
+                return error.CouldntFindExpectedId;
             }
         }
     }
