@@ -13,7 +13,7 @@ pub fn init() void {
 }
 
 fn create_pool(context: *Context, shm: Object, new_id: u32, fd: i32, size: i32) anyerror!void {
-    var pool = try newShmPool(context.client, fd, new_id);
+    var pool = try newShmPool(context.client, fd, new_id, size);
 
     var wl_pool = wl.new_wl_shm_pool(new_id, context, @ptrToInt(pool));
     try context.register(wl_pool);
@@ -28,7 +28,7 @@ pub const ShmPool = struct {
     index: usize,
     in_use: bool = false,
     fd: i32,
-    data: []u8,
+    data: []align(4096) u8,
     pool: ?u32,
     ref_count: usize,
     client: *Client,
@@ -40,6 +40,7 @@ pub const ShmPool = struct {
         self.in_use = false;
         self.pool = null;
         self.fd = -1;
+        std.os.munmap(self.data);
     }
 
     pub fn incrementRefCount(self: *Self) void {
@@ -56,7 +57,7 @@ pub const ShmPool = struct {
     }    
 };
 
-pub fn newShmPool(client: *Client, fd: i32, pool: u32) !*ShmPool {
+pub fn newShmPool(client: *Client, fd: i32, pool: u32, size: i32) !*ShmPool {
     var i: usize = 0;
     while (i < MAX_SHM_POOLS) {
         if (pools[i].in_use == false) {
@@ -66,6 +67,9 @@ pub fn newShmPool(client: *Client, fd: i32, pool: u32) !*ShmPool {
             pools[i].fd = fd;
             pools[i].ref_count = 0;
             pools[i].pool = pool;
+            pools[i].data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT_READ|std.os.linux.PROT_WRITE, std.os.linux.MAP_SHARED, fd, 0);
+
+            std.debug.warn("data length: {}\n", .{pools[i].data.len});
 
             return &pools[i];
         } else {
