@@ -16,6 +16,12 @@ fn commit(surface: Object) anyerror!void {
     var display_id = window.client.display orelse return error.NoDisplayId;
     var display = surface.context.get(display_id) orelse return error.NoDisplay;
 
+    if (window.wl_buffer) |buffer_id| {
+        if (surface.context.get(buffer_id)) |buffer| {
+            try wl.wl_buffer_send_release(buffer.*);
+        }
+    }
+
     while(window.callbacks.readItem()) |callback_id| {
         if (surface.context.get(callback_id)) |callback| {
             try wl.wl_callback_send_done(callback.*, 1000);
