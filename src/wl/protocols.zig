@@ -25,21 +25,14 @@ pub var WL_DISPLAY = wl_display_interface{
     .get_registry = wl_display_get_registry_default,
 };
 
-pub fn new_wl_display(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_display(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_display_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_display_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -110,21 +103,14 @@ pub var WL_REGISTRY = wl_registry_interface{
     .bind = wl_registry_bind_default,
 };
 
-pub fn new_wl_registry(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_registry(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_registry_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -179,21 +165,14 @@ pub const wl_callback_interface = struct {
 
 pub var WL_CALLBACK = wl_callback_interface{};
 
-pub fn new_wl_callback(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_callback(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_callback_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_callback_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -231,21 +210,14 @@ pub var WL_COMPOSITOR = wl_compositor_interface{
     .create_region = wl_compositor_create_region_default,
 };
 
-pub fn new_wl_compositor(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_compositor(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_compositor_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_compositor_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -300,21 +272,14 @@ pub var WL_SHM_POOL = wl_shm_pool_interface{
     .resize = wl_shm_pool_resize_default,
 };
 
-pub fn new_wl_shm_pool(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_shm_pool(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_shm_pool_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_shm_pool_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -366,21 +331,14 @@ pub var WL_SHM = wl_shm_interface{
     .create_pool = wl_shm_create_pool_default,
 };
 
-pub fn new_wl_shm(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_shm(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_shm_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_shm_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -492,21 +450,14 @@ pub var WL_BUFFER = wl_buffer_interface{
     .destroy = wl_buffer_destroy_default,
 };
 
-pub fn new_wl_buffer(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_buffer(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_buffer_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_buffer_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -590,21 +541,14 @@ pub var WL_DATA_OFFER = wl_data_offer_interface{
     .set_actions = wl_data_offer_set_actions_default,
 };
 
-pub fn new_wl_data_offer(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_data_offer(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_data_offer_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_data_offer_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -752,21 +696,14 @@ pub var WL_DATA_SOURCE = wl_data_source_interface{
     .set_actions = wl_data_source_set_actions_default,
 };
 
-pub fn new_wl_data_source(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_data_source(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_data_source_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_data_source_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -936,21 +873,14 @@ pub var WL_DATA_DEVICE = wl_data_device_interface{
     .release = wl_data_device_release_default,
 };
 
-pub fn new_wl_data_device(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_data_device(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_data_device_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -1094,21 +1024,14 @@ pub var WL_DATA_DEVICE_MANAGER = wl_data_device_manager_interface{
     .get_data_device = wl_data_device_manager_get_data_device_default,
 };
 
-pub fn new_wl_data_device_manager(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_data_device_manager(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_data_device_manager_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_data_device_manager_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -1154,21 +1077,14 @@ pub var WL_SHELL = wl_shell_interface{
     .get_shell_surface = wl_shell_get_shell_surface_default,
 };
 
-pub fn new_wl_shell(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_shell(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_shell_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_shell_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -1270,21 +1186,14 @@ pub var WL_SHELL_SURFACE = wl_shell_surface_interface{
     .set_class = wl_shell_surface_set_class_default,
 };
 
-pub fn new_wl_shell_surface(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_shell_surface(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_shell_surface_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -1526,21 +1435,14 @@ pub var WL_SURFACE = wl_surface_interface{
     .damage_buffer = wl_surface_damage_buffer_default,
 };
 
-pub fn new_wl_surface(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_surface(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_surface_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -1695,21 +1597,14 @@ pub var WL_SEAT = wl_seat_interface{
     .release = wl_seat_release_default,
 };
 
-pub fn new_wl_seat(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_seat(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_seat_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_seat_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -1818,21 +1713,14 @@ pub var WL_POINTER = wl_pointer_interface{
     .release = wl_pointer_release_default,
 };
 
-pub fn new_wl_pointer(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_pointer(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_pointer_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -2108,21 +1996,14 @@ pub var WL_KEYBOARD = wl_keyboard_interface{
     .release = wl_keyboard_release_default,
 };
 
-pub fn new_wl_keyboard(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_keyboard(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_keyboard_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_keyboard_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -2246,21 +2127,14 @@ pub var WL_TOUCH = wl_touch_interface{
     .release = wl_touch_release_default,
 };
 
-pub fn new_wl_touch(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_touch(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_touch_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_touch_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -2419,21 +2293,14 @@ pub var WL_OUTPUT = wl_output_interface{
     .release = wl_output_release_default,
 };
 
-pub fn new_wl_output(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_output(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_output_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_output_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -2600,21 +2467,14 @@ pub var WL_REGION = wl_region_interface{
     .subtract = wl_region_subtract_default,
 };
 
-pub fn new_wl_region(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_region(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_region_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_region_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -2677,21 +2537,14 @@ pub var WL_SUBCOMPOSITOR = wl_subcompositor_interface{
     .get_subsurface = wl_subcompositor_get_subsurface_default,
 };
 
-pub fn new_wl_subcompositor(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_subcompositor(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_subcompositor_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -2781,21 +2634,14 @@ pub var WL_SUBSURFACE = wl_subsurface_interface{
     .set_desync = wl_subsurface_set_desync_default,
 };
 
-pub fn new_wl_subsurface(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_wl_subsurface(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = wl_subsurface_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -2896,21 +2742,14 @@ pub var XDG_WM_BASE = xdg_wm_base_interface{
     .pong = xdg_wm_base_pong_default,
 };
 
-pub fn new_xdg_wm_base(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_xdg_wm_base(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = xdg_wm_base_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -3036,21 +2875,14 @@ pub var XDG_POSITIONER = xdg_positioner_interface{
     .set_offset = xdg_positioner_set_offset_default,
 };
 
-pub fn new_xdg_positioner(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_xdg_positioner(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = xdg_positioner_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn xdg_positioner_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -3199,21 +3031,14 @@ pub var XDG_SURFACE = xdg_surface_interface{
     .ack_configure = xdg_surface_ack_configure_default,
 };
 
-pub fn new_xdg_surface(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_xdg_surface(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = xdg_surface_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -3413,21 +3238,14 @@ pub var XDG_TOPLEVEL = xdg_toplevel_interface{
     .set_minimized = xdg_toplevel_set_minimized_default,
 };
 
-pub fn new_xdg_toplevel(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_xdg_toplevel(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = xdg_toplevel_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
@@ -3640,21 +3458,14 @@ pub var XDG_POPUP = xdg_popup_interface{
     .grab = xdg_popup_grab_default,
 };
 
-pub fn new_xdg_popup(context: *Context, id: u32) ?*Object {
-    var object = Object{
+pub fn new_xdg_popup(id: u32, context: *Context, container: usize) Object {
+    return Object{
         .id = id,
         .dispatch = xdg_popup_dispatch,
         .context = context,
         .version = 0,
-        .container = 0,
+        .container = container,
     };
-    context.register(object) catch |err| {
-        std.debug.warn("Couldn't register id: {}\n", .{id});
-    };
-    if (context.objects.get(id)) |o| {
-        return &o.value;
-    }
-    return null;
 }
 
 fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!void {
