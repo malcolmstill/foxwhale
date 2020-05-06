@@ -90,7 +90,7 @@ def generate_request_dispatch(index, request, interface):
         if arg.tag == "arg":
             generate_next(arg)
     print(f"\t\t\t\tif ({interface.attrib['name'].upper()}.{request.attrib['name']}) |{request.attrib['name']}| {{", end = '')
-    print(f"try {request.attrib['name']}(object, ", end = '')
+    print(f"try {request.attrib['name']}(object.context, object, ", end = '')
     first = True
     for arg in request:
         if arg.tag == "arg":
@@ -171,7 +171,7 @@ def generate_interface(interface):
 def generate_request(interface, request):
     fix_wl_registry(interface, request)
     name = request.attrib["name"]
-    print(f"\t{name}: ?fn(Object, ", end = '')
+    print(f"\t{name}: ?fn(*Context, Object, ", end = '')
     first = True
     for arg in request:
         if arg.tag == "arg":
@@ -194,7 +194,7 @@ def generate_event(event):
 def generate_interface_global_debug(interface):
     for child in interface:
         if child.tag == "request":
-            print(f"fn {interface.attrib['name']}_{child.attrib['name']}_default(object: Object", end ='')
+            print(f"fn {interface.attrib['name']}_{child.attrib['name']}_default(context: *Context, object: Object", end ='')
             for arg in child:
                 if arg.tag == "arg":
                     arg_type = lookup_type(arg.attrib["type"], arg)
