@@ -4,7 +4,7 @@ const Object = @import("wl/context.zig").Object;
 const Context = @import("wl/context.zig").Context;
 const wl = @import("wl/protocols.zig");
 const shm_pool = @import("shm_pool.zig");
-const wl_shm_buffer = @import("wl_shm_buffer.zig");
+const shm_buffer = @import("shm_buffer.zig");
 const window = @import("window.zig");
 const Dispatchable = epoll.Dispatchable;
 
@@ -34,7 +34,7 @@ pub const Client = struct {
         self.in_use = false;
 
         shm_pool.releaseShmPools(self);
-        wl_shm_buffer.releaseShmBuffers(self);
+        shm_buffer.releaseShmBuffers(self);
         window.releaseWindows(self);
 
         epoll.removeFd(self.connection.file.handle) catch |err| {
