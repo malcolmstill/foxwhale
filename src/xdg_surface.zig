@@ -7,6 +7,7 @@ const Window = @import("window.zig").Window;
 pub fn init() void {
     wl.XDG_SURFACE.get_toplevel = get_toplevel;
     wl.XDG_SURFACE.ack_configure = ack_configure;
+    wl.XDG_SURFACE.destroy = destroy;
 }
 
 fn get_toplevel(context: *Context, xdg_surface: Object, new_id: u32) anyerror!void {
@@ -25,6 +26,14 @@ fn get_toplevel(context: *Context, xdg_surface: Object, new_id: u32) anyerror!vo
     try context.register(xdg_toplevel);
 }
 
-fn ack_configure(context: *Context, object: Object, serial: u32) anyerror!void {
+fn ack_configure(context: *Context, xdg_surface: Object, serial: u32) anyerror!void {
     std.debug.warn("ack_configure empty implementation\n", .{});
+}
+
+fn destroy(context: *Context, xdg_surface: Object) anyerror!void {
+    var window = @intToPtr(*Window, xdg_surface.container);
+    window.xdg_surface = null;
+
+    try wl.wl_display_send_delete_id(context.client.display, xdg_surface.id);
+    try context.unregister(xdg_surface);
 }
