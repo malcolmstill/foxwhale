@@ -22,7 +22,7 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
         if (context.get(callback_id)) |callback| {
             try prot.wl_callback_send_done(callback.*, @intCast(u32, std.time.timestamp()));
             try context.unregister(callback.*);
-            try prot.wl_display_send_delete_id(window.client.display, callback_id);
+            try prot.wl_display_send_delete_id(context.client.display, callback_id);
         } else {
             return error.CallbackIdNotFound;
         }
