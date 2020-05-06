@@ -86,7 +86,16 @@ fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
         return;
     }
 
-    try client.context.dispatch();
+    client.context.dispatch() catch |err| {
+        if (err == error.ClientSigbusd) {
+            std.debug.warn("client {} sigbus'd\n", .{client.index});
+            client.deinit();
+        } else {
+            // TODO: if we're in debug mode return error
+            //       if we're in release mode kill the client
+            return err;
+        }
+    };
 }
 
 const ClientsError = error {
