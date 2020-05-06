@@ -1,8 +1,10 @@
 const std = @import("std");
+const linux = std.os.linux;
 const prot = @import("wl/protocols.zig");
 const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
 const Client = @import("client.zig").Client;
+const ShmBuffer = @import("shm_buffer.zig").ShmBuffer;
 const Window = @import("window.zig").Window;
 
 fn commit(context: *Context, wl_surface: Object) anyerror!void {
@@ -10,6 +12,16 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
 
     if (window.wl_buffer_id) |wl_buffer_id| {
         if (context.get(wl_buffer_id)) |wl_buffer| {
+            var buffer = @intToPtr(*ShmBuffer, wl_buffer.container);
+            buffer.beginAccess();
+
+            var shm_pool = buffer.shm_pool;
+            var start = shm_pool.data[0];
+            std.debug.warn("first byte value {x}\n", .{start});
+            var value = shm_pool.data[shm_pool.data.len-1];
+            std.debug.warn("last byte value {x}\n", .{value});
+
+            try buffer.endAccess();
             try prot.wl_buffer_send_release(wl_buffer.*);
         }
     }
