@@ -53,7 +53,7 @@ pub const Client = struct {
 pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
     var i: usize = 0;
     while (i < MAX_CLIENTS) {
-        var client = &clients[i];
+        var client: *Client = &clients[i];
         if (client.in_use == false) {
             client.index = i;
             client.dispatchable.impl = dispatch;
