@@ -6,9 +6,10 @@ const Window = @import("window.zig").Window;
 
 pub fn init() void {
     wl.XDG_WM_BASE.get_xdg_surface = get_xdg_surface;
+    wl.XDG_WM_BASE.destroy = destroy;
 }
 
-fn get_xdg_surface(context: *Context, base: Object, new_id: u32, surface: Object) anyerror!void {
+fn get_xdg_surface(context: *Context, xdg_wm_base: Object, new_id: u32, surface: Object) anyerror!void {
     std.debug.warn("get_xdg_surface: {}\n", .{new_id});
 
     var window = @intToPtr(*Window, surface.container);
@@ -16,4 +17,10 @@ fn get_xdg_surface(context: *Context, base: Object, new_id: u32, surface: Object
 
     var xdg_surface = wl.new_xdg_surface(new_id, context, @ptrToInt(window));
     try context.register(xdg_surface);
+}
+
+fn destroy(context: *Context, xdg_wm_base: Object) anyerror!void {
+    // TODO: Should we deinit client?
+    try wl.wl_display_send_delete_id(context.client.display, xdg_wm_base.id);
+    try context.unregister(xdg_wm_base);
 }
