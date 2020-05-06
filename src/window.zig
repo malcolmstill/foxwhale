@@ -32,6 +32,7 @@ pub const Window = struct {
     }
 
     pub fn deinit(self: *Self) void {
+        std.debug.warn("release window\n", .{});
         WINDOWS[self.index].in_use = false;
     }
 };

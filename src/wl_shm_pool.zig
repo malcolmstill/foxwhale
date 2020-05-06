@@ -41,6 +41,7 @@ pub const ShmPool = struct {
         self.pool = null;
         self.fd = -1;
         std.os.munmap(self.data);
+        std.debug.warn("released pool data\n", .{});
     }
 
     pub fn incrementRefCount(self: *Self) void {
