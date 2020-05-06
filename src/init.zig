@@ -35,10 +35,9 @@ fn sync(context: *Context, display: Object, new_id: u32) anyerror!void {
 }
 
 fn get_registry(context: *Context, display: Object, new_id: u32) anyerror!void {
-    std.debug.warn("get_registry with id {} {}\n", .{new_id, display});
+    std.debug.warn("get_registry with id {}\n", .{new_id});
 
     var registry = wl.new_wl_registry(new_id, context, 0);
-    std.debug.warn("wl_registry: {}\n", .{registry});
 
     try wl.wl_registry_send_global(registry, 1, "wl_compositor\x00", 4);
     try wl.wl_registry_send_global(registry, 2, "wl_subcompositor\x00", 1);
