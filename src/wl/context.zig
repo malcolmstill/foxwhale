@@ -60,7 +60,7 @@ pub const Context = struct {
 
             self.read_offset += @sizeOf(Header);
             if (self.objects.get(header.id)) |object| {
-                std.debug.warn("got id: {}\n", .{object.value.id});
+                // std.debug.warn("got id: {}\n", .{object.value.id});
                 try object.value.dispatch(object.value, header.opcode);
             } else {
                 std.debug.warn("couldn't find id: {}\n", .{header.id});
@@ -112,6 +112,13 @@ pub const Context = struct {
             std.mem.copy(i32, self.rx_fds[0..self.rx_fds.len-1], self.rx_fds[1..self.rx_fds.len]);
         }
         return self.rx_fds[0];
+    }
+
+    pub fn get(self: *Self, id: u32) ?*Object {
+        if (self.objects.get(id)) |o| {
+            return &o.value;
+        }
+        return null;
     }
 
     pub fn register(self: *Self, object: Object) !void {

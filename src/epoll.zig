@@ -36,9 +36,9 @@ pub fn removeFd(fd: i32) !void {
 
 // For a given event index that has activity
 // call the Dispatchable function
-pub fn dispatch(i: usize) void {
+pub fn dispatch(i: usize) !void {
     var ev = @intToPtr(*Dispatchable, events[i].data.ptr);
-    ev.dispatch(events[i].events);
+    try ev.dispatch(events[i].events);
 }
 
 // The Dispatchable interface allows for dispatching
@@ -51,9 +51,10 @@ pub const Dispatchable = struct {
 
     const Self = @This();
 
-    pub fn dispatch(self: *Self, event_type: usize) void {
-        self.impl(self, event_type) catch |err| {
-            std.debug.warn("Error dispatching epoll: {}\n", .{ err });
-        };
+    pub fn dispatch(self: *Self, event_type: usize) !void {
+        // self.impl(self, event_type) catch |err| {
+        //     std.debug.warn("Error dispatching epoll: {}\n", .{ err });
+        // };
+        try self.impl(self, event_type);
     }
 };

@@ -3,7 +3,9 @@ const wl = @import("wl/protocols.zig");
 const Object = @import("wl/context.zig").Object;
 const win = @import("window.zig");
 const Window = @import("window.zig").Window;
-const shm_impl = @import("shm.zig");
+const surface_impl = @import("surface.zig");
+const shm_pool_impl = @import("shm_pool.zig");
+const shm_buffer_impl = @import("shm_buffer.zig");
 
 pub fn init() void {
     wl.WL_DISPLAY.sync = sync;
@@ -14,18 +16,18 @@ pub fn init() void {
     wl.XDG_SURFACE.get_toplevel = get_toplevel;
     wl.XDG_SURFACE.ack_configure = ack_configure;
     wl.XDG_TOPLEVEL.set_title = set_title;
-    wl.WL_SURFACE.commit = commit;
-    wl.WL_SURFACE.damage = damage;
 
-    shm_impl.init();
+    surface_impl.init();
+    shm_pool_impl.init();
+    shm_buffer_impl.init();
 }
 
-fn sync(object: Object, new_id: u32) anyerror!void {
+fn sync(display: Object, new_id: u32) anyerror!void {
     std.debug.warn("sync with id {}\n", .{new_id});
-    if(wl.new_wl_callback(object.context, new_id)) |callback| {
+    if(wl.new_wl_callback(display.context, new_id)) |callback| {
         try wl.wl_callback_send_done(callback.*, 120);
-        var x = object.context.unregister(callback.*);
-        try wl.wl_display_send_delete_id(object, callback.id);
+        var x = display.context.unregister(callback.*);
+        try wl.wl_display_send_delete_id(display, callback.id);
     }
 }
 
@@ -94,10 +96,10 @@ fn bind(registry: Object, name: u32, name_string: []u8, version: u32, new_id: u3
     }
 }
 
-fn create_surface(compositor: Object, id: u32) anyerror!void {
-    std.debug.warn("create_surface: {}\n", .{id});
-    if (wl.new_wl_surface(compositor.context, id)) |surface| {
-        var x = win.newWindow(compositor.context.client, id);
+fn create_surface(compositor: Object, new_surface_id: u32) anyerror!void {
+    std.debug.warn("create_surface: {}\n", .{new_surface_id});
+    if (wl.new_wl_surface(compositor.context, new_surface_id)) |surface| {
+        var window = try win.newWindow(compositor.context.client, new_surface_id);
     }
 }
 
@@ -131,13 +133,6 @@ fn set_title(xdg_toplevel: Object, title: []u8) anyerror!void {
     std.debug.warn("window: {}\n", .{window.title});
 }
 
-fn commit(surface: Object) anyerror!void {
-    std.debug.warn("surface {} committed\n", .{surface.id});
-}
-
-fn damage(object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    std.debug.warn("damage does nothing\n", .{});
-}
 
 fn ack_configure(object: Object, serial: u32) anyerror!void {
     std.debug.warn("ack_configure empty implementation\n", .{});

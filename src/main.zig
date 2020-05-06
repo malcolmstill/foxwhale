@@ -18,7 +18,7 @@ pub fn main() anyerror!void {
         var i: usize = 0;
 
         while (i < n) {
-            epoll.dispatch(i);
+            try epoll.dispatch(i);
             i = i + 1;
         }
     }
