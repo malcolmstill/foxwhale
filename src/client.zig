@@ -80,8 +80,9 @@ fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
     var client = @fieldParentPtr(Client, "dispatchable", dispatchable);
 
     if (event_type & std.os.linux.EPOLLHUP > 0) {
-        std.debug.warn("client {}: hung up.\n\n", .{ client.index });
+        std.debug.warn("client {}: hung up.\n", .{ client.index });
         client.deinit();
+        std.debug.warn("client {}: freed.\n", .{ client.index });
         return;
     }
 
