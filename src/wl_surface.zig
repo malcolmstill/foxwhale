@@ -5,14 +5,6 @@ const Object = @import("wl/context.zig").Object;
 const Client = @import("client.zig").Client;
 const Window = @import("window.zig").Window;
 
-pub fn init() void {    
-    wl.WL_SURFACE.commit = commit;
-    wl.WL_SURFACE.damage = damage;
-    wl.WL_SURFACE.attach = attach;
-    wl.WL_SURFACE.frame = frame;
-    wl.WL_SURFACE.destroy = destroy;
-}
-
 fn commit(context: *Context, wl_surface: Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
 
@@ -62,4 +54,12 @@ fn destroy(context: *Context, wl_surface: Object) anyerror!void {
 
     try wl.wl_display_send_delete_id(context.client.display, wl_surface.id);
     try context.unregister(wl_surface);
+}
+
+pub fn init() void {
+    wl.WL_SURFACE.commit = commit;
+    wl.WL_SURFACE.damage = damage;
+    wl.WL_SURFACE.attach = attach;
+    wl.WL_SURFACE.frame = frame;
+    wl.WL_SURFACE.destroy = destroy;
 }

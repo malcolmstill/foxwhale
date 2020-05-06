@@ -5,10 +5,6 @@ const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
 const win = @import("window.zig");
 
-pub fn init() void {    
-    wl.WL_COMPOSITOR.create_surface = create_surface;
-}
-
 fn create_surface(context: *Context, wl_compositor: Object, new_id: u32) anyerror!void {
     std.debug.warn("create_surface: {}\n", .{new_id});
 
@@ -16,4 +12,8 @@ fn create_surface(context: *Context, wl_compositor: Object, new_id: u32) anyerro
 
     var surface = wl.new_wl_surface(new_id, context, @ptrToInt(window));
     try context.register(surface);
+}
+
+pub fn init() void {
+    wl.WL_COMPOSITOR.create_surface = create_surface;
 }

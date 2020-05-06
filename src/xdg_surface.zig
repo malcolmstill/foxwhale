@@ -4,12 +4,6 @@ const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
 const Window = @import("window.zig").Window;
 
-pub fn init() void {
-    wl.XDG_SURFACE.get_toplevel = get_toplevel;
-    wl.XDG_SURFACE.ack_configure = ack_configure;
-    wl.XDG_SURFACE.destroy = destroy;
-}
-
 fn get_toplevel(context: *Context, xdg_surface: Object, new_id: u32) anyerror!void {
     std.debug.warn("get_toplevel: {}\n", .{new_id});
 
@@ -36,4 +30,10 @@ fn destroy(context: *Context, xdg_surface: Object) anyerror!void {
 
     try wl.wl_display_send_delete_id(context.client.display, xdg_surface.id);
     try context.unregister(xdg_surface);
+}
+
+pub fn init() void {
+    wl.XDG_SURFACE.get_toplevel = get_toplevel;
+    wl.XDG_SURFACE.ack_configure = ack_configure;
+    wl.XDG_SURFACE.destroy = destroy;
 }
