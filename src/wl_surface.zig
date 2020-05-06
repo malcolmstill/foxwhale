@@ -36,7 +36,7 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
 }
 
 fn damage(context: *Context, wl_surface: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    std.debug.warn("damage does nothing\n", .{});
+    // std.debug.warn("damage does nothing\n", .{});
 }
 
 fn attach(context: *Context, wl_surface: Object, buffer: Object, x: i32, y: i32) anyerror!void {
