@@ -22,7 +22,9 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
         }
     }
 
-    std.time.sleep(16000000);
+    if (std.builtin.mode == std.builtin.Mode.Debug) {
+        std.time.sleep(@divFloor(10000000000, 60));
+    }
 
     while(window.callbacks.readItem()) |callback_id| {
         if (context.get(callback_id)) |callback| {
