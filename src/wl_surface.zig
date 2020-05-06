@@ -1,5 +1,5 @@
 const std = @import("std");
-const wl = @import("wl/protocols.zig");
+const prot = @import("wl/protocols.zig");
 const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
 const Client = @import("client.zig").Client;
@@ -10,7 +10,7 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
 
     if (window.wl_buffer) |buffer_id| {
         if (context.get(buffer_id)) |wl_buffer| {
-            try wl.wl_buffer_send_release(wl_buffer.*);
+            try prot.wl_buffer_send_release(wl_buffer.*);
         }
     }
 
@@ -20,9 +20,9 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
 
     while(window.callbacks.readItem()) |callback_id| {
         if (context.get(callback_id)) |callback| {
-            try wl.wl_callback_send_done(callback.*, @intCast(u32, std.time.timestamp()));
+            try prot.wl_callback_send_done(callback.*, @intCast(u32, std.time.timestamp()));
             try context.unregister(callback.*);
-            try wl.wl_display_send_delete_id(window.client.display, callback_id);
+            try prot.wl_display_send_delete_id(window.client.display, callback_id);
         } else {
             return error.CallbackIdNotFound;
         }
@@ -43,7 +43,7 @@ fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     try window.callbacks.writeItem(new_id);
 
-    var callback = wl.new_wl_callback(new_id, context, 0);
+    var callback = prot.new_wl_callback(new_id, context, 0);
     try context.register(callback);
 }
 
@@ -52,14 +52,14 @@ fn destroy(context: *Context, wl_surface: Object) anyerror!void {
     // TODO: what about subsurfaces / popups?
     window.deinit();
 
-    try wl.wl_display_send_delete_id(context.client.display, wl_surface.id);
+    try prot.wl_display_send_delete_id(context.client.display, wl_surface.id);
     try context.unregister(wl_surface);
 }
 
 pub fn init() void {
-    wl.WL_SURFACE.commit = commit;
-    wl.WL_SURFACE.damage = damage;
-    wl.WL_SURFACE.attach = attach;
-    wl.WL_SURFACE.frame = frame;
-    wl.WL_SURFACE.destroy = destroy;
+    prot.WL_SURFACE.commit = commit;
+    prot.WL_SURFACE.damage = damage;
+    prot.WL_SURFACE.attach = attach;
+    prot.WL_SURFACE.frame = frame;
+    prot.WL_SURFACE.destroy = destroy;
 }

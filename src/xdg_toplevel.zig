@@ -1,5 +1,5 @@
 const std = @import("std");
-const wl = @import("wl/protocols.zig");
+const prot = @import("wl/protocols.zig");
 const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
 const Window = @import("window.zig").Window;
@@ -15,11 +15,11 @@ fn destroy(context: *Context, xdg_toplevel: Object) anyerror!void {
     var window = @intToPtr(*Window, xdg_toplevel.container);
     window.xdg_toplevel = null;
 
-    try wl.wl_display_send_delete_id(context.client.display, xdg_toplevel.id);
+    try prot.wl_display_send_delete_id(context.client.display, xdg_toplevel.id);
     try context.unregister(xdg_toplevel);
 }
 
 pub fn init() void {
-    wl.XDG_TOPLEVEL.set_title = set_title;
-    wl.XDG_TOPLEVEL.destroy = destroy;
+    prot.XDG_TOPLEVEL.set_title = set_title;
+    prot.XDG_TOPLEVEL.destroy = destroy;
 }

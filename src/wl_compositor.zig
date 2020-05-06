@@ -1,5 +1,5 @@
 const std = @import("std");
-const wl = @import("wl/protocols.zig");
+const prot = @import("wl/protocols.zig");
 const Client = @import("client.zig").Client;
 const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
@@ -10,10 +10,10 @@ fn create_surface(context: *Context, wl_compositor: Object, new_id: u32) anyerro
 
     var window = try win.newWindow(context.client, new_id);
 
-    var surface = wl.new_wl_surface(new_id, context, @ptrToInt(window));
+    var surface = prot.new_wl_surface(new_id, context, @ptrToInt(window));
     try context.register(surface);
 }
 
 pub fn init() void {
-    wl.WL_COMPOSITOR.create_surface = create_surface;
+    prot.WL_COMPOSITOR.create_surface = create_surface;
 }

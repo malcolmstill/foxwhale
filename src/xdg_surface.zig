@@ -1,5 +1,5 @@
 const std = @import("std");
-const wl = @import("wl/protocols.zig");
+const prot = @import("wl/protocols.zig");
 const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
 const Window = @import("window.zig").Window;
@@ -10,12 +10,12 @@ fn get_toplevel(context: *Context, xdg_surface: Object, new_id: u32) anyerror!vo
     var window = @intToPtr(*Window, xdg_surface.container);
     window.xdg_toplevel = new_id;
 
-    var xdg_toplevel = wl.new_xdg_toplevel(new_id, context, @ptrToInt(window));
+    var xdg_toplevel = prot.new_xdg_toplevel(new_id, context, @ptrToInt(window));
 
     var array = [_]u32{};
     var serial = window.client.nextSerial();
-    try wl.xdg_toplevel_send_configure(xdg_toplevel, 0, 0, array[0..array.len]);
-    try wl.xdg_surface_send_configure(xdg_surface, serial);
+    try prot.xdg_toplevel_send_configure(xdg_toplevel, 0, 0, array[0..array.len]);
+    try prot.xdg_surface_send_configure(xdg_surface, serial);
 
     try context.register(xdg_toplevel);
 }
@@ -28,12 +28,12 @@ fn destroy(context: *Context, xdg_surface: Object) anyerror!void {
     var window = @intToPtr(*Window, xdg_surface.container);
     window.xdg_surface = null;
 
-    try wl.wl_display_send_delete_id(context.client.display, xdg_surface.id);
+    try prot.wl_display_send_delete_id(context.client.display, xdg_surface.id);
     try context.unregister(xdg_surface);
 }
 
 pub fn init() void {
-    wl.XDG_SURFACE.get_toplevel = get_toplevel;
-    wl.XDG_SURFACE.ack_configure = ack_configure;
-    wl.XDG_SURFACE.destroy = destroy;
+    prot.XDG_SURFACE.get_toplevel = get_toplevel;
+    prot.XDG_SURFACE.ack_configure = ack_configure;
+    prot.XDG_SURFACE.destroy = destroy;
 }
