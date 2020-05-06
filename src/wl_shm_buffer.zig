@@ -65,7 +65,7 @@ fn destroy(context: *Context, shm_buffer: Object) anyerror!void {
 
     try wl.wl_display_send_delete_id(context.client.display, shm_buffer.id);
 
-    try shm_buffer.context.unregister(shm_buffer);
+    try context.unregister(shm_buffer);
 }
 
 const ShmBuffersError = error{ShmBuffersExhausted};
