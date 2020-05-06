@@ -1,9 +1,9 @@
 const std = @import("std");
+const linux = std.os.linux;
 const Object = @import("wl/context.zig").Object;
 const Context = @import("wl/context.zig").Context;
 const Client = @import("client.zig").Client;
 const ShmPool = @import("shm_pool.zig").ShmPool;
-const wl = @import("wl/protocols.zig");
 
 const MAX_SHM_BUFFERS = 2048;
 var SHM_BUFFERS: [MAX_SHM_BUFFERS]ShmBuffer = undefined;
@@ -54,6 +54,22 @@ pub const ShmBuffer = struct {
         std.debug.warn("deinit buffer\n", .{});
         self.in_use = false;
     }
+
+    pub fn beginAccess(self: *Self) void {
+        CURRENT_POOL_ADDRESS = self.shm_pool.data.ptr;
+        CURRENT_POOL_SIZE = self.shm_pool.data.len;
+        _ = linux.sigaction(linux.SIGBUS, &sigbus_handler_action, null);
+    }
+
+    pub fn endAccess(self: *Self) !void {
+        defer {
+            SIGBUS_ERROR = false;
+            _ = linux.sigaction(linux.SIGBUS, &sigbus_handler_reset, null);
+        }
+        if (SIGBUS_ERROR) {
+            return error.ClientSigbusd;
+        }
+    }
 };
 
 pub fn releaseShmBuffers(client: *Client) void {
@@ -68,3 +84,25 @@ pub fn releaseShmBuffers(client: *Client) void {
 }
 
 const ShmBuffersError = error{ShmBuffersExhausted};
+
+var SIGBUS_ERROR = false;
+var CURRENT_POOL_ADDRESS: [*]align(4096) u8 = undefined;
+var CURRENT_POOL_SIZE: usize = 0;
+
+const sigbus_handler_action = linux.Sigaction{
+    .sigaction = sigbus_handler,
+    .mask = linux.empty_sigset,
+    .flags = linux.SA_RESETHAND,
+};
+
+const sigbus_handler_reset = linux.Sigaction{
+    .sigaction = null,
+    .mask = linux.empty_sigset,
+    .flags = linux.SA_RESETHAND,
+};
+
+fn sigbus_handler(sig: i32, info: *linux.siginfo_t, data: ?*c_void) callconv(.C) void {
+    SIGBUS_ERROR = true;
+    var replaced = linux.mmap(CURRENT_POOL_ADDRESS, CURRENT_POOL_SIZE, linux.PROT_READ|linux.PROT_WRITE, linux.MAP_FIXED | linux.MAP_PRIVATE | linux.MAP_ANONYMOUS, -1, 0);
+    return;
+}
