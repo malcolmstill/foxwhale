@@ -15,7 +15,7 @@ pub fn newShmBuffer(client: *Client, id: u32, wl_shm_pool: Object, offset: i32, 
             SHM_BUFFERS[i].index = i;
             SHM_BUFFERS[i].client = client;
             SHM_BUFFERS[i].in_use = true;
-            SHM_BUFFERS[i].pool = @intToPtr(*ShmPool, wl_shm_pool.container);
+            SHM_BUFFERS[i].shm_pool = @intToPtr(*ShmPool, wl_shm_pool.container);
             SHM_BUFFERS[i].offset = offset;
             SHM_BUFFERS[i].width = width;
             SHM_BUFFERS[i].height = height;
@@ -23,7 +23,7 @@ pub fn newShmBuffer(client: *Client, id: u32, wl_shm_pool: Object, offset: i32, 
             SHM_BUFFERS[i].format = format;
             SHM_BUFFERS[i].wl_buffer_id = id;
 
-            SHM_BUFFERS[i].pool.incrementRefCount();
+            SHM_BUFFERS[i].shm_pool.incrementRefCount();
 
             return &SHM_BUFFERS[i];
         } else {
@@ -39,8 +39,8 @@ pub const ShmBuffer = struct {
     index: usize,
     in_use: bool = false,
     client: *Client,
-    wl_buffer_id: ?u32,
-    pool: *ShmPool,
+    wl_buffer_id: u32,
+    shm_pool: *ShmPool,
     offset: i32,
     width: i32,
     height: i32,
