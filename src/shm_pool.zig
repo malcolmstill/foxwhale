@@ -2,14 +2,14 @@ const std = @import("std");
 const Client = @import("client.zig").Client;
 
 const MAX_SHM_POOLS = 512;
-var pools: [MAX_SHM_POOLS]ShmPool = undefined;
+var SHM_POOLS: [MAX_SHM_POOLS]ShmPool = undefined;
 
 pub const ShmPool = struct {
     index: usize,
     in_use: bool = false,
     fd: i32,
     data: []align(4096) u8,
-    wl_shm_pool_id: ?u32,
+    wl_shm_pool_id: u32,
     ref_count: usize,
     client: *Client,
     to_be_destroyed: bool = false,
@@ -17,11 +17,12 @@ pub const ShmPool = struct {
     const Self = @This();
 
     pub fn deinit(self: *Self) void {
-        self.in_use = false;
-        self.wl_shm_pool_id = null;
-        self.fd = -1;
         std.os.munmap(self.data);
-        std.debug.warn("released pool data\n", .{});
+        std.debug.warn("shm_pool closing file descriptor: {}\n", .{self.fd});
+        std.os.close(self.fd);
+
+        self.in_use = false;
+        self.fd = -1;
     }
 
     pub fn incrementRefCount(self: *Self) void {
@@ -41,18 +42,20 @@ pub const ShmPool = struct {
 pub fn newShmPool(client: *Client, fd: i32, wl_shm_pool_id: u32, size: i32) !*ShmPool {
     var i: usize = 0;
     while (i < MAX_SHM_POOLS) {
-        if (pools[i].in_use == false) {
-            pools[i].index = i;
-            pools[i].in_use = true;
-            pools[i].client = client;
-            pools[i].fd = fd;
-            pools[i].ref_count = 0;
-            pools[i].wl_shm_pool_id = wl_shm_pool_id;
-            pools[i].data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT_READ|std.os.linux.PROT_WRITE, std.os.linux.MAP_SHARED, fd, 0);
+        var shm_pool: *ShmPool = &SHM_POOLS[i];
+        if (shm_pool.in_use == false) {
+            shm_pool.index = i;
+            shm_pool.in_use = true;
+            shm_pool.to_be_destroyed = false;
+            shm_pool.client = client;
+            shm_pool.fd = fd;
+            shm_pool.ref_count = 0;
+            shm_pool.wl_shm_pool_id = wl_shm_pool_id;
+            shm_pool.data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT_READ|std.os.linux.PROT_WRITE, std.os.linux.MAP_SHARED, fd, 0);
 
-            std.debug.warn("data length: {}\n", .{pools[i].data.len});
+            std.debug.warn("data length: {}\n", .{shm_pool.data.len});
 
-            return &pools[i];
+            return shm_pool;
         } else {
             i = i + 1;
             continue;
@@ -65,8 +68,9 @@ pub fn newShmPool(client: *Client, fd: i32, wl_shm_pool_id: u32, size: i32) !*Sh
 pub fn releaseShmPools(client: *Client) void {
     var i: usize = 0;
     while (i < MAX_SHM_POOLS) {
-        if (pools[i].client == client) {
-            pools[i].deinit();
+        var shm_pool: *ShmPool = &SHM_POOLS[i];
+        if (shm_pool.in_use and shm_pool.client == client) {
+            shm_pool.deinit();
         }
         i = i + 1;
     }
