@@ -62,9 +62,8 @@ pub const ShmBuffer = struct {
 fn destroy(context: *Context, shm_buffer: Object) anyerror!void {
     var buffer = @intToPtr(*ShmBuffer, shm_buffer.container);
     buffer.pool.decrementRefCount();
-    if (context.get(1)) |display| {
-        try wl.wl_display_send_delete_id(display.*, shm_buffer.id);
-    }
+
+    try wl.wl_display_send_delete_id(context.client.display, shm_buffer.id);
 
     try shm_buffer.context.unregister(shm_buffer);
 }
