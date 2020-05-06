@@ -4,6 +4,7 @@ const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
 
 const wl_compositor_impl = @import("wl_compositor.zig");
+const wl_seat_impl = @import("wl_seat.zig");
 const wl_shm_pool_impl = @import("wl_shm_pool.zig");
 const wl_shm_buffer_impl = @import("wl_shm_buffer.zig");
 const wl_surface_impl = @import("wl_surface.zig");
@@ -17,6 +18,7 @@ pub fn init() void {
     wl.WL_REGISTRY.bind = bind;
 
     wl_compositor_impl.init();
+    wl_seat_impl.init();
     wl_shm_pool_impl.init();
     wl_shm_buffer_impl.init();
     wl_surface_impl.init();
