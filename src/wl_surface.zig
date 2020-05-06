@@ -46,7 +46,7 @@ fn attach(context: *Context, wl_surface: Object, buffer: Object, x: i32, y: i32)
 }
 
 fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {
-    var window = @alignCast(@alignOf(Window), @intToPtr(*Window, wl_surface.container));
+    var window = @intToPtr(*Window, wl_surface.container);
     try window.callbacks.writeItem(new_id);
 
     var callback = wl.new_wl_callback(new_id, context, 0);
