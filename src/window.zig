@@ -33,20 +33,27 @@ pub const Window = struct {
 
     pub fn deinit(self: *Self) void {
         std.debug.warn("release window\n", .{});
-        WINDOWS[self.index].in_use = false;
+        self.in_use = false;
+        self.wl_buffer_id = null;
+        self.xdg_surface_id = null;
+        self.xdg_toplevel_id = null;
     }
 };
 
 pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
     var i: usize = 0;
     while (i < MAX_WINDOWS) {
-        if (WINDOWS[i].in_use == false) {
-            WINDOWS[i].index = i;
-            WINDOWS[i].in_use = true;
-            WINDOWS[i].client = client;
-            WINDOWS[i].wl_surface_id = wl_surface_id;
+        var window: *Window = &WINDOWS[i];
+        if (window.in_use == false) {
+            window.index = i;
+            window.in_use = true;
+            window.client = client;
+            window.wl_surface_id = wl_surface_id;
+            window.wl_buffer_id = null;
+            window.xdg_surface_id = null;
+            window.xdg_toplevel_id = null;
 
-            return &WINDOWS[i];
+            return window;
         } else {
             i = i + 1;
             continue;
@@ -70,8 +77,9 @@ const WindowsError = error {
 pub fn releaseWindows(client: *Client) void {
     var i: usize = 0;
     while (i < MAX_WINDOWS) {
-        if (WINDOWS[i].client == client) {
-            WINDOWS[i].deinit();
+        var window: *Window = &WINDOWS[i];
+        if (window.in_use and window.client == client) {
+            window.deinit();
         }
         i = i + 1;
     }
