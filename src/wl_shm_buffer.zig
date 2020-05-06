@@ -14,7 +14,7 @@ fn create_buffer(context: *Context, wl_shm_pool: Object, new_id: u32, offset: i3
 
 fn destroy(context: *Context, wl_shm_buffer: Object) anyerror!void {
     var buffer = @intToPtr(*ShmBuffer, wl_shm_buffer.container);
-    buffer.pool.decrementRefCount();
+    buffer.shm_pool.decrementRefCount();
     buffer.deinit();
 
     try prot.wl_display_send_delete_id(context.client.display, wl_shm_buffer.id);
