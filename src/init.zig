@@ -2,25 +2,28 @@ const std = @import("std");
 const wl = @import("wl/protocols.zig");
 const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
-const win = @import("window.zig");
-const Window = @import("window.zig").Window;
-const surface_impl = @import("surface.zig");
-const shm_pool_impl = @import("shm_pool.zig");
-const shm_buffer_impl = @import("shm_buffer.zig");
+
+const wl_compositor_impl = @import("wl_compositor.zig");
+const wl_shm_pool_impl = @import("wl_shm_pool.zig");
+const wl_shm_buffer_impl = @import("wl_shm_buffer.zig");
+const wl_surface_impl = @import("wl_surface.zig");
+const xdg_base_impl = @import("xdg_base.zig");
+const xdg_surface_impl = @import("xdg_surface.zig");
+const xdg_toplevel_impl = @import("xdg_toplevel.zig");
 
 pub fn init() void {
     wl.WL_DISPLAY.sync = sync;
     wl.WL_DISPLAY.get_registry = get_registry;
     wl.WL_REGISTRY.bind = bind;
-    wl.WL_COMPOSITOR.create_surface = create_surface;
-    wl.XDG_WM_BASE.get_xdg_surface = get_xdg_surface;
-    wl.XDG_SURFACE.get_toplevel = get_toplevel;
-    wl.XDG_SURFACE.ack_configure = ack_configure;
-    wl.XDG_TOPLEVEL.set_title = set_title;
 
-    surface_impl.init();
-    shm_pool_impl.init();
-    shm_buffer_impl.init();
+    wl_compositor_impl.init();
+    wl_shm_pool_impl.init();
+    wl_shm_buffer_impl.init();
+    wl_surface_impl.init();
+
+    xdg_base_impl.init();
+    xdg_surface_impl.init();
+    xdg_toplevel_impl.init();
 }
 
 fn sync(context: *Context, display: Object, new_id: u32) anyerror!void {
@@ -105,51 +108,4 @@ fn bind(context: *Context, registry: Object, name: u32, name_string: []u8, versi
         10 => {},
         else => {},
     }
-}
-
-fn create_surface(context: *Context, compositor: Object, new_id: u32) anyerror!void {
-    std.debug.warn("create_surface: {}\n", .{new_id});
-
-    var window = try win.newWindow(context.client, new_id);
-
-    var surface = wl.new_wl_surface(new_id, context, @ptrToInt(window));
-    try context.register(surface);
-}
-
-fn get_xdg_surface(context: *Context, base: Object, new_id: u32, surface: Object) anyerror!void {
-    std.debug.warn("get_xdg_surface: {}\n", .{new_id});
-
-    var window = @intToPtr(*Window, surface.container);
-    window.xdg_surface = new_id;
-
-    var xdg_surface = wl.new_xdg_surface(new_id, context, @ptrToInt(window));
-    try context.register(xdg_surface);
-}
-
-fn get_toplevel(context: *Context, xdg_surface: Object, new_id: u32) anyerror!void {
-    std.debug.warn("get_toplevel: {}\n", .{new_id});
-
-    var window = @intToPtr(*Window, xdg_surface.container);
-    window.xdg_toplevel = new_id;
-
-    var xdg_toplevel = wl.new_xdg_toplevel(new_id, context, @ptrToInt(window));
-
-    var array = [_]u32{};
-    var serial = window.client.nextSerial();
-    try wl.xdg_toplevel_send_configure(xdg_toplevel, 0, 0, array[0..array.len]);
-    try wl.xdg_surface_send_configure(xdg_surface, serial);
-
-    try context.register(xdg_toplevel);
-}
-
-fn set_title(context: *Context, xdg_toplevel: Object, title: []u8) anyerror!void {
-    var window = @intToPtr(*Window, xdg_toplevel.container);
-    var len = std.math.min(window.title.len, title.len);
-    std.mem.copy(u8, window.title[0..len], title[0..len]);
-    std.debug.warn("window: {}\n", .{window.title});
-}
-
-
-fn ack_configure(context: *Context, object: Object, serial: u32) anyerror!void {
-    std.debug.warn("ack_configure empty implementation\n", .{});
 }

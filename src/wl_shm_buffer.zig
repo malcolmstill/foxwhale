@@ -2,8 +2,9 @@ const std = @import("std");
 const Object = @import("wl/context.zig").Object;
 const Context = @import("wl/context.zig").Context;
 const Client = @import("client.zig").Client;
-const ShmPool = @import("shm_pool.zig").ShmPool;
+const ShmPool = @import("wl_shm_pool.zig").ShmPool;
 const wl = @import("wl/protocols.zig");
+
 const MAX_SHM_BUFFERS = 2048;
 var SHM_BUFFERS: [MAX_SHM_BUFFERS]ShmBuffer = undefined;
 
