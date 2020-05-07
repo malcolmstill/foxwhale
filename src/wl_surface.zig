@@ -26,10 +26,6 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
         }
     }
 
-    if (std.builtin.mode == std.builtin.Mode.Debug) {
-        std.time.sleep(@divFloor(10000000000, 60));
-    }
-
     while(window.callbacks.readItem()) |callback_id| {
         if (context.get(callback_id)) |callback| {
             try prot.wl_callback_send_done(callback.*, @intCast(u32, std.time.timestamp()));
