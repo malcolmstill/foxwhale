@@ -1,3 +1,4 @@
+const std = @import("std");
 const headless = @import("headless.zig");
 const glfw = @import("glfw.zig");
 const HeadlessBackend = @import("headless.zig").HeadlessBackend;
@@ -40,3 +41,11 @@ pub const Backend = union(BackendType) {
         };
     }
 };
+
+pub fn detect() BackendType {
+    if (std.os.getenv("DISPLAY")) |display| {
+        return BackendType.GLFW;
+    } else {
+        return BackendType.Headless;
+    }
+}
