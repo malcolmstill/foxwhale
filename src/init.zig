@@ -28,34 +28,34 @@ pub fn init() void {
     xdg_toplevel_impl.init();
 }
 
-fn sync(context: *Context, display: Object, new_id: u32) anyerror!void {
+fn sync(context: *Context, wl_display: Object, new_id: u32) anyerror!void {
     std.debug.warn("sync with id {}\n", .{new_id});
 
-    var callback = wl.new_wl_callback(new_id, display.context, 0);
-    try wl.wl_callback_send_done(callback, @intCast(u32, std.time.timestamp()));
-    try wl.wl_display_send_delete_id(display, callback.id);
+    var wl_callback = wl.new_wl_callback(new_id, context, 0);
+    try wl.wl_callback_send_done(wl_callback, @intCast(u32, std.time.timestamp()));
+    try wl.wl_display_send_delete_id(wl_display, wl_callback.id);
 }
 
-fn get_registry(context: *Context, display: Object, new_id: u32) anyerror!void {
+fn get_registry(context: *Context, wl_display: Object, new_id: u32) anyerror!void {
     std.debug.warn("get_registry with id {}\n", .{new_id});
 
-    var registry = wl.new_wl_registry(new_id, context, 0);
+    var wl_registry = wl.new_wl_registry(new_id, context, 0);
 
-    try wl.wl_registry_send_global(registry, 1, "wl_compositor\x00", 4);
-    try wl.wl_registry_send_global(registry, 2, "wl_subcompositor\x00", 1);
-    try wl.wl_registry_send_global(registry, 3, "wl_seat\x00", 4);
-    try wl.wl_registry_send_global(registry, 4, "xdg_wm_base\x00", 1);
-    try wl.wl_registry_send_global(registry, 5, "wl_output\x00", 2);
-    try wl.wl_registry_send_global(registry, 6, "wl_data_device_manager\x00", 3);
-    try wl.wl_registry_send_global(registry, 7, "wl_shell\x00", 1);
-    try wl.wl_registry_send_global(registry, 8, "wl_shm\x00", 1);
-    try wl.wl_registry_send_global(registry, 9, "zxdg_decoration_manager_v1\x00", 1);
-    try wl.wl_registry_send_global(registry, 10, "zwp_linux_dmabuf_v1\x00", 3);
+    try wl.wl_registry_send_global(wl_registry, 1, "wl_compositor\x00", 4);
+    try wl.wl_registry_send_global(wl_registry, 2, "wl_subcompositor\x00", 1);
+    try wl.wl_registry_send_global(wl_registry, 3, "wl_seat\x00", 4);
+    try wl.wl_registry_send_global(wl_registry, 4, "xdg_wm_base\x00", 1);
+    try wl.wl_registry_send_global(wl_registry, 5, "wl_output\x00", 2);
+    try wl.wl_registry_send_global(wl_registry, 6, "wl_data_device_manager\x00", 3);
+    try wl.wl_registry_send_global(wl_registry, 7, "wl_shell\x00", 1);
+    try wl.wl_registry_send_global(wl_registry, 8, "wl_shm\x00", 1);
+    try wl.wl_registry_send_global(wl_registry, 9, "zxdg_decoration_manager_v1\x00", 1);
+    try wl.wl_registry_send_global(wl_registry, 10, "zwp_linux_dmabuf_v1\x00", 3);
 
-    try context.register(registry);
+    try context.register(wl_registry);
 }
 
-fn bind(context: *Context, registry: Object, name: u32, name_string: []u8, version: u32, new_id: u32) anyerror!void {
+fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, version: u32, new_id: u32) anyerror!void {
     std.debug.warn("bind for {} ({}) with id {} at version {}\n", .{name_string, name, new_id, version});
 
     switch (name) {
