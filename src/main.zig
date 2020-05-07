@@ -13,7 +13,7 @@ pub fn main() anyerror!void {
     var backend: Backend = try bknd.init(detected_type);
     defer backend.deinit();
 
-    std.debug.warn("backend: {} (size: {})\n", .{backend, @sizeOf(Backend)});
+    std.debug.warn("==> backend: {}\n", .{backend.name()});
 
     var display = try Display.init();
     defer { display.deinit(); }
