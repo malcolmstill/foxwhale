@@ -10,7 +10,6 @@ pub const GLFWBackend = struct {
     
     pub fn draw(self: Self) void {
         c.glfwPollEvents();
-        c.glClear(c.GL_COLOR_BUFFER_BIT);
         c.glfwSwapBuffers(self.window);
     }
 
