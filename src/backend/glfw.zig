@@ -30,6 +30,9 @@ pub fn init() !GLFWBackend {
     }
     errdefer c.glfwTerminate();
 
+    c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MAJOR, 3);
+    c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MINOR, 3);
+
     var window = c.glfwCreateWindow(640, 480, "zig-wayland", null, null) orelse return error.GLFWWindowCreationFailed;
 
     c.glfwMakeContextCurrent(window);

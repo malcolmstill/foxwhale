@@ -19,6 +19,8 @@ pub fn main() anyerror!void {
     defer { display.deinit(); }
     try display.addToEpoll();
 
+    try render.init();
+
     var running = true;
     while (running) {
         var i: usize = 0;
