@@ -90,7 +90,7 @@ var CURRENT_POOL_ADDRESS: [*]align(4096) u8 = undefined;
 var CURRENT_POOL_SIZE: usize = 0;
 
 const sigbus_handler_action = linux.Sigaction{
-    .sigaction = sigbus_handler,
+    .sigaction = sigbusHandler,
     .mask = linux.empty_sigset,
     .flags = linux.SA_RESETHAND,
 };
@@ -101,7 +101,7 @@ const sigbus_handler_reset = linux.Sigaction{
     .flags = linux.SA_RESETHAND,
 };
 
-fn sigbus_handler(sig: i32, info: *linux.siginfo_t, data: ?*c_void) callconv(.C) void {
+fn sigbusHandler(sig: i32, info: *linux.siginfo_t, data: ?*c_void) callconv(.C) void {
     SIGBUS_ERROR = true;
     _ = linux.mmap(CURRENT_POOL_ADDRESS, CURRENT_POOL_SIZE, linux.PROT_READ|linux.PROT_WRITE, linux.MAP_FIXED | linux.MAP_PRIVATE | linux.MAP_ANONYMOUS, -1, 0);
 }
