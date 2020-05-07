@@ -5,6 +5,7 @@ const epoll = @import("epoll.zig");
 const Backend = @import("backend/backend.zig").Backend;
 const BackendType = @import("backend/backend.zig").BackendType;
 const bknd = @import("backend/backend.zig");
+const render = @import("render.zig");
 
 pub fn main() anyerror!void {
     try epoll.init();
@@ -28,6 +29,7 @@ pub fn main() anyerror!void {
             i = i + 1;
         }
 
+        render.render();
         backend.draw();
 
         if (backend.shouldClose()) {
