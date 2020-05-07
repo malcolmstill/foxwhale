@@ -2,7 +2,6 @@ const std = @import("std");
 const Context = @import("wl/context.zig").Context;
 const Display = @import("display.zig").Display;
 const epoll = @import("epoll.zig");
-const init = @import("init.zig");
 const Backend = @import("backend/backend.zig").Backend;
 const BackendType = @import("backend/backend.zig").BackendType;
 const bknd = @import("backend/backend.zig");
@@ -18,8 +17,6 @@ pub fn main() anyerror!void {
     var display = try Display.init();
     defer { display.deinit(); }
     try display.addToEpoll();
-
-    init.init();
 
     var running = true;
     while (running) {
