@@ -60,42 +60,42 @@ fn bind(context: *Context, registry: Object, name: u32, name_string: []u8, versi
 
     switch (name) {
         1 => {
-            var compositor = wl.new_wl_compositor(new_id, context, 0);
-            compositor.version = version;
-            context.client.compositor = compositor.id;
+            var wl_compositor = wl.new_wl_compositor(new_id, context, 0);
+            wl_compositor.version = version;
+            context.client.wl_compositor_id = wl_compositor.id;
 
-            try context.register(compositor);
+            try context.register(wl_compositor);
         },
         2 => {
-            var subcompositor = wl.new_wl_subcompositor(new_id, context, 0);
-            subcompositor.version = version;
-            context.client.subcompositor = subcompositor.id;
+            var wl_subcompositor = wl.new_wl_subcompositor(new_id, context, 0);
+            wl_subcompositor.version = version;
+            context.client.wl_subcompositor_id = wl_subcompositor.id;
 
-            try context.register(subcompositor);
+            try context.register(wl_subcompositor);
         },
         3 => {
-            if (context.client.seat != null) {
+            if (context.client.wl_seat_id != null) {
                 return;
             }
 
-            var seat = wl.new_wl_seat(new_id, context, 0);
-            seat.version = version;
-            try wl.wl_seat_send_capabilities(seat, @enumToInt(wl.wl_seat_capability.pointer) | @enumToInt(wl.wl_seat_capability.keyboard));
-            context.client.seat = seat.id;
+            var wl_seat = wl.new_wl_seat(new_id, context, 0);
+            wl_seat.version = version;
+            try wl.wl_seat_send_capabilities(wl_seat, @enumToInt(wl.wl_seat_capability.pointer) | @enumToInt(wl.wl_seat_capability.keyboard));
+            context.client.wl_seat_id = wl_seat.id;
 
-            try context.register(seat);
+            try context.register(wl_seat);
         },
         4 => {
-            var base = wl.new_xdg_wm_base(new_id, context, 0);
-            base.version = version;
-            context.client.xdg_wm_base = base.id;
+            var xdg_wm_base = wl.new_xdg_wm_base(new_id, context, 0);
+            xdg_wm_base.version = version;
+            context.client.xdg_wm_base_id = xdg_wm_base.id;
 
-            try context.register(base);
+            try context.register(xdg_wm_base);
         },
         5 => {
             var wl_output = wl.new_wl_output(new_id, context, 0);
             wl_output.version = version;
-            context.client.wl_output = wl_output.id;
+            context.client.wl_output_id = wl_output.id;
 
             try wl.wl_output_send_geometry(wl_output, 0, 0, 267, 200, @enumToInt(wl.wl_output_subpixel.none), "unknown", "unknown", @enumToInt(wl.wl_output_transform.normal));
             try wl.wl_output_send_mode(wl_output, @enumToInt(wl.wl_output_mode.current), 640, 480, 60000);
@@ -107,14 +107,14 @@ fn bind(context: *Context, registry: Object, name: u32, name_string: []u8, versi
         6 => {},
         7 => {},
         8 => {
-            var shm = wl.new_wl_shm(new_id, context, 0);
-            shm.version = version;
-            context.client.shm = shm.id;
+            var wl_shm = wl.new_wl_shm(new_id, context, 0);
+            wl_shm.version = version;
+            context.client.wl_shm_id = wl_shm.id;
 
-            try wl.wl_shm_send_format(shm, @enumToInt(wl.wl_shm_format.argb8888));
-            try wl.wl_shm_send_format(shm, @enumToInt(wl.wl_shm_format.xrgb8888));
+            try wl.wl_shm_send_format(wl_shm, @enumToInt(wl.wl_shm_format.argb8888));
+            try wl.wl_shm_send_format(wl_shm, @enumToInt(wl.wl_shm_format.xrgb8888));
 
-            try context.register(shm);
+            try context.register(wl_shm);
         },
         9 => {},
         10 => {},

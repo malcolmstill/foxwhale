@@ -20,12 +20,12 @@ pub const Client = struct {
     context: Context,
     serial: u32 = 0,
     display: Object,
-    wl_output: ?u32,
-    seat: ?u32,
-    compositor: ?u32,
-    subcompositor: ?u32,
-    shm: ?u32,
-    xdg_wm_base: ?u32,
+    wl_output_id: ?u32,
+    wl_seat_id: ?u32,
+    wl_compositor_id: ?u32,
+    wl_subcompositor_id: ?u32,
+    wl_shm_id: ?u32,
+    xdg_wm_base_id: ?u32,
 
     const Self = @This();
 
