@@ -14,7 +14,9 @@ pub fn build(b: *Builder) void {
     const exe = b.addExecutable("zig-wayland", "src/main.zig");
     exe.setTarget(target);
     exe.setBuildMode(mode);
-    // exe.linkSystemLibrary("c");
+    exe.linkSystemLibrary("c");
+    exe.linkSystemLibrary("glfw3");
+    exe.linkSystemLibrary("gl");
     exe.install();
 
     const run_cmd = exe.run();
