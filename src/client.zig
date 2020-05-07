@@ -2,7 +2,7 @@ const std = @import("std");
 const epoll = @import("epoll.zig");
 const Object = @import("wl/context.zig").Object;
 const Context = @import("wl/context.zig").Context;
-const wl = @import("wl/protocols.zig");
+const prot = @import("wl/protocols.zig");
 const shm_pool = @import("shm_pool.zig");
 const shm_buffer = @import("shm_buffer.zig");
 const window = @import("window.zig");
@@ -20,12 +20,12 @@ pub const Client = struct {
     context: Context,
     serial: u32 = 0,
     display: Object,
-    wl_output: ?u32,
-    seat: ?u32,
-    compositor: ?u32,
-    subcompositor: ?u32,
-    shm: ?u32,
-    xdg_wm_base: ?u32,
+    wl_output_id: ?u32,
+    wl_seat_id: ?u32,
+    wl_compositor_id: ?u32,
+    wl_subcompositor_id: ?u32,
+    wl_shm_id: ?u32,
+    xdg_wm_base_id: ?u32,
 
     const Self = @This();
 
@@ -61,7 +61,7 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
             client.in_use = true;
             client.context.init(conn.file.handle, client);
 
-            client.display = wl.new_wl_display(1, &client.context, 0);
+            client.display = prot.new_wl_display(1, &client.context, 0);
             try client.context.register(client.display);
 
             try epoll.addFd(conn.file.handle, &client.dispatchable);
