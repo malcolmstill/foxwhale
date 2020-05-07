@@ -41,6 +41,13 @@ pub const Backend = union(BackendType) {
         };
     }
 
+    pub fn name(self: Backend) []const u8 {
+        return switch (self) {
+            BackendType.Headless => "Headless",
+            BackendType.GLFW => "GLFW",
+        };
+    }
+
     pub fn deinit(self: Backend) void {
         return switch (self) {
             BackendType.Headless => |headless_backend| headless_backend.deinit(),
