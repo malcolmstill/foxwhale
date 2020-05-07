@@ -3,6 +3,7 @@ const std = @import("std");
 const fs = std.fs;
 const clients = @import("client.zig");
 const epoll = @import("epoll.zig");
+const implementations = @import("implementations.zig");
 
 pub const Display = struct {
     server: std.net.StreamServer,
@@ -11,6 +12,8 @@ pub const Display = struct {
     const Self = @This();
 
     pub fn init() !Display {
+        implementations.init();
+
         return Display {
             .dispatchable = epoll.Dispatchable {
                 .impl = dispatch,
