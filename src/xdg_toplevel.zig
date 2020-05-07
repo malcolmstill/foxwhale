@@ -15,7 +15,7 @@ fn destroy(context: *Context, xdg_toplevel: Object) anyerror!void {
     var window = @intToPtr(*Window, xdg_toplevel.container);
     window.xdg_toplevel_id = null;
 
-    try prot.wl_display_send_delete_id(context.client.display, xdg_toplevel.id);
+    try prot.wl_display_send_delete_id(context.client.wl_display, xdg_toplevel.id);
     try context.unregister(xdg_toplevel);
 }
 

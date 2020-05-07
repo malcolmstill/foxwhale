@@ -19,7 +19,7 @@ pub const Client = struct {
     dispatchable: Dispatchable,
     context: Context,
     serial: u32 = 0,
-    display: Object,
+    wl_display: Object,
     wl_output_id: ?u32,
     wl_seat_id: ?u32,
     wl_compositor_id: ?u32,
@@ -61,8 +61,8 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
             client.in_use = true;
             client.context.init(conn.file.handle, client);
 
-            client.display = prot.new_wl_display(1, &client.context, 0);
-            try client.context.register(client.display);
+            client.wl_display = prot.new_wl_display(1, &client.context, 0);
+            try client.context.register(client.wl_display);
 
             try epoll.addFd(conn.file.handle, &client.dispatchable);
 
