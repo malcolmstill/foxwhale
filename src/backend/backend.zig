@@ -52,7 +52,7 @@ pub const Backend = union(BackendType) {
 pub fn detect() BackendType {
     if (std.os.getenv("DISPLAY")) |display| {
         return BackendType.GLFW;
-    } else {
-        return BackendType.Headless;
     }
+
+    return BackendType.Headless;
 }
