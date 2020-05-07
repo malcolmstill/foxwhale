@@ -40,6 +40,13 @@ pub const Backend = union(BackendType) {
             BackendType.GLFW => |glfw_backend| glfw_backend.shouldClose(),
         };
     }
+
+    pub fn deinit(self: Backend) void {
+        return switch (self) {
+            BackendType.Headless => |headless_backend| headless_backend.deinit(),
+            BackendType.GLFW => |glfw_backend| glfw_backend.deinit(),
+        };
+    }
 };
 
 pub fn detect() BackendType {

@@ -11,6 +11,8 @@ pub fn main() anyerror!void {
     try epoll.init();
     var detected_type = bknd.detect();
     var backend: Backend = try bknd.init(detected_type);
+    defer backend.deinit();
+
     std.debug.warn("backend: {} (size: {})\n", .{backend, @sizeOf(Backend)});
 
     var display = try Display.init();
