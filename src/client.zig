@@ -73,7 +73,7 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
         }
     }
 
-    return ClientsError.ClientsExhausted;
+    return error.ClientsExhausted;
 }
 
 fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
@@ -97,7 +97,3 @@ fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
         }
     };
 }
-
-const ClientsError = error {
-    ClientsExhausted,
-};
