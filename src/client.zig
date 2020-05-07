@@ -2,7 +2,7 @@ const std = @import("std");
 const epoll = @import("epoll.zig");
 const Object = @import("wl/context.zig").Object;
 const Context = @import("wl/context.zig").Context;
-const wl = @import("wl/protocols.zig");
+const prot = @import("wl/protocols.zig");
 const shm_pool = @import("shm_pool.zig");
 const shm_buffer = @import("shm_buffer.zig");
 const window = @import("window.zig");
@@ -61,7 +61,7 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
             client.in_use = true;
             client.context.init(conn.file.handle, client);
 
-            client.display = wl.new_wl_display(1, &client.context, 0);
+            client.display = prot.new_wl_display(1, &client.context, 0);
             try client.context.register(client.display);
 
             try epoll.addFd(conn.file.handle, &client.dispatchable);
