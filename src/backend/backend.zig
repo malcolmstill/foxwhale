@@ -29,8 +29,8 @@ pub const Backend = union(BackendType) {
 
     pub fn wait(self: Backend) i32 {
         return switch (self) {
-            BackendType.Headless => |headless_backend| headless_backend.wait(),
-            BackendType.GLFW => |glfw_backend| glfw_backend.wait(),
+            BackendType.Headless => |headless_backend| -1,
+            BackendType.GLFW => |glfw_backend| 10,
         };
     }
 

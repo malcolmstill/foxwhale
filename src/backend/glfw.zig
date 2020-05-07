@@ -14,10 +14,6 @@ pub const GLFWBackend = struct {
         c.glfwSwapBuffers(self.window);
     }
 
-    pub fn wait(self: Self) i32 {
-        return 10;
-    }
-
     pub fn shouldClose(self: Self) bool {
         return c.glfwWindowShouldClose(self.window) == 1;
     }
