@@ -1,6 +1,7 @@
 const std = @import("std");
 const renderer = @import("renderer.zig");
 const Client = @import("client.zig").Client;
+const Rectangle = @import("rectangle.zig").Rectangle;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 
@@ -56,7 +57,7 @@ pub fn newRegion(client: *Client, wl_region_id: u32) !*Region {
 }
 
 const BufferedState = struct {
-    rectangles: LinearFifo(Rectangle, LinearFifoBufferType{ .Static = 64 }),
+    rectangles: LinearFifo(RectangleOp, LinearFifoBufferType{ .Static = 64 }),
 };
 
 pub const RegionOp = enum {
@@ -64,12 +65,9 @@ pub const RegionOp = enum {
     Subtract,
 };
 
-pub const Rectangle = struct {
+pub const RectangleOp = struct {
+    rectangle: Rectangle,
     op: RegionOp,
-    x: i32,
-    y: i32,
-    width: i32,
-    height: i32,
 };
 
 pub fn releaseRegions(client: *Client) !void {
