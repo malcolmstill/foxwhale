@@ -17,6 +17,22 @@ pub const GLFWBackend = struct {
         return c.glfwWindowShouldClose(self.window) == 1;
     }
 
+    pub fn width(self: Self) i32 {
+        var w: c_int = 0;
+        var h: c_int = 0;
+        c.glfwGetFramebufferSize(self.window, &w, &h);
+
+        return w;
+    }
+
+    pub fn height(self: Self) i32 {
+        var w: c_int = 0;
+        var h: c_int = 0;
+        c.glfwGetFramebufferSize(self.window, &w, &h);
+
+        return h;
+    }
+
     pub fn deinit(self: Self) void {
         c.glfwDestroyWindow(self.window);
         c.glfwTerminate();

@@ -48,6 +48,20 @@ pub const Backend = union(BackendType) {
         };
     }
 
+    pub fn width(self: Backend) i32 {
+        return switch (self) {
+            BackendType.Headless => 0,
+            BackendType.GLFW => |glfw_backend| glfw_backend.width(),
+        };
+    }
+
+    pub fn height(self: Backend) i32 {
+        return switch (self) {
+            BackendType.Headless => 0,
+            BackendType.GLFW => |glfw_backend| glfw_backend.height(),
+        };
+    }
+
     pub fn deinit(self: Backend) void {
         return switch (self) {
             BackendType.Headless => |headless_backend| headless_backend.deinit(),
