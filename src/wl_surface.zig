@@ -17,8 +17,8 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
             buffer.beginAccess();
 
             if (window.texture) |texture| {
-                renderer.releaseTexture(texture);
                 window.texture = null;
+                try renderer.releaseTexture(texture);
             }
 
             window.width = buffer.width;
@@ -62,7 +62,7 @@ fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {
 fn destroy(context: *Context, wl_surface: Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     // TODO: what about subsurfaces / popups?
-    window.deinit();
+    try window.deinit();
 
     try prot.wl_display_send_delete_id(context.client.wl_display, wl_surface.id);
     try context.unregister(wl_surface);
