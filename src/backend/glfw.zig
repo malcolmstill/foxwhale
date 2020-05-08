@@ -52,7 +52,6 @@ pub fn init() !GLFWBackend {
 
     c.glfwMakeContextCurrent(window);
     _ = c.glfwSetKeyCallback(window, keyCallback);
-    _ = c.glfwSetWindowFocusCallback(window, windowFocusCallback);
     _ = c.glfwSetMouseButtonCallback(window, mouseButtonCallback);
     _ = c.glfwSetFramebufferSizeCallback(window, resizeCallback);
 
@@ -71,14 +70,6 @@ fn keyCallback(window: ?*c.GLFWwindow, key: c_int, scancode: c_int, action: c_in
         } else {
             c.glfwSetWindowShouldClose(window, c.GLFW_TRUE);
         }
-    }
-}
-
-fn windowFocusCallback(window: ?*c.GLFWwindow, focussed: c_int) callconv(.C) void {
-    if (focussed == c.GLFW_TRUE) {
-        c.glfwSetInputMode(window, c.GLFW_CURSOR, c.GLFW_CURSOR_DISABLED);
-    } else {
-        c.glfwSetInputMode(window, c.GLFW_CURSOR, c.GLFW_CURSOR_NORMAL);
     }
 }
 
