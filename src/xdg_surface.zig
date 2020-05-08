@@ -28,7 +28,7 @@ fn destroy(context: *Context, xdg_surface: Object) anyerror!void {
     var window = @intToPtr(*Window, xdg_surface.container);
     window.xdg_surface_id = null;
 
-    try prot.wl_display_send_delete_id(context.client.display, xdg_surface.id);
+    try prot.wl_display_send_delete_id(context.client.wl_display, xdg_surface.id);
     try context.unregister(xdg_surface);
 }
 

@@ -17,7 +17,7 @@ fn destroy(context: *Context, wl_shm_buffer: Object) anyerror!void {
     buffer.shm_pool.decrementRefCount();
     buffer.deinit();
 
-    try prot.wl_display_send_delete_id(context.client.display, wl_shm_buffer.id);
+    try prot.wl_display_send_delete_id(context.client.wl_display, wl_shm_buffer.id);
 
     try context.unregister(wl_shm_buffer);
 }

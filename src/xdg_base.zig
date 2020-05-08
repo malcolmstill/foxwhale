@@ -16,7 +16,7 @@ fn get_xdg_surface(context: *Context, xdg_wm_base: Object, new_id: u32, surface:
 
 fn destroy(context: *Context, xdg_wm_base: Object) anyerror!void {
     // TODO: Should we deinit client?
-    try prot.wl_display_send_delete_id(context.client.display, xdg_wm_base.id);
+    try prot.wl_display_send_delete_id(context.client.wl_display, xdg_wm_base.id);
     try context.unregister(xdg_wm_base);
 }
 

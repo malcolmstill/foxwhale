@@ -10,7 +10,7 @@ const Dispatchable = epoll.Dispatchable;
 
 const MAX_CLIENTS = 256;
 
-var clients: [MAX_CLIENTS]Client = undefined;
+var CLIENTS: [MAX_CLIENTS]Client = undefined;
 
 pub const Client = struct {
     index: usize,
@@ -19,7 +19,7 @@ pub const Client = struct {
     dispatchable: Dispatchable,
     context: Context,
     serial: u32 = 0,
-    display: Object,
+    wl_display: Object,
     wl_output_id: ?u32,
     wl_seat_id: ?u32,
     wl_compositor_id: ?u32,
@@ -53,7 +53,7 @@ pub const Client = struct {
 pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
     var i: usize = 0;
     while (i < MAX_CLIENTS) {
-        var client: *Client = &clients[i];
+        var client: *Client = &CLIENTS[i];
         if (client.in_use == false) {
             client.index = i;
             client.dispatchable.impl = dispatch;
@@ -61,8 +61,8 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
             client.in_use = true;
             client.context.init(conn.file.handle, client);
 
-            client.display = prot.new_wl_display(1, &client.context, 0);
-            try client.context.register(client.display);
+            client.wl_display = prot.new_wl_display(1, &client.context, 0);
+            try client.context.register(client.wl_display);
 
             try epoll.addFd(conn.file.handle, &client.dispatchable);
 
@@ -73,7 +73,7 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
         }
     }
 
-    return ClientsError.ClientsExhausted;
+    return error.ClientsExhausted;
 }
 
 fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
@@ -97,7 +97,3 @@ fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
         }
     };
 }
-
-const ClientsError = error {
-    ClientsExhausted,
-};

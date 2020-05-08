@@ -4,11 +4,16 @@ const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 
 const MAX_WINDOWS = 512;
-var WINDOWS: [MAX_WINDOWS]Window = undefined;
+pub var WINDOWS: [MAX_WINDOWS]Window = undefined;
 
 pub const Window = struct {
     index: usize = 0,
     in_use: bool = false,
+
+    texture: ?u32,
+    width: i32,
+    height: i32,
+
     state: [2]BufferedState = undefined,
     stateIndex: u1 = 0,
     wl_surface_id: u32,
