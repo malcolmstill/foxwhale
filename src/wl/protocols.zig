@@ -826,19 +826,19 @@ pub fn wl_data_source_send_action(object: Object, dnd_action: u32) anyerror!void
 // wl_data_device
 pub const wl_data_device_interface = struct {
     // data transfer device
-    start_drag: ?fn (*Context, Object, Object, Object, Object, u32) anyerror!void,
-    set_selection: ?fn (*Context, Object, Object, u32) anyerror!void,
+    start_drag: ?fn (*Context, Object, ?Object, Object, ?Object, u32) anyerror!void,
+    set_selection: ?fn (*Context, Object, ?Object, u32) anyerror!void,
     release: ?fn (
         *Context,
         Object,
     ) anyerror!void,
 };
 
-fn wl_data_device_start_drag_default(context: *Context, object: Object, source: Object, origin: Object, icon: Object, serial: u32) anyerror!void {
+fn wl_data_device_start_drag_default(context: *Context, object: Object, source: ?Object, origin: Object, icon: ?Object, serial: u32) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
-fn wl_data_device_set_selection_default(context: *Context, object: Object, source: Object, serial: u32) anyerror!void {
+fn wl_data_device_set_selection_default(context: *Context, object: Object, source: ?Object, serial: u32) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
@@ -866,9 +866,9 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // start_drag
         0 => {
-            var source: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var source: ?Object = object.context.objects.getValue(object.context.next_u32());
             var origin: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var icon: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var icon: ?Object = object.context.objects.getValue(object.context.next_u32());
             var serial: u32 = object.context.next_u32();
             if (WL_DATA_DEVICE.start_drag) |start_drag| {
                 try start_drag(object.context, object, source, origin, icon, serial);
@@ -876,7 +876,7 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_selection
         1 => {
-            var source: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var source: ?Object = object.context.objects.getValue(object.context.next_u32());
             var serial: u32 = object.context.next_u32();
             if (WL_DATA_DEVICE.set_selection) |set_selection| {
                 try set_selection(object.context, object, source, serial);
@@ -1092,9 +1092,9 @@ pub const wl_shell_surface_interface = struct {
         Object,
     ) anyerror!void,
     set_transient: ?fn (*Context, Object, Object, i32, i32, u32) anyerror!void,
-    set_fullscreen: ?fn (*Context, Object, u32, u32, Object) anyerror!void,
+    set_fullscreen: ?fn (*Context, Object, u32, u32, ?Object) anyerror!void,
     set_popup: ?fn (*Context, Object, Object, u32, Object, i32, i32, u32) anyerror!void,
-    set_maximized: ?fn (*Context, Object, Object) anyerror!void,
+    set_maximized: ?fn (*Context, Object, ?Object) anyerror!void,
     set_title: ?fn (*Context, Object, []u8) anyerror!void,
     set_class: ?fn (*Context, Object, []u8) anyerror!void,
 };
@@ -1119,7 +1119,7 @@ fn wl_shell_surface_set_transient_default(context: *Context, object: Object, par
     return error.DebugFunctionNotImplemented;
 }
 
-fn wl_shell_surface_set_fullscreen_default(context: *Context, object: Object, method: u32, framerate: u32, output: Object) anyerror!void {
+fn wl_shell_surface_set_fullscreen_default(context: *Context, object: Object, method: u32, framerate: u32, output: ?Object) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
@@ -1127,7 +1127,7 @@ fn wl_shell_surface_set_popup_default(context: *Context, object: Object, seat: O
     return error.DebugFunctionNotImplemented;
 }
 
-fn wl_shell_surface_set_maximized_default(context: *Context, object: Object, output: Object) anyerror!void {
+fn wl_shell_surface_set_maximized_default(context: *Context, object: Object, output: ?Object) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
@@ -1211,7 +1211,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         5 => {
             var method: u32 = object.context.next_u32();
             var framerate: u32 = object.context.next_u32();
-            var output: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var output: ?Object = object.context.objects.getValue(object.context.next_u32());
             if (WL_SHELL_SURFACE.set_fullscreen) |set_fullscreen| {
                 try set_fullscreen(object.context, object, method, framerate, output);
             }
@@ -1230,7 +1230,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_maximized
         7 => {
-            var output: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var output: ?Object = object.context.objects.getValue(object.context.next_u32());
             if (WL_SHELL_SURFACE.set_maximized) |set_maximized| {
                 try set_maximized(object.context, object, output);
             }
@@ -1324,11 +1324,11 @@ pub const wl_surface_interface = struct {
         *Context,
         Object,
     ) anyerror!void,
-    attach: ?fn (*Context, Object, Object, i32, i32) anyerror!void,
+    attach: ?fn (*Context, Object, ?Object, i32, i32) anyerror!void,
     damage: ?fn (*Context, Object, i32, i32, i32, i32) anyerror!void,
     frame: ?fn (*Context, Object, u32) anyerror!void,
-    set_opaque_region: ?fn (*Context, Object, Object) anyerror!void,
-    set_input_region: ?fn (*Context, Object, Object) anyerror!void,
+    set_opaque_region: ?fn (*Context, Object, ?Object) anyerror!void,
+    set_input_region: ?fn (*Context, Object, ?Object) anyerror!void,
     commit: ?fn (
         *Context,
         Object,
@@ -1342,7 +1342,7 @@ fn wl_surface_destroy_default(context: *Context, object: Object) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
-fn wl_surface_attach_default(context: *Context, object: Object, buffer: Object, x: i32, y: i32) anyerror!void {
+fn wl_surface_attach_default(context: *Context, object: Object, buffer: ?Object, x: i32, y: i32) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
@@ -1354,11 +1354,11 @@ fn wl_surface_frame_default(context: *Context, object: Object, callback: u32) an
     return error.DebugFunctionNotImplemented;
 }
 
-fn wl_surface_set_opaque_region_default(context: *Context, object: Object, region: Object) anyerror!void {
+fn wl_surface_set_opaque_region_default(context: *Context, object: Object, region: ?Object) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
-fn wl_surface_set_input_region_default(context: *Context, object: Object, region: Object) anyerror!void {
+fn wl_surface_set_input_region_default(context: *Context, object: Object, region: ?Object) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
@@ -1414,7 +1414,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // attach
         1 => {
-            var buffer: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var buffer: ?Object = object.context.objects.getValue(object.context.next_u32());
             var x: i32 = object.context.next_i32();
             var y: i32 = object.context.next_i32();
             if (WL_SURFACE.attach) |attach| {
@@ -1440,14 +1440,14 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_opaque_region
         4 => {
-            var region: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var region: ?Object = object.context.objects.getValue(object.context.next_u32());
             if (WL_SURFACE.set_opaque_region) |set_opaque_region| {
                 try set_opaque_region(object.context, object, region);
             }
         },
         // set_input_region
         5 => {
-            var region: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var region: ?Object = object.context.objects.getValue(object.context.next_u32());
             if (WL_SURFACE.set_input_region) |set_input_region| {
                 try set_input_region(object.context, object, region);
             }
@@ -1643,14 +1643,14 @@ pub fn wl_seat_send_name(object: Object, name: []const u8) anyerror!void {
 // wl_pointer
 pub const wl_pointer_interface = struct {
     // pointer input device
-    set_cursor: ?fn (*Context, Object, u32, Object, i32, i32) anyerror!void,
+    set_cursor: ?fn (*Context, Object, u32, ?Object, i32, i32) anyerror!void,
     release: ?fn (
         *Context,
         Object,
     ) anyerror!void,
 };
 
-fn wl_pointer_set_cursor_default(context: *Context, object: Object, serial: u32, surface: Object, hotspot_x: i32, hotspot_y: i32) anyerror!void {
+fn wl_pointer_set_cursor_default(context: *Context, object: Object, serial: u32, surface: ?Object, hotspot_x: i32, hotspot_y: i32) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
@@ -1678,7 +1678,7 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!void {
         // set_cursor
         0 => {
             var serial: u32 = object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var surface: ?Object = object.context.objects.getValue(object.context.next_u32());
             var hotspot_x: i32 = object.context.next_i32();
             var hotspot_y: i32 = object.context.next_i32();
             if (WL_POINTER.set_cursor) |set_cursor| {
@@ -2918,7 +2918,7 @@ pub const xdg_surface_interface = struct {
         Object,
     ) anyerror!void,
     get_toplevel: ?fn (*Context, Object, u32) anyerror!void,
-    get_popup: ?fn (*Context, Object, u32, Object, Object) anyerror!void,
+    get_popup: ?fn (*Context, Object, u32, ?Object, Object) anyerror!void,
     set_window_geometry: ?fn (*Context, Object, i32, i32, i32, i32) anyerror!void,
     ack_configure: ?fn (*Context, Object, u32) anyerror!void,
 };
@@ -2931,7 +2931,7 @@ fn xdg_surface_get_toplevel_default(context: *Context, object: Object, id: u32) 
     return error.DebugFunctionNotImplemented;
 }
 
-fn xdg_surface_get_popup_default(context: *Context, object: Object, id: u32, parent: Object, positioner: Object) anyerror!void {
+fn xdg_surface_get_popup_default(context: *Context, object: Object, id: u32, parent: ?Object, positioner: Object) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
@@ -2982,7 +2982,7 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         // get_popup
         2 => {
             var id: u32 = object.context.next_u32();
-            var parent: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var parent: ?Object = object.context.objects.getValue(object.context.next_u32());
             var positioner: Object = object.context.objects.getValue(object.context.next_u32()).?;
             if (XDG_SURFACE.get_popup) |get_popup| {
                 try get_popup(object.context, object, id, parent, positioner);
@@ -3044,7 +3044,7 @@ pub const xdg_toplevel_interface = struct {
         *Context,
         Object,
     ) anyerror!void,
-    set_parent: ?fn (*Context, Object, Object) anyerror!void,
+    set_parent: ?fn (*Context, Object, ?Object) anyerror!void,
     set_title: ?fn (*Context, Object, []u8) anyerror!void,
     set_app_id: ?fn (*Context, Object, []u8) anyerror!void,
     show_window_menu: ?fn (*Context, Object, Object, u32, i32, i32) anyerror!void,
@@ -3060,7 +3060,7 @@ pub const xdg_toplevel_interface = struct {
         *Context,
         Object,
     ) anyerror!void,
-    set_fullscreen: ?fn (*Context, Object, Object) anyerror!void,
+    set_fullscreen: ?fn (*Context, Object, ?Object) anyerror!void,
     unset_fullscreen: ?fn (
         *Context,
         Object,
@@ -3075,7 +3075,7 @@ fn xdg_toplevel_destroy_default(context: *Context, object: Object) anyerror!void
     return error.DebugFunctionNotImplemented;
 }
 
-fn xdg_toplevel_set_parent_default(context: *Context, object: Object, parent: Object) anyerror!void {
+fn xdg_toplevel_set_parent_default(context: *Context, object: Object, parent: ?Object) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
@@ -3115,7 +3115,7 @@ fn xdg_toplevel_unset_maximized_default(context: *Context, object: Object) anyer
     return error.DebugFunctionNotImplemented;
 }
 
-fn xdg_toplevel_set_fullscreen_default(context: *Context, object: Object, output: Object) anyerror!void {
+fn xdg_toplevel_set_fullscreen_default(context: *Context, object: Object, output: ?Object) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
@@ -3167,7 +3167,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_parent
         1 => {
-            var parent: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var parent: ?Object = object.context.objects.getValue(object.context.next_u32());
             if (XDG_TOPLEVEL.set_parent) |set_parent| {
                 try set_parent(object.context, object, parent);
             }
@@ -3249,7 +3249,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_fullscreen
         11 => {
-            var output: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var output: ?Object = object.context.objects.getValue(object.context.next_u32());
             if (XDG_TOPLEVEL.set_fullscreen) |set_fullscreen| {
                 try set_fullscreen(object.context, object, output);
             }
