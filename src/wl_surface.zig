@@ -45,10 +45,14 @@ fn damage(context: *Context, wl_surface: Object, x: i32, y: i32, width: i32, hei
     // std.debug.warn("damage does nothing\n", .{});
 }
 
-fn attach(context: *Context, wl_surface: Object, wl_buffer: Object, x: i32, y: i32) anyerror!void {
+fn attach(context: *Context, wl_surface: Object, optional_wl_buffer: ?Object, x: i32, y: i32) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     // window.pending = true;
-    window.wl_buffer_id = wl_buffer.id;
+    if (optional_wl_buffer) |wl_buffer| {
+        window.wl_buffer_id = wl_buffer.id;
+    } else {
+        window.wl_buffer_id = null;
+    }
 }
 
 fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {
