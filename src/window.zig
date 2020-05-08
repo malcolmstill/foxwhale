@@ -1,6 +1,7 @@
 const std = @import("std");
 const renderer = @import("renderer.zig");
 const Client = @import("client.zig").Client;
+const Rectangle = @import("rectangle.zig").Rectangle;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 
@@ -23,6 +24,7 @@ pub const Window = struct {
 
     input_region_id: ?u32,
     opaque_region_id: ?u32,
+    window_geometry: ?Rectangle,
 
     state: [2]BufferedState = undefined,
     stateIndex: u1 = 0,
