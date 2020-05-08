@@ -13,6 +13,11 @@ fn create_pool(context: *Context, wl_shm: Object, new_id: u32, fd: i32, size: i3
     try context.register(wl_pool);
 }
 
+fn resize(context: *Context, wl_shm_pool: Object, size: i32) anyerror!void {
+    var pool = @intToPtr(*ShmPool, wl_shm_pool.container);
+    try pool.resize(size);
+}
+
 fn destroy(context: *Context, wl_shm_pool: Object) anyerror!void {
     var pool = @intToPtr(*ShmPool, wl_shm_pool.container);
     pool.to_be_destroyed = true;
@@ -20,5 +25,6 @@ fn destroy(context: *Context, wl_shm_pool: Object) anyerror!void {
 
 pub fn init() void {
     prot.WL_SHM.create_pool = create_pool;
+    prot.WL_SHM_POOL.resize = resize;
     prot.WL_SHM_POOL.destroy = destroy;
 }

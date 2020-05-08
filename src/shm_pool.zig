@@ -25,6 +25,11 @@ pub const ShmPool = struct {
         self.fd = -1;
     }
 
+    pub fn resize(self: *Self, size: i32) !void {
+        std.os.munmap(self.data);
+        self.data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT_READ|std.os.linux.PROT_WRITE, std.os.linux.MAP_SHARED, self.fd, 0);
+    }
+
     pub fn incrementRefCount(self: *Self) void {
         self.ref_count += 1;
     }
