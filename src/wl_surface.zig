@@ -63,12 +63,22 @@ fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {
     try context.register(callback);
 }
 
-fn set_opaque_region(context: *Context, wl_surface: Object, wl_region: Object) anyerror!void {
-    // IMPLEMENT
+fn set_opaque_region(context: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
+    var window = @intToPtr(*Window, wl_surface.container);
+    if (optional_wl_region) |wl_region| {
+        window.opaque_region_id = wl_region.id;
+    } else {
+        window.opaque_region_id = null;
+    }
 }
 
-fn set_input_region(context: *Context, wl_surface: Object, wl_region: Object) anyerror!void {
-    // IMPLEMENT
+fn set_input_region(context: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
+    var window = @intToPtr(*Window, wl_surface.container);
+    if (optional_wl_region) |wl_region| {
+        window.input_region_id = wl_region.id;
+    } else {
+        window.input_region_id = null;
+    }
 }
 
 fn destroy(context: *Context, wl_surface: Object) anyerror!void {
