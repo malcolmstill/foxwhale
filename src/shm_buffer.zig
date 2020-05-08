@@ -1,5 +1,6 @@
 const std = @import("std");
 const linux = std.os.linux;
+const renderer = @import("render.zig");
 const Object = @import("wl/context.zig").Object;
 const Context = @import("wl/context.zig").Context;
 const Client = @import("client.zig").Client;
@@ -69,6 +70,10 @@ pub const ShmBuffer = struct {
         if (SIGBUS_ERROR) {
             return error.ClientSigbusd;
         }
+    }
+
+    pub fn makeTexture(self: *Self) !u32 {
+        return renderer.makeTexture(self.width, self.height, self.stride, self.format, self.shm_pool.data);
     }
 };
 
