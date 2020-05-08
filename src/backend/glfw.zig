@@ -65,7 +65,7 @@ fn windowFocusCallback(window: ?*c.GLFWwindow, focussed: c_int) callconv(.C) voi
     }
 }
 
-fn  mouseButtonCallback(window: ?*c.GLFWwindow, button: c_int, action: c_int, mods: c_int) callconv(.C) void {
+fn mouseButtonCallback(window: ?*c.GLFWwindow, button: c_int, action: c_int, mods: c_int) callconv(.C) void {
     if (action == c.GLFW_PRESS) {
         c.glfwSetInputMode(window, c.GLFW_CURSOR, c.GLFW_CURSOR_DISABLED);
     }
