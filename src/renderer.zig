@@ -14,11 +14,19 @@ var PROGRAM: c_uint = undefined;
 
 pub fn render(backend: Backend) !void {
     c.glClearColor(0.3, 0.3, 0.36, 0.0);
+    try checkGLError();
+
     c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
+    try checkGLError();
+
     c.glUseProgram(PROGRAM);
+    try checkGLError();
 
     c.glEnable(c.GL_BLEND);
+    try checkGLError();
+
     c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
+    try checkGLError();
 
     var width = backend.width();
     var height = backend.height();
@@ -48,25 +56,47 @@ pub fn render(backend: Backend) !void {
 
 fn renderSurface(program: c_uint, texture: u32) !void {
     var vbo: u32 = undefined;
+
     c.glGenBuffers(1, &vbo);
+    try checkGLError();
+
     c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
+    try checkGLError();
+
     c.glBufferData(c.GL_ARRAY_BUFFER, 4*28, &rectangle[0], c.GL_STATIC_DRAW);
+    try checkGLError();
 
     var vao: u32 = undefined;
     c.glGenVertexArrays(1, &vao);
+    try checkGLError();
+
     c.glBindVertexArray(vao);
+    try checkGLError();
+
     c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
+    try checkGLError();
 
     try setVertexAttrib(program, "position", 0);
     try setVertexAttrib(program, "texcoord", 8);
 
     c.glEnable(c.GL_BLEND);
+    try checkGLError();
+
     c.glBindVertexArray(vao);
+    try checkGLError();
+
     c.glBindTexture(c.GL_TEXTURE_2D, texture);
+    try checkGLError();
+
     c.glDrawArrays(c.GL_TRIANGLES, 0, 28/4);
+    try checkGLError();
+
 
     c.glDeleteVertexArrays(1, &vao);
+    try checkGLError();
+
     c.glDeleteBuffers(1, &vbo);
+    try checkGLError();
 }
 
 pub fn init() !void {
@@ -78,9 +108,16 @@ fn initShaders() !c_uint{
     var fragment_shader = try compileShader(fragment_shader_source, c.GL_FRAGMENT_SHADER);
 
     var program = c.glCreateProgram();
+    try checkGLError();
+
     c.glAttachShader(program, vertex_shader);
+    try checkGLError();
+
     c.glAttachShader(program, fragment_shader);
+    try checkGLError();
+
     c.glLinkProgram(program);
+    try checkGLError();
 
     return program;
 }
@@ -88,7 +125,9 @@ fn initShaders() !c_uint{
 fn compileShader(source: []const u8, shader_type: c_uint) !c_uint {
     var log: [256]u8 = undefined;
     var shader = c.glCreateShader(shader_type);
+    try checkGLError();
     c.glShaderSource(shader, 1, &source.ptr, null);
+    try checkGLError();
     c.glCompileShader(shader);
 
     var status: i32 = c.GL_TRUE;
@@ -158,6 +197,7 @@ fn setUniformMatrix(program: c_uint, location_string: []const u8, matrix: [16]f3
         return error.UniformNotFound;
     }
     c.glUniformMatrix4fv(location, 1, c.GL_TRUE, &matrix[0]);
+    try checkGLError();
 }
 
 fn setUniformFloat(program: c_uint, location_string: []const u8, value: f32) !void {
@@ -166,6 +206,7 @@ fn setUniformFloat(program: c_uint, location_string: []const u8, value: f32) !vo
         return error.UniformNotFound;
     }
     c.glUniform1f(location, value);
+    try checkGLError();
 }
 
 fn setVertexAttrib(program: c_uint, attribute_string: []const u8, offset: c_uint) !void {
@@ -174,7 +215,9 @@ fn setVertexAttrib(program: c_uint, attribute_string: []const u8, offset: c_uint
         return error.AttributeNotFound;
     }
     c.glEnableVertexAttribArray(@intCast(c_uint, attribute));
+    try checkGLError();
     c.glVertexAttribPointer(@intCast(c_uint, attribute), 2, c.GL_FLOAT, c.GL_FALSE, 16, @intToPtr(*allowzero c_uint, offset));
+    try checkGLError();
 }
 
 pub fn makeTexture(width: i32, height: i32, stride: i32, format: u32, data: []u8) !u32 {
@@ -182,57 +225,38 @@ pub fn makeTexture(width: i32, height: i32, stride: i32, format: u32, data: []u8
     var err: c_uint = undefined;
 
     c.glGenTextures(1, &texture);
-    err = c.glGetError();
-    if(err != c.GL_NO_ERROR) {
-        std.debug.warn("error: {}\n", .{err});
-        return error.GL_ERROR;
-    }
+    try checkGLError();
 
     c.glBindTexture(c.GL_TEXTURE_2D, texture);
-    err = c.glGetError();
-    if(err != c.GL_NO_ERROR) {
-        std.debug.warn("error: {}\n", .{err});
-        return error.GL_ERROR;
-    }
+    try checkGLError();
 
     c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_LINEAR);
-    err = c.glGetError();
-    if(err != c.GL_NO_ERROR) {
-        std.debug.warn("error: {}\n", .{err});
-        return error.GL_ERROR;
-    }
+    try checkGLError();
 
     c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_LINEAR);
-    err = c.glGetError();
-    if(err != c.GL_NO_ERROR) {
-        std.debug.warn("error: {}\n", .{err});
-        return error.GL_ERROR;
-    }
+    try checkGLError();
 
     c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_CLAMP_TO_EDGE);
-    err = c.glGetError();
-    if(err != c.GL_NO_ERROR) {
-        std.debug.warn("error: {}\n", .{err});
-        return error.GL_ERROR;
-    }
+    try checkGLError();
 
     c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_T, c.GL_CLAMP_TO_EDGE);
-    err = c.glGetError();
-    if(err != c.GL_NO_ERROR) {
-        std.debug.warn("error: {}\n", .{err});
-        return error.GL_ERROR;
-    }
+    try checkGLError();
 
     c.glTexImage2D(c.GL_TEXTURE_2D, 0, c.GL_RGBA, width, height, 0, c.GL_RGBA, c.GL_UNSIGNED_BYTE, data.ptr);
-    err = c.glGetError();
-    if(err != c.GL_NO_ERROR) {
-        std.debug.warn("error: {}\n", .{err});
-        return error.GL_ERROR;
-    }
+    try checkGLError();
 
     return texture;
 }
 
-pub fn releaseTexture(texture: u32) void {
+pub fn releaseTexture(texture: u32) !void {
     c.glDeleteTextures(1, &texture);
+    try checkGLError();
+}
+
+fn checkGLError() !void {
+    var err = c.glGetError();
+    if(err != c.GL_NO_ERROR) {
+        std.debug.warn("error: {}\n", .{err});
+        return error.GL_ERROR;
+    }
 }
