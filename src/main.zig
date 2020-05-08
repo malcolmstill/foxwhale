@@ -5,7 +5,7 @@ const epoll = @import("epoll.zig");
 const Backend = @import("backend/backend.zig").Backend;
 const BackendType = @import("backend/backend.zig").BackendType;
 const bknd = @import("backend/backend.zig");
-const render = @import("render.zig");
+const render = @import("renderer.zig");
 
 pub fn main() anyerror!void {
     try epoll.init();

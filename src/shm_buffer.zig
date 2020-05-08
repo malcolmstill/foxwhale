@@ -1,6 +1,6 @@
 const std = @import("std");
 const linux = std.os.linux;
-const renderer = @import("render.zig");
+const renderer = @import("renderer.zig");
 const Object = @import("wl/context.zig").Object;
 const Context = @import("wl/context.zig").Context;
 const Client = @import("client.zig").Client;
