@@ -4,17 +4,20 @@ const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
 const Region = @import("region.zig").Region;
 const RegionOp = @import("region.zig").RegionOp;
-const Rectangle = @import("region.zig").Rectangle;
+const RectangleOp = @import("region.zig").RectangleOp;
+const Rectangle = @import("rectangle.zig").Rectangle;
 
 fn add(context: *Context, wl_region: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     var region = @intToPtr(*Region, wl_region.container);
 
-    var rect = Rectangle {
+    var rect = RectangleOp {
+        .rectangle = Rectangle {
+            .x = x,
+            .y = y,
+            .width = width,
+            .height = height,
+        },
         .op = RegionOp.Add,
-        .x = x,
-        .y = y,
-        .width = width,
-        .height = height,
     };
 
     try region.pending().rectangles.writeItem(rect);
@@ -23,12 +26,14 @@ fn add(context: *Context, wl_region: Object, x: i32, y: i32, width: i32, height:
 fn subtract(context: *Context, wl_region: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     var region = @intToPtr(*Region, wl_region.container);
 
-    var rect = Rectangle {
+    var rect = RectangleOp {
+        .rectangle = Rectangle {
+            .x = x,
+            .y = y,
+            .width = width,
+            .height = height,
+        },
         .op = RegionOp.Subtract,
-        .x = x,
-        .y = y,
-        .width = width,
-        .height = height,
     };
 
     try region.pending().rectangles.writeItem(rect);
