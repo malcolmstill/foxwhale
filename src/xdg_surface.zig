@@ -2,6 +2,7 @@ const std = @import("std");
 const prot = @import("wl/protocols.zig");
 const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
+const Rectangle = @import("rectangle.zig").Rectangle;
 const Window = @import("window.zig").Window;
 
 fn get_toplevel(context: *Context, xdg_surface: Object, new_id: u32) anyerror!void {
@@ -21,7 +22,14 @@ fn get_toplevel(context: *Context, xdg_surface: Object, new_id: u32) anyerror!vo
 }
 
 fn set_window_geometry(context: *Context, xdg_surface: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    // IMPLEMENT
+    var window = @intToPtr(*Window, xdg_surface.container);
+
+    window.window_geometry = Rectangle {
+        .x = x,
+        .y = y,
+        .width = width,
+        .height = height,
+    };
 }
 
 fn ack_configure(context: *Context, xdg_surface: Object, serial: u32) anyerror!void {
