@@ -29,13 +29,13 @@ pub const Client = struct {
 
     const Self = @This();
 
-    pub fn deinit(self: *Self) void {
+    pub fn deinit(self: *Self) !void {
         self.context.deinit();
         self.in_use = false;
 
         shm_pool.releaseShmPools(self);
         shm_buffer.releaseShmBuffers(self);
-        window.releaseWindows(self);
+        try window.releaseWindows(self);
 
         epoll.removeFd(self.connection.file.handle) catch |err| {
             std.debug.warn("Client not removed from epoll: {}\n", .{ self.index });
@@ -81,7 +81,7 @@ fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
 
     if (event_type & std.os.linux.EPOLLHUP > 0) {
         std.debug.warn("client {}: hung up.\n", .{ client.index });
-        client.deinit();
+        try client.deinit();
         std.debug.warn("client {}: freed.\n", .{ client.index });
         return;
     }
@@ -89,7 +89,7 @@ fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
     client.context.dispatch() catch |err| {
         if (err == error.ClientSigbusd) {
             std.debug.warn("client {} sigbus'd\n", .{client.index});
-            client.deinit();
+            try client.deinit();
         } else {
             // TODO: if we're in debug mode return error
             //       if we're in release mode kill the client
