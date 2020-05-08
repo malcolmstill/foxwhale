@@ -21,6 +21,9 @@ pub const Window = struct {
     xdg_surface_id: ?u32,
     xdg_toplevel_id: ?u32,
 
+    input_region_id: ?u32,
+    opaque_region_id: ?u32,
+
     state: [2]BufferedState = undefined,
     stateIndex: u1 = 0,
 
@@ -44,6 +47,8 @@ pub const Window = struct {
         self.wl_buffer_id = null;
         self.xdg_surface_id = null;
         self.xdg_toplevel_id = null;
+        self.input_region_id = null;
+        self.opaque_region_id = null;
 
         self.width = 0;
         self.height = 0;
@@ -71,6 +76,8 @@ pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
             window.wl_buffer_id = null;
             window.xdg_surface_id = null;
             window.xdg_toplevel_id = null;
+            window.input_region_id = null;
+            window.opaque_region_id = null;
 
             window.texture = null;
             window.width = 0;
