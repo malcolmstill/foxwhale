@@ -31,7 +31,7 @@ pub fn main() anyerror!void {
             i = i + 1;
         }
 
-        render.render();
+        render.render(backend);
         backend.draw();
 
         if (backend.shouldClose()) {

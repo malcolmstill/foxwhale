@@ -1,21 +1,24 @@
 const std = @import("std");
 const vertex_shader_source = @embedFile("shaders/vertex.glsl");
 const fragment_shader_source = @embedFile("shaders/fragment.glsl");
+const Backend = @import("backend/backend.zig").Backend;
 const c = @cImport({
     @cInclude("GLES2/gl2.h");
 });
 
 var ortho: [16]f32 = undefined;
 
-pub fn render() void {
-    c.glClearColor(0.0, 0.6, 0.0, 0.0);
+pub fn render(backend: Backend) void {
+    c.glClearColor(0.3, 0.3, 0.36, 0.0);
     c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
     c.glUseProgram(PROGRAM);
 
     c.glEnable(c.GL_BLEND);
     c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
 
-    orthographicProjection(&ortho, 0.0, 1600.0, 0.0, 1200.0, -1.0, 1.0);
+    var width = backend.width();
+    var height = backend.height();
+    orthographicProjection(&ortho, 0.0, @intToFloat(f32, width), @intToFloat(f32, height), 0.0, -1.0, 1.0);
 }
 
 var PROGRAM: c_uint = undefined;
