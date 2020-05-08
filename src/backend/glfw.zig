@@ -38,6 +38,7 @@ pub fn init() !GLFWBackend {
     _ = c.glfwSetKeyCallback(window, keyCallback);
     _ = c.glfwSetWindowFocusCallback(window, windowFocusCallback);
     _ = c.glfwSetMouseButtonCallback(window, mouseButtonCallback);
+    _ = c.glfwSetFramebufferSizeCallback(window, resizeCallback);
 
     c.glfwSwapInterval(1);
     c.glClearColor(0.3, 0.3, 0.35, 0.0);
@@ -69,4 +70,9 @@ fn mouseButtonCallback(window: ?*c.GLFWwindow, button: c_int, action: c_int, mod
     if (action == c.GLFW_PRESS) {
         c.glfwSetInputMode(window, c.GLFW_CURSOR, c.GLFW_CURSOR_DISABLED);
     }
+}
+
+fn resizeCallback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.C) void {
+    c.glfwMakeContextCurrent(window);
+    c.glViewport(0, 0, width, height);
 }
