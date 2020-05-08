@@ -63,6 +63,7 @@ fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {
     try context.register(callback);
 }
 
+// TODO: Should we store a *Region instead of a wl_region id?
 fn set_opaque_region(context: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     if (optional_wl_region) |wl_region| {
@@ -72,6 +73,7 @@ fn set_opaque_region(context: *Context, wl_surface: Object, optional_wl_region: 
     }
 }
 
+// TODO: Should we store a *Region instead of a wl_region id?
 fn set_input_region(context: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     if (optional_wl_region) |wl_region| {
