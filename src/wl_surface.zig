@@ -59,6 +59,14 @@ fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {
     try context.register(callback);
 }
 
+fn set_opaque_region(context: *Context, wl_surface: Object, wl_region: Object) anyerror!void {
+    // IMPLEMENT
+}
+
+fn set_input_region(context: *Context, wl_surface: Object, wl_region: Object) anyerror!void {
+    // IMPLEMENT
+}
+
 fn destroy(context: *Context, wl_surface: Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     // TODO: what about subsurfaces / popups?
@@ -73,5 +81,7 @@ pub fn init() void {
     prot.WL_SURFACE.damage = damage;
     prot.WL_SURFACE.attach = attach;
     prot.WL_SURFACE.frame = frame;
+    prot.WL_SURFACE.set_opaque_region = set_opaque_region;
+    prot.WL_SURFACE.set_input_region = set_input_region;
     prot.WL_SURFACE.destroy = destroy;
 }

@@ -20,6 +20,10 @@ fn get_toplevel(context: *Context, xdg_surface: Object, new_id: u32) anyerror!vo
     try context.register(xdg_toplevel);
 }
 
+fn set_window_geometry(context: *Context, xdg_surface: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
+    // IMPLEMENT
+}
+
 fn ack_configure(context: *Context, xdg_surface: Object, serial: u32) anyerror!void {
     std.debug.warn("ack_configure empty implementation\n", .{});
 }
@@ -34,6 +38,7 @@ fn destroy(context: *Context, xdg_surface: Object) anyerror!void {
 
 pub fn init() void {
     prot.XDG_SURFACE.get_toplevel = get_toplevel;
+    prot.XDG_SURFACE.set_window_geometry = set_window_geometry;
     prot.XDG_SURFACE.ack_configure = ack_configure;
     prot.XDG_SURFACE.destroy = destroy;
 }
