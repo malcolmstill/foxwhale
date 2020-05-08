@@ -4,7 +4,7 @@ const Client = @import("client.zig").Client;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 
-const MAX_REGIONS = 512;
+const MAX_REGIONS = 1024;
 pub var REGIONS: [MAX_REGIONS]Region = undefined;
 
 pub const Region = struct {
@@ -52,18 +52,24 @@ pub fn newRegion(client: *Client, wl_region_id: u32) !*Region {
         }
     }
 
-    return RegionsError.RegionsExhausted;
+    return error.RegionsExhausted;
 }
 
-const RegionsError = error {
-    RegionsExhausted,
+const BufferedState = struct {
+    rectangles: LinearFifo(Rectangle, LinearFifoBufferType{ .Static = 64 }),
 };
 
-const BufferedState = struct {
-    x: i32 = 0,
-    y: i32 = 0,
-    width: u32 = 0,
-    height: u32 = 0,
+pub const RegionOp = enum {
+    Add,
+    Subtract,
+};
+
+pub const Rectangle = struct {
+    op: RegionOp,
+    x: i32,
+    y: i32,
+    width: i32,
+    height: i32,
 };
 
 pub fn releaseRegions(client: *Client) !void {
