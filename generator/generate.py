@@ -102,7 +102,10 @@ def generate_next(arg):
     name = arg.attrib["name"]
     atype = lookup_type(arg.attrib["type"], arg)
     if arg.attrib["type"] == "object":
-        print(f"\t\t\tvar {name}: Object = object.context.objects.getValue(object.context.next_u32()).?;")
+        if "allow-null" in arg.attrib and arg.attrib["allow-null"] == "true":
+            print(f"\t\t\tvar {name}: ?Object = object.context.objects.getValue(object.context.next_u32());")
+        else:
+            print(f"\t\t\tvar {name}: Object = object.context.objects.getValue(object.context.next_u32()).?;")
     else:    
         print(f"\t\t\t\tvar {name}: {atype} = object.context.next_{next_type(arg.attrib['type'])}();")
 
@@ -238,8 +241,11 @@ def generate_send(interface):
 
 def lookup_type(type, arg):
     if type == "object":
+        if "allow-null" in arg.attrib and arg.attrib["allow-null"]:
+            return "?Object"
         # return "*" + arg.attrib["interface"]
-        return "Object"
+        else:
+            return "Object"
     else:
         types = {
             "int": "i32",

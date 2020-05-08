@@ -45,10 +45,14 @@ fn damage(context: *Context, wl_surface: Object, x: i32, y: i32, width: i32, hei
     // std.debug.warn("damage does nothing\n", .{});
 }
 
-fn attach(context: *Context, wl_surface: Object, wl_buffer: Object, x: i32, y: i32) anyerror!void {
+fn attach(context: *Context, wl_surface: Object, optional_wl_buffer: ?Object, x: i32, y: i32) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     // window.pending = true;
-    window.wl_buffer_id = wl_buffer.id;
+    if (optional_wl_buffer) |wl_buffer| {
+        window.wl_buffer_id = wl_buffer.id;
+    } else {
+        window.wl_buffer_id = null;
+    }
 }
 
 fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {
@@ -57,6 +61,26 @@ fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {
 
     var callback = prot.new_wl_callback(new_id, context, 0);
     try context.register(callback);
+}
+
+// TODO: Should we store a *Region instead of a wl_region id?
+fn set_opaque_region(context: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
+    var window = @intToPtr(*Window, wl_surface.container);
+    if (optional_wl_region) |wl_region| {
+        window.opaque_region_id = wl_region.id;
+    } else {
+        window.opaque_region_id = null;
+    }
+}
+
+// TODO: Should we store a *Region instead of a wl_region id?
+fn set_input_region(context: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
+    var window = @intToPtr(*Window, wl_surface.container);
+    if (optional_wl_region) |wl_region| {
+        window.input_region_id = wl_region.id;
+    } else {
+        window.input_region_id = null;
+    }
 }
 
 fn destroy(context: *Context, wl_surface: Object) anyerror!void {
@@ -73,5 +97,7 @@ pub fn init() void {
     prot.WL_SURFACE.damage = damage;
     prot.WL_SURFACE.attach = attach;
     prot.WL_SURFACE.frame = frame;
+    prot.WL_SURFACE.set_opaque_region = set_opaque_region;
+    prot.WL_SURFACE.set_input_region = set_input_region;
     prot.WL_SURFACE.destroy = destroy;
 }

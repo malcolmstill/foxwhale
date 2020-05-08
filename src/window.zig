@@ -1,6 +1,7 @@
 const std = @import("std");
 const renderer = @import("renderer.zig");
 const Client = @import("client.zig").Client;
+const Rectangle = @import("rectangle.zig").Rectangle;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 
@@ -20,6 +21,10 @@ pub const Window = struct {
     wl_buffer_id: ?u32,
     xdg_surface_id: ?u32,
     xdg_toplevel_id: ?u32,
+
+    input_region_id: ?u32,
+    opaque_region_id: ?u32,
+    window_geometry: ?Rectangle,
 
     state: [2]BufferedState = undefined,
     stateIndex: u1 = 0,
@@ -44,6 +49,8 @@ pub const Window = struct {
         self.wl_buffer_id = null;
         self.xdg_surface_id = null;
         self.xdg_toplevel_id = null;
+        self.input_region_id = null;
+        self.opaque_region_id = null;
 
         self.width = 0;
         self.height = 0;
@@ -71,6 +78,8 @@ pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
             window.wl_buffer_id = null;
             window.xdg_surface_id = null;
             window.xdg_toplevel_id = null;
+            window.input_region_id = null;
+            window.opaque_region_id = null;
 
             window.texture = null;
             window.width = 0;
@@ -83,7 +92,7 @@ pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
         }
     }
 
-    return WindowsError.WindowsExhausted;
+    return error.WindowsExhausted;
 }
 
 const BufferedState = struct {
@@ -91,10 +100,6 @@ const BufferedState = struct {
     y: i32 = 0,
     width: u32 = 0,
     height: u32 = 0,
-};
-
-const WindowsError = error {
-    WindowsExhausted,
 };
 
 pub fn releaseWindows(client: *Client) !void {
