@@ -83,7 +83,7 @@ pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
         }
     }
 
-    return WindowsError.WindowsExhausted;
+    return error.WindowsExhausted;
 }
 
 const BufferedState = struct {
@@ -91,10 +91,6 @@ const BufferedState = struct {
     y: i32 = 0,
     width: u32 = 0,
     height: u32 = 0,
-};
-
-const WindowsError = error {
-    WindowsExhausted,
 };
 
 pub fn releaseWindows(client: *Client) !void {
