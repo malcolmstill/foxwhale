@@ -6,6 +6,7 @@ const prot = @import("wl/protocols.zig");
 const shm_pool = @import("shm_pool.zig");
 const shm_buffer = @import("shm_buffer.zig");
 const window = @import("window.zig");
+const region = @import("region.zig");
 const Dispatchable = epoll.Dispatchable;
 
 const MAX_CLIENTS = 256;
@@ -36,6 +37,7 @@ pub const Client = struct {
         shm_pool.releaseShmPools(self);
         shm_buffer.releaseShmBuffers(self);
         try window.releaseWindows(self);
+        region.releaseRegions(self);
 
         epoll.removeFd(self.connection.file.handle) catch |err| {
             std.debug.warn("Client not removed from epoll: {}\n", .{ self.index });

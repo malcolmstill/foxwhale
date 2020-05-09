@@ -70,7 +70,7 @@ pub const RectangleOp = struct {
     op: RegionOp,
 };
 
-pub fn releaseRegions(client: *Client) !void {
+pub fn releaseRegions(client: *Client) void {
     var i: usize = 0;
     while (i < MAX_REGIONS) {
         var region: *Region = &REGIONS[i];
