@@ -37,7 +37,7 @@ pub const Client = struct {
         shm_pool.releaseShmPools(self);
         shm_buffer.releaseShmBuffers(self);
         try window.releaseWindows(self);
-        region.releaseRegions(self);
+        try region.releaseRegions(self);
 
         epoll.removeFd(self.connection.file.handle) catch |err| {
             std.debug.warn("Client not removed from epoll: {}\n", .{ self.index });
