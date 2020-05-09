@@ -1,18 +1,14 @@
 const std = @import("std");
 const renderer = @import("renderer.zig");
+const Stalloc = @import("stalloc.zig").Stalloc;
 const Client = @import("client.zig").Client;
 const Rectangle = @import("rectangle.zig").Rectangle;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 
-const MAX_REGIONS = 1024;
-pub var REGIONS: [MAX_REGIONS]Region = undefined;
+pub var REGIONS: Stalloc(Client, Region, 1024) = undefined;
 
 pub const Region = struct {
-    index: usize = 0,
-    in_use: bool = false,
-    client: *Client,
-
     wl_region_id: u32,
 
     state: [2]BufferedState = undefined,
@@ -31,29 +27,17 @@ pub const Region = struct {
 
     pub fn deinit(self: *Self) !void {
         std.debug.warn("release region\n", .{});
-        self.in_use = false;
     }
 };
 
 pub fn newRegion(client: *Client, wl_region_id: u32) !*Region {
-    var i: usize = 0;
-    while (i < MAX_REGIONS) {
-        var region: *Region = &REGIONS[i];
-        if (region.in_use == false) {
-            region.index = i;
-            region.in_use = true;
-            region.client = client;
+    var region: *Region = try REGIONS.new(client);
+    region.wl_region_id = wl_region_id;
+    return region;
+}
 
-            region.wl_region_id = wl_region_id;
-
-            return region;
-        } else {
-            i = i + 1;
-            continue;
-        }
-    }
-
-    return error.RegionsExhausted;
+pub fn releaseRegions(client: *Client) !void {
+    try REGIONS.releaseBelongingTo(client);
 }
 
 const BufferedState = struct {
@@ -69,14 +53,3 @@ pub const RectangleOp = struct {
     rectangle: Rectangle,
     op: RegionOp,
 };
-
-pub fn releaseRegions(client: *Client) void {
-    var i: usize = 0;
-    while (i < MAX_REGIONS) {
-        var region: *Region = &REGIONS[i];
-        if (region.in_use and region.client == client) {
-            try region.deinit();
-        }
-        i = i + 1;
-    }
-}
