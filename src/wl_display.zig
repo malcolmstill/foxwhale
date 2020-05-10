@@ -1,5 +1,6 @@
 const std = @import("std");
 const prot = @import("wl/protocols.zig");
+const out = @import("output.zig");
 const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
 
@@ -20,7 +21,14 @@ fn get_registry(context: *Context, wl_display: Object, new_id: u32) anyerror!voi
     try prot.wl_registry_send_global(wl_registry, 2, "wl_subcompositor\x00", 1);
     try prot.wl_registry_send_global(wl_registry, 3, "wl_seat\x00", 4);
     try prot.wl_registry_send_global(wl_registry, 4, "xdg_wm_base\x00", 1);
-    try prot.wl_registry_send_global(wl_registry, 5, "wl_output\x00", 2);
+
+    var output_base: u32 = out.OUTPUT_BASE;
+    var it = out.OUTPUTS.iterator();
+    while(it.next()) |output| {
+        try prot.wl_registry_send_global(wl_registry, output_base, "wl_output\x00", 2);
+        output_base += 1;
+    }
+
     // try prot.wl_registry_send_global(wl_registry, 6, "wl_data_device_manager\x00", 3);
     try prot.wl_registry_send_global(wl_registry, 7, "wl_shell\x00", 1);
     try prot.wl_registry_send_global(wl_registry, 8, "wl_shm\x00", 1);
