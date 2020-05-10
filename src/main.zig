@@ -14,8 +14,11 @@ pub fn main() anyerror!void {
     var detected_type = bknd.detect();
     var backend: Backend = try bknd.init(detected_type);
     defer backend.deinit();
+    std.debug.warn("backend: {}\n", .{backend});
 
     var output: *Output = try out.newOutput(&backend, 640, 480);
+    std.debug.warn("output: {}\n", .{output});
+    std.debug.warn("backend: {}\n", .{backend});
 
     std.debug.warn("==> backend: {}\n", .{backend.name()});
 
@@ -35,10 +38,10 @@ pub fn main() anyerror!void {
             i = i + 1;
         }
 
-        try render.render(backend);
-        backend.draw();
+        try render.render(output);
+        output.draw();
 
-        if (backend.shouldClose()) {
+        if (output.shouldClose()) {
             running = false;
         }
     }
