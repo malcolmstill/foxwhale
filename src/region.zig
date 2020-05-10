@@ -26,8 +26,8 @@ pub const Region = struct {
     }
 
     pub fn deinit(self: *Self) !void {
-        std.debug.warn("release region\n", .{});
-        REGIONS.deinit(self);
+        var freed_index = REGIONS.deinit(self);
+        std.debug.warn("released region {}\n", .{freed_index});
     }
 };
 
