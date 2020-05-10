@@ -1,18 +1,13 @@
 const std = @import("std");
 const Stalloc = @import("stalloc.zig").Stalloc;
-const stalloc = @import("stalloc.zig");
 const Backend = @import("backend/backend.zig").Backend;
+const BackendType = @import("backend/backend.zig").BackendType;
 const HeadlessOutput = @import("backend/headless.zig").HeadlessOutput;
 const GLFWOutput = @import("backend/glfw.zig").GLFWOutput;
 
 pub var OUTPUTS: Stalloc(void, Output, 16) = undefined;
 
-pub const OutputType = enum {
-    Headless,
-    GLFW,
-};
-
-pub const Output = union(OutputType) {
+pub const Output = union(BackendType) {
     Headless: HeadlessOutput,
     GLFW: GLFWOutput,
 
@@ -20,10 +15,10 @@ pub const Output = union(OutputType) {
 
     pub fn begin(self: Self) void {
         return switch (self) {
-            OutputType.Headless => |headless_output| {
+            BackendType.Headless => |headless_output| {
                 headless_output.begin();
             },
-            OutputType.GLFW => |glfw_output| {
+            BackendType.GLFW => |glfw_output| {
                 glfw_output.begin();
             },
         };
@@ -31,10 +26,10 @@ pub const Output = union(OutputType) {
 
     pub fn swap(self: Self) void {
         return switch (self) {
-            OutputType.Headless => |headless_output| {
+            BackendType.Headless => |headless_output| {
                 headless_output.swap();
             },
-            OutputType.GLFW => |glfw_output| {
+            BackendType.GLFW => |glfw_output| {
                 glfw_output.swap();
             },
         };
@@ -42,30 +37,30 @@ pub const Output = union(OutputType) {
 
     pub fn shouldClose(self: Self) bool {
         return switch (self) {
-            OutputType.Headless => |headless_output| headless_output.shouldClose(),
-            OutputType.GLFW => |glfw_output| glfw_output.shouldClose(),
+            BackendType.Headless => |headless_output| headless_output.shouldClose(),
+            BackendType.GLFW => |glfw_output| glfw_output.shouldClose(),
         };
     }
 
     pub fn getWidth(self: Self) i32 {
         return switch (self) {
-            OutputType.Headless => |headless_output| headless_output.getWidth(),
-            OutputType.GLFW => |glfw_output| glfw_output.getWidth(),
+            BackendType.Headless => |headless_output| headless_output.getWidth(),
+            BackendType.GLFW => |glfw_output| glfw_output.getWidth(),
         };
     }
 
     pub fn getHeight(self: Self) i32 {
         return switch (self) {
-            OutputType.Headless => |headless_output| headless_output.getHeight(),
-            OutputType.GLFW => |glfw_output| glfw_output.getHeight(),
+            BackendType.Headless => |headless_output| headless_output.getHeight(),
+            BackendType.GLFW => |glfw_output| glfw_output.getHeight(),
         };
     }
 
     pub fn deinit(self: *Self) void {
         OUTPUTS.deinit(self);
         return switch (self.*) {
-            OutputType.Headless => |*headless_output| headless_output.deinit(),
-            OutputType.GLFW => |*glfw_output| glfw_output.deinit(),
+            BackendType.Headless => |*headless_output| headless_output.deinit(),
+            BackendType.GLFW => |*glfw_output| glfw_output.deinit(),
             else => return,
         };
     }
