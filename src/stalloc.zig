@@ -90,6 +90,12 @@ pub fn Stalloc(comptime B: type, comptime T: type, comptime S: usize) type {
             return &e.value;
         }
 
+        // TODO: is this safe?
+        pub fn getIndexOf(self: *Self, t: *T) usize {
+            var entry: *Entry = @fieldParentPtr(Entry, "value", t);
+            return entry.index;
+        }
+
         pub fn freeCount(self: *Self) usize {
             var i: usize = 0;
             var count: usize = 0;
