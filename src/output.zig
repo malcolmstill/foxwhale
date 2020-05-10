@@ -1,5 +1,6 @@
 const std = @import("std");
 const Stalloc = @import("stalloc.zig").Stalloc;
+const stalloc = @import("stalloc.zig");
 const Backend = @import("backend/backend.zig").Backend;
 const HeadlessOutput = @import("backend/headless.zig").HeadlessOutput;
 const GLFWOutput = @import("backend/glfw.zig").GLFWOutput;
@@ -61,7 +62,12 @@ pub const Output = union(OutputType) {
     }
 
     pub fn deinit(self: *Self) void {
-        std.debug.warn("deinit output {}\n", .{});
+        OUTPUTS.deinit(self);
+        return switch (self.*) {
+            OutputType.Headless => |*headless_output| headless_output.deinit(),
+            OutputType.GLFW => |*glfw_output| glfw_output.deinit(),
+            else => return,
+        };
     }
 };
 
