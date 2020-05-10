@@ -3,7 +3,7 @@ const vertex_shader_source = @embedFile("shaders/vertex.glsl");
 const fragment_shader_source = @embedFile("shaders/fragment.glsl");
 const windows = @import("window.zig");
 const Window = @import("window.zig").Window;
-const Backend = @import("backend/backend.zig").Backend;
+const Output = @import("output.zig").Output;
 const c = @cImport({
     @cInclude("GLES3/gl3.h");
 });
@@ -12,7 +12,10 @@ var ortho: [16]f32 = undefined;
 var rectangle: [28]f32 = undefined;
 var PROGRAM: c_uint = undefined;
 
-pub fn render(backend: Backend) !void {
+pub fn render(output: *Output) !void {
+    var width = output.getWidth();
+    var height = output.getHeight();
+
     c.glClearColor(0.3, 0.3, 0.36, 0.0);
     try checkGLError();
 
@@ -27,9 +30,6 @@ pub fn render(backend: Backend) !void {
 
     c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
     try checkGLError();
-
-    var width = backend.width();
-    var height = backend.height();
 
     orthographicProjection(&ortho, 0.0, @intToFloat(f32, width), 0.0, @intToFloat(f32, height), -1.0, 1.0);
 

@@ -6,6 +6,8 @@ const Backend = @import("backend/backend.zig").Backend;
 const BackendType = @import("backend/backend.zig").BackendType;
 const bknd = @import("backend/backend.zig");
 const render = @import("renderer.zig");
+const out = @import("output.zig");
+const Output = @import("output.zig").Output;
 
 pub fn main() anyerror!void {
     try epoll.init();
@@ -13,6 +15,8 @@ pub fn main() anyerror!void {
     var backend: Backend = try bknd.init(detected_type);
     defer backend.deinit();
 
+    var o1: *Output = try out.newOutput(&backend, 640, 480);
+    var o2: *Output = try out.newOutput(&backend, 300, 300);
     std.debug.warn("==> backend: {}\n", .{backend.name()});
 
     var display = try Display.init();
@@ -31,11 +35,15 @@ pub fn main() anyerror!void {
             i = i + 1;
         }
 
-        try render.render(backend);
-        backend.draw();
+        var it = out.OUTPUTS.iterator();
+        while (it.next()) |next_output| {
+            next_output.begin();
+            try render.render(next_output);
+            next_output.swap();
 
-        if (backend.shouldClose()) {
-            running = false;
+            if (next_output.shouldClose()) {
+                next_output.deinit();
+            }
         }
     }
 }
