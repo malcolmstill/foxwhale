@@ -8,14 +8,11 @@ const shm_buffer = @import("shm_buffer.zig");
 const window = @import("window.zig");
 const region = @import("region.zig");
 const Dispatchable = epoll.Dispatchable;
+const Stalloc = @import("stalloc.zig").Stalloc;
 
-const MAX_CLIENTS = 256;
-
-var CLIENTS: [MAX_CLIENTS]Client = undefined;
+pub var CLIENTS: Stalloc(void, Client, 256) = undefined;
 
 pub const Client = struct {
-    index: usize,
-    in_use: bool,
     connection: std.net.StreamServer.Connection,
     dispatchable: Dispatchable,
     context: Context,
@@ -31,8 +28,8 @@ pub const Client = struct {
     const Self = @This();
 
     pub fn deinit(self: *Self) !void {
+        var freed_index = CLIENTS.deinit(self);
         self.context.deinit();
-        self.in_use = false;
 
         shm_pool.releaseShmPools(self);
         shm_buffer.releaseShmBuffers(self);
@@ -40,7 +37,7 @@ pub const Client = struct {
         try region.releaseRegions(self);
 
         epoll.removeFd(self.connection.file.handle) catch |err| {
-            std.debug.warn("Client not removed from epoll: {}\n", .{ self.index });
+            std.debug.warn("Client not removed from epoll: {}\n", .{ self.getIndexOf() });
         };
 
         std.os.close(self.connection.file.handle);
@@ -50,47 +47,40 @@ pub const Client = struct {
         self.serial += 1;
         return self.serial;
     }
+
+    pub fn getIndexOf(self: *Self) usize {
+        return CLIENTS.getIndexOf(self);
+    }
 };
 
 pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
-    var i: usize = 0;
-    while (i < MAX_CLIENTS) {
-        var client: *Client = &CLIENTS[i];
-        if (client.in_use == false) {
-            client.index = i;
-            client.dispatchable.impl = dispatch;
-            client.connection = conn;
-            client.in_use = true;
-            client.context.init(conn.file.handle, client);
+    var client: *Client = try CLIENTS.new(undefined);
 
-            client.wl_display = prot.new_wl_display(1, &client.context, 0);
-            try client.context.register(client.wl_display);
+    client.dispatchable.impl = dispatch;
+    client.connection = conn;
+    client.context.init(conn.file.handle, client);
 
-            try epoll.addFd(conn.file.handle, &client.dispatchable);
+    client.wl_display = prot.new_wl_display(1, &client.context, 0);
+    try client.context.register(client.wl_display);
 
-            return client;
-        } else {
-            i = i + 1;
-            continue;
-        }
-    }
+    try epoll.addFd(conn.file.handle, &client.dispatchable);
 
-    return error.ClientsExhausted;
+    return client;
 }
 
 fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
     var client = @fieldParentPtr(Client, "dispatchable", dispatchable);
 
     if (event_type & std.os.linux.EPOLLHUP > 0) {
-        std.debug.warn("client {}: hung up.\n", .{ client.index });
+        std.debug.warn("client {}: hung up.\n", .{ client.getIndexOf() });
         try client.deinit();
-        std.debug.warn("client {}: freed.\n", .{ client.index });
+        std.debug.warn("client {}: freed.\n", .{ client.getIndexOf() });
         return;
     }
 
     client.context.dispatch() catch |err| {
         if (err == error.ClientSigbusd) {
-            std.debug.warn("client {} sigbus'd\n", .{client.index});
+            std.debug.warn("client {} sigbus'd\n", .{client.getIndexOf()});
             try client.deinit();
         } else {
             // TODO: if we're in debug mode return error
