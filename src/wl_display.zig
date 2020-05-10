@@ -16,6 +16,7 @@ fn get_registry(context: *Context, wl_display: Object, new_id: u32) anyerror!voi
     std.debug.warn("get_registry with id {}\n", .{new_id});
 
     var wl_registry = prot.new_wl_registry(new_id, context, 0);
+    context.client.wl_registry_id = new_id;
 
     try prot.wl_registry_send_global(wl_registry, 1, "wl_compositor\x00", 4);
     try prot.wl_registry_send_global(wl_registry, 2, "wl_subcompositor\x00", 1);
