@@ -17,17 +17,24 @@ pub const Output = union(OutputType) {
 
     const Self = @This();
 
-    pub fn draw(self: *Self) void {
-        std.debug.warn("output.zig.draw outer: {x} {}\n", .{@ptrToInt(self), self});
+    pub fn begin(self: *Self) void {
         return switch (self.*) {
             OutputType.Headless => |*headless_output| {
-                std.debug.warn("output.zig.draw Headless: {}\n", .{headless_output});
-                // std.debug.warn("Output.draw.Headless {}\n", .{headless_output});
-                headless_output.draw();
+                headless_output.begin();
             },
             OutputType.GLFW => |*glfw_output| {
-                std.debug.warn("Output.draw.GLFW {x} {}\n", .{@ptrToInt(&glfw_output), glfw_output});
-                glfw_output.draw();
+                glfw_output.begin();
+            },
+        };
+    }
+
+    pub fn swap(self: *Self) void {
+        return switch (self.*) {
+            OutputType.Headless => |*headless_output| {
+                headless_output.swap();
+            },
+            OutputType.GLFW => |*glfw_output| {
+                glfw_output.swap();
             },
         };
     }
@@ -62,21 +69,4 @@ pub fn newOutput(backend: *Backend, width: i32, height: i32) !*Output {
     var output = try OUTPUTS.new(undefined);
     output.* = try backend.newOutput(width, height);
     return output;
-}
-
-pub fn draw2(output: *Output) !void {
-    std.debug.warn("output.zig.draw2 outer: {x} {}\n", .{@ptrToInt(output), output});
-    // _ = self.getWidth();
-    // return switch (self.*) {
-    //     OutputType.Headless => |*headless_output| {
-    //         std.debug.warn("output.zig.draw Headless: {}\n", .{headless_output});
-    //         // std.debug.warn("Output.draw.Headless {}\n", .{headless_output});
-    //         headless_output.draw();
-    //     },
-    //     OutputType.GLFW => |*glfw_output| {
-    //         std.debug.warn("Output.draw.GLFW {x} {}\n", .{@ptrToInt(&glfw_output), glfw_output});
-    //         glfw_output.draw();
-    //     },
-    //     else => return error.NoSuchOutputType,
-    // };
 }
