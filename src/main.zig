@@ -42,7 +42,7 @@ pub fn main() anyerror!void {
             next_output.swap();
 
             if (next_output.shouldClose()) {
-                next_output.deinit();
+                try next_output.deinit();
             }
         }
     }
