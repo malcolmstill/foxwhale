@@ -76,6 +76,19 @@ pub fn Stalloc(comptime B: type, comptime T: type, comptime S: usize) type {
             }
         }
 
+        pub fn get(self: *Self, index: usize) ?*T {
+            if (index < 0 and index >= S) {
+                return null;
+            }
+
+            if (self.entries[index].in_use == false) {
+                return null;
+            }
+
+            var e: *Entry = &self.entries[index];
+            return &e.value;
+        }
+
         pub fn freeCount(self: *Self) usize {
             var i: usize = 0;
             var count: usize = 0;
