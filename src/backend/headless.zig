@@ -37,4 +37,7 @@ pub const HeadlessOutput = struct {
     pub fn shouldClose(self: Self) bool {
         return false;
     }
+
+    pub fn deinit(self: *Self) void {
+    }
 };
