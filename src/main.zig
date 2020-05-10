@@ -6,12 +6,16 @@ const Backend = @import("backend/backend.zig").Backend;
 const BackendType = @import("backend/backend.zig").BackendType;
 const bknd = @import("backend/backend.zig");
 const render = @import("renderer.zig");
+const out = @import("output.zig");
+const Output = @import("output.zig").Output;
 
 pub fn main() anyerror!void {
     try epoll.init();
     var detected_type = bknd.detect();
     var backend: Backend = try bknd.init(detected_type);
     defer backend.deinit();
+
+    var output: *Output = try out.newOutput(&backend, 640, 480);
 
     std.debug.warn("==> backend: {}\n", .{backend.name()});
 
