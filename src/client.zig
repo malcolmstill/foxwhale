@@ -17,7 +17,9 @@ pub const Client = struct {
     dispatchable: Dispatchable,
     context: Context,
     serial: u32 = 0,
+
     wl_display: Object,
+    wl_registry_id: ?u32,
     wl_output_id: ?u32,
     wl_seat_id: ?u32,
     wl_compositor_id: ?u32,
