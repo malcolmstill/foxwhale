@@ -88,5 +88,18 @@ pub const Output = union(BackendType) {
 pub fn newOutput(backend: *Backend, width: i32, height: i32) !*Output {
     var output = try OUTPUTS.new(undefined);
     output.* = try backend.newOutput(width, height);
+
+    var it = clients.CLIENTS.iterator();
+    while(it.next()) |client| {
+        if (client.wl_registry_id) |wl_registry_id| {
+            if (client.context.get(wl_registry_id)) |wl_registry| {
+                var global_id = @intCast(u32, OUTPUTS.getIndexOf(output) + OUTPUT_BASE);
+                try prot.wl_registry_send_global(wl_registry.*, global_id, "wl_output\x00", 2);
+            } else {
+                return error.ContextHasNoRegistry;
+            }
+        }
+    }
+
     return output;
 }
