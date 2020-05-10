@@ -9,6 +9,12 @@ pub const HeadlessBackend = struct {
         return false;
     }
 
+    pub fn newOutput(self: Self, w: i32, h: i32) HeadlessOutput {
+        return HeadlessOutput {
+
+        };
+    }
+
     pub fn deinit(self: Self) void {
     }
 };
@@ -17,3 +23,8 @@ pub fn init() !HeadlessBackend {
     return HeadlessBackend {
     };
 }
+
+pub const HeadlessOutput = struct {
+    const Self = @This();
+
+};
