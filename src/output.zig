@@ -17,23 +17,23 @@ pub const Output = union(OutputType) {
 
     const Self = @This();
 
-    pub fn begin(self: *Self) void {
-        return switch (self.*) {
-            OutputType.Headless => |*headless_output| {
+    pub fn begin(self: Self) void {
+        return switch (self) {
+            OutputType.Headless => |headless_output| {
                 headless_output.begin();
             },
-            OutputType.GLFW => |*glfw_output| {
+            OutputType.GLFW => |glfw_output| {
                 glfw_output.begin();
             },
         };
     }
 
-    pub fn swap(self: *Self) void {
-        return switch (self.*) {
-            OutputType.Headless => |*headless_output| {
+    pub fn swap(self: Self) void {
+        return switch (self) {
+            OutputType.Headless => |headless_output| {
                 headless_output.swap();
             },
-            OutputType.GLFW => |*glfw_output| {
+            OutputType.GLFW => |glfw_output| {
                 glfw_output.swap();
             },
         };
