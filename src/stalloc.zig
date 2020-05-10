@@ -77,7 +77,7 @@ pub fn Stalloc(comptime B: type, comptime T: type, comptime S: usize) type {
             }
         }
 
-        pub fn get(self: *Self, index: usize) ?*T {
+        pub fn getAtIndex(self: *Self, index: usize) ?*T {
             if (index < 0 and index >= S) {
                 return null;
             }
