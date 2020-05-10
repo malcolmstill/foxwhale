@@ -6,6 +6,7 @@ const HeadlessOutput = @import("backend/headless.zig").HeadlessOutput;
 const GLFWOutput = @import("backend/glfw.zig").GLFWOutput;
 
 pub var OUTPUTS: Stalloc(void, Output, 16) = undefined;
+pub const OUTPUT_BASE: usize = 1000;
 
 pub const Output = union(BackendType) {
     Headless: HeadlessOutput,
