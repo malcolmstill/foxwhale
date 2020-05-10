@@ -53,9 +53,10 @@ pub fn Stalloc(comptime B: type, comptime T: type, comptime S: usize) type {
             return error.StallocExhausted;
         }
 
-        pub fn deinit(self: *Self, t: *T) void {
+        pub fn deinit(self: *Self, t: *T) usize {
             var entry: *Entry = @fieldParentPtr(Entry, "value", t);
             entry.in_use = false;
+            return entry.index;
         }
 
         pub fn releaseBelongingTo(self: *Self, b: *B) !void {
