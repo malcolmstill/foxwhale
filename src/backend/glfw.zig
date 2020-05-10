@@ -10,7 +10,7 @@ pub const GLFWBackend = struct {
     const Self = @This();
 
     pub fn newOutput(self: *Self, width: i32, height: i32) !GLFWOutput {
-        var window = c.glfwCreateWindow(width, height, "zig-wayland", null, self.hidden) orelse return error.GLFWWindowCreationFailed;
+        var window = c.glfwCreateWindow(width, height, "foxwhale", null, self.hidden) orelse return error.GLFWWindowCreationFailed;
 
         c.glfwMakeContextCurrent(window);
         _ = c.glfwSetKeyCallback(window, keyCallback);
@@ -38,7 +38,7 @@ pub fn init() !GLFWBackend {
     c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MAJOR, 3);
     c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MINOR, 3);
     c.glfwSwapInterval(1);
-    var hidden = c.glfwCreateWindow(1, 1, "zig-wayland", null, null) orelse return error.GLFWWindowCreationFailed;
+    var hidden = c.glfwCreateWindow(1, 1, "foxwhale", null, null) orelse return error.GLFWWindowCreationFailed;
 
     return GLFWBackend {
         .windowCount = 0,
