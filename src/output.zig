@@ -25,6 +25,34 @@ pub const Output = union(OutputType) {
 
     const Self = @This();
 
+    pub fn draw(self: Self) void {
+        return switch (self) {
+            OutputType.Headless => |headless_output| headless_output.draw(),
+            OutputType.GLFW => |glfw_output| glfw_output.draw(),
+        };
+    }
+
+    pub fn shouldClose(self: Self) bool {
+        return switch (self) {
+            OutputType.Headless => |headless_output| headless_output.shouldClose(),
+            OutputType.GLFW => |glfw_output| glfw_output.shouldClose(),
+        };
+    }
+
+    pub fn getWidth(self: Self) i32 {
+        return switch (self) {
+            OutputType.Headless => |headless_output| headless_output.getWidth(),
+            OutputType.GLFW => |glfw_output| glfw_output.getWidth(),
+        };
+    }
+
+    pub fn getHeight(self: Self) i32 {
+        return switch (self) {
+            OutputType.Headless => |headless_output| headless_output.getHeight(),
+            OutputType.GLFW => |glfw_output| glfw_output.getHeight(),
+        };
+    }
+
     pub fn deinit(self: *Self) void {
         std.debug.warn("deinit output {}\n", .{});
     }
@@ -32,6 +60,6 @@ pub const Output = union(OutputType) {
 
 pub fn newOutput(backend: *Backend, width: i32, height: i32) !*Output {
     var output = try OUTPUTS.new(undefined);
-    output.* = backend.newOutput(width, height);
+    output.* = try backend.newOutput(width, height);
     return output;
 }
