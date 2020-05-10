@@ -40,10 +40,10 @@ pub fn main() anyerror!void {
             next_output.begin();
             try render.render(next_output);
             next_output.swap();
-        }
 
-        // if (output.shouldClose()) {
-            // running = false;
-        // }
+            if (next_output.shouldClose()) {
+                next_output.deinit();
+            }
+        }
     }
 }
