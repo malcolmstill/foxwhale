@@ -15,23 +15,15 @@ pub const Output = union(BackendType) {
 
     pub fn begin(self: Self) void {
         return switch (self) {
-            BackendType.Headless => |headless_output| {
-                headless_output.begin();
-            },
-            BackendType.GLFW => |glfw_output| {
-                glfw_output.begin();
-            },
+            BackendType.Headless => |headless_output| headless_output.begin(),
+            BackendType.GLFW => |glfw_output| glfw_output.begin(),
         };
     }
 
     pub fn swap(self: Self) void {
         return switch (self) {
-            BackendType.Headless => |headless_output| {
-                headless_output.swap();
-            },
-            BackendType.GLFW => |glfw_output| {
-                glfw_output.swap();
-            },
+            BackendType.Headless => |headless_output| headless_output.swap(),
+            BackendType.GLFW => |glfw_output| glfw_output.swap(),
         };
     }
 
