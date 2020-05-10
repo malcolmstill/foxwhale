@@ -5,11 +5,7 @@ pub const HeadlessBackend = struct {
     pub fn draw(self: Self) void {
     }
 
-    pub fn shouldClose(self: Self) bool {
-        return false;
-    }
-
-    pub fn newOutput(self: Self, w: i32, h: i32) HeadlessOutput {
+    pub fn newOutput(self: *Self, w: i32, h: i32) !HeadlessOutput {
         return HeadlessOutput {
 
         };
@@ -27,4 +23,18 @@ pub fn init() !HeadlessBackend {
 pub const HeadlessOutput = struct {
     const Self = @This();
 
+    pub fn draw(self: Self) void {
+    }
+
+    pub fn getWidth(self: Self) i32 {
+        return 0;
+    }
+
+    pub fn getHeight(self: Self) i32 {
+        return 0;
+    }
+
+    pub fn shouldClose(self: Self) bool {
+        return false;
+    }
 };
