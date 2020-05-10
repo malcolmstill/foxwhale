@@ -5,8 +5,6 @@ in terms of this repo).
 
 # Repo
 
-- `src/backend`: this directory contains implementations of backend specific code.
-   Examples of backends are GLFW and Headless.
 - `src/wl`: this directory contains the implementation of the Wayland wire protocol
    and the code generated from the XML protocol specifications.
    
@@ -23,12 +21,15 @@ in terms of this repo).
 
    Finally, `protocols.zig` is generated code from XML-specified protocols. This generated
    code is what is actually used by the compositor code.
-- `src/shaders`: just a bunch of GLSL files used by the compositor for rendering.
 - `src/`: the code directly under `src/` then is the "bulk" of the implementation of the
-  compositor. It has files that implement the Wayland messages (e.g. `wl_surface.zig` and
-  `xdg_surface.zig`) and then files which are more specific to the compositor such as
-  `window.zig`. There's an argument to be made for the Wayland implementation functions to
-  be in, say, `src/implementations` but this is not currently the case.
+   compositor. It has files that implement the Wayland messages (e.g. `wl_surface.zig` and
+   `xdg_surface.zig`) and then files which are more specific to the compositor such as
+   `window.zig`. There's an argument to be made for the Wayland implementation functions to
+   be in, say, `src/implementations` but this is not currently the case. The foxwhale binary
+   is generated from `src/main.zig`.
+- `src/backend`: this directory contains implementations of backend specific code.
+   Examples of backends are GLFW and Headless.
+- `src/shaders`: just a bunch of GLSL files used by the compositor for rendering.
 - `generator/`: this director contains code for generating `protocols.zig` from Wayland XML
   files. Ostensibly this is also written in zig, but it is actually hacked together in python.
    
