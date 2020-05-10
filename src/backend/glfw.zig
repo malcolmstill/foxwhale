@@ -68,7 +68,7 @@ fn resizeCallback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(
 }
 
 pub const GLFWOutput = struct {
-    window: *c.GLFWwindow,
+    window: ?*c.GLFWwindow,
 
     const Self = @This();
 
@@ -101,4 +101,8 @@ pub const GLFWOutput = struct {
         return h;
     }
 
+    pub fn deinit(self: *Self) void {
+        c.glfwDestroyWindow(self.window);
+        self.window = null;
+    }
 };
