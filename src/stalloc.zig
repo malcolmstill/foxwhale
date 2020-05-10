@@ -2,7 +2,7 @@ const std = @import("std");
 
 pub fn Stalloc(comptime B: type, comptime T: type, comptime S: usize) type {
     return struct {
-        data: [S]Entry,
+        entries: [S]Entry,
 
         const Self = @This();
 
@@ -13,10 +13,31 @@ pub fn Stalloc(comptime B: type, comptime T: type, comptime S: usize) type {
             value: T,
         };
 
+        pub const Iterator = struct {
+            stalloc: *Self,
+            index: usize,
+
+            pub fn next(it: *Iterator) ?*T {
+                while (it.index < it.stalloc.entries.len) {
+                    var entry: *Entry = &it.stalloc.entries[it.index];
+                    if (entry.in_use) {
+                        it.index += 1;
+                        return &entry.value;
+                    }
+                    it.index += 1;
+                }
+                return null;
+            }
+
+            pub fn reset(it: *Iterator) void {
+                it.index = 0;
+            }
+        };
+
         pub fn new(self: *Self, belongs_to: *B) !*T {
             var i: usize = 0;
             while (i < S) {
-                var e: *Entry = &self.data[i];
+                var e: *Entry = &self.entries[i];
                 if (e.in_use == false) {
                     e.index = i;
                     e.in_use = true;
@@ -40,7 +61,7 @@ pub fn Stalloc(comptime B: type, comptime T: type, comptime S: usize) type {
         pub fn releaseBelongingTo(self: *Self, b: *B) !void {
             var i: usize = 0;
             while (i < S) {
-                var entry: *Entry = &self.data[i];
+                var entry: *Entry = &self.entries[i];
                 if (entry.in_use and entry.belongs_to == b) {
                     entry.in_use = false;
                     entry.value.deinit() catch |err| {
@@ -59,7 +80,7 @@ pub fn Stalloc(comptime B: type, comptime T: type, comptime S: usize) type {
             var i: usize = 0;
             var count: usize = 0;
             while (i < S) {
-                var entry: *Entry = &self.data[i];
+                var entry: *Entry = &self.entries[i];
                 if (!entry.in_use) {
                     count += 1;
                 }
@@ -67,6 +88,13 @@ pub fn Stalloc(comptime B: type, comptime T: type, comptime S: usize) type {
             }
 
             return count;
+        }
+
+        pub fn iterator(self: *Self) Iterator {
+            return Iterator{
+                .stalloc = self,
+                .index = 0,
+            };
         }
     };
 }
