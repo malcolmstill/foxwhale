@@ -5,9 +5,6 @@ const HeadlessOutput = @import("backend/headless.zig").HeadlessOutput;
 const GLFWOutput = @import("backend/glfw.zig").GLFWOutput;
 
 var OUTPUTS: Stalloc(void, Output, 64) = undefined;
-// pub const Backend = union(BackendType) {
-    // Headless: HeadlessBackend,
-    // GLFW: GLFWBackend,
 
 pub const OutputType = enum {
     Headless,
@@ -15,11 +12,6 @@ pub const OutputType = enum {
 };
 
 pub const Output = union(OutputType) {
-    // An output belongs to backend.
-    // E.g. we might simultaneously have a some outputs
-    // from GLFW and and DRM
-    // backend: *Backend,
-
     Headless: HeadlessOutput,
     GLFW: GLFWOutput,
 
