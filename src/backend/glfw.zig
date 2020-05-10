@@ -33,6 +33,12 @@ pub const GLFWBackend = struct {
         return h;
     }
 
+    pub fn newOutput(self: Self, w: i32, h: i32) GLFWOutput {
+        return GLFWOutput {
+
+        };
+    }
+
     pub fn deinit(self: Self) void {
         c.glfwDestroyWindow(self.window);
         c.glfwTerminate();
@@ -83,3 +89,8 @@ fn resizeCallback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(
     c.glfwMakeContextCurrent(window);
     c.glViewport(0, 0, width, height);
 }
+
+pub const GLFWOutput = struct {
+    const Self = @This();
+
+};
