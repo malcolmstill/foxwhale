@@ -4,7 +4,7 @@ const Backend = @import("backend/backend.zig").Backend;
 const HeadlessOutput = @import("backend/headless.zig").HeadlessOutput;
 const GLFWOutput = @import("backend/glfw.zig").GLFWOutput;
 
-var OUTPUTS: Stalloc(void, Output, 64) = undefined;
+pub var OUTPUTS: Stalloc(void, Output, 64) = undefined;
 
 pub const OutputType = enum {
     Headless,
