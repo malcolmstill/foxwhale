@@ -13,6 +13,9 @@ var rectangle: [28]f32 = undefined;
 var PROGRAM: c_uint = undefined;
 
 pub fn render(output: *Output) !void {
+    var width = output.getWidth();
+    var height = output.getHeight();
+
     c.glClearColor(0.3, 0.3, 0.36, 0.0);
     try checkGLError();
 
@@ -27,9 +30,6 @@ pub fn render(output: *Output) !void {
 
     c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
     try checkGLError();
-
-    var width = output.getWidth();
-    var height = output.getHeight();
 
     orthographicProjection(&ortho, 0.0, @intToFloat(f32, width), 0.0, @intToFloat(f32, height), -1.0, 1.0);
 
