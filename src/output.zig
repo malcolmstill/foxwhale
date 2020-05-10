@@ -1,4 +1,6 @@
 const std = @import("std");
+const clients = @import("client.zig");
+const prot = @import("wl/protocols.zig");
 const Stalloc = @import("stalloc.zig").Stalloc;
 const Backend = @import("backend/backend.zig").Backend;
 const BackendType = @import("backend/backend.zig").BackendType;
@@ -49,8 +51,32 @@ pub const Output = union(BackendType) {
         };
     }
 
-    pub fn deinit(self: *Self) void {
-        OUTPUTS.deinit(self);
+    pub fn deinit(self: *Self) !void {
+        var freed_index = OUTPUTS.deinit(self);
+
+        // Inform all clients that have bound this output
+        // that it is going away
+        var client_it = clients.CLIENTS.iterator();
+        while(client_it.next()) |client| {
+            var obj_it = client.context.objects.iterator();
+            while(obj_it.next()) |wl_object_entry| {
+                var wl_object = wl_object_entry.value;
+                if (@ptrToInt(self) == wl_object.container) {
+                    if (client.wl_registry_id) |wl_registry_id| {
+                        // TODO: in release mode do not error
+                        if (client.context.get(wl_registry_id)) |wl_registry| {
+                            try prot.wl_registry_send_global_remove(wl_registry.*, @intCast(u32, OUTPUT_BASE + freed_index));
+                            std.debug.warn("OUTPUTS[{}] removed from CLIENTS[{}] (wl_output@{})\n", .{freed_index, client.getIndexOf(), wl_object.id});
+                        } else {
+                            return error.ContextHasNoRegistry;
+                        }
+                    } else {
+                        return error.ClientHasNoRegistry;
+                    }
+                }
+            }
+        }
+
         return switch (self.*) {
             BackendType.Headless => |*headless_output| headless_output.deinit(),
             BackendType.GLFW => |*glfw_output| glfw_output.deinit(),
