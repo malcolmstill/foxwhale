@@ -1,10 +1,28 @@
 const std = @import("std");
 const prot = @import("wl/protocols.zig");
+const out = @import("output.zig");
 const Context = @import("wl/context.zig").Context;
 const Object = @import("wl/context.zig").Object;
 
 fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, version: u32, new_id: u32) anyerror!void {
     std.debug.warn("bind for {} ({}) with id {} at version {}\n", .{name_string, name, new_id, version});
+
+    if (name >= out.OUTPUT_BASE) {
+        if(out.OUTPUTS.get(name - out.OUTPUT_BASE)) |output| {
+            var wl_output = prot.new_wl_output(new_id, context, @ptrToInt(output));
+            wl_output.version = version;
+            context.client.wl_output_id = wl_output.id;
+
+            try prot.wl_output_send_geometry(wl_output, 0, 0, 267, 200, @enumToInt(prot.wl_output_subpixel.none), "unknown", "unknown", @enumToInt(prot.wl_output_transform.normal));
+            try prot.wl_output_send_mode(wl_output, @enumToInt(prot.wl_output_mode.current), output.getWidth(), output.getHeight(), 60000);
+            try prot.wl_output_send_scale(wl_output, 1);
+            try prot.wl_output_send_done(wl_output);
+
+            try context.register(wl_output);
+        } else {
+            return error.NoSuchOutputInUseToBind;
+        }
+    }
 
     switch (name) {
         1 => {
@@ -39,18 +57,6 @@ fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, ve
             context.client.xdg_wm_base_id = xdg_wm_base.id;
 
             try context.register(xdg_wm_base);
-        },
-        5 => {
-            var wl_output = prot.new_wl_output(new_id, context, 0);
-            wl_output.version = version;
-            context.client.wl_output_id = wl_output.id;
-
-            try prot.wl_output_send_geometry(wl_output, 0, 0, 267, 200, @enumToInt(prot.wl_output_subpixel.none), "unknown", "unknown", @enumToInt(prot.wl_output_transform.normal));
-            try prot.wl_output_send_mode(wl_output, @enumToInt(prot.wl_output_mode.current), 640, 480, 60000);
-            try prot.wl_output_send_scale(wl_output, 1);
-            try prot.wl_output_send_done(wl_output);
-
-            try context.register(wl_output);
         },
         6 => {},
         7 => {},
