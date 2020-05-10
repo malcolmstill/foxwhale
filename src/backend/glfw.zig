@@ -5,16 +5,12 @@ const c = @cImport({
 
 pub const GLFWBackend = struct {
     windowCount: i32,
+    hidden: *c.GLFWwindow,
 
     const Self = @This();
-    
-    pub fn draw(self: Self) void {
-        c.glfwPollEvents();
-        c.glfwSwapBuffers(self.window);
-    }
 
-    pub fn newOutput(self: *Self, w: i32, h: i32) !GLFWOutput {
-        var window = c.glfwCreateWindow(640, 480, "zig-wayland", null, null) orelse return error.GLFWWindowCreationFailed;
+    pub fn newOutput(self: *Self, width: i32, height: i32) !GLFWOutput {
+        var window = c.glfwCreateWindow(width, height, "zig-wayland", null, self.hidden) orelse return error.GLFWWindowCreationFailed;
 
         c.glfwMakeContextCurrent(window);
         _ = c.glfwSetKeyCallback(window, keyCallback);
@@ -42,9 +38,11 @@ pub fn init() !GLFWBackend {
     c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MAJOR, 3);
     c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MINOR, 3);
     c.glfwSwapInterval(1);
+    var hidden = c.glfwCreateWindow(1, 1, "glfw-hidden", null, null) orelse return error.GLFWWindowCreationFailed;
 
     return GLFWBackend {
         .windowCount = 0,
+        .hidden = hidden,
     };
 }
 
@@ -74,8 +72,12 @@ pub const GLFWOutput = struct {
 
     const Self = @This();
 
-    pub fn draw(self: Self) void {
+    pub fn begin(self: Self) void {
         c.glfwPollEvents();
+        c.glfwMakeContextCurrent(self.window);
+    }
+
+    pub fn swap(self: Self) void {
         c.glfwSwapBuffers(self.window);
     }
 
