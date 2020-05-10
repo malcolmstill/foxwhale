@@ -14,11 +14,14 @@ pub fn main() anyerror!void {
     var detected_type = bknd.detect();
     var backend: Backend = try bknd.init(detected_type);
     defer backend.deinit();
-    std.debug.warn("backend: {}\n", .{backend});
+    // std.debug.warn("backend: {}\n", .{backend});
 
-    var output: *Output = try out.newOutput(&backend, 640, 480);
-    std.debug.warn("output: {}\n", .{output});
-    std.debug.warn("backend: {}\n", .{backend});
+    var o1: *Output = try out.newOutput(&backend, 640, 480);
+    var o2: *Output = try out.newOutput(&backend, 200, 200);
+    // var o2: *Output = try out.newOutput(&backend, 400, 400);
+    // std.debug.warn("output: {}\n", .{o1.Headless});
+    // std.debug.warn("output: {}\n", .{o2});
+    // std.debug.warn("backend: {}\n", .{backend});
 
     std.debug.warn("==> backend: {}\n", .{backend.name()});
 
@@ -38,11 +41,14 @@ pub fn main() anyerror!void {
             i = i + 1;
         }
 
-        try render.render(output);
-        output.draw();
-
-        if (output.shouldClose()) {
-            running = false;
+        var it = out.OUTPUTS.iterator();
+        while (it.next()) |next_output| {
+            try render.render(next_output);
+            next_output.draw();
         }
+
+        // if (output.shouldClose()) {
+            // running = false;
+        // }
     }
 }
