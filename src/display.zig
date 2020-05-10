@@ -50,5 +50,5 @@ pub fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!v
     var client = try clients.newClient(conn);
     errdefer { client.deinit(); }
 
-    std.debug.warn("\nclient {}: connected.\n", .{ client.index });
+    std.debug.warn("\nclient {}: connected.\n", .{ client.getIndexOf() });
 }
