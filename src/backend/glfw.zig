@@ -38,7 +38,7 @@ pub fn init() !GLFWBackend {
     c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MAJOR, 3);
     c.glfwWindowHint(c.GLFW_CONTEXT_VERSION_MINOR, 3);
     c.glfwSwapInterval(1);
-    var hidden = c.glfwCreateWindow(1, 1, "glfw-hidden", null, null) orelse return error.GLFWWindowCreationFailed;
+    var hidden = c.glfwCreateWindow(1, 1, "zig-wayland", null, null) orelse return error.GLFWWindowCreationFailed;
 
     return GLFWBackend {
         .windowCount = 0,
