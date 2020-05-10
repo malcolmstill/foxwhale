@@ -8,7 +8,7 @@ fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, ve
     std.debug.warn("bind for {} ({}) with id {} at version {}\n", .{name_string, name, new_id, version});
 
     if (name >= out.OUTPUT_BASE) {
-        if(out.OUTPUTS.get(name - out.OUTPUT_BASE)) |output| {
+        if(out.OUTPUTS.getAtIndex(name - out.OUTPUT_BASE)) |output| {
             var wl_output = prot.new_wl_output(new_id, context, @ptrToInt(output));
             wl_output.version = version;
             context.client.wl_output_id = wl_output.id;
