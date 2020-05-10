@@ -3,6 +3,7 @@ const headless = @import("headless.zig");
 const glfw = @import("glfw.zig");
 const HeadlessBackend = @import("headless.zig").HeadlessBackend;
 const GLFWBackend = @import("glfw.zig").GLFWBackend;
+const Output = @import("../output.zig").Output;
 
 pub const BackendType = enum {
     Headless,
@@ -59,6 +60,13 @@ pub const Backend = union(BackendType) {
         return switch (self) {
             BackendType.Headless => 0,
             BackendType.GLFW => |glfw_backend| glfw_backend.height(),
+        };
+    }
+
+    pub fn newOutput(self: Backend, w: i32, h: i32) Output {
+        return switch (self) {
+            BackendType.Headless => |headless_backend| Output{ .Headless = headless_backend.newOutput(w, h) },
+            BackendType.GLFW => |glfw_backend| Output{ .GLFW = glfw_backend.newOutput(w, h) },
         };
     }
 
