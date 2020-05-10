@@ -35,13 +35,6 @@ pub const Backend = union(BackendType) {
         };
     }
 
-    pub fn shouldClose(self: Backend) bool {
-        return switch (self) {
-            BackendType.Headless => |headless_backend| headless_backend.shouldClose(),
-            BackendType.GLFW => |glfw_backend| glfw_backend.shouldClose(),
-        };
-    }
-
     pub fn name(self: Backend) []const u8 {
         return switch (self) {
             BackendType.Headless => "Headless",
@@ -49,24 +42,11 @@ pub const Backend = union(BackendType) {
         };
     }
 
-    pub fn width(self: Backend) i32 {
-        return switch (self) {
-            BackendType.Headless => 0,
-            BackendType.GLFW => |glfw_backend| glfw_backend.width(),
-        };
-    }
-
-    pub fn height(self: Backend) i32 {
-        return switch (self) {
-            BackendType.Headless => 0,
-            BackendType.GLFW => |glfw_backend| glfw_backend.height(),
-        };
-    }
-
-    pub fn newOutput(self: Backend, w: i32, h: i32) Output {
-        return switch (self) {
-            BackendType.Headless => |headless_backend| Output{ .Headless = headless_backend.newOutput(w, h) },
-            BackendType.GLFW => |glfw_backend| Output{ .GLFW = glfw_backend.newOutput(w, h) },
+    pub fn newOutput(self: *Backend, w: i32, h: i32) !Output {
+        return switch (self.*) {
+            BackendType.Headless => |*headless_backend| Output{ .Headless = try headless_backend.newOutput(w, h) },
+            BackendType.GLFW => |*glfw_backend| Output{ .GLFW = try glfw_backend.newOutput(w, h) },
+            else => return error.NoSuchBackendType,
         };
     }
 
