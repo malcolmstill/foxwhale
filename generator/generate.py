@@ -235,6 +235,7 @@ def generate_send(interface, sentType):
     i = 0
     for child in interface:
         if child.tag == sentType:
+            fix_wl_registry(interface, child)
             for desc in child:
                 if desc.tag == "description":
                     print(f"\n")
