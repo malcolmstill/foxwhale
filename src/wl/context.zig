@@ -82,13 +82,23 @@ pub fn Context(comptime T: type) type {
             }
         }
 
-        pub fn next_u32(self: *Self) u32 {
-            defer { self.read_offset += @sizeOf(u32); }
+        pub fn next_u32(self: *Self) !u32 {
+            var next_offset = self.read_offset + @sizeOf(u32);
+            if (next_offset > self.rx_buf.len) {
+                return error.NextReadsPastEndOfBuffer;
+            }
+
+            defer { self.read_offset = next_offset; }
             return @ptrCast(*u32, @alignCast(@alignOf(u32), &self.rx_buf[self.read_offset])).*;
         }
 
-        pub fn next_i32(self: *Self) i32 {
-            defer { self.read_offset += @sizeOf(i32); }
+        pub fn next_i32(self: *Self) !i32 {
+            var next_offset = self.read_offset + @sizeOf(i32);
+            if (next_offset > self.rx_buf.len) {
+                return error.NextReadsPastEndOfBuffer;
+            }
+
+            defer { self.read_offset = next_offset; }
             return @ptrCast(*i32, @alignCast(@alignOf(i32), &self.rx_buf[self.read_offset])).*;
         }
 
@@ -97,12 +107,17 @@ pub fn Context(comptime T: type) type {
         // after the dispatch function returns and so we cannot
         // hang on to this pointer. If we want to retain the string
         // we should copy it.
-        pub fn next_string(self: *Self) []u8 {
-            var length = self.next_u32();
+        pub fn next_string(self: *Self) ![]u8 {
+            var length = try self.next_u32();
+            var next_offset = self.read_offset + @sizeOf(u32) * @divTrunc(length - 1, @sizeOf(u32)) + @sizeOf(u32);
+            if (next_offset > self.rx_buf.len) {
+                return error.NextReadsPastEndOfBuffer;
+            }
+
             var s: []u8 = undefined;
             s.ptr = @ptrCast([*]u8, &self.rx_buf[self.read_offset]);
             s.len = length;
-            self.read_offset += @sizeOf(u32) * @divTrunc(length - 1, @sizeOf(u32)) + @sizeOf(u32);
+            self.read_offset = next_offset;
             return s;
         }
 
@@ -111,16 +126,21 @@ pub fn Context(comptime T: type) type {
         // after the dispatch function returns and so we cannot
         // hang on to this pointer. If we want to retain the array
         // we should copy it.
-        pub fn next_array(self: *Self) []u32 {
-            var length = self.next_u32();
-            var s: []32 = undefined;
+        pub fn next_array(self: *Self) ![]u32 {
+            var length = try self.next_u32();
+            var next_offset = self.read_offset + length;
+            if (next_offset > self.rx_buf.len) {
+                return error.NextReadsPastEndOfBuffer;
+            }
+
+            var s: []u32 = undefined;
             s.ptr = @ptrCast(*u32, @alignCast(@alignOf(u32), &self.rx_buf[self.read_offset]));
             s.len = length/@sizeOf(u32);
-            self.read_offset += length;
+            self.read_offset = next_offset;
             return s;
         }
 
-        pub fn next_fd(self: *Self) i32 {
+        pub fn next_fd(self: *Self) !i32 {
             defer {
                 std.mem.copy(i32, self.rx_fds[0..self.rx_fds.len-1], self.rx_fds[1..self.rx_fds.len]);
             }
