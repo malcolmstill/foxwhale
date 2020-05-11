@@ -147,9 +147,11 @@ fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!void {
 // Binds a new, client-created object to the server using the
 // specified name as the identifier.
 //
-pub fn wl_registry_send_bind(object: Object, name: u32, id: u32) anyerror!void {
+pub fn wl_registry_send_bind(object: Object, name: u32, name_string: []const u8, version: u32, id: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(name);
+    object.context.putString(name_string);
+    object.context.putU32(version);
     object.context.putU32(id);
     object.context.finishWrite(object.id, 0);
 }
