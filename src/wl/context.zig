@@ -59,7 +59,8 @@ pub fn Context(comptime T: type) type {
                     return;
                 }
 
-                var header = @ptrCast(*Header, &self.rx_buf[self.read_offset]);
+                var message_start_offset = self.read_offset;
+                var header = @ptrCast(*Header, &self.rx_buf[message_start_offset]);
 
                 // We need to have read a full message
                 if (remaining < header.length) {
@@ -70,6 +71,10 @@ pub fn Context(comptime T: type) type {
                 if (self.objects.get(header.id)) |object| {
                     // std.debug.warn("got id: {}\n", .{object.value.id});
                     try object.value.dispatch(object.value, header.opcode);
+                    if ((self.read_offset - message_start_offset) != header.length) {
+                        self.read_offset = 0;
+                        return error.MessageWrongLength;
+                    }
                 } else {
                     std.debug.warn("couldn't find id: {}\n", .{header.id});
                     return error.CouldntFindExpectedId;
