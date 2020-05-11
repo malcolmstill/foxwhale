@@ -24,6 +24,7 @@ pub fn build(b: *Builder) void {
     foxwhalectl_exe.setBuildMode(mode);
     foxwhalectl_exe.install();
     foxwhalectl_exe.addPackagePath("epoll", "src/epoll.zig");
+    foxwhalectl_exe.addPackagePath("wl", "src/wl/context.zig");
 
     const run_cmd = exe.run();
     run_cmd.step.dependOn(b.getInstallStep());
