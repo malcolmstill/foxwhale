@@ -1,8 +1,8 @@
 const std = @import("std");
 const linux = std.os.linux;
 const renderer = @import("renderer.zig");
-const Object = @import("wl/context.zig").Object;
-const Context = @import("wl/context.zig").Context;
+const Object = @import("client.zig").Object;
+const Context = @import("client.zig").Context;
 const Client = @import("client.zig").Client;
 const ShmPool = @import("shm_pool.zig").ShmPool;
 

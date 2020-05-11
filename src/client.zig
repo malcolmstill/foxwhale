@@ -1,8 +1,7 @@
 const std = @import("std");
 const epoll = @import("epoll.zig");
-const Object = @import("wl/context.zig").Object;
-const Context = @import("wl/context.zig").Context;
-const prot = @import("wl/protocols.zig");
+const WlContext = @import("wl/context.zig").Context;
+const prot = @import("protocols.zig");
 const shm_pool = @import("shm_pool.zig");
 const shm_buffer = @import("shm_buffer.zig");
 const window = @import("window.zig");
@@ -12,10 +11,13 @@ const Stalloc = @import("stalloc.zig").Stalloc;
 
 pub var CLIENTS: Stalloc(void, Client, 256) = undefined;
 
+pub const Context = WlContext(*Client);
+pub const Object = WlContext(*Client).Object;
+
 pub const Client = struct {
     connection: std.net.StreamServer.Connection,
     dispatchable: Dispatchable,
-    context: Context,
+    context: WlContext(*Self),
     serial: u32 = 0,
 
     wl_display: Object,

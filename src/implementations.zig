@@ -1,7 +1,7 @@
 const std = @import("std");
-const prot = @import("wl/protocols.zig");
-const Context = @import("wl/context.zig").Context;
-const Object = @import("wl/context.zig").Object;
+const prot = @import("protocols.zig");
+const Context = @import("client.zig").Context;
+const Object = @import("client.zig").Object;
 
 const wl_compositor_impl = @import("wl_compositor.zig");
 const wl_display_impl = @import("wl_display.zig");

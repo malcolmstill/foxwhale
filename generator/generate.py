@@ -3,7 +3,7 @@ import sys
 
 wl_registry_fixed = False
 
-def generate(side, files):
+def generate(context, side, files):
     receiveType = None
     sendType = None
 
@@ -16,9 +16,8 @@ def generate(side, files):
         sendType = "request"
 
     print(f'const std = @import("std");')
-    print(f'const Context = @import("context.zig").Context;')
-    print(f'const Header = @import("context.zig").Header;')
-    print(f'const Object = @import("context.zig").Object;\n')
+    print(f'const Context = @import("{context}").Context;')
+    print(f'const Object = @import("{context}").Object;\n')
 
     for file in files:
         tree = Tree.parse(file)
@@ -276,4 +275,4 @@ def lookup_type(type, arg):
         }
         return types[type]
 
-generate(sys.argv[1], sys.argv[2:])
+generate(sys.argv[1], sys.argv[2], sys.argv[3:])

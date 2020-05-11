@@ -1,7 +1,6 @@
 const std = @import("std");
-const Context = @import("context.zig").Context;
-const Header = @import("context.zig").Header;
-const Object = @import("context.zig").Object;
+const Context = @import("client.zig").Context;
+const Object = @import("client.zig").Object;
 
 // wl_display
 pub const wl_display_interface = struct {
