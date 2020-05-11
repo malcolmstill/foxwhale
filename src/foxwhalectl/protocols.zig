@@ -1,7 +1,6 @@
 const std = @import("std");
-const Context = @import("context.zig").Context;
-const Header = @import("context.zig").Header;
-const Object = @import("context.zig").Object;
+const Context = @import("connection.zig").Context;
+const Object = @import("connection.zig").Object;
 
 // wl_display
 pub const wl_display_interface = struct {
@@ -37,16 +36,16 @@ fn wl_display_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // error
         0 => {
-            var object_id: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var code: u32 = object.context.next_u32();
-            var message: []u8 = object.context.next_string();
+            var object_id: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var code: u32 = try object.context.next_u32();
+            var message: []u8 = try object.context.next_string();
             if (WL_DISPLAY.@"error") |@"error"| {
                 try @"error"(object.context, object, object_id, code, message);
             }
         },
         // delete_id
         1 => {
-            var id: u32 = object.context.next_u32();
+            var id: u32 = try object.context.next_u32();
             if (WL_DISPLAY.delete_id) |delete_id| {
                 try delete_id(object.context, object, id);
             }
@@ -128,16 +127,16 @@ fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // global
         0 => {
-            var name: u32 = object.context.next_u32();
-            var interface: []u8 = object.context.next_string();
-            var version: u32 = object.context.next_u32();
+            var name: u32 = try object.context.next_u32();
+            var interface: []u8 = try object.context.next_string();
+            var version: u32 = try object.context.next_u32();
             if (WL_REGISTRY.global) |global| {
                 try global(object.context, object, name, interface, version);
             }
         },
         // global_remove
         1 => {
-            var name: u32 = object.context.next_u32();
+            var name: u32 = try object.context.next_u32();
             if (WL_REGISTRY.global_remove) |global_remove| {
                 try global_remove(object.context, object, name);
             }
@@ -183,7 +182,7 @@ fn wl_callback_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // done
         0 => {
-            var callback_data: u32 = object.context.next_u32();
+            var callback_data: u32 = try object.context.next_u32();
             if (WL_CALLBACK.done) |done| {
                 try done(object.context, object, callback_data);
             }
@@ -322,7 +321,7 @@ fn wl_shm_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // format
         0 => {
-            var format: u32 = object.context.next_u32();
+            var format: u32 = try object.context.next_u32();
             if (WL_SHM.format) |format| {
                 try format(object.context, object, format);
             }
@@ -502,21 +501,21 @@ fn wl_data_offer_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // offer
         0 => {
-            var mime_type: []u8 = object.context.next_string();
+            var mime_type: []u8 = try object.context.next_string();
             if (WL_DATA_OFFER.offer) |offer| {
                 try offer(object.context, object, mime_type);
             }
         },
         // source_actions
         1 => {
-            var source_actions: u32 = object.context.next_u32();
+            var source_actions: u32 = try object.context.next_u32();
             if (WL_DATA_OFFER.source_actions) |source_actions| {
                 try source_actions(object.context, object, source_actions);
             }
         },
         // action
         2 => {
-            var dnd_action: u32 = object.context.next_u32();
+            var dnd_action: u32 = try object.context.next_u32();
             if (WL_DATA_OFFER.action) |action| {
                 try action(object.context, object, dnd_action);
             }
@@ -702,15 +701,15 @@ fn wl_data_source_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // target
         0 => {
-            var mime_type: []u8 = object.context.next_string();
+            var mime_type: []u8 = try object.context.next_string();
             if (WL_DATA_SOURCE.target) |target| {
                 try target(object.context, object, mime_type);
             }
         },
         // send
         1 => {
-            var mime_type: []u8 = object.context.next_string();
-            var fd: i32 = object.context.next_fd();
+            var mime_type: []u8 = try object.context.next_string();
+            var fd: i32 = try object.context.next_fd();
             if (WL_DATA_SOURCE.send) |send| {
                 try send(object.context, object, mime_type, fd);
             }
@@ -744,7 +743,7 @@ fn wl_data_source_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // action
         5 => {
-            var dnd_action: u32 = object.context.next_u32();
+            var dnd_action: u32 = try object.context.next_u32();
             if (WL_DATA_SOURCE.action) |action| {
                 try action(object.context, object, dnd_action);
             }
@@ -856,18 +855,18 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // data_offer
         0 => {
-            var id: u32 = object.context.next_u32();
+            var id: u32 = try object.context.next_u32();
             if (WL_DATA_DEVICE.data_offer) |data_offer| {
                 try data_offer(object.context, object, id);
             }
         },
         // enter
         1 => {
-            var serial: u32 = object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var x: f32 = object.context.next_fixed();
-            var y: f32 = object.context.next_fixed();
-            var id: ?Object = object.context.objects.getValue(object.context.next_u32());
+            var serial: u32 = try object.context.next_u32();
+            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var x: f32 = try object.context.next_fixed();
+            var y: f32 = try object.context.next_fixed();
+            var id: ?Object = object.context.objects.getValue(try object.context.next_u32());
             if (WL_DATA_DEVICE.enter) |enter| {
                 try enter(object.context, object, serial, surface, x, y, id);
             }
@@ -883,9 +882,9 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // motion
         3 => {
-            var time: u32 = object.context.next_u32();
-            var x: f32 = object.context.next_fixed();
-            var y: f32 = object.context.next_fixed();
+            var time: u32 = try object.context.next_u32();
+            var x: f32 = try object.context.next_fixed();
+            var y: f32 = try object.context.next_fixed();
             if (WL_DATA_DEVICE.motion) |motion| {
                 try motion(object.context, object, time, x, y);
             }
@@ -901,7 +900,7 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // selection
         5 => {
-            var id: ?Object = object.context.objects.getValue(object.context.next_u32());
+            var id: ?Object = object.context.objects.getValue(try object.context.next_u32());
             if (WL_DATA_DEVICE.selection) |selection| {
                 try selection(object.context, object, id);
             }
@@ -1094,16 +1093,16 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // ping
         0 => {
-            var serial: u32 = object.context.next_u32();
+            var serial: u32 = try object.context.next_u32();
             if (WL_SHELL_SURFACE.ping) |ping| {
                 try ping(object.context, object, serial);
             }
         },
         // configure
         1 => {
-            var edges: u32 = object.context.next_u32();
-            var width: i32 = object.context.next_i32();
-            var height: i32 = object.context.next_i32();
+            var edges: u32 = try object.context.next_u32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
             if (WL_SHELL_SURFACE.configure) |configure| {
                 try configure(object.context, object, edges, width, height);
             }
@@ -1355,14 +1354,14 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // enter
         0 => {
-            var output: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var output: Object = object.context.objects.getValue(try object.context.next_u32()).?;
             if (WL_SURFACE.enter) |enter| {
                 try enter(object.context, object, output);
             }
         },
         // leave
         1 => {
-            var output: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var output: Object = object.context.objects.getValue(try object.context.next_u32()).?;
             if (WL_SURFACE.leave) |leave| {
                 try leave(object.context, object, output);
             }
@@ -1716,14 +1715,14 @@ fn wl_seat_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // capabilities
         0 => {
-            var capabilities: u32 = object.context.next_u32();
+            var capabilities: u32 = try object.context.next_u32();
             if (WL_SEAT.capabilities) |capabilities| {
                 try capabilities(object.context, object, capabilities);
             }
         },
         // name
         1 => {
-            var name: []u8 = object.context.next_string();
+            var name: []u8 = try object.context.next_string();
             if (WL_SEAT.name) |name| {
                 try name(object.context, object, name);
             }
@@ -1863,46 +1862,46 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // enter
         0 => {
-            var serial: u32 = object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var surface_x: f32 = object.context.next_fixed();
-            var surface_y: f32 = object.context.next_fixed();
+            var serial: u32 = try object.context.next_u32();
+            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var surface_x: f32 = try object.context.next_fixed();
+            var surface_y: f32 = try object.context.next_fixed();
             if (WL_POINTER.enter) |enter| {
                 try enter(object.context, object, serial, surface, surface_x, surface_y);
             }
         },
         // leave
         1 => {
-            var serial: u32 = object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var serial: u32 = try object.context.next_u32();
+            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
             if (WL_POINTER.leave) |leave| {
                 try leave(object.context, object, serial, surface);
             }
         },
         // motion
         2 => {
-            var time: u32 = object.context.next_u32();
-            var surface_x: f32 = object.context.next_fixed();
-            var surface_y: f32 = object.context.next_fixed();
+            var time: u32 = try object.context.next_u32();
+            var surface_x: f32 = try object.context.next_fixed();
+            var surface_y: f32 = try object.context.next_fixed();
             if (WL_POINTER.motion) |motion| {
                 try motion(object.context, object, time, surface_x, surface_y);
             }
         },
         // button
         3 => {
-            var serial: u32 = object.context.next_u32();
-            var time: u32 = object.context.next_u32();
-            var button: u32 = object.context.next_u32();
-            var state: u32 = object.context.next_u32();
+            var serial: u32 = try object.context.next_u32();
+            var time: u32 = try object.context.next_u32();
+            var button: u32 = try object.context.next_u32();
+            var state: u32 = try object.context.next_u32();
             if (WL_POINTER.button) |button| {
                 try button(object.context, object, serial, time, button, state);
             }
         },
         // axis
         4 => {
-            var time: u32 = object.context.next_u32();
-            var axis: u32 = object.context.next_u32();
-            var value: f32 = object.context.next_fixed();
+            var time: u32 = try object.context.next_u32();
+            var axis: u32 = try object.context.next_u32();
+            var value: f32 = try object.context.next_fixed();
             if (WL_POINTER.axis) |axis| {
                 try axis(object.context, object, time, axis, value);
             }
@@ -1918,23 +1917,23 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // axis_source
         6 => {
-            var axis_source: u32 = object.context.next_u32();
+            var axis_source: u32 = try object.context.next_u32();
             if (WL_POINTER.axis_source) |axis_source| {
                 try axis_source(object.context, object, axis_source);
             }
         },
         // axis_stop
         7 => {
-            var time: u32 = object.context.next_u32();
-            var axis: u32 = object.context.next_u32();
+            var time: u32 = try object.context.next_u32();
+            var axis: u32 = try object.context.next_u32();
             if (WL_POINTER.axis_stop) |axis_stop| {
                 try axis_stop(object.context, object, time, axis);
             }
         },
         // axis_discrete
         8 => {
-            var axis: u32 = object.context.next_u32();
-            var discrete: i32 = object.context.next_i32();
+            var axis: u32 = try object.context.next_u32();
+            var discrete: i32 = try object.context.next_i32();
             if (WL_POINTER.axis_discrete) |axis_discrete| {
                 try axis_discrete(object.context, object, axis, discrete);
             }
@@ -2072,55 +2071,55 @@ fn wl_keyboard_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // keymap
         0 => {
-            var format: u32 = object.context.next_u32();
-            var fd: i32 = object.context.next_fd();
-            var size: u32 = object.context.next_u32();
+            var format: u32 = try object.context.next_u32();
+            var fd: i32 = try object.context.next_fd();
+            var size: u32 = try object.context.next_u32();
             if (WL_KEYBOARD.keymap) |keymap| {
                 try keymap(object.context, object, format, fd, size);
             }
         },
         // enter
         1 => {
-            var serial: u32 = object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var keys: []u32 = object.context.next_array();
+            var serial: u32 = try object.context.next_u32();
+            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var keys: []u32 = try object.context.next_array();
             if (WL_KEYBOARD.enter) |enter| {
                 try enter(object.context, object, serial, surface, keys);
             }
         },
         // leave
         2 => {
-            var serial: u32 = object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var serial: u32 = try object.context.next_u32();
+            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
             if (WL_KEYBOARD.leave) |leave| {
                 try leave(object.context, object, serial, surface);
             }
         },
         // key
         3 => {
-            var serial: u32 = object.context.next_u32();
-            var time: u32 = object.context.next_u32();
-            var key: u32 = object.context.next_u32();
-            var state: u32 = object.context.next_u32();
+            var serial: u32 = try object.context.next_u32();
+            var time: u32 = try object.context.next_u32();
+            var key: u32 = try object.context.next_u32();
+            var state: u32 = try object.context.next_u32();
             if (WL_KEYBOARD.key) |key| {
                 try key(object.context, object, serial, time, key, state);
             }
         },
         // modifiers
         4 => {
-            var serial: u32 = object.context.next_u32();
-            var mods_depressed: u32 = object.context.next_u32();
-            var mods_latched: u32 = object.context.next_u32();
-            var mods_locked: u32 = object.context.next_u32();
-            var group: u32 = object.context.next_u32();
+            var serial: u32 = try object.context.next_u32();
+            var mods_depressed: u32 = try object.context.next_u32();
+            var mods_latched: u32 = try object.context.next_u32();
+            var mods_locked: u32 = try object.context.next_u32();
+            var group: u32 = try object.context.next_u32();
             if (WL_KEYBOARD.modifiers) |modifiers| {
                 try modifiers(object.context, object, serial, mods_depressed, mods_latched, mods_locked, group);
             }
         },
         // repeat_info
         5 => {
-            var rate: i32 = object.context.next_i32();
-            var delay: i32 = object.context.next_i32();
+            var rate: i32 = try object.context.next_i32();
+            var delay: i32 = try object.context.next_i32();
             if (WL_KEYBOARD.repeat_info) |repeat_info| {
                 try repeat_info(object.context, object, rate, delay);
             }
@@ -2214,31 +2213,31 @@ fn wl_touch_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // down
         0 => {
-            var serial: u32 = object.context.next_u32();
-            var time: u32 = object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var id: i32 = object.context.next_i32();
-            var x: f32 = object.context.next_fixed();
-            var y: f32 = object.context.next_fixed();
+            var serial: u32 = try object.context.next_u32();
+            var time: u32 = try object.context.next_u32();
+            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var id: i32 = try object.context.next_i32();
+            var x: f32 = try object.context.next_fixed();
+            var y: f32 = try object.context.next_fixed();
             if (WL_TOUCH.down) |down| {
                 try down(object.context, object, serial, time, surface, id, x, y);
             }
         },
         // up
         1 => {
-            var serial: u32 = object.context.next_u32();
-            var time: u32 = object.context.next_u32();
-            var id: i32 = object.context.next_i32();
+            var serial: u32 = try object.context.next_u32();
+            var time: u32 = try object.context.next_u32();
+            var id: i32 = try object.context.next_i32();
             if (WL_TOUCH.up) |up| {
                 try up(object.context, object, serial, time, id);
             }
         },
         // motion
         2 => {
-            var time: u32 = object.context.next_u32();
-            var id: i32 = object.context.next_i32();
-            var x: f32 = object.context.next_fixed();
-            var y: f32 = object.context.next_fixed();
+            var time: u32 = try object.context.next_u32();
+            var id: i32 = try object.context.next_i32();
+            var x: f32 = try object.context.next_fixed();
+            var y: f32 = try object.context.next_fixed();
             if (WL_TOUCH.motion) |motion| {
                 try motion(object.context, object, time, id, x, y);
             }
@@ -2263,17 +2262,17 @@ fn wl_touch_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // shape
         5 => {
-            var id: i32 = object.context.next_i32();
-            var major: f32 = object.context.next_fixed();
-            var minor: f32 = object.context.next_fixed();
+            var id: i32 = try object.context.next_i32();
+            var major: f32 = try object.context.next_fixed();
+            var minor: f32 = try object.context.next_fixed();
             if (WL_TOUCH.shape) |shape| {
                 try shape(object.context, object, id, major, minor);
             }
         },
         // orientation
         6 => {
-            var id: i32 = object.context.next_i32();
-            var orientation: f32 = object.context.next_fixed();
+            var id: i32 = try object.context.next_i32();
+            var orientation: f32 = try object.context.next_fixed();
             if (WL_TOUCH.orientation) |orientation| {
                 try orientation(object.context, object, id, orientation);
             }
@@ -2336,24 +2335,24 @@ fn wl_output_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // geometry
         0 => {
-            var x: i32 = object.context.next_i32();
-            var y: i32 = object.context.next_i32();
-            var physical_width: i32 = object.context.next_i32();
-            var physical_height: i32 = object.context.next_i32();
-            var subpixel: i32 = object.context.next_i32();
-            var make: []u8 = object.context.next_string();
-            var model: []u8 = object.context.next_string();
-            var transform: i32 = object.context.next_i32();
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
+            var physical_width: i32 = try object.context.next_i32();
+            var physical_height: i32 = try object.context.next_i32();
+            var subpixel: i32 = try object.context.next_i32();
+            var make: []u8 = try object.context.next_string();
+            var model: []u8 = try object.context.next_string();
+            var transform: i32 = try object.context.next_i32();
             if (WL_OUTPUT.geometry) |geometry| {
                 try geometry(object.context, object, x, y, physical_width, physical_height, subpixel, make, model, transform);
             }
         },
         // mode
         1 => {
-            var flags: u32 = object.context.next_u32();
-            var width: i32 = object.context.next_i32();
-            var height: i32 = object.context.next_i32();
-            var refresh: i32 = object.context.next_i32();
+            var flags: u32 = try object.context.next_u32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
+            var refresh: i32 = try object.context.next_i32();
             if (WL_OUTPUT.mode) |mode| {
                 try mode(object.context, object, flags, width, height, refresh);
             }
@@ -2369,7 +2368,7 @@ fn wl_output_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // scale
         3 => {
-            var factor: i32 = object.context.next_i32();
+            var factor: i32 = try object.context.next_i32();
             if (WL_OUTPUT.scale) |scale| {
                 try scale(object.context, object, factor);
             }
@@ -2646,4 +2645,68 @@ pub fn wl_subsurface_send_set_sync(object: Object) anyerror!void {
 pub fn wl_subsurface_send_set_desync(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 5);
+}
+
+// fw_control
+pub const fw_control_interface = struct {
+    // factory for creating dmabuf-based wl_buffers
+    client: ?fn (*Context, Object, u32) anyerror!void,
+    done: ?fn (
+        *Context,
+        Object,
+    ) anyerror!void,
+};
+
+fn fw_control_client_default(context: *Context, object: Object, index: u32) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn fw_control_done_default(context: *Context, object: Object) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+pub var FW_CONTROL = fw_control_interface{
+    .client = fw_control_client_default,
+    .done = fw_control_done_default,
+};
+
+pub fn new_fw_control(id: u32, context: *Context, container: usize) Object {
+    return Object{
+        .id = id,
+        .dispatch = fw_control_dispatch,
+        .context = context,
+        .version = 0,
+        .container = container,
+    };
+}
+
+fn fw_control_dispatch(object: Object, opcode: u16) anyerror!void {
+    switch (opcode) {
+        // client
+        0 => {
+            var index: u32 = try object.context.next_u32();
+            if (FW_CONTROL.client) |client| {
+                try client(object.context, object, index);
+            }
+        },
+        // done
+        1 => {
+            if (FW_CONTROL.done) |done| {
+                try done(
+                    object.context,
+                    object,
+                );
+            }
+        },
+        else => {},
+    }
+}
+//         This temporary object is used to collect multiple dmabuf handles into
+//         a single batch to create a wl_buffer. It can only be used once and
+//         should be destroyed after a 'created' or 'failed' event has been
+//         received.
+//
+pub fn fw_control_send_get_clients(object: Object) anyerror!void {
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 0);
 }
