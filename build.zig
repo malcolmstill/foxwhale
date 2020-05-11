@@ -19,6 +19,12 @@ pub fn build(b: *Builder) void {
     exe.linkSystemLibrary("gl");
     exe.install();
 
+    const foxwhalectl_exe = b.addExecutable("foxwhalectl", "src/foxwhalectl/main.zig");
+    foxwhalectl_exe.setTarget(target);
+    foxwhalectl_exe.setBuildMode(mode);
+    foxwhalectl_exe.install();
+    foxwhalectl_exe.addPackagePath("epoll", "src/epoll.zig");
+
     const run_cmd = exe.run();
     run_cmd.step.dependOn(b.getInstallStep());
 
