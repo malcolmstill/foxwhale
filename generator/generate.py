@@ -114,11 +114,11 @@ def generate_next(arg):
     atype = lookup_type(arg.attrib["type"], arg)
     if arg.attrib["type"] == "object":
         if "allow-null" in arg.attrib and arg.attrib["allow-null"] == "true":
-            print(f"\t\t\tvar {name}: ?Object = object.context.objects.getValue(object.context.next_u32());")
+            print(f"\t\t\tvar {name}: ?Object = object.context.objects.getValue(try object.context.next_u32());")
         else:
-            print(f"\t\t\tvar {name}: Object = object.context.objects.getValue(object.context.next_u32()).?;")
+            print(f"\t\t\tvar {name}: Object = object.context.objects.getValue(try object.context.next_u32()).?;")
     else:    
-        print(f"\t\t\t\tvar {name}: {atype} = object.context.next_{next_type(arg.attrib['type'])}();")
+        print(f"\t\t\t\tvar {name}: {atype} = try object.context.next_{next_type(arg.attrib['type'])}();")
 
 def next_type(type):
     types = {
