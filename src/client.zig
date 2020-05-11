@@ -87,9 +87,13 @@ fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
             std.debug.warn("client {} sigbus'd\n", .{client.getIndexOf()});
             try client.deinit();
         } else {
-            // TODO: if we're in debug mode return error
-            //       if we're in release mode kill the client
-            return err;
+            if (std.builtin.mode == std.builtin.Mode.Debug) {
+                std.debug.warn("DEBUG: client[{}] error: {}\n", .{client.getIndexOf(), err});
+                return err;
+            } else {
+                std.debug.warn("RELEASE: client[{}] error: {}\n", .{client.getIndexOf(), err});
+                try client.deinit();
+            }
         }
     };
 }
