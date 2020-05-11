@@ -36,14 +36,14 @@ fn wl_display_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // sync
         0 => {
-            var callback: u32 = object.context.next_u32();
+            var callback: u32 = try object.context.next_u32();
             if (WL_DISPLAY.sync) |sync| {
                 try sync(object.context, object, callback);
             }
         },
         // get_registry
         1 => {
-            var registry: u32 = object.context.next_u32();
+            var registry: u32 = try object.context.next_u32();
             if (WL_DISPLAY.get_registry) |get_registry| {
                 try get_registry(object.context, object, registry);
             }
@@ -113,10 +113,10 @@ fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // bind
         0 => {
-            var name: u32 = object.context.next_u32();
-            var name_string: []u8 = object.context.next_string();
-            var version: u32 = object.context.next_u32();
-            var id: u32 = object.context.next_u32();
+            var name: u32 = try object.context.next_u32();
+            var name_string: []u8 = try object.context.next_string();
+            var version: u32 = try object.context.next_u32();
+            var id: u32 = try object.context.next_u32();
             if (WL_REGISTRY.bind) |bind| {
                 try bind(object.context, object, name, name_string, version, id);
             }
@@ -218,14 +218,14 @@ fn wl_compositor_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // create_surface
         0 => {
-            var id: u32 = object.context.next_u32();
+            var id: u32 = try object.context.next_u32();
             if (WL_COMPOSITOR.create_surface) |create_surface| {
                 try create_surface(object.context, object, id);
             }
         },
         // create_region
         1 => {
-            var id: u32 = object.context.next_u32();
+            var id: u32 = try object.context.next_u32();
             if (WL_COMPOSITOR.create_region) |create_region| {
                 try create_region(object.context, object, id);
             }
@@ -277,12 +277,12 @@ fn wl_shm_pool_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // create_buffer
         0 => {
-            var id: u32 = object.context.next_u32();
-            var offset: i32 = object.context.next_i32();
-            var width: i32 = object.context.next_i32();
-            var height: i32 = object.context.next_i32();
-            var stride: i32 = object.context.next_i32();
-            var format: u32 = object.context.next_u32();
+            var id: u32 = try object.context.next_u32();
+            var offset: i32 = try object.context.next_i32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
+            var stride: i32 = try object.context.next_i32();
+            var format: u32 = try object.context.next_u32();
             if (WL_SHM_POOL.create_buffer) |create_buffer| {
                 try create_buffer(object.context, object, id, offset, width, height, stride, format);
             }
@@ -298,7 +298,7 @@ fn wl_shm_pool_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // resize
         2 => {
-            var size: i32 = object.context.next_i32();
+            var size: i32 = try object.context.next_i32();
             if (WL_SHM_POOL.resize) |resize| {
                 try resize(object.context, object, size);
             }
@@ -335,9 +335,9 @@ fn wl_shm_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // create_pool
         0 => {
-            var id: u32 = object.context.next_u32();
-            var fd: i32 = object.context.next_fd();
-            var size: i32 = object.context.next_i32();
+            var id: u32 = try object.context.next_u32();
+            var fd: i32 = try object.context.next_fd();
+            var size: i32 = try object.context.next_i32();
             if (WL_SHM.create_pool) |create_pool| {
                 try create_pool(object.context, object, id, fd, size);
             }
@@ -539,16 +539,16 @@ fn wl_data_offer_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // accept
         0 => {
-            var serial: u32 = object.context.next_u32();
-            var mime_type: []u8 = object.context.next_string();
+            var serial: u32 = try object.context.next_u32();
+            var mime_type: []u8 = try object.context.next_string();
             if (WL_DATA_OFFER.accept) |accept| {
                 try accept(object.context, object, serial, mime_type);
             }
         },
         // receive
         1 => {
-            var mime_type: []u8 = object.context.next_string();
-            var fd: i32 = object.context.next_fd();
+            var mime_type: []u8 = try object.context.next_string();
+            var fd: i32 = try object.context.next_fd();
             if (WL_DATA_OFFER.receive) |receive| {
                 try receive(object.context, object, mime_type, fd);
             }
@@ -573,8 +573,8 @@ fn wl_data_offer_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_actions
         4 => {
-            var dnd_actions: u32 = object.context.next_u32();
-            var preferred_action: u32 = object.context.next_u32();
+            var dnd_actions: u32 = try object.context.next_u32();
+            var preferred_action: u32 = try object.context.next_u32();
             if (WL_DATA_OFFER.set_actions) |set_actions| {
                 try set_actions(object.context, object, dnd_actions, preferred_action);
             }
@@ -691,7 +691,7 @@ fn wl_data_source_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // offer
         0 => {
-            var mime_type: []u8 = object.context.next_string();
+            var mime_type: []u8 = try object.context.next_string();
             if (WL_DATA_SOURCE.offer) |offer| {
                 try offer(object.context, object, mime_type);
             }
@@ -707,7 +707,7 @@ fn wl_data_source_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_actions
         2 => {
-            var dnd_actions: u32 = object.context.next_u32();
+            var dnd_actions: u32 = try object.context.next_u32();
             if (WL_DATA_SOURCE.set_actions) |set_actions| {
                 try set_actions(object.context, object, dnd_actions);
             }
@@ -865,18 +865,18 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // start_drag
         0 => {
-            var source: ?Object = object.context.objects.getValue(object.context.next_u32());
-            var origin: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var icon: ?Object = object.context.objects.getValue(object.context.next_u32());
-            var serial: u32 = object.context.next_u32();
+            var source: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var origin: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var icon: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var serial: u32 = try object.context.next_u32();
             if (WL_DATA_DEVICE.start_drag) |start_drag| {
                 try start_drag(object.context, object, source, origin, icon, serial);
             }
         },
         // set_selection
         1 => {
-            var source: ?Object = object.context.objects.getValue(object.context.next_u32());
-            var serial: u32 = object.context.next_u32();
+            var source: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var serial: u32 = try object.context.next_u32();
             if (WL_DATA_DEVICE.set_selection) |set_selection| {
                 try set_selection(object.context, object, source, serial);
             }
@@ -1014,15 +1014,15 @@ fn wl_data_device_manager_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // create_data_source
         0 => {
-            var id: u32 = object.context.next_u32();
+            var id: u32 = try object.context.next_u32();
             if (WL_DATA_DEVICE_MANAGER.create_data_source) |create_data_source| {
                 try create_data_source(object.context, object, id);
             }
         },
         // get_data_device
         1 => {
-            var id: u32 = object.context.next_u32();
-            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var id: u32 = try object.context.next_u32();
+            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
             if (WL_DATA_DEVICE_MANAGER.get_data_device) |get_data_device| {
                 try get_data_device(object.context, object, id, seat);
             }
@@ -1066,8 +1066,8 @@ fn wl_shell_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // get_shell_surface
         0 => {
-            var id: u32 = object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var id: u32 = try object.context.next_u32();
+            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
             if (WL_SHELL.get_shell_surface) |get_shell_surface| {
                 try get_shell_surface(object.context, object, id, surface);
             }
@@ -1165,24 +1165,24 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // pong
         0 => {
-            var serial: u32 = object.context.next_u32();
+            var serial: u32 = try object.context.next_u32();
             if (WL_SHELL_SURFACE.pong) |pong| {
                 try pong(object.context, object, serial);
             }
         },
         // move
         1 => {
-            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var serial: u32 = object.context.next_u32();
+            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var serial: u32 = try object.context.next_u32();
             if (WL_SHELL_SURFACE.move) |move| {
                 try move(object.context, object, seat, serial);
             }
         },
         // resize
         2 => {
-            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var serial: u32 = object.context.next_u32();
-            var edges: u32 = object.context.next_u32();
+            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var serial: u32 = try object.context.next_u32();
+            var edges: u32 = try object.context.next_u32();
             if (WL_SHELL_SURFACE.resize) |resize| {
                 try resize(object.context, object, seat, serial, edges);
             }
@@ -1198,52 +1198,52 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_transient
         4 => {
-            var parent: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var x: i32 = object.context.next_i32();
-            var y: i32 = object.context.next_i32();
-            var flags: u32 = object.context.next_u32();
+            var parent: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
+            var flags: u32 = try object.context.next_u32();
             if (WL_SHELL_SURFACE.set_transient) |set_transient| {
                 try set_transient(object.context, object, parent, x, y, flags);
             }
         },
         // set_fullscreen
         5 => {
-            var method: u32 = object.context.next_u32();
-            var framerate: u32 = object.context.next_u32();
-            var output: ?Object = object.context.objects.getValue(object.context.next_u32());
+            var method: u32 = try object.context.next_u32();
+            var framerate: u32 = try object.context.next_u32();
+            var output: ?Object = object.context.objects.getValue(try object.context.next_u32());
             if (WL_SHELL_SURFACE.set_fullscreen) |set_fullscreen| {
                 try set_fullscreen(object.context, object, method, framerate, output);
             }
         },
         // set_popup
         6 => {
-            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var serial: u32 = object.context.next_u32();
-            var parent: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var x: i32 = object.context.next_i32();
-            var y: i32 = object.context.next_i32();
-            var flags: u32 = object.context.next_u32();
+            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var serial: u32 = try object.context.next_u32();
+            var parent: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
+            var flags: u32 = try object.context.next_u32();
             if (WL_SHELL_SURFACE.set_popup) |set_popup| {
                 try set_popup(object.context, object, seat, serial, parent, x, y, flags);
             }
         },
         // set_maximized
         7 => {
-            var output: ?Object = object.context.objects.getValue(object.context.next_u32());
+            var output: ?Object = object.context.objects.getValue(try object.context.next_u32());
             if (WL_SHELL_SURFACE.set_maximized) |set_maximized| {
                 try set_maximized(object.context, object, output);
             }
         },
         // set_title
         8 => {
-            var title: []u8 = object.context.next_string();
+            var title: []u8 = try object.context.next_string();
             if (WL_SHELL_SURFACE.set_title) |set_title| {
                 try set_title(object.context, object, title);
             }
         },
         // set_class
         9 => {
-            var class_: []u8 = object.context.next_string();
+            var class_: []u8 = try object.context.next_string();
             if (WL_SHELL_SURFACE.set_class) |set_class| {
                 try set_class(object.context, object, class_);
             }
@@ -1413,40 +1413,40 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // attach
         1 => {
-            var buffer: ?Object = object.context.objects.getValue(object.context.next_u32());
-            var x: i32 = object.context.next_i32();
-            var y: i32 = object.context.next_i32();
+            var buffer: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
             if (WL_SURFACE.attach) |attach| {
                 try attach(object.context, object, buffer, x, y);
             }
         },
         // damage
         2 => {
-            var x: i32 = object.context.next_i32();
-            var y: i32 = object.context.next_i32();
-            var width: i32 = object.context.next_i32();
-            var height: i32 = object.context.next_i32();
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
             if (WL_SURFACE.damage) |damage| {
                 try damage(object.context, object, x, y, width, height);
             }
         },
         // frame
         3 => {
-            var callback: u32 = object.context.next_u32();
+            var callback: u32 = try object.context.next_u32();
             if (WL_SURFACE.frame) |frame| {
                 try frame(object.context, object, callback);
             }
         },
         // set_opaque_region
         4 => {
-            var region: ?Object = object.context.objects.getValue(object.context.next_u32());
+            var region: ?Object = object.context.objects.getValue(try object.context.next_u32());
             if (WL_SURFACE.set_opaque_region) |set_opaque_region| {
                 try set_opaque_region(object.context, object, region);
             }
         },
         // set_input_region
         5 => {
-            var region: ?Object = object.context.objects.getValue(object.context.next_u32());
+            var region: ?Object = object.context.objects.getValue(try object.context.next_u32());
             if (WL_SURFACE.set_input_region) |set_input_region| {
                 try set_input_region(object.context, object, region);
             }
@@ -1462,24 +1462,24 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_buffer_transform
         7 => {
-            var transform: i32 = object.context.next_i32();
+            var transform: i32 = try object.context.next_i32();
             if (WL_SURFACE.set_buffer_transform) |set_buffer_transform| {
                 try set_buffer_transform(object.context, object, transform);
             }
         },
         // set_buffer_scale
         8 => {
-            var scale: i32 = object.context.next_i32();
+            var scale: i32 = try object.context.next_i32();
             if (WL_SURFACE.set_buffer_scale) |set_buffer_scale| {
                 try set_buffer_scale(object.context, object, scale);
             }
         },
         // damage_buffer
         9 => {
-            var x: i32 = object.context.next_i32();
-            var y: i32 = object.context.next_i32();
-            var width: i32 = object.context.next_i32();
-            var height: i32 = object.context.next_i32();
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
             if (WL_SURFACE.damage_buffer) |damage_buffer| {
                 try damage_buffer(object.context, object, x, y, width, height);
             }
@@ -1562,21 +1562,21 @@ fn wl_seat_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // get_pointer
         0 => {
-            var id: u32 = object.context.next_u32();
+            var id: u32 = try object.context.next_u32();
             if (WL_SEAT.get_pointer) |get_pointer| {
                 try get_pointer(object.context, object, id);
             }
         },
         // get_keyboard
         1 => {
-            var id: u32 = object.context.next_u32();
+            var id: u32 = try object.context.next_u32();
             if (WL_SEAT.get_keyboard) |get_keyboard| {
                 try get_keyboard(object.context, object, id);
             }
         },
         // get_touch
         2 => {
-            var id: u32 = object.context.next_u32();
+            var id: u32 = try object.context.next_u32();
             if (WL_SEAT.get_touch) |get_touch| {
                 try get_touch(object.context, object, id);
             }
@@ -1676,10 +1676,10 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // set_cursor
         0 => {
-            var serial: u32 = object.context.next_u32();
-            var surface: ?Object = object.context.objects.getValue(object.context.next_u32());
-            var hotspot_x: i32 = object.context.next_i32();
-            var hotspot_y: i32 = object.context.next_i32();
+            var serial: u32 = try object.context.next_u32();
+            var surface: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var hotspot_x: i32 = try object.context.next_i32();
+            var hotspot_y: i32 = try object.context.next_i32();
             if (WL_POINTER.set_cursor) |set_cursor| {
                 try set_cursor(object.context, object, serial, surface, hotspot_x, hotspot_y);
             }
@@ -2433,20 +2433,20 @@ fn wl_region_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // add
         1 => {
-            var x: i32 = object.context.next_i32();
-            var y: i32 = object.context.next_i32();
-            var width: i32 = object.context.next_i32();
-            var height: i32 = object.context.next_i32();
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
             if (WL_REGION.add) |add| {
                 try add(object.context, object, x, y, width, height);
             }
         },
         // subtract
         2 => {
-            var x: i32 = object.context.next_i32();
-            var y: i32 = object.context.next_i32();
-            var width: i32 = object.context.next_i32();
-            var height: i32 = object.context.next_i32();
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
             if (WL_REGION.subtract) |subtract| {
                 try subtract(object.context, object, x, y, width, height);
             }
@@ -2501,9 +2501,9 @@ fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // get_subsurface
         1 => {
-            var id: u32 = object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var parent: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var id: u32 = try object.context.next_u32();
+            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var parent: Object = object.context.objects.getValue(try object.context.next_u32()).?;
             if (WL_SUBCOMPOSITOR.get_subsurface) |get_subsurface| {
                 try get_subsurface(object.context, object, id, surface, parent);
             }
@@ -2592,22 +2592,22 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_position
         1 => {
-            var x: i32 = object.context.next_i32();
-            var y: i32 = object.context.next_i32();
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
             if (WL_SUBSURFACE.set_position) |set_position| {
                 try set_position(object.context, object, x, y);
             }
         },
         // place_above
         2 => {
-            var sibling: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var sibling: Object = object.context.objects.getValue(try object.context.next_u32()).?;
             if (WL_SUBSURFACE.place_above) |place_above| {
                 try place_above(object.context, object, sibling);
             }
         },
         // place_below
         3 => {
-            var sibling: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var sibling: Object = object.context.objects.getValue(try object.context.next_u32()).?;
             if (WL_SUBSURFACE.place_below) |place_below| {
                 try place_below(object.context, object, sibling);
             }
@@ -2696,22 +2696,22 @@ fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // create_positioner
         1 => {
-            var id: u32 = object.context.next_u32();
+            var id: u32 = try object.context.next_u32();
             if (XDG_WM_BASE.create_positioner) |create_positioner| {
                 try create_positioner(object.context, object, id);
             }
         },
         // get_xdg_surface
         2 => {
-            var id: u32 = object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var id: u32 = try object.context.next_u32();
+            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
             if (XDG_WM_BASE.get_xdg_surface) |get_xdg_surface| {
                 try get_xdg_surface(object.context, object, id, surface);
             }
         },
         // pong
         3 => {
-            var serial: u32 = object.context.next_u32();
+            var serial: u32 = try object.context.next_u32();
             if (XDG_WM_BASE.pong) |pong| {
                 try pong(object.context, object, serial);
             }
@@ -2822,47 +2822,47 @@ fn xdg_positioner_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_size
         1 => {
-            var width: i32 = object.context.next_i32();
-            var height: i32 = object.context.next_i32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
             if (XDG_POSITIONER.set_size) |set_size| {
                 try set_size(object.context, object, width, height);
             }
         },
         // set_anchor_rect
         2 => {
-            var x: i32 = object.context.next_i32();
-            var y: i32 = object.context.next_i32();
-            var width: i32 = object.context.next_i32();
-            var height: i32 = object.context.next_i32();
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
             if (XDG_POSITIONER.set_anchor_rect) |set_anchor_rect| {
                 try set_anchor_rect(object.context, object, x, y, width, height);
             }
         },
         // set_anchor
         3 => {
-            var anchor: u32 = object.context.next_u32();
+            var anchor: u32 = try object.context.next_u32();
             if (XDG_POSITIONER.set_anchor) |set_anchor| {
                 try set_anchor(object.context, object, anchor);
             }
         },
         // set_gravity
         4 => {
-            var gravity: u32 = object.context.next_u32();
+            var gravity: u32 = try object.context.next_u32();
             if (XDG_POSITIONER.set_gravity) |set_gravity| {
                 try set_gravity(object.context, object, gravity);
             }
         },
         // set_constraint_adjustment
         5 => {
-            var constraint_adjustment: u32 = object.context.next_u32();
+            var constraint_adjustment: u32 = try object.context.next_u32();
             if (XDG_POSITIONER.set_constraint_adjustment) |set_constraint_adjustment| {
                 try set_constraint_adjustment(object.context, object, constraint_adjustment);
             }
         },
         // set_offset
         6 => {
-            var x: i32 = object.context.next_i32();
-            var y: i32 = object.context.next_i32();
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
             if (XDG_POSITIONER.set_offset) |set_offset| {
                 try set_offset(object.context, object, x, y);
             }
@@ -2973,33 +2973,33 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // get_toplevel
         1 => {
-            var id: u32 = object.context.next_u32();
+            var id: u32 = try object.context.next_u32();
             if (XDG_SURFACE.get_toplevel) |get_toplevel| {
                 try get_toplevel(object.context, object, id);
             }
         },
         // get_popup
         2 => {
-            var id: u32 = object.context.next_u32();
-            var parent: ?Object = object.context.objects.getValue(object.context.next_u32());
-            var positioner: Object = object.context.objects.getValue(object.context.next_u32()).?;
+            var id: u32 = try object.context.next_u32();
+            var parent: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var positioner: Object = object.context.objects.getValue(try object.context.next_u32()).?;
             if (XDG_SURFACE.get_popup) |get_popup| {
                 try get_popup(object.context, object, id, parent, positioner);
             }
         },
         // set_window_geometry
         3 => {
-            var x: i32 = object.context.next_i32();
-            var y: i32 = object.context.next_i32();
-            var width: i32 = object.context.next_i32();
-            var height: i32 = object.context.next_i32();
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
             if (XDG_SURFACE.set_window_geometry) |set_window_geometry| {
                 try set_window_geometry(object.context, object, x, y, width, height);
             }
         },
         // ack_configure
         4 => {
-            var serial: u32 = object.context.next_u32();
+            var serial: u32 = try object.context.next_u32();
             if (XDG_SURFACE.ack_configure) |ack_configure| {
                 try ack_configure(object.context, object, serial);
             }
@@ -3166,64 +3166,64 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_parent
         1 => {
-            var parent: ?Object = object.context.objects.getValue(object.context.next_u32());
+            var parent: ?Object = object.context.objects.getValue(try object.context.next_u32());
             if (XDG_TOPLEVEL.set_parent) |set_parent| {
                 try set_parent(object.context, object, parent);
             }
         },
         // set_title
         2 => {
-            var title: []u8 = object.context.next_string();
+            var title: []u8 = try object.context.next_string();
             if (XDG_TOPLEVEL.set_title) |set_title| {
                 try set_title(object.context, object, title);
             }
         },
         // set_app_id
         3 => {
-            var app_id: []u8 = object.context.next_string();
+            var app_id: []u8 = try object.context.next_string();
             if (XDG_TOPLEVEL.set_app_id) |set_app_id| {
                 try set_app_id(object.context, object, app_id);
             }
         },
         // show_window_menu
         4 => {
-            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var serial: u32 = object.context.next_u32();
-            var x: i32 = object.context.next_i32();
-            var y: i32 = object.context.next_i32();
+            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var serial: u32 = try object.context.next_u32();
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
             if (XDG_TOPLEVEL.show_window_menu) |show_window_menu| {
                 try show_window_menu(object.context, object, seat, serial, x, y);
             }
         },
         // move
         5 => {
-            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var serial: u32 = object.context.next_u32();
+            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var serial: u32 = try object.context.next_u32();
             if (XDG_TOPLEVEL.move) |move| {
                 try move(object.context, object, seat, serial);
             }
         },
         // resize
         6 => {
-            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var serial: u32 = object.context.next_u32();
-            var edges: u32 = object.context.next_u32();
+            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var serial: u32 = try object.context.next_u32();
+            var edges: u32 = try object.context.next_u32();
             if (XDG_TOPLEVEL.resize) |resize| {
                 try resize(object.context, object, seat, serial, edges);
             }
         },
         // set_max_size
         7 => {
-            var width: i32 = object.context.next_i32();
-            var height: i32 = object.context.next_i32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
             if (XDG_TOPLEVEL.set_max_size) |set_max_size| {
                 try set_max_size(object.context, object, width, height);
             }
         },
         // set_min_size
         8 => {
-            var width: i32 = object.context.next_i32();
-            var height: i32 = object.context.next_i32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
             if (XDG_TOPLEVEL.set_min_size) |set_min_size| {
                 try set_min_size(object.context, object, width, height);
             }
@@ -3248,7 +3248,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_fullscreen
         11 => {
-            var output: ?Object = object.context.objects.getValue(object.context.next_u32());
+            var output: ?Object = object.context.objects.getValue(try object.context.next_u32());
             if (XDG_TOPLEVEL.set_fullscreen) |set_fullscreen| {
                 try set_fullscreen(object.context, object, output);
             }
@@ -3384,8 +3384,8 @@ fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // grab
         1 => {
-            var seat: Object = object.context.objects.getValue(object.context.next_u32()).?;
-            var serial: u32 = object.context.next_u32();
+            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var serial: u32 = try object.context.next_u32();
             if (XDG_POPUP.grab) |grab| {
                 try grab(object.context, object, seat, serial);
             }
@@ -3418,6 +3418,57 @@ pub fn xdg_popup_send_configure(object: Object, x: i32, y: i32, width: i32, heig
 // point.
 //
 pub fn xdg_popup_send_popup_done(object: Object) anyerror!void {
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 1);
+}
+
+// fw_control
+pub const fw_control_interface = struct {
+    // factory for creating dmabuf-based wl_buffers
+    get_clients: ?fn (
+        *Context,
+        Object,
+    ) anyerror!void,
+};
+
+fn fw_control_get_clients_default(context: *Context, object: Object) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+pub var FW_CONTROL = fw_control_interface{
+    .get_clients = fw_control_get_clients_default,
+};
+
+pub fn new_fw_control(id: u32, context: *Context, container: usize) Object {
+    return Object{
+        .id = id,
+        .dispatch = fw_control_dispatch,
+        .context = context,
+        .version = 0,
+        .container = container,
+    };
+}
+
+fn fw_control_dispatch(object: Object, opcode: u16) anyerror!void {
+    switch (opcode) {
+        // get_clients
+        0 => {
+            if (FW_CONTROL.get_clients) |get_clients| {
+                try get_clients(
+                    object.context,
+                    object,
+                );
+            }
+        },
+        else => {},
+    }
+}
+pub fn fw_control_send_client(object: Object, index: u32) anyerror!void {
+    object.context.startWrite();
+    object.context.putU32(index);
+    object.context.finishWrite(object.id, 0);
+}
+pub fn fw_control_send_done(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 1);
 }
