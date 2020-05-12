@@ -21,6 +21,7 @@ pub const GLFWBackend = struct {
 
         return GLFWOutput {
             .window = window,
+            .backend = self,
         };
     }
 
@@ -69,6 +70,7 @@ fn resizeCallback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(
 
 pub const GLFWOutput = struct {
     window: ?*c.GLFWwindow,
+    backend: *GLFWBackend,
 
     const Self = @This();
 
