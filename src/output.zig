@@ -23,6 +23,13 @@ pub const Output = union(BackendType) {
         };
     }
 
+    pub fn end(self: Self) void {
+        return switch (self) {
+            BackendType.Headless => |headless_output| headless_output.end(),
+            BackendType.GLFW => |glfw_output| glfw_output.end(),
+        };
+    }
+
     pub fn swap(self: Self) void {
         return switch (self) {
             BackendType.Headless => |headless_output| headless_output.swap(),

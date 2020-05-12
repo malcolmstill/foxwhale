@@ -23,6 +23,9 @@ pub const HeadlessOutput = struct {
     pub fn begin(self: Self) void {
     }
 
+    pub fn end(self: Self) void {
+    }
+
     pub fn swap(self: Self) void {
     }
 

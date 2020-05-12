@@ -79,6 +79,10 @@ pub const GLFWOutput = struct {
         c.glfwMakeContextCurrent(self.window);
     }
 
+    pub fn end(self: Self) void {
+        c.glfwMakeContextCurrent(self.backend.hidden);
+    }
+
     pub fn swap(self: Self) void {
         c.glfwSwapBuffers(self.window);
     }
