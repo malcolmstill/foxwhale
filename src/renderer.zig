@@ -91,7 +91,6 @@ fn renderSurface(program: c_uint, texture: u32) !void {
     c.glDrawArrays(c.GL_TRIANGLES, 0, 28/4);
     try checkGLError();
 
-
     c.glDeleteVertexArrays(1, &vao);
     try checkGLError();
 
@@ -129,13 +128,16 @@ fn compileShader(source: []const u8, shader_type: c_uint) !c_uint {
     c.glShaderSource(shader, 1, &source.ptr, null);
     try checkGLError();
     c.glCompileShader(shader);
+    try checkGLError();
 
     var status: i32 = c.GL_TRUE;
     c.glGetShaderiv(shader, c.GL_COMPILE_STATUS, &status);
     if (status == c.GL_FALSE) {
         var log_length: c_int = 0;
         c.glGetShaderiv(shader, c.GL_INFO_LOG_LENGTH, &log_length);
+        try checkGLError();
         c.glGetShaderInfoLog(shader, log_length, null, log[0..]);
+        try checkGLError();
 
         std.debug.warn("log: {}\n", .{log[0..std.math.min(log.len, @intCast(usize, log_length))]});
 
@@ -193,6 +195,7 @@ var identity: [16]f32 = [_]f32{
 
 fn setUniformMatrix(program: c_uint, location_string: []const u8, matrix: [16]f32) !void {
     var location = c.glGetUniformLocation(program, location_string.ptr);
+    try checkGLError();
     if (location == -1) {
         return error.UniformNotFound;
     }
@@ -202,6 +205,7 @@ fn setUniformMatrix(program: c_uint, location_string: []const u8, matrix: [16]f3
 
 fn setUniformFloat(program: c_uint, location_string: []const u8, value: f32) !void {
     var location = c.glGetUniformLocation(program, location_string.ptr);
+    try checkGLError();
     if (location == -1) {
         return error.UniformNotFound;
     }
@@ -211,6 +215,7 @@ fn setUniformFloat(program: c_uint, location_string: []const u8, value: f32) !vo
 
 fn setVertexAttrib(program: c_uint, attribute_string: []const u8, offset: c_uint) !void {
     var attribute = c.glGetAttribLocation(program, attribute_string.ptr);
+    try checkGLError();
     if (attribute == -1) {
         return error.AttributeNotFound;
     }
