@@ -52,7 +52,6 @@ pub const ShmBuffer = struct {
     const Self = @This();
 
     pub fn deinit(self: *Self) void {
-        std.debug.warn("deinit buffer\n", .{});
         self.in_use = false;
     }
 
