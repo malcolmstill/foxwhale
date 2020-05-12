@@ -26,11 +26,6 @@ pub const Window = struct {
     opaque_region_id: ?u32,
     window_geometry: ?Rectangle,
 
-    min_width: ?i32,
-    min_height: ?i32,
-    max_width: ?i32,
-    max_height: ?i32,
-
     state: [2]BufferedState = undefined,
     stateIndex: u1 = 0,
 
@@ -58,10 +53,8 @@ pub const Window = struct {
         self.input_region_id = null;
         self.opaque_region_id = null;
 
-        self.min_width = null;
-        self.min_height = null;
-        self.max_width = null;
-        self.max_height = null;
+        self.state[0].deinit();
+        self.state[1].deinit();
 
         self.width = 0;
         self.height = 0;
@@ -111,6 +104,23 @@ const BufferedState = struct {
     y: i32 = 0,
     width: u32 = 0,
     height: u32 = 0,
+    scale: i32 = 1,
+
+    min_width: ?i32,
+    min_height: ?i32,
+    max_width: ?i32,
+    max_height: ?i32,
+
+    const Self = @This();
+
+    fn deinit(self: *Self) void {
+        self.scale = 1;
+
+        self.min_width = null;
+        self.min_height = null;
+        self.max_width = null;
+        self.max_height = null;
+    }
 };
 
 pub fn releaseWindows(client: *Client) !void {
