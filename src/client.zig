@@ -36,6 +36,15 @@ pub const Client = struct {
         var freed_index = CLIENTS.deinit(self);
         self.context.deinit();
 
+        self.wl_registry_id = null;
+        self.wl_output_id = null;
+        self.wl_seat_id = null;
+        self.wl_compositor_id = null;
+        self.wl_subcompositor_id = null;
+        self.wl_shm_id = null;
+        self.xdg_wm_base_id = null;
+        self.fw_control_id = null;
+
         shm_pool.releaseShmPools(self);
         shm_buffer.releaseShmBuffers(self);
         try window.releaseWindows(self);
