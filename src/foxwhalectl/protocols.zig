@@ -2712,3 +2712,9 @@ pub fn fw_control_send_get_clients(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 0);
 }
+//         Cleans up fw_control object.
+//
+pub fn fw_control_send_destroy(object: Object) anyerror!void {
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 1);
+}

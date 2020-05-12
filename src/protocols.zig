@@ -3429,14 +3429,23 @@ pub const fw_control_interface = struct {
         *Context,
         Object,
     ) anyerror!void,
+    destroy: ?fn (
+        *Context,
+        Object,
+    ) anyerror!void,
 };
 
 fn fw_control_get_clients_default(context: *Context, object: Object) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
+fn fw_control_destroy_default(context: *Context, object: Object) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
 pub var FW_CONTROL = fw_control_interface{
     .get_clients = fw_control_get_clients_default,
+    .destroy = fw_control_destroy_default,
 };
 
 pub fn new_fw_control(id: u32, context: *Context, container: usize) Object {
@@ -3455,6 +3464,15 @@ fn fw_control_dispatch(object: Object, opcode: u16) anyerror!void {
         0 => {
             if (FW_CONTROL.get_clients) |get_clients| {
                 try get_clients(
+                    object.context,
+                    object,
+                );
+            }
+        },
+        // destroy
+        1 => {
+            if (FW_CONTROL.destroy) |destroy| {
+                try destroy(
                     object.context,
                     object,
                 );
