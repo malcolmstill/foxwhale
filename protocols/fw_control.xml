@@ -25,73 +25,16 @@
   </copyright>
 
   <interface name="fw_control" version="1">
-    <description summary="factory for creating dmabuf-based wl_buffers">
-      Following the interfaces from:
-      https://www.khronos.org/registry/egl/extensions/EXT/EGL_EXT_image_dma_buf_import.txt
-      https://www.khronos.org/registry/EGL/extensions/EXT/EGL_EXT_image_dma_buf_import_modifiers.txt
-      and the Linux DRM sub-system's AddFb2 ioctl.
-
-      This interface offers ways to create generic dmabuf-based
-      wl_buffers. Immediately after a client binds to this interface,
-      the set of supported formats and format modifiers is sent with
-      'format' and 'modifier' events.
-
-      The following are required from clients:
-
-      - Clients must ensure that either all data in the dma-buf is
-        coherent for all subsequent read access or that coherency is
-        correctly handled by the underlying kernel-side dma-buf
-        implementation.
-
-      - Don't make any more attachments after sending the buffer to the
-        compositor. Making more attachments later increases the risk of
-        the compositor not being able to use (re-import) an existing
-        dmabuf-based wl_buffer.
-
-      The underlying graphics stack must ensure the following:
-
-      - The dmabuf file descriptors relayed to the server will stay valid
-        for the whole lifetime of the wl_buffer. This means the server may
-        at any time use those fds to import the dmabuf into any kernel
-        sub-system that might accept it.
-
-      To create a wl_buffer from one or more dmabufs, a client creates a
-      zwp_linux_dmabuf_params_v1 object with a zwp_linux_dmabuf_v1.create_params
-      request. All planes required by the intended format are added with
-      the 'add' request. Finally, a 'create' or 'create_immed' request is
-      issued, which has the following outcome depending on the import success.
-
-      The 'create' request,
-      - on success, triggers a 'created' event which provides the final
-        wl_buffer to the client.
-      - on failure, triggers a 'failed' event to convey that the server
-        cannot use the dmabufs received from the client.
-
-      For the 'create_immed' request,
-      - on success, the server immediately imports the added dmabufs to
-        create a wl_buffer. No event is sent from the server in this case.
-      - on failure, the server can choose to either:
-        - terminate the client by raising a fatal error.
-        - mark the wl_buffer as failed, and send a 'failed' event to the
-          client. If the client uses a failed wl_buffer as an argument to any
-          request, the behaviour is compositor implementation-defined.
-
-      Warning! The protocol described in this file is experimental and
-      backward incompatible changes may be made. Backward compatible changes
-      may be added together with the corresponding interface version bump.
-      Backward incompatible changes are done by bumping the version number in
-      the protocol and interface names and resetting the interface version.
-      Once the protocol is to be declared stable, the 'z' prefix and the
-      version number in the protocol and interface names are removed and the
-      interface version number is reset.
+    <description summary="protocol for querying and controlling foxwhale">
+      fw_control defines an interface for a a client to query and control
+      foxwhale. It is intended to used primarily by foxwhalectl but there 
+      is no reason that arbitrary clients can't implement some or all of
+      the protocol for whatever suits their needs.
     </description>
 
     <request name="get_clients">
       <description summary="gets_clients gets current list of clients">
-        This temporary object is used to collect multiple dmabuf handles into
-        a single batch to create a wl_buffer. It can only be used once and
-        should be destroyed after a 'created' or 'failed' event has been
-        received.
+        Gets metadata about all the clients currently connected to foxwhale.
       </description>
     </request>
 
