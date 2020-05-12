@@ -83,6 +83,10 @@ pub const Output = union(BackendType) {
             else => return,
         };
     }
+
+    pub fn getIndexOf(self: *Self) usize {
+        return OUTPUTS.getIndexOf(self);
+    }
 };
 
 pub fn newOutput(backend: *Backend, width: i32, height: i32) !*Output {
