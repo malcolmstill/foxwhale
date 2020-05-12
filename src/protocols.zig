@@ -3424,7 +3424,7 @@ pub fn xdg_popup_send_popup_done(object: Object) anyerror!void {
 
 // fw_control
 pub const fw_control_interface = struct {
-    // factory for creating dmabuf-based wl_buffers
+    // protocol for querying and controlling foxwhale
     get_clients: ?fn (
         *Context,
         Object,

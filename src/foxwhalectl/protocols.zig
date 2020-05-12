@@ -2651,7 +2651,7 @@ pub fn wl_subsurface_send_set_desync(object: Object) anyerror!void {
 
 // fw_control
 pub const fw_control_interface = struct {
-    // factory for creating dmabuf-based wl_buffers
+    // protocol for querying and controlling foxwhale
     client: ?fn (*Context, Object, u32) anyerror!void,
     done: ?fn (
         *Context,
@@ -2703,10 +2703,7 @@ fn fw_control_dispatch(object: Object, opcode: u16) anyerror!void {
         else => {},
     }
 }
-//         This temporary object is used to collect multiple dmabuf handles into
-//         a single batch to create a wl_buffer. It can only be used once and
-//         should be destroyed after a 'created' or 'failed' event has been
-//         received.
+//         Gets metadata about all the clients currently connected to foxwhale.
 //
 pub fn fw_control_send_get_clients(object: Object) anyerror!void {
     object.context.startWrite();
