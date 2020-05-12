@@ -16,6 +16,12 @@ fn set_title(context: *Context, xdg_toplevel: Object, title: []u8) anyerror!void
     std.debug.warn("window: {}\n", .{window.title});
 }
 
+fn set_app_id(context: *Context, xdg_toplevel: Object, app_id: []u8) anyerror!void {
+    var window = @intToPtr(*Window, xdg_toplevel.container);
+    var len = std.math.min(window.app_id.len, app_id.len);
+    std.mem.copy(u8, window.app_id[0..len], app_id[0..len]);
+}
+
 fn set_max_size(context: *Context, xdg_toplevel: Object, width: i32, height: i32) anyerror!void {
     var pending = @intToPtr(*Window, xdg_toplevel.container).pending();
 
@@ -59,6 +65,7 @@ fn destroy(context: *Context, xdg_toplevel: Object) anyerror!void {
 pub fn init() void {
     prot.XDG_TOPLEVEL.set_parent = set_parent;
     prot.XDG_TOPLEVEL.set_title = set_title;
+    prot.XDG_TOPLEVEL.set_app_id = set_app_id;
     prot.XDG_TOPLEVEL.set_max_size = set_max_size;
     prot.XDG_TOPLEVEL.set_min_size = set_min_size;
     prot.XDG_TOPLEVEL.destroy = destroy;

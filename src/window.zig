@@ -32,6 +32,7 @@ pub const Window = struct {
     stateIndex: u1 = 0,
 
     title: [128]u8 = undefined,
+    app_id: [256]u8 = undefined,
     callbacks: LinearFifo(u32, LinearFifoBufferType{ .Static = 32 }),
 
     const Self = @This();
