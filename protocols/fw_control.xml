@@ -95,6 +95,12 @@
       </description>
     </request>
 
+    <request name="destroy" type="destructor">
+      <description summary="delete this object, used or not">
+        Cleans up fw_control object.
+      </description>
+    </request>
+
     <event name="client">
       <arg name="index" type="uint" summary="client index"/>
     </event>
