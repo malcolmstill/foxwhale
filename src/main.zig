@@ -40,6 +40,7 @@ pub fn main() anyerror!void {
             next_output.begin();
             try render.render(next_output);
             next_output.swap();
+            next_output.end();
 
             if (next_output.shouldClose()) {
                 try next_output.deinit();
