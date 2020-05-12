@@ -12,34 +12,34 @@ fn set_title(context: *Context, xdg_toplevel: Object, title: []u8) anyerror!void
 }
 
 fn set_max_size(context: *Context, xdg_toplevel: Object, width: i32, height: i32) anyerror!void {
-    var window = @intToPtr(*Window, xdg_toplevel.container);
+    var pending = @intToPtr(*Window, xdg_toplevel.container).pending();
 
     if (width <= 0) {
-        window.max_width = null;
+        pending.max_width = null;
     } else {
-        window.max_width = width;
+        pending.max_width = width;
     }
 
     if (height <= 0) {
-        window.max_height = null;
+        pending.max_height = null;
     } else {
-        window.max_height = height;
+        pending.max_height = height;
     }
 }
 
 fn set_min_size(context: *Context, xdg_toplevel: Object, width: i32, height: i32) anyerror!void {
-    var window = @intToPtr(*Window, xdg_toplevel.container);
+    var pending = @intToPtr(*Window, xdg_toplevel.container).pending();
 
     if (width <= 0) {
-        window.min_width = null;
+        pending.min_width = null;
     } else {
-        window.min_width = width;
+        pending.min_width = width;
     }
 
     if (height <= 0) {
-        window.min_height = null;
+        pending.min_height = null;
     } else {
-        window.min_height = height;
+        pending.min_height = height;
     }
 }
 
