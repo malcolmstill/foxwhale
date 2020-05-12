@@ -72,6 +72,13 @@ fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, ve
         },
         9 => {},
         10 => {},
+        11 => {
+            var fw_control = prot.new_fw_control(new_id, context, 0);
+            fw_control.version = version;
+            context.client.fw_control_id = fw_control.id;
+
+            try context.register(fw_control);
+        },
         else => {},
     }
 }
