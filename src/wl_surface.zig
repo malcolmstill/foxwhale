@@ -41,6 +41,11 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
     } else |err| {}
 }
 
+fn set_buffer_scale(context: *Context, wl_surface: Object, scale: i32) anyerror!void {
+    var pending = @intToPtr(*Window, wl_surface.container).pending();
+    pending.scale = scale;
+}
+
 fn damage(context: *Context, wl_surface: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     // std.debug.warn("damage does nothing\n", .{});
 }
@@ -93,6 +98,7 @@ fn destroy(context: *Context, wl_surface: Object) anyerror!void {
 }
 
 pub fn init() void {
+    prot.WL_SURFACE.set_buffer_scale = set_buffer_scale;
     prot.WL_SURFACE.commit = commit;
     prot.WL_SURFACE.damage = damage;
     prot.WL_SURFACE.attach = attach;
