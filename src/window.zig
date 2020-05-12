@@ -13,6 +13,8 @@ pub const Window = struct {
     in_use: bool = false,
     client: *Client,
 
+    parent: ?*Window,
+
     texture: ?u32,
     width: i32,
     height: i32,
@@ -46,6 +48,8 @@ pub const Window = struct {
     pub fn deinit(self: *Self) !void {
         std.debug.warn("release window\n", .{});
         self.in_use = false;
+
+        self.parent = null;
 
         self.wl_buffer_id = null;
         self.xdg_surface_id = null;

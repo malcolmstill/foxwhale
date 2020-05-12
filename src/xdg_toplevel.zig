@@ -4,6 +4,11 @@ const Context = @import("client.zig").Context;
 const Object = @import("client.zig").Object;
 const Window = @import("window.zig").Window;
 
+fn set_parent(context: *Context, xdg_toplevel: Object, parent: ?Object) anyerror!void {
+    var window = @intToPtr(*Window, xdg_toplevel.container);
+    window.parent = if (parent) |p| @intToPtr(*Window, p.container) else null;
+}
+
 fn set_title(context: *Context, xdg_toplevel: Object, title: []u8) anyerror!void {
     var window = @intToPtr(*Window, xdg_toplevel.container);
     var len = std.math.min(window.title.len, title.len);
@@ -52,6 +57,7 @@ fn destroy(context: *Context, xdg_toplevel: Object) anyerror!void {
 }
 
 pub fn init() void {
+    prot.XDG_TOPLEVEL.set_parent = set_parent;
     prot.XDG_TOPLEVEL.set_title = set_title;
     prot.XDG_TOPLEVEL.set_max_size = set_max_size;
     prot.XDG_TOPLEVEL.set_min_size = set_min_size;
