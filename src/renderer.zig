@@ -226,6 +226,10 @@ fn setVertexAttrib(program: c_uint, attribute_string: []const u8, offset: c_uint
 }
 
 pub fn makeTexture(width: i32, height: i32, stride: i32, format: u32, data: []u8) !u32 {
+    if (stride*height > data.len) {
+        return error.NotEnoughTextureDataForDimensions;
+    }
+
     var texture: u32 = undefined;
     var err: c_uint = undefined;
 
