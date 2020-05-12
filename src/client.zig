@@ -28,6 +28,7 @@ pub const Client = struct {
     wl_subcompositor_id: ?u32,
     wl_shm_id: ?u32,
     xdg_wm_base_id: ?u32,
+    fw_control_id: ?u32,
 
     const Self = @This();
 
