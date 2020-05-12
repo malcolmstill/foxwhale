@@ -1,8 +1,8 @@
 const std = @import("std");
-const prot = @import("wl/protocols.zig");
+const prot = @import("protocols.zig");
 const out = @import("output.zig");
-const Context = @import("wl/context.zig").Context;
-const Object = @import("wl/context.zig").Object;
+const Context = @import("client.zig").Context;
+const Object = @import("client.zig").Object;
 
 fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, version: u32, new_id: u32) anyerror!void {
     std.debug.warn("bind for {} ({}) with id {} at version {}\n", .{name_string, name, new_id, version});
@@ -72,6 +72,13 @@ fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, ve
         },
         9 => {},
         10 => {},
+        11 => {
+            var fw_control = prot.new_fw_control(new_id, context, 0);
+            fw_control.version = version;
+            context.client.fw_control_id = fw_control.id;
+
+            try context.register(fw_control);
+        },
         else => {},
     }
 }

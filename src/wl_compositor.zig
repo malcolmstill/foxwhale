@@ -1,8 +1,8 @@
 const std = @import("std");
-const prot = @import("wl/protocols.zig");
+const prot = @import("protocols.zig");
 const Client = @import("client.zig").Client;
-const Context = @import("wl/context.zig").Context;
-const Object = @import("wl/context.zig").Object;
+const Context = @import("client.zig").Context;
+const Object = @import("client.zig").Object;
 const win = @import("window.zig");
 const reg = @import("region.zig");
 

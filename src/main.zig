@@ -1,5 +1,5 @@
 const std = @import("std");
-const Context = @import("wl/context.zig").Context;
+const Context = @import("client.zig").Context;
 const Display = @import("display.zig").Display;
 const epoll = @import("epoll.zig");
 const Backend = @import("backend/backend.zig").Backend;

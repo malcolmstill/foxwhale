@@ -1,6 +1,6 @@
 const std = @import("std");
 const clients = @import("client.zig");
-const prot = @import("wl/protocols.zig");
+const prot = @import("protocols.zig");
 const Stalloc = @import("stalloc.zig").Stalloc;
 const Backend = @import("backend/backend.zig").Backend;
 const BackendType = @import("backend/backend.zig").BackendType;

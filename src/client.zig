@@ -1,8 +1,7 @@
 const std = @import("std");
 const epoll = @import("epoll.zig");
-const Object = @import("wl/context.zig").Object;
-const Context = @import("wl/context.zig").Context;
-const prot = @import("wl/protocols.zig");
+const WlContext = @import("wl/context.zig").Context;
+const prot = @import("protocols.zig");
 const shm_pool = @import("shm_pool.zig");
 const shm_buffer = @import("shm_buffer.zig");
 const window = @import("window.zig");
@@ -12,10 +11,13 @@ const Stalloc = @import("stalloc.zig").Stalloc;
 
 pub var CLIENTS: Stalloc(void, Client, 256) = undefined;
 
+pub const Context = WlContext(*Client);
+pub const Object = WlContext(*Client).Object;
+
 pub const Client = struct {
     connection: std.net.StreamServer.Connection,
     dispatchable: Dispatchable,
-    context: Context,
+    context: WlContext(*Self),
     serial: u32 = 0,
 
     wl_display: Object,
@@ -26,12 +28,22 @@ pub const Client = struct {
     wl_subcompositor_id: ?u32,
     wl_shm_id: ?u32,
     xdg_wm_base_id: ?u32,
+    fw_control_id: ?u32,
 
     const Self = @This();
 
     pub fn deinit(self: *Self) !void {
         var freed_index = CLIENTS.deinit(self);
         self.context.deinit();
+
+        self.wl_registry_id = null;
+        self.wl_output_id = null;
+        self.wl_seat_id = null;
+        self.wl_compositor_id = null;
+        self.wl_subcompositor_id = null;
+        self.wl_shm_id = null;
+        self.xdg_wm_base_id = null;
+        self.fw_control_id = null;
 
         shm_pool.releaseShmPools(self);
         shm_buffer.releaseShmBuffers(self);
@@ -85,9 +97,13 @@ fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
             std.debug.warn("client {} sigbus'd\n", .{client.getIndexOf()});
             try client.deinit();
         } else {
-            // TODO: if we're in debug mode return error
-            //       if we're in release mode kill the client
-            return err;
+            if (std.builtin.mode == std.builtin.Mode.Debug) {
+                std.debug.warn("DEBUG: client[{}] error: {}\n", .{client.getIndexOf(), err});
+                return err;
+            } else {
+                std.debug.warn("RELEASE: client[{}] error: {}\n", .{client.getIndexOf(), err});
+                try client.deinit();
+            }
         }
     };
 }

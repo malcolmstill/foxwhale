@@ -1,8 +1,8 @@
 const std = @import("std");
-const prot = @import("wl/protocols.zig");
+const prot = @import("protocols.zig");
 const out = @import("output.zig");
-const Context = @import("wl/context.zig").Context;
-const Object = @import("wl/context.zig").Object;
+const Context = @import("client.zig").Context;
+const Object = @import("client.zig").Object;
 
 fn sync(context: *Context, wl_display: Object, new_id: u32) anyerror!void {
     std.debug.warn("sync with id {}\n", .{new_id});
@@ -35,6 +35,7 @@ fn get_registry(context: *Context, wl_display: Object, new_id: u32) anyerror!voi
     try prot.wl_registry_send_global(wl_registry, 8, "wl_shm\x00", 1);
     // try prot.wl_registry_send_global(wl_registry, 9, "zxdg_decoration_manager_v1\x00", 1);
     // try prot.wl_registry_send_global(wl_registry, 10, "zwp_linux_dmabuf_v1\x00", 3);
+    try prot.wl_registry_send_global(wl_registry, 11, "fw_control\x00", 1);
 
     try context.register(wl_registry);
 }
