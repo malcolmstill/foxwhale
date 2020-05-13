@@ -23,6 +23,7 @@ pub const Window = struct {
     wl_buffer_id: ?u32,
     xdg_surface_id: ?u32,
     xdg_toplevel_id: ?u32,
+    wl_subsurface_id: ?u32,
 
     input_region_id: ?u32,
     opaque_region_id: ?u32,
@@ -55,6 +56,8 @@ pub const Window = struct {
         self.wl_buffer_id = null;
         self.xdg_surface_id = null;
         self.xdg_toplevel_id = null;
+        self.wl_subsurface_id = null;
+
         self.input_region_id = null;
         self.opaque_region_id = null;
 
@@ -105,6 +108,8 @@ pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
 }
 
 const BufferedState = struct {
+    sync: bool = false,
+
     x: i32 = 0,
     y: i32 = 0,
     width: u32 = 0,
@@ -119,6 +124,12 @@ const BufferedState = struct {
     const Self = @This();
 
     fn deinit(self: *Self) void {
+        self.sync = false;
+
+        self.x = 0;
+        self.y = 0;
+        self.width = 0;
+        self.height = 0;
         self.scale = 1;
 
         self.min_width = null;

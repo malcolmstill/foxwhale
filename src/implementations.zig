@@ -11,6 +11,8 @@ const wl_region_impl = @import("wl_region.zig");
 const wl_seat_impl = @import("wl_seat.zig");
 const wl_shm_pool_impl = @import("wl_shm_pool.zig");
 const wl_shm_buffer_impl = @import("wl_shm_buffer.zig");
+const wl_subcompositor_impl = @import("wl_subcompositor.zig");
+const wl_subsurface_impl = @import("wl_subsurface.zig");
 const wl_surface_impl = @import("wl_surface.zig");
 const xdg_base_impl = @import("xdg_base.zig");
 const xdg_surface_impl = @import("xdg_surface.zig");
@@ -26,6 +28,8 @@ pub fn init() void {
     wl_seat_impl.init();
     wl_shm_pool_impl.init();
     wl_shm_buffer_impl.init();
+    wl_subcompositor_impl.init();
+    wl_subsurface_impl.init();
     wl_surface_impl.init();
 
     xdg_base_impl.init();
