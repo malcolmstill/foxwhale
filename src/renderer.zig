@@ -63,7 +63,7 @@ fn renderSurface(program: c_uint, texture: u32) !void {
     c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
     try checkGLError();
 
-    c.glBufferData(c.GL_ARRAY_BUFFER, 4*28, &rectangle[0], c.GL_STATIC_DRAW);
+    c.glBufferData(c.GL_ARRAY_BUFFER, 4*rectangle.len, &rectangle[0], c.GL_STATIC_DRAW);
     try checkGLError();
 
     var vao: u32 = undefined;
@@ -88,7 +88,7 @@ fn renderSurface(program: c_uint, texture: u32) !void {
     c.glBindTexture(c.GL_TEXTURE_2D, texture);
     try checkGLError();
 
-    c.glDrawArrays(c.GL_TRIANGLES, 0, 28/4);
+    c.glDrawArrays(c.GL_TRIANGLES, 0, rectangle.len/4);
     try checkGLError();
 
     c.glDeleteVertexArrays(1, &vao);
