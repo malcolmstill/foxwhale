@@ -54,7 +54,7 @@ pub fn render(output: *Output) !void {
     }
 }
 
-fn renderSurface(program: c_uint, texture: u32) !void {
+pub fn renderSurface(program: c_uint, texture: u32) !void {
     var vbo: u32 = undefined;
 
     c.glGenBuffers(1, &vbo);
@@ -154,7 +154,7 @@ fn orthographicProjection(m: *[16]f32, left: f32, right: f32, top: f32, bottom: 
     m[12] = 0.0;              m[13] = 0.0;              m[14] = 0.0;             m[15] = 1.0;
 }
 
-fn setGeometry(window: Window) void {
+pub fn setGeometry(window: *Window) void {
     rectangle[0] = 0.0;
     rectangle[1] = 0.0;
     rectangle[2] = 0.0;
