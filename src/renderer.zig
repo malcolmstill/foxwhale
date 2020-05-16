@@ -10,17 +10,19 @@ const c = @cImport({
 
 var ortho: [16]f32 = undefined;
 var rectangle: [28]f32 = undefined;
-var PROGRAM: c_uint = undefined;
+pub var PROGRAM: c_uint = undefined;
 
-pub fn render(output: *Output) !void {
-    var width = output.getWidth();
-    var height = output.getHeight();
-
+pub fn clear() !void {
     c.glClearColor(0.3, 0.3, 0.36, 0.0);
     try checkGLError();
 
     c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
     try checkGLError();
+}
+
+pub fn render(output: *Output) !void {
+    var width = output.getWidth();
+    var height = output.getHeight();
 
     c.glUseProgram(PROGRAM);
     try checkGLError();
@@ -33,25 +35,12 @@ pub fn render(output: *Output) !void {
 
     orthographicProjection(&ortho, 0.0, @intToFloat(f32, width), 0.0, @intToFloat(f32, height), -1.0, 1.0);
 
-    // std.debug.warn("ortho: {}, {}, {}, {}\n", .{ortho[0], ortho[1], ortho[2], ortho[3]});
-
     try setUniformMatrix(PROGRAM, "ortho", ortho);
     try setUniformMatrix(PROGRAM, "scale", identity);
     try setUniformMatrix(PROGRAM, "translate", identity);
     try setUniformMatrix(PROGRAM, "origin", identity);
     try setUniformMatrix(PROGRAM, "originInverse", identity);
     try setUniformFloat(PROGRAM, "opacity", 1.0);
-
-    for (windows.WINDOWS) |window| {
-        if (!window.in_use) {
-            continue;
-        }
-
-        if (window.texture) |texture| {
-            setGeometry(window);
-            try renderSurface(PROGRAM, texture);
-        }
-    }
 }
 
 pub fn renderSurface(program: c_uint, texture: u32) !void {
