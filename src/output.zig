@@ -1,6 +1,7 @@
 const std = @import("std");
 const clients = @import("client.zig");
 const prot = @import("protocols.zig");
+const renderer = @import("renderer.zig");
 const Stalloc = @import("stalloc.zig").Stalloc;
 const Backend = @import("backend/backend.zig").Backend;
 const BackendType = @import("backend/backend.zig").BackendType;
@@ -22,11 +23,13 @@ pub const Output = struct {
 
     const Self = @This();
 
-    pub fn begin(self: Self) void {
-        return switch (self.backend) {
+    pub fn begin(self: Self) !void {
+        switch (self.backend) {
             BackendType.Headless => |headless_output| headless_output.begin(),
             BackendType.GLFW => |glfw_output| glfw_output.begin(),
-        };
+        }
+
+        try renderer.clear();
     }
 
     pub fn end(self: Self) void {
