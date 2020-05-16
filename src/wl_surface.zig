@@ -72,9 +72,9 @@ fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {
 fn set_opaque_region(context: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     if (optional_wl_region) |wl_region| {
-        window.opaque_region_id = wl_region.id;
+        window.pending().opaque_region_id = wl_region.id;
     } else {
-        window.opaque_region_id = null;
+        window.pending().opaque_region_id = null;
     }
 }
 
@@ -82,9 +82,9 @@ fn set_opaque_region(context: *Context, wl_surface: Object, optional_wl_region: 
 fn set_input_region(context: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     if (optional_wl_region) |wl_region| {
-        window.input_region_id = wl_region.id;
+        window.pending().input_region_id = wl_region.id;
     } else {
-        window.input_region_id = null;
+        window.pending().input_region_id = null;
     }
 }
 
