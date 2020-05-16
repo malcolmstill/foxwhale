@@ -1,9 +1,12 @@
 const std = @import("std");
 const headless = @import("headless.zig");
 const glfw = @import("glfw.zig");
+const view = @import("../view.zig");
 const HeadlessBackend = @import("headless.zig").HeadlessBackend;
 const GLFWBackend = @import("glfw.zig").GLFWBackend;
 const Output = @import("../output.zig").Output;
+const OutputBackend = @import("../output.zig").OutputBackend;
+const View = @import("../view.zig").View;
 
 pub const BackendType = enum {
     Headless,
@@ -43,10 +46,14 @@ pub const Backend = union(BackendType) {
     }
 
     pub fn newOutput(self: *Backend, w: i32, h: i32) !Output {
-        return switch (self.*) {
-            BackendType.Headless => |*headless_backend| Output{ .Headless = try headless_backend.newOutput(w, h) },
-            BackendType.GLFW => |*glfw_backend| Output{ .GLFW = try glfw_backend.newOutput(w, h) },
-            else => return error.NoSuchBackendType,
+        var output_backend = switch (self.*) {
+            BackendType.Headless => |*headless_backend| OutputBackend{ .Headless = try headless_backend.newOutput(w, h) },
+            BackendType.GLFW => |*glfw_backend| OutputBackend{ .GLFW = try glfw_backend.newOutput(w, h) },
+        };
+
+        return Output{
+            .backend = output_backend,
+            .views = [_]View{view.makeView()} ** 4,
         };
     }
 
