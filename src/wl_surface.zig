@@ -7,6 +7,7 @@ const Object = @import("client.zig").Object;
 const Client = @import("client.zig").Client;
 const ShmBuffer = @import("shm_buffer.zig").ShmBuffer;
 const Window = @import("window.zig").Window;
+const Link = @import("window.zig").Link;
 
 fn commit(context: *Context, wl_surface: Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
@@ -28,6 +29,23 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
             try buffer.endAccess();
             try prot.wl_buffer_send_release(wl_buffer.*);
         }
+    }
+
+    // if we don't already have a toplevel order and this surface
+    // has no parent then it's a toplevel that is yet to be added
+    // to the window list of the view
+    if (window.view != null and window.mapped == false and window.parent == null) {
+        window.top_link = Link {
+            .next = null,
+            .prev = window.view.?.top,
+        };
+
+        if (window.view.?.top) |top| {
+            top.top_link.next = window;
+        }
+
+        window.view.?.top = window;
+        window.mapped = true;
     }
 
     while(window.callbacks.readItem()) |wl_callback_id| {
