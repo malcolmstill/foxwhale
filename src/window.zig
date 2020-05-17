@@ -70,13 +70,26 @@ pub const Window = struct {
         // Now iterate forward rendering each (sub)window
         var forward_it = rear.?.subwindowIterator();
         var i: usize = 0;
-        while(forward_it.next()) |n| {
-            n.ready_for_callback = true;
-            if (n.texture) |texture| {
-                renderer.setGeometry(n);
+        while(forward_it.next()) |window| {
+            window.ready_for_callback = true;
+            if (window.texture) |texture| {
+                try renderer.scale(1.0, 1.0);
+                try renderer.translate(@intToFloat(f32, window.absoluteX()), @intToFloat(f32, window.absoluteY()));
+                try renderer.setUniformMatrix(renderer.PROGRAM, "origin", renderer.identity);
+                try renderer.setUniformMatrix(renderer.PROGRAM, "originInverse", renderer.identity);
+                try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 1.0);
+                renderer.setGeometry(window);
                 try renderer.renderSurface(renderer.PROGRAM, texture);
             }
         }
+    }
+
+    pub fn absoluteX(self: *Self) i32 {
+        return self.current().x + (if (self.parent) |p| p.absoluteX() else 0);
+    }
+
+    pub fn absoluteY(self: *Self) i32 {
+        return self.current().y + (if (self.parent) |p| p.absoluteY() else 0);
     }
 
     pub fn frameCallback(self: *Self) !void {

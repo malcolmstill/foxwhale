@@ -36,11 +36,6 @@ pub fn render(output: *Output) !void {
     orthographicProjection(&ortho, 0.0, @intToFloat(f32, width), 0.0, @intToFloat(f32, height), -1.0, 1.0);
 
     try setUniformMatrix(PROGRAM, "ortho", ortho);
-    try setUniformMatrix(PROGRAM, "scale", identity);
-    try setUniformMatrix(PROGRAM, "translate", identity);
-    try setUniformMatrix(PROGRAM, "origin", identity);
-    try setUniformMatrix(PROGRAM, "originInverse", identity);
-    try setUniformFloat(PROGRAM, "opacity", 1.0);
 }
 
 pub fn renderSurface(program: c_uint, texture: u32) !void {
@@ -175,14 +170,35 @@ pub fn setGeometry(window: *Window) void {
     rectangle[23] = 1.0;
 }
 
-var identity: [16]f32 = [_]f32{
+pub fn translate(x: f32, y: f32) !void {
+    MATRIX = identity;
+    MATRIX[3] = x;
+    MATRIX[7] = y;
+    try setUniformMatrix(PROGRAM, "translate", MATRIX);
+}
+
+pub fn scale(x: f32, y: f32) !void {
+    MATRIX = identity;
+    MATRIX[0] = x;
+    MATRIX[5] = y;
+    try setUniformMatrix(PROGRAM, "scale", MATRIX);
+}
+
+var MATRIX: [16]f32 = [_]f32{
     1.0, 0.0, 0.0, 0.0,
     0.0, 1.0, 0.0, 0.0,
     0.0, 0.0, 1.0, 0.0,
     0.0, 0.0, 0.0, 1.0,
 };
 
-fn setUniformMatrix(program: c_uint, location_string: []const u8, matrix: [16]f32) !void {
+pub const identity: [16]f32 = [_]f32{
+    1.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 1.0,
+};
+
+pub fn setUniformMatrix(program: c_uint, location_string: []const u8, matrix: [16]f32) !void {
     var location = c.glGetUniformLocation(program, location_string.ptr);
     try checkGLError();
     if (location == -1) {
@@ -192,7 +208,7 @@ fn setUniformMatrix(program: c_uint, location_string: []const u8, matrix: [16]f3
     try checkGLError();
 }
 
-fn setUniformFloat(program: c_uint, location_string: []const u8, value: f32) !void {
+pub fn setUniformFloat(program: c_uint, location_string: []const u8, value: f32) !void {
     var location = c.glGetUniformLocation(program, location_string.ptr);
     try checkGLError();
     if (location == -1) {
