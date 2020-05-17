@@ -119,8 +119,8 @@ pub const Window = struct {
                     }
                 }
             } else {
-                if (window.windowUnderPointer(pointer_x, pointer_y)) |w| {
-                    return w;
+                if (window.windowUnderPointer(pointer_x, pointer_y)) |child| {
+                    return child;
                 }
             }
         }
