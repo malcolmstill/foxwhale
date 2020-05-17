@@ -48,15 +48,7 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
         window.mapped = true;
     }
 
-    while(window.callbacks.readItem()) |wl_callback_id| {
-        if (context.get(wl_callback_id)) |wl_callback| {
-            try prot.wl_callback_send_done(wl_callback.*, @truncate(u32, std.time.milliTimestamp()));
-            try context.unregister(wl_callback.*);
-            try prot.wl_display_send_delete_id(context.client.wl_display, wl_callback_id);
-        } else {
-            return error.CallbackIdNotFound;
-        }
-    } else |err| {}
+    window.flip();
 }
 
 fn set_buffer_scale(context: *Context, wl_surface: Object, scale: i32) anyerror!void {

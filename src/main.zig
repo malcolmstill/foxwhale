@@ -8,6 +8,7 @@ const render = @import("renderer.zig");
 const out = @import("output.zig");
 const Output = @import("output.zig").Output;
 const views = @import("view.zig");
+const windows = @import("window.zig");
 
 pub fn main() anyerror!void {
     try epoll.init();
@@ -57,6 +58,12 @@ pub fn main() anyerror!void {
 
             output.swap();
             output.end();
+
+            for (windows.WINDOWS) |*window| {
+                if (window.in_use) {
+                    try window.frameCallback();
+                }
+            }
 
             if (output.shouldClose()) {
                 try output.deinit();

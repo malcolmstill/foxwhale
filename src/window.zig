@@ -1,4 +1,5 @@
 const std = @import("std");
+const prot = @import("protocols.zig");
 const renderer = @import("renderer.zig");
 const Client = @import("client.zig").Client;
 const Rectangle = @import("rectangle.zig").Rectangle;
@@ -18,6 +19,8 @@ pub const Window = struct {
     view: ?*View,
 
     parent: ?*Window,
+
+    ready_for_callback: bool = false,
 
     texture: ?u32,
     width: i32,
@@ -57,10 +60,43 @@ pub const Window = struct {
     }
 
     pub fn render(self: *Self) !void {
-        if (self.texture) |texture| {
-            renderer.setGeometry(self);
-            try renderer.renderSurface(renderer.PROGRAM, texture);
+        // Iterate to rearmost window
+        var backward_it = self.subwindowIterator();
+        var rear: ?*Window = null;
+        while(backward_it.prev()) |p| {
+            rear = p;
         }
+
+        // Now iterate forward rendering each (sub)window
+        var forward_it = rear.?.subwindowIterator();
+        var i: usize = 0;
+        while(forward_it.next()) |n| {
+            n.ready_for_callback = true;
+            if (n.texture) |texture| {
+                renderer.setGeometry(n);
+                try renderer.renderSurface(renderer.PROGRAM, texture);
+            }
+        }
+    }
+
+    pub fn frameCallback(self: *Self) !void {
+        if (self.ready_for_callback == false) {
+            return;
+        }
+
+        while(self.callbacks.readItem()) |wl_callback_id| {
+            if (self.client.context.get(wl_callback_id)) |wl_callback| {
+                try prot.wl_callback_send_done(wl_callback.*, @truncate(u32, std.time.milliTimestamp()));
+                try self.client.context.unregister(wl_callback.*);
+                try prot.wl_display_send_delete_id(self.client.context.client.wl_display, wl_callback_id);
+            } else {
+                return error.CallbackIdNotFound;
+            }
+        } else |err| {
+
+        }
+
+        self.ready_for_callback = false;
     }
 
     // ToplevelIterator provides an iterator for moving
@@ -94,6 +130,86 @@ pub const Window = struct {
         };
     }
 
+    pub const SubwindowIterator = struct {
+        current: ?*Window,
+
+        pub fn next(self: *SubwindowIterator) ?*Window {
+            if (self.current) |window| {
+                self.current = window.current().next;
+                return window;
+            }
+
+            return null;
+        }
+
+        pub fn prev(self: *SubwindowIterator) ?*Window {
+            if (self.current) |window| {
+                self.current = window.current().prev;
+                return window;
+            }
+
+            return null;
+        }
+    };
+
+    pub fn subwindowIterator(self: *Self) SubwindowIterator {
+        return SubwindowIterator {
+            .current = self,
+        };
+    }
+
+    pub fn placeAbove(self: *Self, reference: *Self) void {
+        // 1. Detach window
+        if (self.current().prev) |prev| {
+            prev.pending().next = self.current().next;
+        }
+
+        if (self.current().next) |next| {
+            next.pending().prev = self.current().prev;
+        }
+
+        // 2. window.next may end up being null
+        self.pending().next = null;
+
+        // 3. window.prev will definitely be sibling
+        self.pending().prev = reference;
+
+        // 4. if sibling has next, then next.prev is window and window.next is sibling.next
+        if (reference.current().next) |next| {
+            next.pending().prev = self;
+            self.pending().next = reference.current().next;
+        }
+
+        // 5. sibling.next becomes window
+        reference.pending().next = self;
+    }
+
+    pub fn placeBelow(self: *Self, reference: *Self) void {
+        // 1. Detach window
+        if (self.current().prev) |prev| {
+            prev.pending().next = self.current().next;
+        }
+
+        if (self.current().next) |next| {
+            next.pending().prev = self.current().prev;
+        }
+
+        // 2. window.prev may end up being null
+        self.pending().prev = null;
+
+        // 3. window.next will definitely be sibling
+        self.pending().next = reference;
+
+        // 4. if sibling has prev, then prev.next is window and window.prev is sibling.prev
+        if (reference.current().prev) |prev| {
+            prev.pending().next = self;
+            self.pending().prev = reference.current().prev;
+        }
+
+        // 5. sibling.prev becomes window
+        reference.pending().prev = self;
+    }
+
     pub fn deinit(self: *Self) !void {
         std.debug.warn("release window\n", .{});
         self.in_use = false;
@@ -107,6 +223,8 @@ pub const Window = struct {
 
         self.state[0].deinit();
         self.state[1].deinit();
+
+        self.ready_for_callback = false;
 
         if (self.view) |v| {
             if (v.top == self) {
