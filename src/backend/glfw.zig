@@ -1,4 +1,5 @@
 const std = @import("std");
+const compositor = @import("../compositor.zig");
 const c = @cImport({
     @cInclude("GLFW/glfw3.h");
 });
@@ -16,6 +17,7 @@ pub const GLFWBackend = struct {
         _ = c.glfwSetKeyCallback(window, keyCallback);
         _ = c.glfwSetMouseButtonCallback(window, mouseButtonCallback);
         _ = c.glfwSetFramebufferSizeCallback(window, resizeCallback);
+        _ = c.glfwSetCursorPosCallback(window, cursorPositionCallback);
 
         self.windowCount += 1;
 
@@ -61,11 +63,16 @@ fn mouseButtonCallback(window: ?*c.GLFWwindow, button: c_int, action: c_int, mod
     if (action == c.GLFW_PRESS) {
         c.glfwSetInputMode(window, c.GLFW_CURSOR, c.GLFW_CURSOR_DISABLED);
     }
+    compositor.COMPOSITOR.mouseClick(button, action);
 }
 
 fn resizeCallback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.C) void {
     c.glfwMakeContextCurrent(window);
     c.glViewport(0, 0, width, height);
+}
+
+fn cursorPositionCallback(window: ?*c.GLFWwindow, x: f64, y: f64) callconv(.C) void {
+    compositor.COMPOSITOR.updatePointer(x, y);
 }
 
 pub const GLFWOutput = struct {
