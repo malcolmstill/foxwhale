@@ -60,17 +60,8 @@ pub const Window = struct {
     }
 
     pub fn render(self: *Self) anyerror!void {
-        // Iterate to rearmost window
-        var backward_it = self.subwindowIterator();
-        var rear: ?*Window = null;
-        while(backward_it.prev(self)) |p| {
-            rear = p;
-        }
-
-        // Now iterate forward rendering each (sub)window
-        var forward_it = rear.?.subwindowIterator();
-        var i: usize = 0;
-        while(forward_it.next(self)) |window| {
+        var it = self.forwardIterator();
+        while(it.next()) |window| {
             window.ready_for_callback = true;
             if (window == self) {
                 if (window.texture) |texture| {
@@ -116,43 +107,33 @@ pub const Window = struct {
         self.ready_for_callback = false;
     }
 
-    // ToplevelIterator provides an iterator for moving
-    // between toplevel windows (if the window happens to
-    // be toplevel)
-    pub const ToplevelIterator = struct {
-        current: ?*Window,
-
-        pub fn next(self: *ToplevelIterator) ?*Window {
-            if (self.current) |window| {
-                self.current = window.top_link.next;
-                return window;
+    pub fn windowUnderPointer(self: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
+        var it = self.backwardIterator();
+        while(it.prev()) |window| {
+            if (self == window) {
+                var x = @floatToInt(i32, pointer_x);
+                var y = @floatToInt(i32, pointer_y);
+                if (x >= window.absoluteX() and x <= (window.absoluteX() + window.width)) {
+                    if (y >= window.absoluteY() and y <= (window.absoluteY() + window.height)) {
+                        return window;
+                    }
+                }
+            } else {
+                if (window.windowUnderPointer(pointer_x, pointer_y)) |w| {
+                    return w;
+                }
             }
-
-            return null;
         }
-
-        pub fn prev(self: *ToplevelIterator) ?*Window {
-            if (self.current) |window| {
-                self.current = window.top_link.prev;
-                return window;
-            }
-
-            return null;
-        }
-    };
-
-    pub fn toplevelIterator(self: *Self) ToplevelIterator {
-        return ToplevelIterator {
-            .current = self,
-        };
+        return null;
     }
 
     pub const SubwindowIterator = struct {
         current: ?*Window,
+        parent: ?*Window,
 
-        pub fn next(self: *SubwindowIterator, reference: *Window) ?*Window {
+        pub fn next(self: *SubwindowIterator) ?*Window {
             if (self.current) |window| {
-                if (self.current == reference) {
+                if (self.current == self.parent) {
                     self.current = window.current().children.next;
                 } else {
                     self.current = window.current().siblings.next;
@@ -163,9 +144,9 @@ pub const Window = struct {
             return null;
         }
 
-        pub fn prev(self: *SubwindowIterator, reference: *Window) ?*Window {
+        pub fn prev(self: *SubwindowIterator) ?*Window {
             if (self.current) |window| {
-                if (self.current == reference) {
+                if (self.current == self.parent) {
                     self.current = window.current().children.prev;
                 } else {
                     self.current = window.current().siblings.prev;
@@ -180,6 +161,33 @@ pub const Window = struct {
     pub fn subwindowIterator(self: *Self) SubwindowIterator {
         return SubwindowIterator {
             .current = self,
+            .parent = self,
+        };
+    }
+
+    pub fn forwardIterator(self: *Self) SubwindowIterator {
+        var backward_it = self.subwindowIterator();
+        var rear: ?*Window = null;
+        while(backward_it.prev()) |p| {
+            rear = p;
+        }
+
+        return SubwindowIterator {
+            .current = rear,
+            .parent = self,
+        };
+    }
+
+    pub fn backwardIterator(self: *Self) SubwindowIterator {
+        var forward_it = self.subwindowIterator();
+        var front: ?*Window = null;
+        while(forward_it.next()) |p| {
+            front = p;
+        }
+
+        return SubwindowIterator {
+            .current = front,
+            .parent = self,
         };
     }
 
