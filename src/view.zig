@@ -5,6 +5,7 @@ pub var CURRENT_VIEW: *View = undefined;
 
 pub const View = struct {
     top: ?*Window,
+    pointer_window: ?*Window,
 
     const Self = @This();
 
@@ -12,9 +13,23 @@ pub const View = struct {
         return true;
     }
 
-    pub fn iterator(self: *Self) ?Window.ToplevelIterator {
+    pub fn updatePointer(self: *Self, x: f64, y: f64) void {
+        if (self.top) |top| {
+            var it = top.subwindowIterator();
+            while(it.next()) |window| {
+                if (window.windowUnderPointer(x, y)) |w| {
+                    if (w != self.pointer_window) {
+                        std.debug.warn("new pointer_surface: {}\n", .{w.index});
+                    }
+                    self.pointer_window = w;
+                }
+            }
+        }
+    }
+
+    pub fn iterator(self: *Self) ?Window.SubwindowIterator {
         if(self.top) |top| {
-            var it = top.toplevelIterator();
+            var it = top.subwindowIterator();
 
             // Go to back
             var maybe_window: ?*Window = null;
@@ -22,7 +37,7 @@ pub const View = struct {
                 maybe_window = prev;
             }
             if (maybe_window) |window| {
-                return window.toplevelIterator();
+                return window.subwindowIterator();
             }
         }
         return null;
@@ -36,5 +51,6 @@ pub const View = struct {
 pub fn makeView() View {
     return View{
         .top = null,
+        .pointer_window = null,
     };
 }
