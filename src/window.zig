@@ -59,27 +59,31 @@ pub const Window = struct {
         return &self.state[self.stateIndex +% 1];
     }
 
-    pub fn render(self: *Self) !void {
+    pub fn render(self: *Self) anyerror!void {
         // Iterate to rearmost window
         var backward_it = self.subwindowIterator();
         var rear: ?*Window = null;
-        while(backward_it.prev()) |p| {
+        while(backward_it.prev(self)) |p| {
             rear = p;
         }
 
         // Now iterate forward rendering each (sub)window
         var forward_it = rear.?.subwindowIterator();
         var i: usize = 0;
-        while(forward_it.next()) |window| {
+        while(forward_it.next(self)) |window| {
             window.ready_for_callback = true;
-            if (window.texture) |texture| {
-                try renderer.scale(1.0, 1.0);
-                try renderer.translate(@intToFloat(f32, window.absoluteX()), @intToFloat(f32, window.absoluteY()));
-                try renderer.setUniformMatrix(renderer.PROGRAM, "origin", renderer.identity);
-                try renderer.setUniformMatrix(renderer.PROGRAM, "originInverse", renderer.identity);
-                try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 1.0);
-                renderer.setGeometry(window);
-                try renderer.renderSurface(renderer.PROGRAM, texture);
+            if (window == self) {
+                if (window.texture) |texture| {
+                    try renderer.scale(1.0, 1.0);
+                    try renderer.translate(@intToFloat(f32, window.absoluteX()), @intToFloat(f32, window.absoluteY()));
+                    try renderer.setUniformMatrix(renderer.PROGRAM, "origin", renderer.identity);
+                    try renderer.setUniformMatrix(renderer.PROGRAM, "originInverse", renderer.identity);
+                    try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 0.8);
+                    renderer.setGeometry(window);
+                    try renderer.renderSurface(renderer.PROGRAM, texture);
+                }
+            } else {
+                try window.render();
             }
         }
     }
@@ -146,18 +150,26 @@ pub const Window = struct {
     pub const SubwindowIterator = struct {
         current: ?*Window,
 
-        pub fn next(self: *SubwindowIterator) ?*Window {
+        pub fn next(self: *SubwindowIterator, reference: *Window) ?*Window {
             if (self.current) |window| {
-                self.current = window.current().next;
+                if (self.current == reference) {
+                    self.current = window.current().children.next;
+                } else {
+                    self.current = window.current().siblings.next;
+                }
                 return window;
             }
 
             return null;
         }
 
-        pub fn prev(self: *SubwindowIterator) ?*Window {
+        pub fn prev(self: *SubwindowIterator, reference: *Window) ?*Window {
             if (self.current) |window| {
-                self.current = window.current().prev;
+                if (self.current == reference) {
+                    self.current = window.current().children.prev;
+                } else {
+                    self.current = window.current().siblings.prev;
+                }
                 return window;
             }
 
@@ -171,56 +183,110 @@ pub const Window = struct {
         };
     }
 
+    pub fn detach(self: *Self) void {
+        var prev = self.pending().siblings.prev;
+        var next = self.pending().siblings.next;
+
+        if (prev) |p| {
+            if (p == self.parent) {
+                if (next) |n| {
+                    p.pending().children.next = n;
+                } else {
+                    p.pending().children.next = null;
+                }
+            } else {
+                if (next) |n| {
+                    p.pending().siblings.next = n;
+                } else {
+                    p.pending().siblings.next = null;
+                }
+            }
+        }
+
+        if (next) |n| {
+            if (n == self.parent) {
+                if (prev) |p| {
+                    n.pending().children.prev = p;
+                } else {
+                    n.pending().children.prev = null;
+                }
+            } else {
+                if (prev) |p| {
+                    n.pending().siblings.prev = p;
+                } else {
+                    n.pending().siblings.prev = null;
+                }
+            }
+        }
+
+        self.pending().siblings.prev = null;
+        self.pending().siblings.next = null;
+    }
+
+    pub fn insertAbove(self: *Self, reference: *Self) void {
+        if (reference == self.parent) {
+            var next = reference.pending().children.next;
+            reference.pending().children.next = self;
+
+            if (next) |n| {
+                n.pending().siblings.prev = self;
+            }
+
+            self.pending().siblings.next = next;
+            self.pending().siblings.prev = reference;
+        } else {
+            var next = reference.pending().siblings.next;
+            reference.pending().siblings.next = self;
+
+            if (next) |n| {
+                if (n == self.parent) {
+                    n.pending().children.prev = self;
+                } else {
+                    n.pending().siblings.prev = self;
+                }
+            }
+
+            self.pending().siblings.next = next;
+            self.pending().siblings.prev = reference;
+        }
+    }
+
+    pub fn insertBelow(self: *Self, reference: *Self) void {
+        if (reference == self.parent) {
+            var prev = reference.pending().children.prev;
+            reference.pending().children.prev = self;
+
+            if (prev) |p| {
+                p.pending().siblings.next = self;
+            }
+
+            self.pending().siblings.next = reference;
+            self.pending().siblings.prev = prev;
+        } else {
+            var prev = reference.pending().siblings.prev;
+            reference.pending().siblings.prev = self;
+
+            if (prev) |p| {
+                if (p == self.parent) {
+                    p.pending().children.next = self;
+                } else {
+                    p.pending().siblings.next = self;
+                }
+            }
+
+            self.pending().siblings.next = reference;
+            self.pending().siblings.prev = prev;
+        }
+    }
+
     pub fn placeAbove(self: *Self, reference: *Self) void {
-        // 1. Detach window
-        if (self.current().prev) |prev| {
-            prev.pending().next = self.current().next;
-        }
-
-        if (self.current().next) |next| {
-            next.pending().prev = self.current().prev;
-        }
-
-        // 2. window.next may end up being null
-        self.pending().next = null;
-
-        // 3. window.prev will definitely be sibling
-        self.pending().prev = reference;
-
-        // 4. if sibling has next, then next.prev is window and window.next is sibling.next
-        if (reference.current().next) |next| {
-            next.pending().prev = self;
-            self.pending().next = reference.current().next;
-        }
-
-        // 5. sibling.next becomes window
-        reference.pending().next = self;
+        self.detach();
+        self.insertAbove(reference);
     }
 
     pub fn placeBelow(self: *Self, reference: *Self) void {
-        // 1. Detach window
-        if (self.current().prev) |prev| {
-            prev.pending().next = self.current().next;
-        }
-
-        if (self.current().next) |next| {
-            next.pending().prev = self.current().prev;
-        }
-
-        // 2. window.prev may end up being null
-        self.pending().prev = null;
-
-        // 3. window.next will definitely be sibling
-        self.pending().next = reference;
-
-        // 4. if sibling has prev, then prev.next is window and window.prev is sibling.prev
-        if (reference.current().prev) |prev| {
-            prev.pending().next = self;
-            self.pending().prev = reference.current().prev;
-        }
-
-        // 5. sibling.prev becomes window
-        reference.pending().prev = self;
+        self.detach();
+        self.insertBelow(reference);
     }
 
     pub fn deinit(self: *Self) !void {
@@ -289,8 +355,7 @@ pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
 const BufferedState = struct {
     sync: bool = false,
 
-    prev: ?*Window,
-    next: ?*Window,
+    siblings: Link,
 
     x: i32 = 0,
     y: i32 = 0,
@@ -304,13 +369,15 @@ const BufferedState = struct {
     max_width: ?i32,
     max_height: ?i32,
 
+    children: Link,
+
     const Self = @This();
 
     fn deinit(self: *Self) void {
         self.sync = false;
 
-        self.prev = null;
-        self.next = null;
+        self.siblings.prev = null;
+        self.siblings.next = null;
 
         self.x = 0;
         self.y = 0;
@@ -323,6 +390,9 @@ const BufferedState = struct {
         self.min_height = null;
         self.max_width = null;
         self.max_height = null;
+
+        self.children.prev = null;
+        self.children.next = null;        
     }
 };
 
