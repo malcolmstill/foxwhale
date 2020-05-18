@@ -17,8 +17,7 @@ const Compositor = struct {
 
     pub fn mouseClick(self: *Self, button: i32, action: i32) void {
         std.debug.warn("button: {}, action: {}\n", .{button, action});
-        // if (views.CURRENT_VIEW.update()) |window| {
-        // }
+        views.CURRENT_VIEW.mouseClick(button, action);
     }
 };
 
