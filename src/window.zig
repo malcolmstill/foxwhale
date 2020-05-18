@@ -316,11 +316,8 @@ pub const Window = struct {
         self.ready_for_callback = false;
 
         if (self.view) |view| {
-            if (view.top == self) {
-                view.top = self.toplevel.prev;
-            }
+            view.remove(self);
         }
-        self.toplevel.deinit();
         self.view = null;
         self.mapped = false;
 
