@@ -346,6 +346,8 @@ pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
             window.xdg_surface_id = null;
             window.xdg_toplevel_id = null;
 
+            window.callbacks = LinearFifo(u32, LinearFifoBufferType{ .Static = 32 }).init();
+
             window.texture = null;
             window.width = 0;
             window.height = 0;
