@@ -45,6 +45,8 @@ pub const Window = struct {
     app_id: [256]u8 = undefined,
     callbacks: LinearFifo(u32, LinearFifoBufferType{ .Static = 32 }),
 
+    cursor: ?Cursor = null,
+
     const Self = @This();
 
     // flip double-buffered state
@@ -331,6 +333,8 @@ pub const Window = struct {
         self.view = null;
         self.mapped = false;
 
+        self.cursor = null;
+
         if (self.texture) |texture| {
             self.texture = null;
             // Note that while this can fail, we're doing
@@ -356,6 +360,8 @@ pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
             window.xdg_toplevel_id = null;
 
             window.callbacks = LinearFifo(u32, LinearFifoBufferType{ .Static = 32 }).init();
+
+            window.cursor = null;
 
             window.texture = null;
             window.width = 0;
@@ -446,6 +452,11 @@ pub const Link = struct {
         self.prev = null;
         self.next = null;
     }
+};
+
+pub const Cursor = struct {
+    hotspot_x: i32,
+    hotspot_y: i32,
 };
 
 test "Window + View" {
