@@ -448,7 +448,6 @@ pub const Link = struct {
     }
 };
 
-
 test "Window + View" {
     var c: Client = undefined;
     var v: View = View {
