@@ -6,7 +6,7 @@ const Compositor = struct {
     pointer_x: i32,
     pointer_y: i32,
 
-    cursor: ?u32,
+    cursor_wl_surface_id: ?u32,
 
     const Self = @This();
 
@@ -27,6 +27,6 @@ fn makeCompositor() Compositor {
     return Compositor {
         .pointer_x = 0.0,
         .pointer_y = 0.0,
-        .cursor = null,
+        .cursor_wl_surface_id = null,
     };
 }
