@@ -63,7 +63,13 @@ fn mouseButtonCallback(window: ?*c.GLFWwindow, button: c_int, action: c_int, mod
     if (action == c.GLFW_PRESS) {
         // c.glfwSetInputMode(window, c.GLFW_CURSOR, c.GLFW_CURSOR_DISABLED);
     }
-    compositor.COMPOSITOR.mouseClick(@intCast(u32, button), @intCast(u32, action)) catch return;
+
+    var button_code: u32 = switch(button) {
+        0 => 0x110,
+        else => 0x0,
+    };
+
+    compositor.COMPOSITOR.mouseClick(@intCast(u32, button_code), @intCast(u32, action)) catch return;
 }
 
 fn resizeCallback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.C) void {
