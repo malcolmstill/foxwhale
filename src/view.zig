@@ -56,17 +56,20 @@ pub const View = struct {
     }
 
     pub fn updatePointer(self: *Self, x: f64, y: f64) void {
-        if (self.top) |top| {
-            var it = top.subwindowIterator();
-            while(it.next()) |window| {
-                if (window.windowUnderPointer(x, y)) |w| {
-                    if (w != self.pointer_window) {
-                        std.debug.warn("new pointer_surface: {}\n", .{w.index});
-                    }
-                    self.pointer_window = w;
+        var it = self.top;
+        while(it) |window| : (it = window.toplevel.prev) {
+            if (window.windowUnderPointer(x, y)) |w| {
+                if (w != self.pointer_window) {
+                    std.debug.warn("new pointer_surface: {}\n", .{w.index});
                 }
+                self.pointer_window = w;
+                return;
             }
         }
+        if (self.pointer_window != null) {
+            std.debug.warn("new pointer_surface: null\n", .{});
+        }
+        self.pointer_window = null;
     }
 
     pub fn deinit(self: *Self) void {
