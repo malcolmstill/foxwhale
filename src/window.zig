@@ -447,3 +447,58 @@ pub const Link = struct {
         self.next = null;
     }
 };
+
+
+test "Window + View" {
+    var c: Client = undefined;
+    var v: View = View {
+        .top = null,
+        .pointer_window = null,
+    };
+
+    var w1 = try newWindow(&c, 1);
+    v.push(w1);
+    std.debug.assert(v.top == w1);
+
+    std.debug.assert(w1.toplevel.prev == null);
+    std.debug.assert(w1.toplevel.next == null);
+
+    var w2 = try newWindow(&c, 2);
+    v.push(w2);
+    std.debug.assert(v.top == w2);
+
+    std.debug.assert(w1.toplevel.prev == null);
+    std.debug.assert(w1.toplevel.next == w2);
+
+    std.debug.assert(w2.toplevel.prev == w1);
+    std.debug.assert(w2.toplevel.next == null);
+
+    var w3 = try newWindow(&c, 3);
+    v.push(w3);
+    std.debug.assert(v.top == w3);
+
+    std.debug.assert(w1.toplevel.prev == null);
+    std.debug.assert(w1.toplevel.next == w2);
+
+    std.debug.assert(w2.toplevel.prev == w1);
+    std.debug.assert(w2.toplevel.next == w3);
+
+    std.debug.assert(w3.toplevel.prev == w2);
+    std.debug.assert(w3.toplevel.next == null);
+
+    // Remove middle window
+    v.remove(w2);
+    std.debug.assert(v.top == w3);
+
+    std.debug.assert(w1.toplevel.prev == null);
+    std.debug.assert(w1.toplevel.next == w3);
+
+    std.debug.assert(w3.toplevel.prev == w1);
+    std.debug.assert(w3.toplevel.next == null);
+
+    v.remove(w3);
+    std.debug.assert(v.top == w1);
+
+    std.debug.assert(w1.toplevel.prev == null);
+    std.debug.assert(w1.toplevel.next == null);
+}
