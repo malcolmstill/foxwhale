@@ -47,8 +47,11 @@ pub const View = struct {
         if (self.pointer_window) |pointer_window| {
             if (self.top) |top| {
                 if (top != pointer_window) {
-                    pointer_window.detach();
-                    pointer_window.placeAbove(top);
+                    if (action == 1) {
+                        std.debug.warn("raise\n", .{});
+                        self.remove(pointer_window);
+                        self.push(pointer_window);
+                    }
                 }
             }
             // window.mouseClick(button, action);
