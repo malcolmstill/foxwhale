@@ -36,6 +36,13 @@ pub const View = struct {
         std.debug.warn("pushed\n", .{});
     }
 
+    pub fn remove(self: *Self, window: *Window) void {
+        if (self.top == window) {
+            self.top = window.toplevel.prev;
+        }
+        window.toplevel.deinit();
+    }
+
     pub fn mouseClick(self: *Self, button: i32, action: i32) void {
         if (self.pointer_window) |pointer_window| {
             if (self.top) |top| {
