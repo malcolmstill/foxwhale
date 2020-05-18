@@ -8,16 +8,16 @@ const Compositor = struct {
 
     const Self = @This();
 
-    pub fn updatePointer(self: *Self, new_x: f64, new_y: f64) void {
+    pub fn updatePointer(self: *Self, new_x: f64, new_y: f64) !void {
         self.pointer_x = @floatToInt(i32, new_x);
         self.pointer_y = @floatToInt(i32, new_y);
 
-        views.CURRENT_VIEW.updatePointer(new_x, new_y);
+        try views.CURRENT_VIEW.updatePointer(new_x, new_y);
     }
 
-    pub fn mouseClick(self: *Self, button: i32, action: i32) void {
+    pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
         // std.debug.warn("button: {}, action: {}\n", .{button, action});
-        views.CURRENT_VIEW.mouseClick(button, action);
+        try views.CURRENT_VIEW.mouseClick(button, action);
     }
 };
 

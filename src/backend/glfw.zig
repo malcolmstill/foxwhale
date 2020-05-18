@@ -63,7 +63,7 @@ fn mouseButtonCallback(window: ?*c.GLFWwindow, button: c_int, action: c_int, mod
     if (action == c.GLFW_PRESS) {
         // c.glfwSetInputMode(window, c.GLFW_CURSOR, c.GLFW_CURSOR_DISABLED);
     }
-    compositor.COMPOSITOR.mouseClick(button, action);
+    compositor.COMPOSITOR.mouseClick(@intCast(u32, button), @intCast(u32, action)) catch return;
 }
 
 fn resizeCallback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.C) void {
@@ -72,7 +72,7 @@ fn resizeCallback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(
 }
 
 fn cursorPositionCallback(window: ?*c.GLFWwindow, x: f64, y: f64) callconv(.C) void {
-    compositor.COMPOSITOR.updatePointer(x, y);
+    compositor.COMPOSITOR.updatePointer(x, y) catch return;
 }
 
 pub const GLFWOutput = struct {
