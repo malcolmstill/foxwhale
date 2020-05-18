@@ -32,7 +32,7 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
     }
 
     if (window.view) |view| {
-        if (window.pending().siblings.unanchored() and window.toplevel.unanchored()) {
+        if (window.xdg_toplevel_id != null) {
             view.push(window);
         }
     }
