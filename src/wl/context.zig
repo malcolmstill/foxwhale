@@ -196,6 +196,13 @@ pub fn Context(comptime T: type) type {
             self.tx_write_offset += @sizeOf(i32);
         }
 
+        pub fn putFixed(self: *Self, value: f64) void {
+            var fixed = doubleToFixed(value);
+            var i32_ptr = @ptrCast(*i32, @alignCast(@alignOf(i32), &self.tx_buf[self.tx_write_offset]));
+            i32_ptr.* = fixed;
+            self.tx_write_offset += @sizeOf(i32);
+        }
+
         pub fn putArray(self: *Self, array: []u32) void {
             // Write our array length (in bytes) into buffer
             var len_ptr = @ptrCast(*u32, @alignCast(@alignOf(u32), &self.tx_buf[self.tx_write_offset]));
@@ -231,3 +238,15 @@ pub const Header = packed struct {
     opcode: u16,
     length: u16,
 };
+
+pub fn doubleToFixed(f: f64) i32 {
+    var x: f64 = f + (3 << (51 - 8));
+    var x_ptr = @ptrCast(*i32, &x);
+    return x_ptr.*;
+}
+
+pub fn fixedToDouble(f: i32) f64 {
+    var x: i32 = ((1023 + 44) << 52) + (1 << 51) + f;
+    var x_ptr = @ptrCast(*f64, &x);
+    return x_ptr.*;
+}
