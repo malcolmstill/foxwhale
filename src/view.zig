@@ -13,6 +13,41 @@ pub const View = struct {
         return true;
     }
 
+    pub fn back(self: *Self) ?*Window {
+        var it = self.top;
+        var window: ?*Window = null;
+        while(it) |w| : (it = w.toplevel.prev) {
+            window = w;
+        }
+
+        return window;
+    }
+
+    pub fn push(self: *Self, window: *Window) void {
+        if (self.top) |top| {
+            if (top == window) {
+                return;
+            }
+            top.toplevel.next = window;
+            window.toplevel.prev = top;
+        }
+
+        self.top = window;
+        std.debug.warn("pushed\n", .{});
+    }
+
+    pub fn mouseClick(self: *Self, button: i32, action: i32) void {
+        if (self.pointer_window) |pointer_window| {
+            if (self.top) |top| {
+                if (top != pointer_window) {
+                    pointer_window.detach();
+                    pointer_window.placeAbove(top);
+                }
+            }
+            // window.mouseClick(button, action);
+        }
+    }
+
     pub fn updatePointer(self: *Self, x: f64, y: f64) void {
         if (self.top) |top| {
             var it = top.subwindowIterator();
@@ -25,22 +60,6 @@ pub const View = struct {
                 }
             }
         }
-    }
-
-    pub fn iterator(self: *Self) ?Window.SubwindowIterator {
-        if(self.top) |top| {
-            var it = top.subwindowIterator();
-
-            // Go to back
-            var maybe_window: ?*Window = null;
-            while(it.prev()) |prev| {
-                maybe_window = prev;
-            }
-            if (maybe_window) |window| {
-                return window.subwindowIterator();
-            }
-        }
-        return null;
     }
 
     pub fn deinit(self: *Self) void {
