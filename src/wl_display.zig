@@ -5,11 +5,11 @@ const Context = @import("client.zig").Context;
 const Object = @import("client.zig").Object;
 
 fn sync(context: *Context, wl_display: Object, new_id: u32) anyerror!void {
-    std.debug.warn("sync with id {}\n", .{new_id});
+    // std.debug.warn("sync with id {}\n", .{new_id});
 
     var wl_callback = prot.new_wl_callback(new_id, context, 0);
-    try prot.wl_callback_send_done(wl_callback, @intCast(u32, std.time.timestamp()));
-    try prot.wl_display_send_delete_id(wl_display, wl_callback.id);
+    try prot.wl_callback_send_done(wl_callback, context.client.nextSerial());
+    try prot.wl_display_send_delete_id(wl_display, new_id);
 }
 
 fn get_registry(context: *Context, wl_display: Object, new_id: u32) anyerror!void {

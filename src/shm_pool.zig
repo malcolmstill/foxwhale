@@ -18,7 +18,7 @@ pub const ShmPool = struct {
 
     pub fn deinit(self: *Self) void {
         std.os.munmap(self.data);
-        std.debug.warn("shm_pool closing file descriptor: {}\n", .{self.fd});
+        // std.debug.warn("shm_pool closing file descriptor: {}\n", .{self.fd});
         std.os.close(self.fd);
 
         self.in_use = false;
@@ -58,7 +58,7 @@ pub fn newShmPool(client: *Client, fd: i32, wl_shm_pool_id: u32, size: i32) !*Sh
             shm_pool.wl_shm_pool_id = wl_shm_pool_id;
             shm_pool.data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT_READ|std.os.linux.PROT_WRITE, std.os.linux.MAP_SHARED, fd, 0);
 
-            std.debug.warn("data length: {}\n", .{shm_pool.data.len});
+            // std.debug.warn("data length: {}\n", .{shm_pool.data.len});
 
             return shm_pool;
         } else {

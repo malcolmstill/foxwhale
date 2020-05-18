@@ -22,7 +22,9 @@ pub const Client = struct {
 
     wl_display: Object,
     wl_registry_id: ?u32,
+    wl_keyboard_id: ?u32,
     wl_output_id: ?u32,
+    wl_pointer_id: ?u32,
     wl_seat_id: ?u32,
     wl_compositor_id: ?u32,
     wl_subcompositor_id: ?u32,
@@ -37,7 +39,9 @@ pub const Client = struct {
         self.context.deinit();
 
         self.wl_registry_id = null;
+        self.wl_keyboard_id = null;
         self.wl_output_id = null;
+        self.wl_pointer_id = null;
         self.wl_seat_id = null;
         self.wl_compositor_id = null;
         self.wl_subcompositor_id = null;

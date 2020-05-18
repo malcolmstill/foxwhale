@@ -10,17 +10,19 @@ const c = @cImport({
 
 var ortho: [16]f32 = undefined;
 var rectangle: [28]f32 = undefined;
-var PROGRAM: c_uint = undefined;
+pub var PROGRAM: c_uint = undefined;
 
-pub fn render(output: *Output) !void {
-    var width = output.getWidth();
-    var height = output.getHeight();
-
+pub fn clear() !void {
     c.glClearColor(0.3, 0.3, 0.36, 0.0);
     try checkGLError();
 
     c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
     try checkGLError();
+}
+
+pub fn render(output: *Output) !void {
+    var width = output.getWidth();
+    var height = output.getHeight();
 
     c.glUseProgram(PROGRAM);
     try checkGLError();
@@ -33,28 +35,10 @@ pub fn render(output: *Output) !void {
 
     orthographicProjection(&ortho, 0.0, @intToFloat(f32, width), 0.0, @intToFloat(f32, height), -1.0, 1.0);
 
-    // std.debug.warn("ortho: {}, {}, {}, {}\n", .{ortho[0], ortho[1], ortho[2], ortho[3]});
-
     try setUniformMatrix(PROGRAM, "ortho", ortho);
-    try setUniformMatrix(PROGRAM, "scale", identity);
-    try setUniformMatrix(PROGRAM, "translate", identity);
-    try setUniformMatrix(PROGRAM, "origin", identity);
-    try setUniformMatrix(PROGRAM, "originInverse", identity);
-    try setUniformFloat(PROGRAM, "opacity", 1.0);
-
-    for (windows.WINDOWS) |window| {
-        if (!window.in_use) {
-            continue;
-        }
-
-        if (window.texture) |texture| {
-            setGeometry(window);
-            try renderSurface(PROGRAM, texture);
-        }
-    }
 }
 
-fn renderSurface(program: c_uint, texture: u32) !void {
+pub fn renderSurface(program: c_uint, texture: u32) !void {
     var vbo: u32 = undefined;
 
     c.glGenBuffers(1, &vbo);
@@ -63,7 +47,7 @@ fn renderSurface(program: c_uint, texture: u32) !void {
     c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
     try checkGLError();
 
-    c.glBufferData(c.GL_ARRAY_BUFFER, 4*28, &rectangle[0], c.GL_STATIC_DRAW);
+    c.glBufferData(c.GL_ARRAY_BUFFER, 4*rectangle.len, &rectangle[0], c.GL_STATIC_DRAW);
     try checkGLError();
 
     var vao: u32 = undefined;
@@ -88,7 +72,7 @@ fn renderSurface(program: c_uint, texture: u32) !void {
     c.glBindTexture(c.GL_TEXTURE_2D, texture);
     try checkGLError();
 
-    c.glDrawArrays(c.GL_TRIANGLES, 0, 28/4);
+    c.glDrawArrays(c.GL_TRIANGLES, 0, rectangle.len/4);
     try checkGLError();
 
     c.glDeleteVertexArrays(1, &vao);
@@ -154,7 +138,7 @@ fn orthographicProjection(m: *[16]f32, left: f32, right: f32, top: f32, bottom: 
     m[12] = 0.0;              m[13] = 0.0;              m[14] = 0.0;             m[15] = 1.0;
 }
 
-fn setGeometry(window: Window) void {
+pub fn setGeometry(window: *Window) void {
     rectangle[0] = 0.0;
     rectangle[1] = 0.0;
     rectangle[2] = 0.0;
@@ -186,14 +170,35 @@ fn setGeometry(window: Window) void {
     rectangle[23] = 1.0;
 }
 
-var identity: [16]f32 = [_]f32{
+pub fn translate(x: f32, y: f32) !void {
+    MATRIX = identity;
+    MATRIX[3] = x;
+    MATRIX[7] = y;
+    try setUniformMatrix(PROGRAM, "translate", MATRIX);
+}
+
+pub fn scale(x: f32, y: f32) !void {
+    MATRIX = identity;
+    MATRIX[0] = x;
+    MATRIX[5] = y;
+    try setUniformMatrix(PROGRAM, "scale", MATRIX);
+}
+
+var MATRIX: [16]f32 = [_]f32{
     1.0, 0.0, 0.0, 0.0,
     0.0, 1.0, 0.0, 0.0,
     0.0, 0.0, 1.0, 0.0,
     0.0, 0.0, 0.0, 1.0,
 };
 
-fn setUniformMatrix(program: c_uint, location_string: []const u8, matrix: [16]f32) !void {
+pub const identity: [16]f32 = [_]f32{
+    1.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 1.0,
+};
+
+pub fn setUniformMatrix(program: c_uint, location_string: []const u8, matrix: [16]f32) !void {
     var location = c.glGetUniformLocation(program, location_string.ptr);
     try checkGLError();
     if (location == -1) {
@@ -203,7 +208,7 @@ fn setUniformMatrix(program: c_uint, location_string: []const u8, matrix: [16]f3
     try checkGLError();
 }
 
-fn setUniformFloat(program: c_uint, location_string: []const u8, value: f32) !void {
+pub fn setUniformFloat(program: c_uint, location_string: []const u8, value: f32) !void {
     var location = c.glGetUniformLocation(program, location_string.ptr);
     try checkGLError();
     if (location == -1) {

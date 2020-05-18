@@ -1,3 +1,4 @@
+const std = @import("std");
 const prot = @import("protocols.zig");
 const Context = @import("client.zig").Context;
 const Object = @import("client.zig").Object;
@@ -15,6 +16,9 @@ fn get_subsurface(context: *Context, wl_subcompositor: Object, new_id: u32, wl_s
 
     child.wl_subsurface_id = new_id;
     child.parent = parent;
+
+    child.detach();
+    child.placeAbove(parent);
 
     var wl_subsurface_child = prot.new_wl_subsurface(new_id, context, @ptrToInt(child));
     try context.register(wl_subsurface_child);

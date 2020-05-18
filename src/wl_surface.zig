@@ -7,6 +7,7 @@ const Object = @import("client.zig").Object;
 const Client = @import("client.zig").Client;
 const ShmBuffer = @import("shm_buffer.zig").ShmBuffer;
 const Window = @import("window.zig").Window;
+const Link = @import("window.zig").Link;
 
 fn commit(context: *Context, wl_surface: Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
@@ -30,15 +31,13 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
         }
     }
 
-    while(window.callbacks.readItem()) |wl_callback_id| {
-        if (context.get(wl_callback_id)) |wl_callback| {
-            try prot.wl_callback_send_done(wl_callback.*, @truncate(u32, std.time.milliTimestamp()));
-            try context.unregister(wl_callback.*);
-            try prot.wl_display_send_delete_id(context.client.wl_display, wl_callback_id);
-        } else {
-            return error.CallbackIdNotFound;
+    if (window.view) |view| {
+        if (window.xdg_toplevel_id != null) {
+            view.push(window);
         }
-    } else |err| {}
+    }
+
+    window.flip();
 }
 
 fn set_buffer_scale(context: *Context, wl_surface: Object, scale: i32) anyerror!void {
@@ -72,9 +71,9 @@ fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {
 fn set_opaque_region(context: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     if (optional_wl_region) |wl_region| {
-        window.opaque_region_id = wl_region.id;
+        window.pending().opaque_region_id = wl_region.id;
     } else {
-        window.opaque_region_id = null;
+        window.pending().opaque_region_id = null;
     }
 }
 
@@ -82,9 +81,9 @@ fn set_opaque_region(context: *Context, wl_surface: Object, optional_wl_region: 
 fn set_input_region(context: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     if (optional_wl_region) |wl_region| {
-        window.input_region_id = wl_region.id;
+        window.pending().input_region_id = wl_region.id;
     } else {
-        window.input_region_id = null;
+        window.pending().input_region_id = null;
     }
 }
 
