@@ -49,10 +49,9 @@ pub fn main() anyerror!void {
                     continue;
                 }
 
-                if (view.iterator()) |*win_it| {
-                    while(win_it.next()) |window| {
-                        try window.render();
-                    }
+                var it = view.back();
+                while(it) |window| : (it = window.toplevel.next) {
+                    try window.render();
                 }
             }
 
