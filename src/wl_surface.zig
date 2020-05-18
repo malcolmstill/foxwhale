@@ -31,21 +31,10 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
         }
     }
 
-    // if we don't already have a toplevel order and this surface
-    // has no parent then it's a toplevel that is yet to be added
-    // to the window list of the view
-    if (window.view != null and window.mapped == false and window.parent == null) {
-        window.top_link = Link {
-            .next = null,
-            .prev = window.view.?.top,
-        };
-
-        if (window.view.?.top) |top| {
-            top.top_link.next = window;
+    if (window.view) |view| {
+        if (window.pending().siblings.unanchored() and window.toplevel.unanchored()) {
+            view.push(window);
         }
-
-        window.view.?.top = window;
-        window.mapped = true;
     }
 
     window.flip();
