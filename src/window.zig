@@ -20,6 +20,8 @@ pub const Window = struct {
 
     parent: ?*Window,
 
+    toplevel: Link,
+
     ready_for_callback: bool = false,
 
     texture: ?u32,
@@ -313,13 +315,13 @@ pub const Window = struct {
 
         self.ready_for_callback = false;
 
-        if (self.view) |v| {
-            if (v.top == self) {
-                v.top = self.top_link.prev;
+        if (self.view) |view| {
+            if (view.top == self) {
+                view.top = self.toplevel.prev;
             }
         }
+        self.toplevel.deinit();
         self.view = null;
-        self.top_link.deinit();
         self.mapped = false;
 
         if (self.texture) |texture| {
@@ -421,13 +423,17 @@ pub const Link = struct {
     prev: ?*Window,
     next: ?*Window,
 
+    pub fn unanchored(self: Link) bool {
+        return (self.prev == null) and (self.next == null);
+    }
+
     pub fn deinit(self: *Link) void {
-        if (self.next) |n| {
-            n.top_link.prev = self.prev;
+        if (self.next) |next| {
+            next.toplevel.prev = self.prev;
         }
 
-        if(self.prev) |p| {
-            p.top_link.next = self.next;
+        if (self.prev) |prev| {
+            prev.toplevel.next = self.next;
         }
 
         self.prev = null;
