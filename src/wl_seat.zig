@@ -3,6 +3,7 @@ const prot = @import("protocols.zig");
 const Client = @import("client.zig").Client;
 const Context = @import("client.zig").Context;
 const Object = @import("client.zig").Object;
+const compositor = @import("compositor.zig");
 
 fn get_pointer(context: *Context, wl_seat: Object, new_id: u32) anyerror!void {
     context.client.wl_pointer_id = new_id;
@@ -12,7 +13,16 @@ fn get_pointer(context: *Context, wl_seat: Object, new_id: u32) anyerror!void {
 
 fn get_keyboard(context: *Context, wl_seat: Object, new_id: u32) anyerror!void {
     context.client.wl_keyboard_id = new_id;
+
     var wl_keyboard = prot.new_wl_keyboard(new_id, context, 0);
+
+    if (compositor.COMPOSITOR.xkb) |*xkb| {
+        var fd_size = try xkb.getKeymap();
+        var format: u32 = @enumToInt(prot.wl_keyboard_keymap_format.xkb_v1);
+
+        try prot.wl_keyboard_send_keymap(wl_keyboard, format, fd_size.fd, @intCast(u32, fd_size.size));
+    }
+
     try context.register(wl_keyboard);
 }
 
