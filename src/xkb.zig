@@ -55,6 +55,11 @@ pub const Xkb = struct {
         return error.NoKeymap;
     }
 
+    pub fn updateKey(self: *Self, keycode: u32, state: u32) void {
+        var direction = if (state == 1) c.enum_xkb_key_direction.XKB_KEY_DOWN else c.enum_xkb_key_direction.XKB_KEY_UP;
+        _ = c.xkb_state_update_key(self.state, keycode+8, direction);
+    }
+
     pub fn serializeDepressed(self: *Self) u32 {
         return c.xkb_state_serialize_mods(self.state, c.enum_xkb_state_component.XKB_STATE_MODS_DEPRESSED);
     }
