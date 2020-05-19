@@ -1,6 +1,7 @@
 const std = @import("std");
 const prot = @import("protocols.zig");
 const renderer = @import("renderer.zig");
+const compositor = @import("compositor.zig");
 const Client = @import("client.zig").Client;
 const Rectangle = @import("rectangle.zig").Rectangle;
 const LinearFifo = std.fifo.LinearFifo;
@@ -392,6 +393,15 @@ pub const Window = struct {
                     time,
                     button,
                     action
+                );
+
+                try prot.wl_keyboard_send_modifiers(
+                    wl_keyboard.*,
+                    client.nextSerial(),
+                    compositor.COMPOSITOR.mods_depressed,
+                    compositor.COMPOSITOR.mods_latched,
+                    compositor.COMPOSITOR.mods_locked,
+                    compositor.COMPOSITOR.mods_group
                 );
             }
         }
