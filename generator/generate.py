@@ -151,7 +151,7 @@ def put_type(type):
         "int": "I32",
         "uint": "U32",
         "new_id": "U32",
-        "fd": "I32",
+        "fd": "Fd",
         "string": "String",
         "array": "Array",
         "object": "U32",
