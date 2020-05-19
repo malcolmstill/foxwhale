@@ -40,14 +40,13 @@ fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, ve
             try context.register(wl_subcompositor);
         },
         3 => {
-            if (context.client.wl_seat_id != null) {
-                return;
-            }
-
             var wl_seat = prot.new_wl_seat(new_id, context, 0);
             wl_seat.version = version;
             try prot.wl_seat_send_capabilities(wl_seat, @enumToInt(prot.wl_seat_capability.pointer) | @enumToInt(prot.wl_seat_capability.keyboard));
-            context.client.wl_seat_id = wl_seat.id;
+
+            if (context.client.wl_seat_id != null) {
+                context.client.wl_seat_id = wl_seat.id;
+            }
 
             try context.register(wl_seat);
         },
