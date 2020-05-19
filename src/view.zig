@@ -1,5 +1,6 @@
 const std = @import("std");
 const prot = @import("protocols.zig");
+const Focus = @import("focus.zig").Focus;
 const Window = @import("window.zig").Window;
 
 pub var CURRENT_VIEW: *View = undefined;
@@ -8,6 +9,7 @@ pub const View = struct {
     top: ?*Window,
     pointer_window: ?*Window,
     active_window: ?*Window,
+    focus: Focus,
 
     const Self = @This();
 
@@ -109,5 +111,6 @@ pub fn makeView() View {
         .top = null,
         .pointer_window = null,
         .active_window = null,
+        .focus = Focus.Click,
     };
 }
