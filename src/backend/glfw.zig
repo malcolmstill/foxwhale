@@ -57,6 +57,9 @@ fn keyCallback(window: ?*c.GLFWwindow, key: c_int, scancode: c_int, action: c_in
             c.glfwSetWindowShouldClose(window, c.GLFW_TRUE);
         }
     }
+
+    var time = @truncate(u32, std.time.milliTimestamp());
+    compositor.COMPOSITOR.keyboard(time, @intCast(u32, scancode-8), @intCast(u32, action), @intCast(u32, mods)) catch return;
 }
 
 fn mouseButtonCallback(window: ?*c.GLFWwindow, button: c_int, action: c_int, mods: c_int) callconv(.C) void {
