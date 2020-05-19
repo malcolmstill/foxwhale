@@ -9,12 +9,15 @@ const out = @import("output.zig");
 const Output = @import("output.zig").Output;
 const views = @import("view.zig");
 const windows = @import("window.zig");
+const compositor = @import("compositor.zig");
 
 pub fn main() anyerror!void {
     try epoll.init();
     var detected_type = bknd.detect();
     var backend: Backend = try bknd.init(detected_type);
     defer backend.deinit();
+
+    try compositor.COMPOSITOR.init();
 
     var o1: *Output = try out.newOutput(&backend, 640, 480);
     // var o2: *Output = try out.newOutput(&backend, 300, 300);
