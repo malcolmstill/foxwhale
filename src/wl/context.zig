@@ -3,6 +3,9 @@ const fifo = std.fifo;
 const Client = @import("../client.zig").Client;
 const txrx = @import("txrx.zig");
 const AutoHashMap = std.hash_map.AutoHashMap;
+const LinearFifo = std.fifo.LinearFifo;
+const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
+const FdBuffer = LinearFifo(i32, LinearFifoBufferType{ .Static = MAX_FDS });
 const MAX_FDS = @import("txrx.zig").MAX_FDS;
 const BUFFER_SIZE = 512;
 
@@ -15,7 +18,7 @@ pub fn Context(comptime T: type) type {
         rx_fds: [MAX_FDS]i32,
         rx_buf: [BUFFER_SIZE]u8,
         objects: AutoHashMap(u32, Object),
-        tx_fds: [MAX_FDS]i32,
+        tx_fds: FdBuffer,
         tx_buf: [BUFFER_SIZE]u8,
         tx_write_offset: usize = 0,
 
@@ -34,6 +37,9 @@ pub fn Context(comptime T: type) type {
             self.client = client;
             self.read_offset = 0;
             self.write_offset = 0;
+
+            self.tx_fds.deinit();
+
             self.objects = AutoHashMap(u32, Object).init(std.heap.page_allocator);
         }
 
@@ -181,7 +187,7 @@ pub fn Context(comptime T: type) type {
             };
             var h_ptr = @ptrCast(*Header, &self.tx_buf[0]);
             h_ptr.* = h;
-            var x = txrx.sendMsg(self.fd, self.tx_buf[0..self.tx_write_offset], self.tx_fds[0..self.tx_fds.len]);
+            var x = txrx.sendMsg(self.fd, self.tx_buf[0..self.tx_write_offset], &self.tx_fds);
         }
 
         pub fn putU32(self: *Self, value: u32) void {
@@ -194,6 +200,11 @@ pub fn Context(comptime T: type) type {
             var i32_ptr = @ptrCast(*i32, @alignCast(@alignOf(i32), &self.tx_buf[self.tx_write_offset]));
             i32_ptr.* = value;
             self.tx_write_offset += @sizeOf(i32);
+        }
+
+        pub fn putFd(self: *Self, value: i32) void {
+            // TODO: I guess we need to error
+            self.tx_fds.writeItem(value) catch return;
         }
 
         pub fn putFixed(self: *Self, value: f64) void {
