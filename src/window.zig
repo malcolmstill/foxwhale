@@ -326,6 +326,20 @@ pub const Window = struct {
         }
     }
 
+    pub fn deactivate(self: *Self) !void {
+        var client = self.client;
+
+        if (client.wl_keyboard_id) |wl_keyboard_id| {
+            if (client.context.get(wl_keyboard_id)) |wl_keyboard| {
+                try prot.wl_keyboard_send_leave(
+                    wl_keyboard.*,
+                    client.nextSerial(),
+                    self.wl_surface_id
+                );
+            }
+        }
+    }    
+
     pub fn pointerEnter(self: *Self, pointer_x: f64, pointer_y: f64) !void {
         var client = self.client;
 
