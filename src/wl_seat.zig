@@ -21,6 +21,10 @@ fn get_keyboard(context: *Context, wl_seat: Object, new_id: u32) anyerror!void {
         var format: u32 = @enumToInt(prot.wl_keyboard_keymap_format.xkb_v1);
 
         try prot.wl_keyboard_send_keymap(wl_keyboard, format, fd_size.fd, @intCast(u32, fd_size.size));
+
+        if (wl_seat.version >= 4) {
+            try prot.wl_keyboard_send_repeat_info(wl_keyboard, 1, 2000);
+        }
     }
 
     try context.register(wl_keyboard);
