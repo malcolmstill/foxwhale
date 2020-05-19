@@ -30,7 +30,7 @@ fn get_registry(context: *Context, wl_display: Object, new_id: u32) anyerror!voi
         output_base += 1;
     }
 
-    // try prot.wl_registry_send_global(wl_registry, 6, "wl_data_device_manager\x00", 3);
+    try prot.wl_registry_send_global(wl_registry, 6, "wl_data_device_manager\x00", 3);
     try prot.wl_registry_send_global(wl_registry, 7, "wl_shell\x00", 1);
     try prot.wl_registry_send_global(wl_registry, 8, "wl_shm\x00", 1);
     // try prot.wl_registry_send_global(wl_registry, 9, "zxdg_decoration_manager_v1\x00", 1);

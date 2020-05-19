@@ -58,7 +58,13 @@ fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, ve
 
             try context.register(xdg_wm_base);
         },
-        6 => {},
+        6 => {
+            var wl_data_device_manager = prot.new_wl_data_device_manager(new_id, context, 0);
+            wl_data_device_manager.version = version;
+            context.client.wl_data_device_manager_id = wl_data_device_manager.id;
+
+            try context.register(wl_data_device_manager);
+        },
         7 => {},
         8 => {
             var wl_shm = prot.new_wl_shm(new_id, context, 0);
