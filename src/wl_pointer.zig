@@ -13,9 +13,9 @@ fn set_cursor(context: *Context, wl_pointer: Object, serial: u32, optional_wl_su
             .hotspot_y = hotspot_y,
         };
 
-        compositor.COMPOSITOR.cursor = wl_surface.id;
+        compositor.COMPOSITOR.cursor_wl_surface_id = wl_surface.id;
     } else {
-        compositor.COMPOSITOR.cursor = null;
+        compositor.COMPOSITOR.cursor_wl_surface_id = null;
     }
 }
 
