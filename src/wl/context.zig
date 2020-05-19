@@ -15,7 +15,7 @@ pub fn Context(comptime T: type) type {
         fd: i32 = -1,
         read_offset: usize = 0,
         write_offset: usize = 0,
-        rx_fds: [MAX_FDS]i32,
+        rx_fds: FdBuffer,
         rx_buf: [BUFFER_SIZE]u8,
         objects: AutoHashMap(u32, Object),
         tx_fds: FdBuffer,
@@ -48,7 +48,7 @@ pub fn Context(comptime T: type) type {
         }
 
         pub fn dispatch(self: *Self) anyerror!void {
-            var n = try txrx.recvMsg(self.fd, self.rx_buf[self.write_offset..self.rx_buf.len], self.rx_fds[0..self.rx_fds.len]);
+            var n = try txrx.recvMsg(self.fd, self.rx_buf[self.write_offset..self.rx_buf.len], &self.rx_fds);
             n = self.write_offset + n;
 
             self.read_offset = 0;
@@ -147,10 +147,7 @@ pub fn Context(comptime T: type) type {
         }
 
         pub fn next_fd(self: *Self) !i32 {
-            defer {
-                std.mem.copy(i32, self.rx_fds[0..self.rx_fds.len-1], self.rx_fds[1..self.rx_fds.len]);
-            }
-            return self.rx_fds[0];
+            return self.rx_fds.readItem();
         }
 
         pub fn get(self: *Self, id: u32) ?*Object {

@@ -6,7 +6,7 @@ const FdBuffer = LinearFifo(i32, LinearFifoBufferType{ .Static = MAX_FDS });
 
 pub const MAX_FDS = 28;
 
-pub fn recvMsg(fd: i32, buffer: []u8, fds: []i32) !usize {
+pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
     var iov: linux.iovec = undefined;
     iov.iov_base = @ptrCast([*]u8, &buffer[0]);
     iov.iov_len = buffer.len;
@@ -56,7 +56,10 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: []i32) !usize {
             var data: []i32 = undefined;
             data.ptr = @ptrCast([*]i32, @alignCast(@alignOf(i32), cmsg_data(cmsg)));
             data.len = (cmsg.cmsg_len - cmsg_len(0))/@sizeOf(i32);
-            std.mem.copy(i32, fds[0..fds.len], data);
+
+            var writable = try fds.writableWithSize(data.len);
+            std.mem.copy(i32, writable, data);
+            fds.update(data.len);
         }
     }
 
