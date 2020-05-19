@@ -74,6 +74,7 @@ pub const View = struct {
         if (new_pointer_window != self.pointer_window) {
             if (self.pointer_window) |old_pointer_window| {
                 try old_pointer_window.pointerLeave();
+                try old_pointer_window.deactivate();
             }
 
             if (new_pointer_window) |window| {
@@ -99,7 +100,7 @@ pub const View = struct {
     }
 
     pub fn deinit(self: *Self) void {
-
+        self.* = makeView();
     }
 };
 
