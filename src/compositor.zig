@@ -1,5 +1,7 @@
 const std = @import("std");
 const views = @import("view.zig");
+const xkb = @import("xkb.zig");
+const Xkb = @import("xkb.zig").Xkb;
 pub var COMPOSITOR: Compositor = makeCompositor();
 
 const Compositor = struct {
@@ -8,7 +10,13 @@ const Compositor = struct {
 
     cursor_wl_surface_id: ?u32,
 
+    xkb: ?Xkb,
+
     const Self = @This();
+
+    pub fn init(self: *Self) !void {
+        self.xkb = try xkb.init();
+    }
 
     pub fn updatePointer(self: *Self, new_x: f64, new_y: f64) !void {
         self.pointer_x = @floatToInt(i32, new_x);
@@ -28,5 +36,6 @@ fn makeCompositor() Compositor {
         .pointer_x = 0.0,
         .pointer_y = 0.0,
         .cursor_wl_surface_id = null,
+        .xkb = null,
     };
 }
