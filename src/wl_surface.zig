@@ -28,6 +28,7 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
 
             try buffer.endAccess();
             try prot.wl_buffer_send_release(wl_buffer.*);
+            window.wl_buffer_id = null;
         }
     }
 
