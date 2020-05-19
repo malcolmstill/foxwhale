@@ -7,6 +7,7 @@ pub var CURRENT_VIEW: *View = undefined;
 pub const View = struct {
     top: ?*Window,
     pointer_window: ?*Window,
+    active_window: ?*Window,
 
     const Self = @This();
 
@@ -71,29 +72,14 @@ pub const View = struct {
         }
 
         if (new_pointer_window != self.pointer_window) {
-            if (self.pointer_window) |pointer_window| {
-                var client = pointer_window.client;
-                if (client.wl_pointer_id) |wl_pointer_id| {
-                    if (client.context.objects.get(wl_pointer_id)) |wl_pointer| {
-                        try prot.wl_pointer_send_leave(wl_pointer.value, client.nextSerial(), pointer_window.wl_surface_id);
-                    }
-                }
+            if (self.pointer_window) |old_pointer_window| {
+                try old_pointer_window.pointerLeave();
             }
 
             if (new_pointer_window) |window| {
                 std.debug.warn("new pointer_window: {}\n", .{window.index});
-                var client = window.client;
-                if (client.wl_pointer_id) |wl_pointer_id| {
-                    if (client.context.objects.get(wl_pointer_id)) |wl_pointer| {
-                        try prot.wl_pointer_send_enter(
-                            wl_pointer.value,
-                            client.nextSerial(),
-                            window.wl_surface_id,
-                            @floatCast(f32, x - @intToFloat(f64, window.current().x)),
-                            @floatCast(f32, y - @intToFloat(f64, window.current().y))
-                            );
-                    }
-                }
+                try window.activate();
+                try window.pointerEnter(x, y);
             } else {
                 std.debug.warn("new pointer_window: null\n", .{});
             }
@@ -102,17 +88,13 @@ pub const View = struct {
         self.pointer_window = new_pointer_window;
 
         if (self.pointer_window) |window| {
-            var client = window.client;
-            if (client.wl_pointer_id) |wl_pointer_id| {
-                if (client.context.objects.get(wl_pointer_id)) |wl_pointer| {
-                    try prot.wl_pointer_send_motion(
-                        wl_pointer.value,
-                        @truncate(u32, std.time.milliTimestamp()),
-                        @floatCast(f32, x - @intToFloat(f64, window.current().x)),
-                        @floatCast(f32, y - @intToFloat(f64, window.current().y))
-                    );
-                }
-            }
+            try window.pointerMotion(x, y);
+        }
+    }
+
+    pub fn keyboard(self: *Self, time: u32, button: u32, action: u32, mods: u32) !void {
+        if (self.pointer_window) |window| {
+            try window.keyboardKey(time, button, action);
         }
     }
 
@@ -125,5 +107,6 @@ pub fn makeView() View {
     return View{
         .top = null,
         .pointer_window = null,
+        .active_window = null,
     };
 }
