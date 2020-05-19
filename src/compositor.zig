@@ -36,6 +36,7 @@ const Compositor = struct {
 
     pub fn keyboard(self: *Self, time: u32, button: u32, action: u32, mods: u32) !void {
         if (self.xkb) |*x| {
+            x.updateKey(button, action);
             self.mods_depressed = x.serializeDepressed();
             self.mods_latched = x.serializeLatched();
             self.mods_locked = x.serializeLocked();
