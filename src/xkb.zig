@@ -30,6 +30,7 @@ pub const Xkb = struct {
         if (self.keymap) |keymap| {
             var keymap_as_string = c.xkb_keymap_get_as_string(keymap, c.enum_xkb_keymap_format.XKB_KEYMAP_FORMAT_TEXT_V1);
             if (keymap_as_string) |string| {
+                defer c.free(string);
                 var size = std.mem.len(string) + 1;
                 var keymap_string: []u8 = undefined;
                 keymap_string.ptr = string;
@@ -69,11 +70,7 @@ pub fn init() !Xkb {
 }
 
 fn newContext(flags: c.enum_xkb_context_flags) !*c.xkb_context {
-    if (c.xkb_context_new(flags)) |context| {
-        return context;
-    } else {
-        return error.XkbContextCreationFailed;
-    }
+    return c.xkb_context_new(flags) orelse error.XkbContextCreationFailed;
 }
 
 fn newKeymapFromNames(context: *c.xkb_context, rules: []const u8, model: []const u8, layout: []const u8, variant: []const u8, options: []const u8) !*c.xkb_keymap {
@@ -86,17 +83,10 @@ fn newKeymapFromNames(context: *c.xkb_context, rules: []const u8, model: []const
     };
 
     var flags = c.enum_xkb_keymap_compile_flags.XKB_KEYMAP_COMPILE_NO_FLAGS;
-    if (c.xkb_keymap_new_from_names(context, &names, flags)) |keymap| {
-        return keymap;
-    } else {
-        return error.XkbKeymapCreationFailed;
-    }
+
+    return c.xkb_keymap_new_from_names(context, &names, flags) orelse error.XkbKeymapCreationFailed;
 }
 
 fn newState(keymap: *c.xkb_keymap) !*c.xkb_state {
-    if (c.xkb_state_new(keymap)) |state| {
-        return state;
-    } else {
-        return error.XkbStateCreationFailed;
-    }
+    return c.xkb_state_new(keymap) orelse error.XkbStateCreationFailed;
 }
