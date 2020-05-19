@@ -311,6 +311,78 @@ pub const Window = struct {
         self.insertBelow(reference);
     }
 
+    pub fn activate(self: *Self) !void {
+        var client = self.client;
+
+        if (client.wl_keyboard_id) |wl_keyboard_id| {
+            if (client.context.get(wl_keyboard_id)) |wl_keyboard| {
+                try prot.wl_keyboard_send_enter(
+                    wl_keyboard.*,
+                    client.nextSerial(),
+                    self.wl_surface_id,
+                    &[_]u32{}
+                );
+            }
+        }
+    }
+
+    pub fn pointerEnter(self: *Self, pointer_x: f64, pointer_y: f64) !void {
+        var client = self.client;
+
+        if (client.wl_pointer_id) |wl_pointer_id| {
+            if (client.context.get(wl_pointer_id)) |wl_pointer| {
+                try prot.wl_pointer_send_enter(
+                    wl_pointer.*,
+                    client.nextSerial(),
+                    self.wl_surface_id,
+                    @floatCast(f32, pointer_x - @intToFloat(f64, self.current().x)),
+                    @floatCast(f32, pointer_y - @intToFloat(f64, self.current().y))
+                    );
+            }
+        }
+    }
+
+    pub fn pointerMotion(self: *Self, pointer_x: f64, pointer_y: f64) !void {
+        var client = self.client;
+        if (client.wl_pointer_id) |wl_pointer_id| {
+            if (client.context.get(wl_pointer_id)) |wl_pointer| {
+                try prot.wl_pointer_send_motion(
+                    wl_pointer.*,
+                    @truncate(u32, std.time.milliTimestamp()),
+                    @floatCast(f32, pointer_x - @intToFloat(f64, self.current().x)),
+                    @floatCast(f32, pointer_y - @intToFloat(f64, self.current().y))
+                );
+            }
+        }
+    }
+
+    pub fn pointerLeave(self: *Self) !void {
+        var client = self.client;
+        if (client.wl_pointer_id) |wl_pointer_id| {
+            if (client.context.get(wl_pointer_id)) |wl_pointer| {
+                try prot.wl_pointer_send_leave(
+                    wl_pointer.*,
+                    client.nextSerial(),
+                    self.wl_surface_id);
+            }
+        }
+    }
+
+    pub fn keyboardKey(self: *Self, time: u32, button: u32, action: u32) !void {
+        var client = self.client;
+        if (client.wl_keyboard_id) |wl_keyboard_id| {
+            if (client.context.get(wl_keyboard_id)) |wl_keyboard| {
+                try prot.wl_keyboard_send_key(
+                    wl_keyboard.*,
+                    client.nextSerial(),
+                    time,
+                    button,
+                    action
+                );
+            }
+        }
+    }
+
     pub fn deinit(self: *Self) !void {
         std.debug.warn("release window\n", .{});
         self.in_use = false;
