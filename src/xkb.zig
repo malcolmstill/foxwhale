@@ -54,6 +54,22 @@ pub const Xkb = struct {
 
         return error.NoKeymap;
     }
+
+    pub fn serializeDepressed(self: *Self) u32 {
+        return c.xkb_state_serialize_mods(self.state, c.enum_xkb_state_component.XKB_STATE_MODS_DEPRESSED);
+    }
+
+    pub fn serializeLatched(self: *Self) u32 {
+        return c.xkb_state_serialize_mods(self.state, c.enum_xkb_state_component.XKB_STATE_MODS_LATCHED);
+    }
+
+    pub fn serializeLocked(self: *Self) u32 {
+        return c.xkb_state_serialize_mods(self.state, c.enum_xkb_state_component.XKB_STATE_MODS_LOCKED);
+    }
+
+    pub fn serializeGroup(self: *Self) u32 {
+        return c.xkb_state_serialize_mods(self.state, c.enum_xkb_state_component.XKB_STATE_LAYOUT_EFFECTIVE);
+    }
 };
 
 pub fn init() !Xkb {
