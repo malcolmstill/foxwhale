@@ -1,5 +1,8 @@
 const std = @import("std");
 const linux = std.os.linux;
+const LinearFifo = std.fifo.LinearFifo;
+const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
+const FdBuffer = LinearFifo(i32, LinearFifoBufferType{ .Static = MAX_FDS });
 
 pub const MAX_FDS = 28;
 
@@ -60,20 +63,32 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: []i32) !usize {
     return @intCast(usize, rc);
 }
 
-pub fn sendMsg(fd: i32, buffer: []u8, fds: []i32) !usize {
+pub fn sendMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
     var iov: linux.iovec_const = undefined;
     iov.iov_base = @ptrCast([*]u8, &buffer[0]);
     iov.iov_len = buffer.len;
 
     var control: [cmsg_space(MAX_FDS*@sizeOf(i32))]u8 = undefined;
+    var msg_hdr: *cmsghdr = @ptrCast(*cmsghdr, @alignCast(@alignOf(cmsghdr), &control[0]));
+
+    // Copy fds from `fds` to control
+    var incoming_slice = fds.readableSlice(0);
+    msg_hdr.cmsg_len = cmsg_len(@sizeOf(i32) * incoming_slice.len);
+    msg_hdr.cmsg_type = SCM_RIGHTS;
+    msg_hdr.cmsg_level = linux.SOL_SOCKET;
+    var fds_ptr: []i32 = undefined;
+    fds_ptr.len = MAX_FDS;
+    fds_ptr.ptr = @ptrCast([*]i32, @alignCast(@alignOf(i32), cmsg_data(msg_hdr)));
+    std.mem.copy(i32, fds_ptr, incoming_slice);
+    fds.discard(incoming_slice.len);
 
     var msg = linux.msghdr_const{
         .msg_name = null,
         .msg_namelen = 0,
         .msg_iov = @ptrCast([*]std.os.iovec_const, &iov),
         .msg_iovlen = 1,
-        .msg_control = null, // we'll need to change this when send file descriptor
-        .msg_controllen = 0, // we'll need to change this when we send file desricptor
+        .msg_control = if (incoming_slice.len == 0) null else msg_hdr, // we'll need to change this when send file descriptor
+        .msg_controllen = if (incoming_slice.len == 0) 0 else @truncate(u32, msg_hdr.cmsg_len), // we'll need to change this when we send file desricptor
         .msg_flags = 0,
         .__pad1 = 0,
         .__pad2 = 0,
