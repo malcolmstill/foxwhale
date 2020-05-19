@@ -17,6 +17,7 @@ pub fn build(b: *Builder) void {
     exe.linkSystemLibrary("c");
     exe.linkSystemLibrary("glfw3");
     exe.linkSystemLibrary("gl");
+    exe.linkSystemLibrary("xkbcommon");
     exe.install();
 
     const foxwhalectl_exe = b.addExecutable("foxwhalectl", "src/foxwhalectl/main.zig");
