@@ -28,6 +28,7 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
 
             try buffer.endAccess();
             try prot.wl_buffer_send_release(wl_buffer.*);
+            window.wl_buffer_id = null;
         }
     }
 
@@ -97,12 +98,24 @@ fn destroy(context: *Context, wl_surface: Object) anyerror!void {
 }
 
 pub fn init() void {
-    prot.WL_SURFACE.set_buffer_scale = set_buffer_scale;
-    prot.WL_SURFACE.commit = commit;
-    prot.WL_SURFACE.damage = damage;
-    prot.WL_SURFACE.attach = attach;
-    prot.WL_SURFACE.frame = frame;
-    prot.WL_SURFACE.set_opaque_region = set_opaque_region;
-    prot.WL_SURFACE.set_input_region = set_input_region;
-    prot.WL_SURFACE.destroy = destroy;
+    prot.WL_SURFACE = prot.wl_surface_interface{
+        .destroy = destroy,
+        .attach = attach,
+        .damage = damage,
+        .frame = frame,
+        .set_opaque_region = set_opaque_region,
+        .set_input_region = set_input_region,
+        .commit = commit,
+        .set_buffer_transform = set_buffer_transform,
+        .set_buffer_scale = set_buffer_scale,
+        .damage_buffer = damage_buffer,
+    };
+}
+
+fn set_buffer_transform(context: *Context, object: Object, transform: i32) anyerror!void {
+
+}
+
+fn damage_buffer(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
+
 }
