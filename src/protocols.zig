@@ -737,7 +737,7 @@ pub fn wl_data_source_send_target(object: Object, mime_type: []const u8) anyerro
 pub fn wl_data_source_send_send(object: Object, mime_type: []const u8, fd: i32) anyerror!void {
     object.context.startWrite();
     object.context.putString(mime_type);
-    object.context.putI32(fd);
+    object.context.putFd(fd);
     object.context.finishWrite(object.id, 1);
 }
 // This data source is no longer valid. There are several reasons why
@@ -1987,7 +1987,7 @@ pub const wl_keyboard_key_state = enum(u32) {
 pub fn wl_keyboard_send_keymap(object: Object, format: u32, fd: i32, size: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(format);
-    object.context.putI32(fd);
+    object.context.putFd(fd);
     object.context.putU32(size);
     object.context.finishWrite(object.id, 0);
 }

@@ -407,7 +407,7 @@ pub const wl_shm_format = enum(u32) {
 pub fn wl_shm_send_create_pool(object: Object, id: u32, fd: i32, size: i32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(id);
-    object.context.putI32(fd);
+    object.context.putFd(fd);
     object.context.putI32(size);
     object.context.finishWrite(object.id, 0);
 }
@@ -572,7 +572,7 @@ pub fn wl_data_offer_send_accept(object: Object, serial: u32, mime_type: []const
 pub fn wl_data_offer_send_receive(object: Object, mime_type: []const u8, fd: i32) anyerror!void {
     object.context.startWrite();
     object.context.putString(mime_type);
-    object.context.putI32(fd);
+    object.context.putFd(fd);
     object.context.finishWrite(object.id, 1);
 }
 // Destroy the data offer.
