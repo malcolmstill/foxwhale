@@ -1,8 +1,8 @@
 const std = @import("std");
-const prot = @import("protocols.zig");
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
-const Window = @import("window.zig").Window;
+const prot = @import("../protocols.zig");
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
+const Window = @import("../window.zig").Window;
 
 fn destroy(context: *Context, wl_subcompositor: Object) anyerror!void {
     context.client.wl_subcompositor_id = null;

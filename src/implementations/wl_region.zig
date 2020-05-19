@@ -1,11 +1,11 @@
 const std = @import("std");
-const prot = @import("protocols.zig");
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
-const Region = @import("region.zig").Region;
-const RegionOp = @import("region.zig").RegionOp;
-const RectangleOp = @import("region.zig").RectangleOp;
-const Rectangle = @import("rectangle.zig").Rectangle;
+const prot = @import("../protocols.zig");
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
+const Region = @import("../region.zig").Region;
+const RegionOp = @import("../region.zig").RegionOp;
+const RectangleOp = @import("../region.zig").RectangleOp;
+const Rectangle = @import("../rectangle.zig").Rectangle;
 
 fn add(context: *Context, wl_region: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     var region = @intToPtr(*Region, wl_region.container);

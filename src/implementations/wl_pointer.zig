@@ -1,9 +1,9 @@
-const prot = @import("protocols.zig");
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
-const Window = @import("window.zig").Window;
-const Cursor = @import("window.zig").Cursor;
-const compositor = @import("compositor.zig");
+const prot = @import("../protocols.zig");
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
+const Window = @import("../window.zig").Window;
+const Cursor = @import("../window.zig").Cursor;
+const compositor = @import("../compositor.zig");
 
 fn set_cursor(context: *Context, wl_pointer: Object, serial: u32, optional_wl_surface: ?Object, hotspot_x: i32, hotspot_y: i32) anyerror!void {
     if (optional_wl_surface) |wl_surface| {

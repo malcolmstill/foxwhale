@@ -1,9 +1,9 @@
 const std = @import("std");
-const prot = @import("protocols.zig");
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
-const shm_pool = @import("shm_pool.zig");
-const ShmPool = @import("shm_pool.zig").ShmPool;
+const prot = @import("../protocols.zig");
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
+const shm_pool = @import("../shm_pool.zig");
+const ShmPool = @import("../shm_pool.zig").ShmPool;
 
 fn create_pool(context: *Context, wl_shm: Object, new_id: u32, fd: i32, size: i32) anyerror!void {
     // std.debug.warn("create_pool: fd {}\n", .{fd});

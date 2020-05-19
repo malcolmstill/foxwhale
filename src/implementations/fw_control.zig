@@ -1,8 +1,8 @@
 const std = @import("std");
-const prot = @import("protocols.zig");
-const clients = @import("client.zig");
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
+const prot = @import("../protocols.zig");
+const clients = @import("../client.zig");
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
 
 fn get_clients(context: *Context, fw_control: Object) anyerror!void {
     var it = clients.CLIENTS.iterator();

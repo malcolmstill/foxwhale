@@ -1,9 +1,9 @@
 const std = @import("std");
-const prot = @import("protocols.zig");
-const Client = @import("client.zig").Client;
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
-const compositor = @import("compositor.zig");
+const prot = @import("../protocols.zig");
+const Client = @import("../client.zig").Client;
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
+const compositor = @import("../compositor.zig");
 
 fn get_pointer(context: *Context, wl_seat: Object, new_id: u32) anyerror!void {
     context.client.wl_pointer_id = new_id;

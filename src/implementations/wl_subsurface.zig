@@ -1,7 +1,7 @@
-const prot = @import("protocols.zig");
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
-const Window = @import("window.zig").Window;
+const prot = @import("../protocols.zig");
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
+const Window = @import("../window.zig").Window;
 
 fn destroy(context: *Context, object: Object) anyerror!void {
     return error.DebugFunctionNotImplemented;

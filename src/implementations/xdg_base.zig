@@ -1,8 +1,8 @@
 const std = @import("std");
-const prot = @import("protocols.zig");
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
-const Window = @import("window.zig").Window;
+const prot = @import("../protocols.zig");
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
+const Window = @import("../window.zig").Window;
 
 fn get_xdg_surface(context: *Context, xdg_wm_base: Object, new_id: u32, surface: Object) anyerror!void {
     std.debug.warn("get_xdg_surface: {}\n", .{new_id});

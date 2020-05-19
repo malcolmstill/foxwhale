@@ -1,13 +1,13 @@
 const std = @import("std");
 const linux = std.os.linux;
-const prot = @import("protocols.zig");
-const renderer = @import("renderer.zig");
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
-const Client = @import("client.zig").Client;
-const ShmBuffer = @import("shm_buffer.zig").ShmBuffer;
-const Window = @import("window.zig").Window;
-const Link = @import("window.zig").Link;
+const prot = @import("../protocols.zig");
+const renderer = @import("../renderer.zig");
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
+const Client = @import("../client.zig").Client;
+const ShmBuffer = @import("../shm_buffer.zig").ShmBuffer;
+const Window = @import("../window.zig").Window;
+const Link = @import("../window.zig").Link;
 
 fn commit(context: *Context, wl_surface: Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);

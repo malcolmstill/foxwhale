@@ -1,8 +1,8 @@
 const std = @import("std");
-const prot = @import("protocols.zig");
-const Client = @import("client.zig").Client;
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
+const prot = @import("../protocols.zig");
+const Client = @import("../client.zig").Client;
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
 
 fn create_data_source(context: *Context, object: Object, id: u32) anyerror!void {
 

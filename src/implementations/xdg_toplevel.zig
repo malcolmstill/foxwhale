@@ -1,8 +1,8 @@
 const std = @import("std");
-const prot = @import("protocols.zig");
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
-const Window = @import("window.zig").Window;
+const prot = @import("../protocols.zig");
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
+const Window = @import("../window.zig").Window;
 
 fn set_parent(context: *Context, xdg_toplevel: Object, parent: ?Object) anyerror!void {
     var window = @intToPtr(*Window, xdg_toplevel.container);

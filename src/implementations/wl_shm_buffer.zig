@@ -1,9 +1,9 @@
 const std = @import("std");
-const prot = @import("protocols.zig");
-const shm_buffer = @import("shm_buffer.zig");
-const Object = @import("client.zig").Object;
-const Context = @import("client.zig").Context;
-const ShmBuffer = @import("shm_buffer.zig").ShmBuffer;
+const prot = @import("../protocols.zig");
+const shm_buffer = @import("../shm_buffer.zig");
+const Object = @import("../client.zig").Object;
+const Context = @import("../client.zig").Context;
+const ShmBuffer = @import("../shm_buffer.zig").ShmBuffer;
 
 fn create_buffer(context: *Context, wl_shm_pool: Object, new_id: u32, offset: i32, width: i32, height: i32, stride: i32, format: u32) anyerror!void {
     var buffer = try shm_buffer.newShmBuffer(context.client, new_id, wl_shm_pool, offset, width, height, stride, format);

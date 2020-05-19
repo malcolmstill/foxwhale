@@ -1,8 +1,8 @@
 const std = @import("std");
-const prot = @import("protocols.zig");
-const out = @import("output.zig");
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
+const prot = @import("../protocols.zig");
+const out = @import("../output.zig");
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
 
 fn sync(context: *Context, wl_display: Object, new_id: u32) anyerror!void {
     // std.debug.warn("sync with id {}\n", .{new_id});

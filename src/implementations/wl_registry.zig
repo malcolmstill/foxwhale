@@ -1,8 +1,8 @@
 const std = @import("std");
-const prot = @import("protocols.zig");
-const out = @import("output.zig");
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
+const prot = @import("../protocols.zig");
+const out = @import("../output.zig");
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
 
 fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, version: u32, new_id: u32) anyerror!void {
     std.debug.warn("bind for {} ({}) with id {} at version {}\n", .{name_string, name, new_id, version});

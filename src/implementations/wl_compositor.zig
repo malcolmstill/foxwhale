@@ -1,11 +1,11 @@
 const std = @import("std");
-const prot = @import("protocols.zig");
-const Client = @import("client.zig").Client;
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
-const win = @import("window.zig");
-const reg = @import("region.zig");
-const view = @import("view.zig");
+const prot = @import("../protocols.zig");
+const Client = @import("../client.zig").Client;
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
+const win = @import("../window.zig");
+const reg = @import("../region.zig");
+const view = @import("../view.zig");
 
 fn create_surface(context: *Context, wl_compositor: Object, new_id: u32) anyerror!void {
     std.debug.warn("create_surface: {}\n", .{new_id});

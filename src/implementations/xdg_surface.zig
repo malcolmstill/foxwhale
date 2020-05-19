@@ -1,9 +1,9 @@
 const std = @import("std");
-const prot = @import("protocols.zig");
-const Context = @import("client.zig").Context;
-const Object = @import("client.zig").Object;
-const Rectangle = @import("rectangle.zig").Rectangle;
-const Window = @import("window.zig").Window;
+const prot = @import("../protocols.zig");
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
+const Rectangle = @import("../rectangle.zig").Rectangle;
+const Window = @import("../window.zig").Window;
 
 fn get_toplevel(context: *Context, xdg_surface: Object, new_id: u32) anyerror!void {
     std.debug.warn("get_toplevel: {}\n", .{new_id});
