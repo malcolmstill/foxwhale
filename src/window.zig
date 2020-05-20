@@ -315,6 +315,22 @@ pub const Window = struct {
     pub fn activate(self: *Self) !void {
         var client = self.client;
 
+        if (self.xdg_surface_id) |xdg_surface_id| {
+            if (client.context.get(xdg_surface_id)) |xdg_surface| {
+                if (self.xdg_toplevel_id) |xdg_toplevel_id| {
+                    if (client.context.get(xdg_toplevel_id)) |xdg_toplevel| {
+                        var state: [1]u32 = [_]u32{@enumToInt(prot.xdg_toplevel_state.activated)};
+                        if (self.window_geometry) |window_geometry| {
+                            try prot.xdg_toplevel_send_configure(xdg_toplevel.*, window_geometry.width, window_geometry.height, &state);
+                        } else {
+                            try prot.xdg_toplevel_send_configure(xdg_toplevel.*, self.width, self.height, &state);
+                        }
+                        try prot.xdg_surface_send_configure(xdg_surface.*, client.nextSerial());
+                    }
+                }
+            }
+        }
+
         if (client.wl_keyboard_id) |wl_keyboard_id| {
             if (client.context.get(wl_keyboard_id)) |wl_keyboard| {
                 try prot.wl_keyboard_send_enter(
@@ -329,6 +345,21 @@ pub const Window = struct {
 
     pub fn deactivate(self: *Self) !void {
         var client = self.client;
+
+        if (self.xdg_surface_id) |xdg_surface_id| {
+            if (client.context.get(xdg_surface_id)) |xdg_surface| {
+                if (self.xdg_toplevel_id) |xdg_toplevel_id| {
+                    if (client.context.get(xdg_toplevel_id)) |xdg_toplevel| {
+                        if (self.window_geometry) |window_geometry| {
+                            try prot.xdg_toplevel_send_configure(xdg_toplevel.*, window_geometry.width, window_geometry.height, &[_]u32{});
+                        } else {
+                            try prot.xdg_toplevel_send_configure(xdg_toplevel.*, self.width, self.height, &[_]u32{});
+                        }
+                        try prot.xdg_surface_send_configure(xdg_surface.*, client.nextSerial());
+                    }
+                }
+            }
+        }
 
         if (client.wl_keyboard_id) |wl_keyboard_id| {
             if (client.context.get(wl_keyboard_id)) |wl_keyboard| {
