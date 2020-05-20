@@ -116,12 +116,8 @@ pub const Window = struct {
         var it = self.backwardIterator();
         while(it.prev()) |window| {
             if (self == window) {
-                var x = @floatToInt(i32, pointer_x);
-                var y = @floatToInt(i32, pointer_y);
-                if (x >= window.absoluteX() and x <= (window.absoluteX() + window.width)) {
-                    if (y >= window.absoluteY() and y <= (window.absoluteY() + window.height)) {
-                        return window;
-                    }
+                if (isPointerInside(self, pointer_x, pointer_y)) {
+                    return window;
                 }
             } else {
                 if (window.windowUnderPointer(pointer_x, pointer_y)) |child| {
@@ -130,6 +126,29 @@ pub const Window = struct {
             }
         }
         return null;
+    }
+
+    fn isPointerInside(self: *Self, x: f64, y: f64) bool {
+        if (self.window_geometry) |window_geometry| {
+            var x_left = self.absoluteX() + window_geometry.x;
+            var x_right = x_left + window_geometry.width;
+            var y_top = self.absoluteY() + window_geometry.y;
+            var y_bottom = y_top + window_geometry.height;
+            if (x >= @intToFloat(f64, x_left) and x <= @intToFloat(f64, x_right)) {
+                if (y >= @intToFloat(f64, y_top) and y <= @intToFloat(f64, y_bottom)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if (x >= @intToFloat(f64, self.absoluteX()) and x <= @intToFloat(f64, (self.absoluteX() + self.width))) {
+            if (y >= @intToFloat(f64, self.absoluteY()) and y <= @intToFloat(f64, (self.absoluteY() + self.height))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
