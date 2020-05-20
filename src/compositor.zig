@@ -2,13 +2,16 @@ const std = @import("std");
 const views = @import("view.zig");
 const xkb = @import("xkb.zig");
 const Xkb = @import("xkb.zig").Xkb;
+const Move = @import("move.zig").Move;
 pub var COMPOSITOR: Compositor = makeCompositor();
 
 const Compositor = struct {
-    pointer_x: i32,
-    pointer_y: i32,
+    pointer_x: f64,
+    pointer_y: f64,
 
     cursor_wl_surface_id: ?u32,
+
+    move: ?Move,
 
     xkb: ?Xkb,
     mods_depressed: u32,
@@ -23,14 +26,25 @@ const Compositor = struct {
     }
 
     pub fn updatePointer(self: *Self, new_x: f64, new_y: f64) !void {
-        self.pointer_x = @floatToInt(i32, new_x);
-        self.pointer_y = @floatToInt(i32, new_y);
+        self.pointer_x = new_x;
+        self.pointer_y = new_y;
+
+        if (self.move) |move| {
+            move.window.current().x = move.window_x + @floatToInt(i32, new_x - move.pointer_x);
+            move.window.current().y = move.window_y + @floatToInt(i32, new_y - move.pointer_y);
+            move.window.pending().x = move.window_x + @floatToInt(i32, new_x - move.pointer_x);
+            move.window.pending().y = move.window_y + @floatToInt(i32, new_y - move.pointer_y);
+        }
 
         try views.CURRENT_VIEW.updatePointer(new_x, new_y);
     }
 
     pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
-        // std.debug.warn("button: {}, action: {}\n", .{button, action});
+        if (self.move) |move| {
+            if (action == 0) {
+                self.move = null;
+            }
+        }
         try views.CURRENT_VIEW.mouseClick(button, action);
     }
 
@@ -51,6 +65,7 @@ fn makeCompositor() Compositor {
         .pointer_x = 0.0,
         .pointer_y = 0.0,
         .cursor_wl_surface_id = null,
+        .move = null,
         .xkb = null,
         .mods_depressed = 0,
         .mods_latched = 0,

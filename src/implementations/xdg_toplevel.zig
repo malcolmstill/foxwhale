@@ -1,8 +1,10 @@
 const std = @import("std");
 const prot = @import("../protocols.zig");
+const compositor = @import("../compositor.zig");
 const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
 const Window = @import("../window.zig").Window;
+const Move = @import("../move.zig").Move;
 
 fn set_parent(context: *Context, xdg_toplevel: Object, parent: ?Object) anyerror!void {
     var window = @intToPtr(*Window, xdg_toplevel.container);
@@ -63,10 +65,60 @@ fn destroy(context: *Context, xdg_toplevel: Object) anyerror!void {
 }
 
 pub fn init() void {
-    prot.XDG_TOPLEVEL.set_parent = set_parent;
-    prot.XDG_TOPLEVEL.set_title = set_title;
-    prot.XDG_TOPLEVEL.set_app_id = set_app_id;
-    prot.XDG_TOPLEVEL.set_max_size = set_max_size;
-    prot.XDG_TOPLEVEL.set_min_size = set_min_size;
-    prot.XDG_TOPLEVEL.destroy = destroy;
+    prot.XDG_TOPLEVEL = prot.xdg_toplevel_interface{
+        .destroy = destroy,
+        .set_parent = set_parent,
+        .set_title = set_title,
+        .set_app_id = set_app_id,
+        .show_window_menu = show_window_menu,
+        .move = move,
+        .resize = resize,
+        .set_max_size = set_max_size,
+        .set_min_size = set_min_size,
+        .set_maximized = set_maximized,
+        .unset_maximized = unset_maximized,
+        .set_fullscreen = set_fullscreen,
+        .unset_fullscreen = unset_fullscreen,
+        .set_minimized = set_minimized,
+    };
+}
+
+fn show_window_menu(context: *Context, object: Object, seat: Object, serial: u32, x: i32, y: i32) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn move(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32) anyerror!void {
+    var window = @intToPtr(*Window, xdg_toplevel.container);
+
+    compositor.COMPOSITOR.move = Move {
+        .window = window,
+        .window_x = window.current().x,
+        .window_y = window.current().y,
+        .pointer_x = compositor.COMPOSITOR.pointer_x,
+        .pointer_y = compositor.COMPOSITOR.pointer_y,
+    };
+}
+
+fn resize(context: *Context, object: Object, seat: Object, serial: u32, edges: u32) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn set_maximized(context: *Context, object: Object) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn unset_maximized(context: *Context, object: Object) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn set_fullscreen(context: *Context, object: Object, output: ?Object) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn unset_fullscreen(context: *Context, object: Object) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn set_minimized(context: *Context, object: Object) anyerror!void {
+    return error.DebugFunctionNotImplemented;
 }
