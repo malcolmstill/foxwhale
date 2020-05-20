@@ -70,6 +70,7 @@ pub const View = struct {
         } else {
             if (self.active_window) |active_window| {
                 try active_window.deactivate();
+                self.active_window = null;
             }
         }
     }
