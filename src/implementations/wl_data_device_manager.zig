@@ -4,11 +4,11 @@ const Client = @import("../client.zig").Client;
 const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
 
-fn create_data_source(context: *Context, object: Object, id: u32) anyerror!void {
+fn create_data_source(context: *Context, wl_data_device_manager: Object, new_id: u32) anyerror!void {
 
 }
 
-fn get_data_device(context: *Context, object: Object, id: u32, seat: Object) anyerror!void {
+fn get_data_device(context: *Context, wl_data_device_manager: Object, id: u32, seat: Object) anyerror!void {
 
 }
 
