@@ -91,6 +91,7 @@ pub const View = struct {
                 try old_pointer_window.pointerLeave();
                 if (self.focus == Focus.FollowsMouse) {
                     try old_pointer_window.deactivate();
+                    self.active_window = null;
                 }
             }
 
@@ -99,6 +100,7 @@ pub const View = struct {
                 try window.pointerEnter(x, y);
                 if (self.focus == Focus.FollowsMouse) {
                     try window.activate();
+                    self.active_window = window;
                 }
             } else {
                 std.debug.warn("new pointer_window: null\n", .{});
@@ -113,8 +115,8 @@ pub const View = struct {
     }
 
     pub fn keyboard(self: *Self, time: u32, button: u32, action: u32, mods: u32) !void {
-        if (self.pointer_window) |window| {
-            try window.keyboardKey(time, button, action);
+        if (self.active_window) |active_window| {
+            try active_window.keyboardKey(time, button, action);
         }
     }
 
