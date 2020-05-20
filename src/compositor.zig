@@ -30,10 +30,12 @@ const Compositor = struct {
         self.pointer_y = new_y;
 
         if (self.move) |move| {
-            move.window.current().x = move.window_x + @floatToInt(i32, new_x - move.pointer_x);
-            move.window.current().y = move.window_y + @floatToInt(i32, new_y - move.pointer_y);
-            move.window.pending().x = move.window_x + @floatToInt(i32, new_x - move.pointer_x);
-            move.window.pending().y = move.window_y + @floatToInt(i32, new_y - move.pointer_y);
+            var new_window_x = move.window_x + @floatToInt(i32, new_x - move.pointer_x);
+            var new_window_y = move.window_y + @floatToInt(i32, new_y - move.pointer_y);
+            move.window.current().x = new_window_x;
+            move.window.pending().x = new_window_x;
+            move.window.current().y = new_window_y;
+            move.window.pending().y = new_window_y;
         }
 
         try views.CURRENT_VIEW.updatePointer(new_x, new_y);
