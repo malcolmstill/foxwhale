@@ -1,6 +1,6 @@
 const std = @import("std");
 const views = @import("view.zig");
-const xkb = @import("xkb.zig");
+const xkbcommon = @import("xkb.zig");
 const Xkb = @import("xkb.zig").Xkb;
 const Move = @import("move.zig").Move;
 pub var COMPOSITOR: Compositor = makeCompositor();
@@ -22,7 +22,7 @@ const Compositor = struct {
     const Self = @This();
 
     pub fn init(self: *Self) !void {
-        self.xkb = try xkb.init();
+        self.xkb = try xkbcommon.init();
     }
 
     pub fn updatePointer(self: *Self, new_x: f64, new_y: f64) !void {
@@ -51,12 +51,12 @@ const Compositor = struct {
     }
 
     pub fn keyboard(self: *Self, time: u32, button: u32, action: u32, mods: u32) !void {
-        if (self.xkb) |*x| {
-            x.updateKey(button, action);
-            self.mods_depressed = x.serializeDepressed();
-            self.mods_latched = x.serializeLatched();
-            self.mods_locked = x.serializeLocked();
-            self.mods_group = x.serializeGroup();
+        if (self.xkb) |*xkb| {
+            xkb.updateKey(button, action);
+            self.mods_depressed = xkb.serializeDepressed();
+            self.mods_latched = xkb.serializeLatched();
+            self.mods_locked = xkb.serializeLocked();
+            self.mods_group = xkb.serializeGroup();
         }
         try views.CURRENT_VIEW.keyboard(time, button, action, mods);
     }
