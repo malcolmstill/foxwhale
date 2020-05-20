@@ -610,11 +610,19 @@ test "Window + View" {
     var v: View = View {
         .top = null,
         .pointer_window = null,
+        .active_window = null,
+        .focus = .Click,
     };
+
+    var back = v.back();
+    std.debug.assert(back == null);
 
     var w1 = try newWindow(&c, 1);
     v.push(w1);
     std.debug.assert(v.top == w1);
+
+    back = v.back();
+    std.debug.assert(back == w1);
 
     std.debug.assert(w1.toplevel.prev == null);
     std.debug.assert(w1.toplevel.next == null);
@@ -622,6 +630,9 @@ test "Window + View" {
     var w2 = try newWindow(&c, 2);
     v.push(w2);
     std.debug.assert(v.top == w2);
+
+    back = v.back();
+    std.debug.assert(back == w1);
 
     std.debug.assert(w1.toplevel.prev == null);
     std.debug.assert(w1.toplevel.next == w2);
@@ -632,6 +643,9 @@ test "Window + View" {
     var w3 = try newWindow(&c, 3);
     v.push(w3);
     std.debug.assert(v.top == w3);
+
+    back = v.back();
+    std.debug.assert(back == w1);
 
     std.debug.assert(w1.toplevel.prev == null);
     std.debug.assert(w1.toplevel.next == w2);
@@ -646,6 +660,9 @@ test "Window + View" {
     v.remove(w2);
     std.debug.assert(v.top == w3);
 
+    back = v.back();
+    std.debug.assert(back == w1);
+
     std.debug.assert(w1.toplevel.prev == null);
     std.debug.assert(w1.toplevel.next == w3);
 
@@ -655,6 +672,14 @@ test "Window + View" {
     v.remove(w3);
     std.debug.assert(v.top == w1);
 
+    back = v.back();
+    std.debug.assert(back == w1);
+
     std.debug.assert(w1.toplevel.prev == null);
     std.debug.assert(w1.toplevel.next == null);
+
+    v.remove(w1);
+
+    back = v.back();
+    std.debug.assert(back == null);
 }
