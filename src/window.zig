@@ -127,6 +127,14 @@ pub const Window = struct {
         self.ready_for_callback = false;
     }
 
+    pub fn root(self: *Window) *Window {
+        if (self.parent) |parent| {
+            return parent.root();
+        } else {
+            return self;
+        }
+    }
+
     pub fn toplevelUnderPointer(self: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
         var it = self.backwardIterator();
         while(it.prev()) |window| {
