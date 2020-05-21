@@ -12,7 +12,11 @@ fn get_pointer(context: *Context, wl_seat: Object, new_id: u32) anyerror!void {
 }
 
 fn get_keyboard(context: *Context, wl_seat: Object, new_id: u32) anyerror!void {
-    context.client.wl_keyboard_id = new_id;
+    if (context.client.wl_seat_id) |wl_seat_id| {
+        if (wl_seat_id == wl_seat.id) {
+            context.client.wl_keyboard_id = new_id;
+        }
+    }
 
     var wl_keyboard = prot.new_wl_keyboard(new_id, context, 0);
 
