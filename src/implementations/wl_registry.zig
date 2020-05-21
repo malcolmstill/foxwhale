@@ -44,7 +44,7 @@ fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, ve
             wl_seat.version = version;
             try prot.wl_seat_send_capabilities(wl_seat, @enumToInt(prot.wl_seat_capability.pointer) | @enumToInt(prot.wl_seat_capability.keyboard));
 
-            if (context.client.wl_seat_id != null) {
+            if (context.client.wl_seat_id == null) {
                 context.client.wl_seat_id = wl_seat.id;
             }
 
