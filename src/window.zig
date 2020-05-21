@@ -4,6 +4,7 @@ const renderer = @import("renderer.zig");
 const compositor = @import("compositor.zig");
 const Client = @import("client.zig").Client;
 const Rectangle = @import("rectangle.zig").Rectangle;
+const Region = @import("region.zig").Region;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 const View = @import("view.zig").View;
@@ -180,6 +181,13 @@ pub const Window = struct {
             }
 
             return false;
+        }
+
+        if (self.current().input_region_id) |input_region_id| {
+            if (self.client.context.get(input_region_id)) |input_region| {
+                var region = @intToPtr(*Region, input_region.container);
+                return region.pointInside(x - @intToFloat(f64, self.absoluteX()), y - @intToFloat(f64, self.absoluteY()));
+            }
         }
 
         if (x >= @intToFloat(f64, self.absoluteX()) and x <= @intToFloat(f64, (self.absoluteX() + self.width))) {
