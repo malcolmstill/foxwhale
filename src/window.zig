@@ -112,6 +112,22 @@ pub const Window = struct {
         self.ready_for_callback = false;
     }
 
+    pub fn toplevelUnderPointer(self: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
+        var it = self.backwardIterator();
+        while(it.prev()) |window| {
+            if (self == window) {
+                if (isPointerInside(self, pointer_x, pointer_y)) {
+                    return self;
+                }
+            } else {
+                if (window.windowUnderPointer(pointer_x, pointer_y)) |child| {
+                    return self;
+                }
+            }
+        }
+        return null;
+    }
+
     pub fn windowUnderPointer(self: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
         var it = self.backwardIterator();
         while(it.prev()) |window| {
