@@ -17,7 +17,6 @@ pub const Region = struct {
 
     const Self = @This();
 
-    // flip double-buffered state
     pub fn flip(self: *Self) void {
         self.stateIndex +%= 1;
     }
@@ -28,6 +27,24 @@ pub const Region = struct {
 
     pub fn pending(self: *Self) *BufferedState {
         return &self.state[self.stateIndex +% 1];
+    }
+
+    pub fn pointInside(self: *Self, local_x: f64, local_y: f64) bool {
+        var slice = self.current().rectangles.readableSlice(0);
+        for(slice) |rect| {
+            var left = @intToFloat(f64, rect.rectangle.x);
+            var right = left + @intToFloat(f64, rect.rectangle.width);
+            var top = @intToFloat(f64, rect.rectangle.y);
+            var bottom = top + @intToFloat(f64, rect.rectangle.height);
+
+            if (local_x >= left and local_x <= right) {
+                if (local_y >= top and local_y <= bottom) {
+                    return (if (rect.op == .Add) true else false);
+                }
+            }
+        }
+
+        return false;
     }
 
     pub fn deinit(self: *Self) !void {
