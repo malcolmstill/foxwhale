@@ -33,7 +33,8 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
     }
 
     if (window.view) |view| {
-        if (window.xdg_toplevel_id != null) {
+        if (window.xdg_toplevel_id != null and window.toplevel.prev == null and window.toplevel.next == null) {
+            view.remove(window);
             view.push(window);
         }
     }
