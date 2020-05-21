@@ -3,8 +3,11 @@ const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
 const Window = @import("../window.zig").Window;
 
-fn destroy(context: *Context, object: Object) anyerror!void {
-    return error.DebugFunctionNotImplemented;
+fn destroy(context: *Context, wl_subsurface: Object) anyerror!void {
+    var window = @intToPtr(*Window, wl_subsurface.container);
+    window.wl_subsurface_id = null;
+    try prot.wl_display_send_delete_id(context.client.wl_display, wl_subsurface.id);
+    try context.unregister(wl_subsurface);
 }
 
 fn set_position(context: *Context, wl_subsurface: Object, x: i32, y: i32) anyerror!void {
