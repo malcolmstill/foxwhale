@@ -81,7 +81,7 @@ pub const View = struct {
 
         var it = self.top;
         while(it) |window| : (it = window.toplevel.prev) {
-            if (window.windowUnderPointer(x, y)) |w| {
+            if (window.toplevelUnderPointer(x, y)) |w| {
                 new_pointer_window = w;
                 break;
             }
