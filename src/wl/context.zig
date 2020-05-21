@@ -38,7 +38,8 @@ pub fn Context(comptime T: type) type {
             self.read_offset = 0;
             self.write_offset = 0;
 
-            self.tx_fds.deinit();
+            self.rx_fds = FdBuffer.init();
+            self.tx_fds = FdBuffer.init();
 
             self.objects = AutoHashMap(u32, Object).init(std.heap.page_allocator);
         }
