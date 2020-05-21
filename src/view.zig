@@ -51,8 +51,9 @@ pub const View = struct {
             if (action == 1) {
                 if (self.top != pointer_window) {
                         std.debug.warn("raise: {}\n", .{pointer_window.index});
-                        self.remove(pointer_window);
-                        self.push(pointer_window);
+                        var root = pointer_window.root();
+                        self.remove(root);
+                        self.push(root);
                 }
 
                 if (pointer_window != self.active_window) {
@@ -81,7 +82,7 @@ pub const View = struct {
 
         var it = self.top;
         while(it) |window| : (it = window.toplevel.prev) {
-            if (window.toplevelUnderPointer(x, y)) |w| {
+            if (window.windowUnderPointer(x, y)) |w| {
                 new_pointer_window = w;
                 break;
             }
