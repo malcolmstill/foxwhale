@@ -65,21 +65,6 @@ pub const Window = struct {
         return &self.state[self.stateIndex +% 1];
     }
 
-    pub fn debug(self: *Self) void {
-        var next: ?usize = null;
-        var prev: ?usize = null;
-
-        if (self.toplevel.next) |toplevel_next| {
-            next = toplevel_next.index;
-        }
-
-        if (self.toplevel.prev) |toplevel_prev| {
-            prev = toplevel_prev.index;
-        }
-
-        std.debug.warn("debug: {} <-- window[{}] --> {}\n", .{prev, self.index, next});
-    }
-
     pub fn render(self: *Self) anyerror!void {
         var it = self.forwardIterator();
         while(it.next()) |window| {
@@ -568,6 +553,25 @@ pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
     }
 
     return error.WindowsExhausted;
+}
+
+pub fn debug(window: ?*Window) void {
+    if (window) |self| {
+        var next: ?usize = null;
+        var prev: ?usize = null;
+
+        if (self.toplevel.next) |toplevel_next| {
+            next = toplevel_next.index;
+        }
+
+        if (self.toplevel.prev) |toplevel_prev| {
+            prev = toplevel_prev.index;
+        }
+
+        std.debug.warn("debug: {} <-- window[{}, {}] --> {}\n", .{prev, self.index, self.wl_surface_id, next});
+    } else {
+        std.debug.warn("debug: null\n", .{});
+    }
 }
 
 const BufferedState = struct {
