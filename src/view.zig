@@ -37,7 +37,6 @@ pub const View = struct {
         }
 
         self.top = window;
-        std.debug.warn("pushed\n", .{});
     }
 
     pub fn remove(self: *Self, window: *Window) void {
@@ -49,28 +48,30 @@ pub const View = struct {
 
     pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
         if (self.pointer_window) |pointer_window| {
-            if (self.top != pointer_window) {
-                if (action == 1) {
-                    std.debug.warn("raise\n", .{});
-                    self.remove(pointer_window);
-                    self.push(pointer_window);
-                }
-            }
-
-            if (pointer_window != self.active_window) {
-                if (self.active_window) |active_window| {
-                    try active_window.deactivate();
+            if (action == 1) {
+                if (self.top != pointer_window) {
+                        std.debug.warn("raise: {}\n", .{pointer_window.index});
+                        self.remove(pointer_window);
+                        self.push(pointer_window);
                 }
 
-                try pointer_window.activate();
-                self.active_window = pointer_window;
+                if (pointer_window != self.active_window) {
+                    if (self.active_window) |active_window| {
+                        try active_window.deactivate();
+                    }
+
+                    try pointer_window.activate();
+                    self.active_window = pointer_window;
+                }
             }
 
             try pointer_window.mouseClick(button, action);
         } else {
             if (self.active_window) |active_window| {
-                try active_window.deactivate();
-                self.active_window = null;
+                if (action == 1) {
+                    try active_window.deactivate();
+                    self.active_window = null;
+                }
             }
         }
     }
