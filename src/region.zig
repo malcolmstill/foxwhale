@@ -11,26 +11,12 @@ pub var REGIONS: Stalloc(Client, Region, 1024) = undefined;
 
 pub const Region = struct {
     wl_region_id: u32,
-
-    state: [2]BufferedState = undefined,
-    stateIndex: u1 = 0,
+    rectangles: RectangleBuffer,
 
     const Self = @This();
 
-    pub fn flip(self: *Self) void {
-        self.stateIndex +%= 1;
-    }
-
-    pub fn current(self: *Self) *BufferedState {
-        return &self.state[self.stateIndex];
-    }
-
-    pub fn pending(self: *Self) *BufferedState {
-        return &self.state[self.stateIndex +% 1];
-    }
-
     pub fn pointInside(self: *Self, local_x: f64, local_y: f64) bool {
-        var slice = self.current().rectangles.readableSlice(0);
+        var slice = self.rectangles.readableSlice(0);
         for(slice) |rect| {
             var left = @intToFloat(f64, rect.rectangle.x);
             var right = left + @intToFloat(f64, rect.rectangle.width);
@@ -48,8 +34,7 @@ pub const Region = struct {
     }
 
     pub fn deinit(self: *Self) !void {
-        self.current().rectangles = RectangleBuffer.init();
-        self.pending().rectangles = RectangleBuffer.init();
+        self.rectangles = RectangleBuffer.init();
         var freed_index = REGIONS.deinit(self);
         std.debug.warn("released region {}\n", .{freed_index});
     }
@@ -64,10 +49,6 @@ pub fn newRegion(client: *Client, wl_region_id: u32) !*Region {
 pub fn releaseRegions(client: *Client) !void {
     try REGIONS.releaseBelongingTo(client);
 }
-
-const BufferedState = struct {
-    rectangles: RectangleBuffer,
-};
 
 pub const RegionOp = enum {
     Add,

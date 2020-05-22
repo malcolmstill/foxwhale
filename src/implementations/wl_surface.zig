@@ -7,6 +7,7 @@ const Object = @import("../client.zig").Object;
 const Client = @import("../client.zig").Client;
 const ShmBuffer = @import("../shm_buffer.zig").ShmBuffer;
 const Window = @import("../window.zig").Window;
+const Region = @import("../region.zig").Region;
 const Link = @import("../window.zig").Link;
 
 fn commit(context: *Context, wl_surface: Object) anyerror!void {
@@ -73,9 +74,10 @@ fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {
 fn set_opaque_region(context: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     if (optional_wl_region) |wl_region| {
-        window.pending().opaque_region_id = wl_region.id;
+        var region = @intToPtr(*Region, wl_region.container);
+        window.pending().opaque_region = region;
     } else {
-        window.pending().opaque_region_id = null;
+        window.pending().opaque_region = null;
     }
 }
 
@@ -83,9 +85,10 @@ fn set_opaque_region(context: *Context, wl_surface: Object, optional_wl_region: 
 fn set_input_region(context: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     if (optional_wl_region) |wl_region| {
-        window.pending().input_region_id = wl_region.id;
+        var region = @intToPtr(*Region, wl_region.container);
+        window.pending().input_region = region;
     } else {
-        window.pending().input_region_id = null;
+        window.pending().input_region = null;
     }
 }
 

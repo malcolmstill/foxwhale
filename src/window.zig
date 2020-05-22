@@ -172,11 +172,8 @@ pub const Window = struct {
             return false;
         }
 
-        if (self.current().input_region_id) |input_region_id| {
-            if (self.client.context.get(input_region_id)) |input_region| {
-                var region = @intToPtr(*Region, input_region.container);
-                return region.pointInside(x - @intToFloat(f64, self.absoluteX()), y - @intToFloat(f64, self.absoluteY()));
-            }
+        if (self.current().input_region) |input_region| {
+            return input_region.pointInside(x - @intToFloat(f64, self.absoluteX()), y - @intToFloat(f64, self.absoluteY()));
         }
 
         if (x >= @intToFloat(f64, self.absoluteX()) and x <= @intToFloat(f64, (self.absoluteX() + self.width))) {
@@ -555,6 +552,9 @@ pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
             window.width = 0;
             window.height = 0;
 
+            window.state[0].deinit();
+            window.state[1].deinit();
+
             return window;
         } else {
             i = i + 1;
@@ -603,8 +603,8 @@ const BufferedState = struct {
     y: i32 = 0,
     scale: i32 = 1,
 
-    input_region_id: ?u32,
-    opaque_region_id: ?u32,
+    input_region: ?*Region,
+    opaque_region: ?*Region,
 
     min_width: ?i32,
     min_height: ?i32,
@@ -625,8 +625,8 @@ const BufferedState = struct {
         self.y = 0;
         self.scale = 1;
 
-        self.input_region_id = null;
-        self.opaque_region_id = null;
+        self.input_region = null;
+        self.opaque_region = null;
 
         self.min_width = null;
         self.min_height = null;
