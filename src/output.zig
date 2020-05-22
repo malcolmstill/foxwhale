@@ -2,6 +2,7 @@ const std = @import("std");
 const clients = @import("client.zig");
 const prot = @import("protocols.zig");
 const renderer = @import("renderer.zig");
+const views = @import("view.zig");
 const Stalloc = @import("stalloc.zig").Stalloc;
 const Backend = @import("backend/backend.zig").Backend;
 const BackendType = @import("backend/backend.zig").BackendType;
@@ -108,6 +109,9 @@ pub const Output = struct {
 pub fn newOutput(backend: *Backend, width: i32, height: i32) !*Output {
     var output = try OUTPUTS.new(undefined);
     output.* = try backend.newOutput(width, height);
+    for (output.views) |*view| {
+        view.* = views.makeView(output);
+    }
 
     var it = clients.CLIENTS.iterator();
     while(it.next()) |client| {
