@@ -38,6 +38,12 @@
       </description>
     </request>
 
+    <request name="get_windows">
+      <description summary="get_windows gets current list of windows">
+        Gets metadata about all the windows currently connected to foxwhale.
+      </description>
+    </request>
+
     <request name="destroy" type="destructor">
       <description summary="delete this object, used or not">
         Cleans up fw_control object.
@@ -46,6 +52,25 @@
 
     <event name="client">
       <arg name="index" type="uint" summary="client index"/>
+    </event>
+
+    <event name="window">
+      <arg name="index" type="uint" summary="window index"/>
+      <arg name="wl_surface_id" type="uint" summary="window wl_surface_id"/>
+      <arg name="x" type="int" summary="window x"/>
+      <arg name="y" type="int" summary="window y"/>
+      <arg name="width" type="int" summary="window width"/>
+      <arg name="height" type="int" summary="window height"/>
+      <arg name="input_region_id" type="uint" summary="input region id" allow-null="true"/>
+    </event>
+
+    <event name="region_rect">
+      <arg name="index" type="uint" summary="region index"/>
+      <arg name="x" type="int" summary="rect x"/>
+      <arg name="y" type="int" summary="rect y"/>
+      <arg name="width" type="int" summary="rect width"/>
+      <arg name="height" type="int" summary="rect height"/>
+      <arg name="op" type="int" summary="rect height"/>
     </event>
 
     <event name="done">

@@ -4,6 +4,7 @@ const compositor = @import("../compositor.zig");
 const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
 const Window = @import("../window.zig").Window;
+const XdgConfiguration = @import("../window.zig").XdgConfiguration;
 const Move = @import("../move.zig").Move;
 
 fn set_parent(context: *Context, xdg_toplevel: Object, parent: ?Object) anyerror!void {
@@ -103,12 +104,67 @@ fn resize(context: *Context, object: Object, seat: Object, serial: u32, edges: u
     return error.DebugFunctionNotImplemented;
 }
 
-fn set_maximized(context: *Context, object: Object) anyerror!void {
-    return error.DebugFunctionNotImplemented;
+fn set_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
+    var window = @intToPtr(*Window, xdg_toplevel.container);
+
+    if (window.view == null or window.view.?.output == null or window.xdg_surface_id == null) {
+        return;
+    }
+
+    if (window.client.context.get(window.xdg_surface_id.?)) |xdg_surface| {
+        var serial = window.client.nextSerial();
+        try window.xdg_configurations.writeItem(XdgConfiguration {
+            .serial = serial,
+            .operation = .Maximize,
+        });
+
+        var states: [2]u32 = [_]u32{
+            @enumToInt(prot.xdg_toplevel_state.maximized),
+            @enumToInt(prot.xdg_toplevel_state.activated),
+        };
+
+        try prot.xdg_toplevel_send_configure(
+            xdg_toplevel,
+            window.view.?.output.?.getWidth(),
+            window.view.?.output.?.getHeight(),
+            &states);
+        try prot.xdg_surface_send_configure(xdg_surface.*, serial);
+    }
 }
 
-fn unset_maximized(context: *Context, object: Object) anyerror!void {
-    return error.DebugFunctionNotImplemented;
+fn unset_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
+    var window = @intToPtr(*Window, xdg_toplevel.container);
+
+    if (window.view == null or window.view.?.output == null or window.xdg_surface_id == null) {
+        return;
+    }
+
+    if (window.client.context.get(window.xdg_surface_id.?)) |xdg_surface| {
+        var serial = window.client.nextSerial();
+        try window.xdg_configurations.writeItem(XdgConfiguration {
+            .serial = serial,
+            .operation = .Unmaximize,
+        });
+
+        var states: [1]u32 = [_]u32{
+            @enumToInt(prot.xdg_toplevel_state.activated),
+        };
+
+        if (window.maximized) |maximized| {
+            try prot.xdg_toplevel_send_configure(
+                xdg_toplevel,
+                maximized.width,
+                maximized.height,
+                &states);
+        } else {
+            try prot.xdg_toplevel_send_configure(
+                xdg_toplevel,
+                window.width,
+                window.height,
+                &states);
+        }
+        try prot.xdg_surface_send_configure(xdg_surface.*, serial);
+    }
 }
 
 fn set_fullscreen(context: *Context, object: Object, output: ?Object) anyerror!void {

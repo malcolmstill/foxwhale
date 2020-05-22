@@ -12,6 +12,8 @@ const View = @import("view.zig").View;
 const MAX_WINDOWS = 512;
 pub var WINDOWS: [MAX_WINDOWS]Window = undefined;
 
+pub const XdgConfigurations = LinearFifo(XdgConfiguration, LinearFifoBufferType{ .Static = 32 });
+
 pub const Window = struct {
     index: usize = 0,
     in_use: bool = false,
@@ -41,7 +43,9 @@ pub const Window = struct {
     state: [2]BufferedState = undefined,
     stateIndex: u1 = 0,
 
-    top_link: Link,
+    // When not null, Rectangle defines the OLD unmaximised geometry
+    maximized: ?Rectangle,
+    xdg_configurations: XdgConfigurations,
 
     title: [128]u8 = undefined,
     app_id: [256]u8 = undefined,
@@ -168,11 +172,8 @@ pub const Window = struct {
             return false;
         }
 
-        if (self.current().input_region_id) |input_region_id| {
-            if (self.client.context.get(input_region_id)) |input_region| {
-                var region = @intToPtr(*Region, input_region.container);
-                return region.pointInside(x - @intToFloat(f64, self.absoluteX()), y - @intToFloat(f64, self.absoluteY()));
-            }
+        if (self.current().input_region) |input_region| {
+            return input_region.pointInside(x - @intToFloat(f64, self.absoluteX()), y - @intToFloat(f64, self.absoluteY()));
         }
 
         if (x >= @intToFloat(f64, self.absoluteX()) and x <= @intToFloat(f64, (self.absoluteX() + self.width))) {
@@ -507,6 +508,12 @@ pub const Window = struct {
 
         if (self.view) |view| {
             view.remove(self);
+            if (view.active_window == self) {
+                view.active_window = null;
+            }
+            if (view.pointer_window == self) {
+                view.pointer_window = null;
+            }
         }
         self.view = null;
         self.mapped = false;
@@ -545,6 +552,9 @@ pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
             window.width = 0;
             window.height = 0;
 
+            window.state[0].deinit();
+            window.state[1].deinit();
+
             return window;
         } else {
             i = i + 1;
@@ -574,6 +584,16 @@ pub fn debug(window: ?*Window) void {
     }
 }
 
+pub const XdgOperation = enum {
+    Maximize,
+    Unmaximize,
+};
+
+pub const XdgConfiguration = struct {
+    serial: u32,
+    operation: XdgOperation,
+};
+
 const BufferedState = struct {
     sync: bool = false,
 
@@ -583,8 +603,8 @@ const BufferedState = struct {
     y: i32 = 0,
     scale: i32 = 1,
 
-    input_region_id: ?u32,
-    opaque_region_id: ?u32,
+    input_region: ?*Region,
+    opaque_region: ?*Region,
 
     min_width: ?i32,
     min_height: ?i32,
@@ -605,8 +625,8 @@ const BufferedState = struct {
         self.y = 0;
         self.scale = 1;
 
-        self.input_region_id = null;
-        self.opaque_region_id = null;
+        self.input_region = null;
+        self.opaque_region = null;
 
         self.min_width = null;
         self.min_height = null;

@@ -53,7 +53,7 @@ pub const Backend = union(BackendType) {
 
         return Output{
             .backend = output_backend,
-            .views = [_]View{view.makeView()} ** 4,
+            .views = [_]View{view.makeView(null)} ** 4,
         };
     }
 

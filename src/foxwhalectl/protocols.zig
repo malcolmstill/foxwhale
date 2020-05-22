@@ -2653,6 +2653,8 @@ pub fn wl_subsurface_send_set_desync(object: Object) anyerror!void {
 pub const fw_control_interface = struct {
     // protocol for querying and controlling foxwhale
     client: ?fn (*Context, Object, u32) anyerror!void,
+    window: ?fn (*Context, Object, u32, u32, i32, i32, i32, i32, u32) anyerror!void,
+    region_rect: ?fn (*Context, Object, u32, i32, i32, i32, i32, i32) anyerror!void,
     done: ?fn (
         *Context,
         Object,
@@ -2663,12 +2665,22 @@ fn fw_control_client_default(context: *Context, object: Object, index: u32) anye
     return error.DebugFunctionNotImplemented;
 }
 
+fn fw_control_window_default(context: *Context, object: Object, index: u32, wl_surface_id: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn fw_control_region_rect_default(context: *Context, object: Object, index: u32, x: i32, y: i32, width: i32, height: i32, op: i32) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
 fn fw_control_done_default(context: *Context, object: Object) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
 pub var FW_CONTROL = fw_control_interface{
     .client = fw_control_client_default,
+    .window = fw_control_window_default,
+    .region_rect = fw_control_region_rect_default,
     .done = fw_control_done_default,
 };
 
@@ -2691,8 +2703,33 @@ fn fw_control_dispatch(object: Object, opcode: u16) anyerror!void {
                 try client(object.context, object, index);
             }
         },
-        // done
+        // window
         1 => {
+            var index: u32 = try object.context.next_u32();
+            var wl_surface_id: u32 = try object.context.next_u32();
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
+            var input_region_id: u32 = try object.context.next_u32();
+            if (FW_CONTROL.window) |window| {
+                try window(object.context, object, index, wl_surface_id, x, y, width, height, input_region_id);
+            }
+        },
+        // region_rect
+        2 => {
+            var index: u32 = try object.context.next_u32();
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
+            var op: i32 = try object.context.next_i32();
+            if (FW_CONTROL.region_rect) |region_rect| {
+                try region_rect(object.context, object, index, x, y, width, height, op);
+            }
+        },
+        // done
+        3 => {
             if (FW_CONTROL.done) |done| {
                 try done(
                     object.context,
@@ -2709,9 +2746,15 @@ pub fn fw_control_send_get_clients(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 0);
 }
+//         Gets metadata about all the windows currently connected to foxwhale.
+//
+pub fn fw_control_send_get_windows(object: Object) anyerror!void {
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 1);
+}
 //         Cleans up fw_control object.
 //
 pub fn fw_control_send_destroy(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 1);
+    object.context.finishWrite(object.id, 2);
 }
