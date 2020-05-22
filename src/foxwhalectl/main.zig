@@ -17,6 +17,8 @@ pub fn main() anyerror!void {
     prot.WL_REGISTRY.global = global;
     prot.WL_CALLBACK.done = callback_done;
     prot.FW_CONTROL.client = client;
+    prot.FW_CONTROL.window = window;
+    prot.FW_CONTROL.region_rect = region_rect;
     prot.FW_CONTROL.done = done;
 
     var file = try std.net.connectUnixSocket("/run/user/1000/wayland-0");
@@ -59,7 +61,8 @@ fn global(context: *Context, wl_registry: Object, name: u32, interface: []u8, ve
         try conn.context.register(fw_control);
 
         // As soon as we've bound the interface we can send our query
-        try prot.fw_control_send_get_clients(fw_control);
+        // try prot.fw_control_send_get_clients(fw_control);
+        try prot.fw_control_send_get_windows(fw_control);
     }
 }
 
@@ -69,6 +72,28 @@ fn callback_done(context: *Context, wl_callback: Object, callback_data: u32) any
 
 fn client(context: *Context, fw_control: Object, client_index: u32) anyerror!void {
     std.debug.warn("client[{}]\n", .{client_index});
+}
+
+fn window(context: *Context, fw_control: Object, index: u32, wl_surface_id: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
+    std.debug.warn("window[{}]:\n", .{index});
+    std.debug.warn("\twl_surface_id: {}\n", .{wl_surface_id});
+    std.debug.warn("\tx: {}\n", .{x});
+    std.debug.warn("\ty: {}\n", .{y});
+    std.debug.warn("\twidth: {}\n", .{width});
+    std.debug.warn("\theight: {}\n", .{height});
+
+    if (input_region_id > 0) {
+        std.debug.warn("\tinput_region_id: {}\n", .{input_region_id});
+    }
+}
+
+fn region_rect(context: *Context, fw_control: Object, index: u32, x: i32, y: i32, width: i32, height: i32, op: i32) anyerror!void {
+    std.debug.warn("\t\trect[{}]:\n", .{index});
+    std.debug.warn("\t\t\tx: {}\n", .{x});
+    std.debug.warn("\t\t\ty: {}\n", .{y});
+    std.debug.warn("\t\t\twidth: {}\n", .{width});
+    std.debug.warn("\t\t\theight: {}\n", .{height});
+    std.debug.warn("\t\t\top: {}\n", .{if (op == 1) "Add" else "Sub"});
 }
 
 fn done(context: *Context, fw_control: Object) anyerror!void {
