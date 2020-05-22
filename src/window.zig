@@ -79,7 +79,7 @@ pub const Window = struct {
                     try renderer.translate(@intToFloat(f32, window.absoluteX()), @intToFloat(f32, window.absoluteY()));
                     try renderer.setUniformMatrix(renderer.PROGRAM, "origin", renderer.identity);
                     try renderer.setUniformMatrix(renderer.PROGRAM, "originInverse", renderer.identity);
-                    try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 0.8);
+                    try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 1.0);
                     renderer.setGeometry(window);
                     try renderer.renderSurface(renderer.PROGRAM, texture);
                 }
