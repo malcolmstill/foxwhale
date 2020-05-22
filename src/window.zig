@@ -12,6 +12,8 @@ const View = @import("view.zig").View;
 const MAX_WINDOWS = 512;
 pub var WINDOWS: [MAX_WINDOWS]Window = undefined;
 
+pub const XdgConfigurations = LinearFifo(XdgConfiguration, LinearFifoBufferType{ .Static = 32 });
+
 pub const Window = struct {
     index: usize = 0,
     in_use: bool = false,
@@ -41,7 +43,9 @@ pub const Window = struct {
     state: [2]BufferedState = undefined,
     stateIndex: u1 = 0,
 
-    top_link: Link,
+    // When not null, Rectangle defines the OLD unmaximised geometry
+    maximized: ?Rectangle,
+    xdg_configurations: XdgConfigurations,
 
     title: [128]u8 = undefined,
     app_id: [256]u8 = undefined,
@@ -507,6 +511,12 @@ pub const Window = struct {
 
         if (self.view) |view| {
             view.remove(self);
+            if (view.active_window == self) {
+                view.active_window = null;
+            }
+            if (view.pointer_window == self) {
+                view.pointer_window = null;
+            }
         }
         self.view = null;
         self.mapped = false;
@@ -573,6 +583,16 @@ pub fn debug(window: ?*Window) void {
         std.debug.warn("debug: null\n", .{});
     }
 }
+
+pub const XdgOperation = enum {
+    Maximize,
+    Unmaximize,
+};
+
+pub const XdgConfiguration = struct {
+    serial: u32,
+    operation: XdgOperation,
+};
 
 const BufferedState = struct {
     sync: bool = false,
