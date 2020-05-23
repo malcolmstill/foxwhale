@@ -3,6 +3,7 @@ const views = @import("view.zig");
 const xkbcommon = @import("xkb.zig");
 const Xkb = @import("xkb.zig").Xkb;
 const Move = @import("move.zig").Move;
+const Resize = @import("resize.zig").Resize;
 pub var COMPOSITOR: Compositor = makeCompositor();
 
 const Compositor = struct {
@@ -12,6 +13,7 @@ const Compositor = struct {
     cursor_wl_surface_id: ?u32,
 
     move: ?Move,
+    resize: ?Resize,
 
     xkb: ?Xkb,
     mods_depressed: u32,
@@ -36,6 +38,12 @@ const Compositor = struct {
             move.window.pending().x = new_window_x;
             move.window.current().y = new_window_y;
             move.window.pending().y = new_window_y;
+            return;
+        }
+
+        if (self.resize) |resize| {
+            try resize.resize(new_x, new_y);
+            return;
         }
 
         try views.CURRENT_VIEW.updatePointer(new_x, new_y);
@@ -47,6 +55,13 @@ const Compositor = struct {
                 self.move = null;
             }
         }
+
+        if (self.resize) |resize| {
+            if (action == 0) {
+                self.resize = null;
+            }
+        }
+
         try views.CURRENT_VIEW.mouseClick(button, action);
     }
 
@@ -68,6 +83,7 @@ fn makeCompositor() Compositor {
         .pointer_y = 0.0,
         .cursor_wl_surface_id = null,
         .move = null,
+        .resize = null,
         .xkb = null,
         .mods_depressed = 0,
         .mods_latched = 0,
