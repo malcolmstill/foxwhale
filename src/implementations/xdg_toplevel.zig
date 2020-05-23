@@ -93,13 +93,15 @@ fn show_window_menu(context: *Context, object: Object, seat: Object, serial: u32
 fn move(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32) anyerror!void {
     var window = @intToPtr(*Window, xdg_toplevel.container);
 
-    compositor.COMPOSITOR.move = Move {
-        .window = window,
-        .window_x = window.current().x,
-        .window_y = window.current().y,
-        .pointer_x = compositor.COMPOSITOR.pointer_x,
-        .pointer_y = compositor.COMPOSITOR.pointer_y,
-    };
+    if (window.maximized == null) {
+        compositor.COMPOSITOR.move = Move {
+            .window = window,
+            .window_x = window.current().x,
+            .window_y = window.current().y,
+            .pointer_x = compositor.COMPOSITOR.pointer_x,
+            .pointer_y = compositor.COMPOSITOR.pointer_y,
+        };
+    }
 }
 
 fn resize(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32, edges: u32) anyerror!void {
