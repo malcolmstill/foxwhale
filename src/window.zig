@@ -422,7 +422,7 @@ pub const Window = struct {
                 );
             }
         }
-    }    
+    }
 
     pub fn pointerEnter(self: *Self, pointer_x: f64, pointer_y: f64) !void {
         var client = self.client;
