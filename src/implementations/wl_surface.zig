@@ -2,6 +2,7 @@ const std = @import("std");
 const linux = std.os.linux;
 const prot = @import("../protocols.zig");
 const renderer = @import("../renderer.zig");
+const compositor = @import("../compositor.zig");
 const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
 const Client = @import("../client.zig").Client;
@@ -21,6 +22,15 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
             if (window.texture) |texture| {
                 window.texture = null;
                 try renderer.releaseTexture(texture);
+            }
+
+            // We need to set pending here (rather than in ack_configure) because
+            // we need to know the width and height of the new buffer
+            if (compositor.COMPOSITOR.resize) |resize| {
+                if (resize.window == window) {
+                    window.pending().x += resize.offsetX(window.width, buffer.width);
+                    window.pending().y += resize.offsetY(window.height, buffer.height);
+                }
             }
 
             window.width = buffer.width;
