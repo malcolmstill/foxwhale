@@ -6,6 +6,7 @@ const Object = @import("../client.zig").Object;
 const Window = @import("../window.zig").Window;
 const XdgConfiguration = @import("../window.zig").XdgConfiguration;
 const Move = @import("../move.zig").Move;
+const Resize = @import("../resize.zig").Resize;
 
 fn set_parent(context: *Context, xdg_toplevel: Object, parent: ?Object) anyerror!void {
     var window = @intToPtr(*Window, xdg_toplevel.container);
@@ -88,6 +89,7 @@ fn show_window_menu(context: *Context, object: Object, seat: Object, serial: u32
     return error.DebugFunctionNotImplemented;
 }
 
+// TODO: Moving should be delegated to the current view's mode
 fn move(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32) anyerror!void {
     var window = @intToPtr(*Window, xdg_toplevel.container);
 
@@ -100,8 +102,19 @@ fn move(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32) anye
     };
 }
 
-fn resize(context: *Context, object: Object, seat: Object, serial: u32, edges: u32) anyerror!void {
-    return error.DebugFunctionNotImplemented;
+fn resize(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32, edges: u32) anyerror!void {
+    var window = @intToPtr(*Window, xdg_toplevel.container);
+
+    compositor.COMPOSITOR.resize = Resize {
+        .window = window,
+        .window_x = window.current().x,
+        .window_y = window.current().y,
+        .pointer_x = compositor.COMPOSITOR.pointer_x,
+        .pointer_y = compositor.COMPOSITOR.pointer_y,
+        .width = (if (window.window_geometry) |wg| wg.width else window.width),
+        .height = (if (window.window_geometry) |wg| wg.height else window.height),
+        .direction = edges,
+    };
 }
 
 fn set_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
