@@ -3433,6 +3433,10 @@ pub const fw_control_interface = struct {
         *Context,
         Object,
     ) anyerror!void,
+    get_window_trees: ?fn (
+        *Context,
+        Object,
+    ) anyerror!void,
     destroy: ?fn (
         *Context,
         Object,
@@ -3447,6 +3451,10 @@ fn fw_control_get_windows_default(context: *Context, object: Object) anyerror!vo
     return error.DebugFunctionNotImplemented;
 }
 
+fn fw_control_get_window_trees_default(context: *Context, object: Object) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
 fn fw_control_destroy_default(context: *Context, object: Object) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
@@ -3454,6 +3462,7 @@ fn fw_control_destroy_default(context: *Context, object: Object) anyerror!void {
 pub var FW_CONTROL = fw_control_interface{
     .get_clients = fw_control_get_clients_default,
     .get_windows = fw_control_get_windows_default,
+    .get_window_trees = fw_control_get_window_trees_default,
     .destroy = fw_control_destroy_default,
 };
 
@@ -3487,8 +3496,17 @@ fn fw_control_dispatch(object: Object, opcode: u16) anyerror!void {
                 );
             }
         },
-        // destroy
+        // get_window_trees
         2 => {
+            if (FW_CONTROL.get_window_trees) |get_window_trees| {
+                try get_window_trees(
+                    object.context,
+                    object,
+                );
+            }
+        },
+        // destroy
+        3 => {
             if (FW_CONTROL.destroy) |destroy| {
                 try destroy(
                     object.context,
@@ -3511,9 +3529,10 @@ pub fn fw_control_send_client(object: Object, index: u32) anyerror!void {
     object.context.putU32(index);
     object.context.finishWrite(object.id, 0);
 }
-pub fn fw_control_send_window(object: Object, index: u32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
+pub fn fw_control_send_window(object: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(index);
+    object.context.putI32(parent);
     object.context.putU32(wl_surface_id);
     object.context.putU32(surface_type);
     object.context.putI32(x);
@@ -3523,6 +3542,19 @@ pub fn fw_control_send_window(object: Object, index: u32, wl_surface_id: u32, su
     object.context.putU32(input_region_id);
     object.context.finishWrite(object.id, 1);
 }
+pub fn fw_control_send_toplevel_window(object: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
+    object.context.startWrite();
+    object.context.putU32(index);
+    object.context.putI32(parent);
+    object.context.putU32(wl_surface_id);
+    object.context.putU32(surface_type);
+    object.context.putI32(x);
+    object.context.putI32(y);
+    object.context.putI32(width);
+    object.context.putI32(height);
+    object.context.putU32(input_region_id);
+    object.context.finishWrite(object.id, 2);
+}
 pub fn fw_control_send_region_rect(object: Object, index: u32, x: i32, y: i32, width: i32, height: i32, op: i32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(index);
@@ -3531,9 +3563,9 @@ pub fn fw_control_send_region_rect(object: Object, index: u32, x: i32, y: i32, w
     object.context.putI32(width);
     object.context.putI32(height);
     object.context.putI32(op);
-    object.context.finishWrite(object.id, 2);
+    object.context.finishWrite(object.id, 3);
 }
 pub fn fw_control_send_done(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 3);
+    object.context.finishWrite(object.id, 4);
 }
