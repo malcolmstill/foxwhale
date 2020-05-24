@@ -118,11 +118,11 @@ fn window(context: *Context, fw_control: Object, index: u32, parent: i32, wl_sur
 fn windowsWindow(index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) void {
     var st = @intToEnum(prot.fw_control_surface_type, surface_type);
 
-    std.debug.warn("window[{}, ", .{index});
+    std.debug.warn("window[{} ^", .{index});
     if (parent < 0) {
         std.debug.warn(" null]", .{});
     } else {
-        std.debug.warn(" parent: {}]", .{parent});
+        std.debug.warn(" {}]", .{parent});
     }
     std.debug.warn(" @{}", .{wl_surface_id});
     switch(st) {
