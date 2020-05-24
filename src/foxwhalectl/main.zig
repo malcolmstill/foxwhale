@@ -106,7 +106,7 @@ fn client(context: *Context, fw_control: Object, client_index: u32) anyerror!voi
 fn window(context: *Context, fw_control: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
     var st = @intToEnum(prot.fw_control_surface_type, surface_type);
 
-    std.debug.warn("\twindow[{} ^", .{index});
+    std.debug.warn("    window[{} ^", .{index});
     if (parent < 0) {
         std.debug.warn(" null]", .{});
     } else {
@@ -146,7 +146,7 @@ fn toplevel_window(context: *Context, fw_control: Object, index: u32, parent: i3
     std.debug.warn(" ({}", .{x});
     std.debug.warn(", {})", .{y});
     std.debug.warn(" ({}", .{width});
-    std.debug.warn(", {})\n", .{height});
+    std.debug.warn(", {}):\n", .{height});
 }
 
 fn region_rect(context: *Context, fw_control: Object, index: u32, x: i32, y: i32, width: i32, height: i32, op: i32) anyerror!void {
