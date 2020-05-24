@@ -54,9 +54,17 @@
       <arg name="index" type="uint" summary="client index"/>
     </event>
 
+    <enum name="surface_type">
+      <entry name="wl_surface" value="0" summary=""/>
+      <entry name="wl_subsurface" value="1" summary=""/>
+      <entry name="xdg_toplevel" value="2" summary=""/>
+      <entry name="xdg_popup" value="3" summary=""/>
+    </enum>
+
     <event name="window">
       <arg name="index" type="uint" summary="window index"/>
       <arg name="wl_surface_id" type="uint" summary="window wl_surface_id"/>
+      <arg name="surface_type" type="uint" summary="window surface type"/>
       <arg name="x" type="int" summary="window x"/>
       <arg name="y" type="int" summary="window y"/>
       <arg name="width" type="int" summary="window width"/>
