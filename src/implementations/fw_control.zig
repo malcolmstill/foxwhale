@@ -18,10 +18,25 @@ fn get_clients(context: *Context, fw_control: Object) anyerror!void {
 fn get_windows(context: *Context, fw_control: Object) anyerror!void {
     for (windows.WINDOWS) |*window| {
         if (window.in_use) {
+            var surface_type: u32 = 0;
+
+            if (window.wl_subsurface_id) |wl_subsurface_id| {
+                surface_type = @enumToInt(prot.fw_control_surface_type.wl_subsurface);
+            }
+
+            if (window.xdg_toplevel_id) |xdg_toplevel_id| {
+                surface_type = @enumToInt(prot.fw_control_surface_type.xdg_toplevel);
+            }
+
+            if (window.xdg_popup_id) |xdg_popup_id| {
+                surface_type = @enumToInt(prot.fw_control_surface_type.xdg_popup);
+            }
+
             try prot.fw_control_send_window(
                 fw_control,
                 @intCast(u32, window.index),
                 window.wl_surface_id,
+                surface_type,
                 window.current().x,
                 window.current().y,
                 window.width,

@@ -74,9 +74,18 @@ fn client(context: *Context, fw_control: Object, client_index: u32) anyerror!voi
     std.debug.warn("client[{}]\n", .{client_index});
 }
 
-fn window(context: *Context, fw_control: Object, index: u32, wl_surface_id: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
+fn window(context: *Context, fw_control: Object, index: u32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
+    var st = @intToEnum(prot.fw_control_surface_type, surface_type);
+
     std.debug.warn("window[{}]:\n", .{index});
     std.debug.warn("\twl_surface_id: {}\n", .{wl_surface_id});
+    switch(st) {
+        prot.fw_control_surface_type.wl_surface => std.debug.warn("\ttype: wl_surface\n", .{}),
+        prot.fw_control_surface_type.wl_subsurface => std.debug.warn("\ttype: wl_subsurface\n", .{}),
+        prot.fw_control_surface_type.xdg_toplevel => std.debug.warn("\ttype: xdg_toplevel\n", .{}),
+        prot.fw_control_surface_type.xdg_popup => std.debug.warn("\ttype: xdg_popup\n", .{}),
+    }
+
     std.debug.warn("\tx: {}\n", .{x});
     std.debug.warn("\ty: {}\n", .{y});
     std.debug.warn("\twidth: {}\n", .{width});
