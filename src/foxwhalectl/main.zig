@@ -107,15 +107,15 @@ fn client(context: *Context, fw_control: Object, client_index: u32) anyerror!voi
     std.debug.warn("client[{}]\n", .{client_index});
 }
 
-fn window(context: *Context, fw_control: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
+fn window(context: *Context, fw_control: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, sibling_prev: i32, sibling_next: i32, children_prev: i32, children_next: i32, input_region_id: u32) anyerror!void {
     switch (operation.?) {
-        .Windows => windowsWindow(index, parent, wl_surface_id, surface_type, x, y, width, height, input_region_id),
-        .WindowTrees => windowTressWindow(index, parent, wl_surface_id, surface_type, x, y, width, height, input_region_id),
+        .Windows => windowsWindow(index, parent, wl_surface_id, surface_type, x, y, width, height, sibling_prev, sibling_next, children_prev, children_next, input_region_id),
+        .WindowTrees => windowTressWindow(index, parent, wl_surface_id, surface_type, x, y, width, height, sibling_prev, sibling_next, children_prev, children_next, input_region_id),
         else => return error.WindowNotExpectedForOp,
     }
 }
 
-fn windowsWindow(index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) void {
+fn windowsWindow(index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, sibling_prev: i32, sibling_next: i32, children_prev: i32, children_next: i32, input_region_id: u32) void {
     var st = @intToEnum(prot.fw_control_surface_type, surface_type);
 
     std.debug.warn("window[{} ^", .{index});
@@ -132,17 +132,15 @@ fn windowsWindow(index: u32, parent: i32, wl_surface_id: u32, surface_type: u32,
         prot.fw_control_surface_type.xdg_popup => std.debug.warn(" (xdg_popup)", .{}),
     }
 
-    std.debug.warn(" ({}", .{x});
-    std.debug.warn(", {})", .{y});
-    std.debug.warn(" ({}", .{width});
-    std.debug.warn(", {})\n", .{height});
+    std.debug.warn(" ({}, {}) ({}, {}) [{}, {}] [{}, {}]\n", .{x, y, width, height, sibling_prev, sibling_next, children_prev, children_next});
+
 
     if (input_region_id > 0) {
         std.debug.warn("\tinput_region_id: {}\n", .{input_region_id});
     }
 }
 
-fn windowTressWindow(index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) void {
+fn windowTressWindow(index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, sibling_prev: i32, sibling_next: i32, children_prev: i32, children_next: i32, input_region_id: u32) void {
     var st = @intToEnum(prot.fw_control_surface_type, surface_type);
     std.debug.warn("    window[{} ^", .{index});
     if (parent < 0) {
@@ -158,10 +156,7 @@ fn windowTressWindow(index: u32, parent: i32, wl_surface_id: u32, surface_type: 
         prot.fw_control_surface_type.xdg_popup => std.debug.warn(" (xdg_popup)", .{}),
     }
 
-    std.debug.warn(" ({}", .{x});
-    std.debug.warn(", {})", .{y});
-    std.debug.warn(" ({}", .{width});
-    std.debug.warn(", {})\n", .{height});
+    std.debug.warn(" ({}, {}) ({}, {}) [{}, {}] [{}, {}]\n", .{x, y, width, height, sibling_prev, sibling_next, children_prev, children_next});    
 }
 
 fn toplevel_window(context: *Context, fw_control: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
