@@ -3499,15 +3499,23 @@ fn fw_control_dispatch(object: Object, opcode: u16) anyerror!void {
         else => {},
     }
 }
+
+pub const fw_control_surface_type = enum(u32) {
+    wl_surface = 0,
+    wl_subsurface = 1,
+    xdg_toplevel = 2,
+    xdg_popup = 3,
+};
 pub fn fw_control_send_client(object: Object, index: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(index);
     object.context.finishWrite(object.id, 0);
 }
-pub fn fw_control_send_window(object: Object, index: u32, wl_surface_id: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
+pub fn fw_control_send_window(object: Object, index: u32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(index);
     object.context.putU32(wl_surface_id);
+    object.context.putU32(surface_type);
     object.context.putI32(x);
     object.context.putI32(y);
     object.context.putI32(width);
