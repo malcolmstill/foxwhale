@@ -44,6 +44,10 @@ fn get_windows(context: *Context, fw_control: Object) anyerror!void {
                 window.current().y,
                 window.width,
                 window.height,
+                (if (window.current().siblings.prev) |prev| @intCast(i32, prev.index) else -1),
+                (if (window.current().siblings.next) |next| @intCast(i32, next.index) else -1),
+                (if (window.current().children.prev) |prev| @intCast(i32, prev.index) else -1),
+                (if (window.current().children.next) |next| @intCast(i32, next.index) else -1),
                 (if (window.current().input_region) |region| region.wl_region_id else 0),
             );
 
@@ -132,6 +136,10 @@ fn window_tree(fw_control: Object, window: *Window) anyerror!void {
                 subwindow.current().y,
                 subwindow.width,
                 subwindow.height,
+                (if (subwindow.current().siblings.prev) |prev| @intCast(i32, prev.index) else -1),
+                (if (subwindow.current().siblings.next) |next| @intCast(i32, next.index) else -1),
+                (if (subwindow.current().children.prev) |prev| @intCast(i32, prev.index) else -1),
+                (if (subwindow.current().children.next) |next| @intCast(i32, next.index) else -1),
                 (if (subwindow.current().input_region) |region| region.wl_region_id else 0),
             );
         } else {
