@@ -5,6 +5,7 @@ const compositor = @import("compositor.zig");
 const Client = @import("client.zig").Client;
 const Rectangle = @import("rectangle.zig").Rectangle;
 const Region = @import("region.zig").Region;
+const Positioner = @import("positioner.zig").Positioner;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 const View = @import("view.zig").View;
@@ -36,7 +37,10 @@ pub const Window = struct {
     wl_buffer_id: ?u32,
     xdg_surface_id: ?u32,
     xdg_toplevel_id: ?u32,
+    xdg_popup_id: ?u32,
     wl_subsurface_id: ?u32,
+
+    positioner: ?*Positioner,
 
     window_geometry: ?Rectangle,
 
@@ -512,7 +516,10 @@ pub const Window = struct {
         self.wl_buffer_id = null;
         self.xdg_surface_id = null;
         self.xdg_toplevel_id = null;
+        self.xdg_popup_id = null;
         self.wl_subsurface_id = null;
+
+        self.positioner = null;
 
         self.state[0].deinit();
         self.state[1].deinit();
