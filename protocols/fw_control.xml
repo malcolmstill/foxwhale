@@ -44,6 +44,12 @@
       </description>
     </request>
 
+    <request name="get_window_trees">
+      <description summary="get_windows gets current list of windows">
+        Gets metadata about all the windows currently connected to foxwhale.
+      </description>
+    </request>
+
     <request name="destroy" type="destructor">
       <description summary="delete this object, used or not">
         Cleans up fw_control object.
@@ -63,6 +69,19 @@
 
     <event name="window">
       <arg name="index" type="uint" summary="window index"/>
+      <arg name="parent" type="int" summary="window index of parent" allow-nullable="true"/>
+      <arg name="wl_surface_id" type="uint" summary="window wl_surface_id"/>
+      <arg name="surface_type" type="uint" summary="window surface type"/>
+      <arg name="x" type="int" summary="window x"/>
+      <arg name="y" type="int" summary="window y"/>
+      <arg name="width" type="int" summary="window width"/>
+      <arg name="height" type="int" summary="window height"/>
+      <arg name="input_region_id" type="uint" summary="input region id" allow-null="true"/>
+    </event>
+
+    <event name="toplevel_window">
+      <arg name="index" type="uint" summary="window index"/>
+      <arg name="parent" type="int" summary="window index of parent" allow-nullable="true"/>
       <arg name="wl_surface_id" type="uint" summary="window wl_surface_id"/>
       <arg name="surface_type" type="uint" summary="window surface type"/>
       <arg name="x" type="int" summary="window x"/>
