@@ -17,6 +17,8 @@ const wl_subcompositor_impl = @import("implementations/wl_subcompositor.zig");
 const wl_subsurface_impl = @import("implementations/wl_subsurface.zig");
 const wl_surface_impl = @import("implementations/wl_surface.zig");
 const xdg_base_impl = @import("implementations/xdg_base.zig");
+const xdg_popup_impl = @import("implementations/xdg_popup.zig");
+const xdg_positioner_impl = @import("implementations/xdg_positioner.zig");
 const xdg_surface_impl = @import("implementations/xdg_surface.zig");
 const xdg_toplevel_impl = @import("implementations/xdg_toplevel.zig");
 
@@ -37,6 +39,8 @@ pub fn init() void {
     wl_surface_impl.init();
 
     xdg_base_impl.init();
+    xdg_popup_impl.init();
+    xdg_positioner_impl.init();
     xdg_surface_impl.init();
     xdg_toplevel_impl.init();
 }
