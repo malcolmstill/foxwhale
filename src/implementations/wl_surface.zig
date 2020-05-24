@@ -44,9 +44,11 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
     }
 
     if (window.view) |view| {
-        if (window.xdg_toplevel_id != null and window.toplevel.prev == null and window.toplevel.next == null) {
-            view.remove(window);
-            view.push(window);
+        if (window.xdg_toplevel_id != null or window.xdg_popup_id != null) {
+            if (window.toplevel.prev == null and window.toplevel.next == null) {
+                view.remove(window);
+                view.push(window);
+            }
         }
     }
 
