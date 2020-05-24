@@ -2653,7 +2653,7 @@ pub fn wl_subsurface_send_set_desync(object: Object) anyerror!void {
 pub const fw_control_interface = struct {
     // protocol for querying and controlling foxwhale
     client: ?fn (*Context, Object, u32) anyerror!void,
-    window: ?fn (*Context, Object, u32, i32, u32, u32, i32, i32, i32, i32, u32) anyerror!void,
+    window: ?fn (*Context, Object, u32, i32, u32, u32, i32, i32, i32, i32, i32, i32, i32, i32, u32) anyerror!void,
     toplevel_window: ?fn (*Context, Object, u32, i32, u32, u32, i32, i32, i32, i32, u32) anyerror!void,
     region_rect: ?fn (*Context, Object, u32, i32, i32, i32, i32, i32) anyerror!void,
     done: ?fn (
@@ -2666,7 +2666,7 @@ fn fw_control_client_default(context: *Context, object: Object, index: u32) anye
     return error.DebugFunctionNotImplemented;
 }
 
-fn fw_control_window_default(context: *Context, object: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
+fn fw_control_window_default(context: *Context, object: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, sibling_prev: i32, sibling_next: i32, children_prev: i32, children_next: i32, input_region_id: u32) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
@@ -2719,9 +2719,13 @@ fn fw_control_dispatch(object: Object, opcode: u16) anyerror!void {
             var y: i32 = try object.context.next_i32();
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
+            var sibling_prev: i32 = try object.context.next_i32();
+            var sibling_next: i32 = try object.context.next_i32();
+            var children_prev: i32 = try object.context.next_i32();
+            var children_next: i32 = try object.context.next_i32();
             var input_region_id: u32 = try object.context.next_u32();
             if (FW_CONTROL.window) |window| {
-                try window(object.context, object, index, parent, wl_surface_id, surface_type, x, y, width, height, input_region_id);
+                try window(object.context, object, index, parent, wl_surface_id, surface_type, x, y, width, height, sibling_prev, sibling_next, children_prev, children_next, input_region_id);
             }
         },
         // toplevel_window

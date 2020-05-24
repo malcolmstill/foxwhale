@@ -3529,7 +3529,7 @@ pub fn fw_control_send_client(object: Object, index: u32) anyerror!void {
     object.context.putU32(index);
     object.context.finishWrite(object.id, 0);
 }
-pub fn fw_control_send_window(object: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
+pub fn fw_control_send_window(object: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, sibling_prev: i32, sibling_next: i32, children_prev: i32, children_next: i32, input_region_id: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(index);
     object.context.putI32(parent);
@@ -3539,6 +3539,10 @@ pub fn fw_control_send_window(object: Object, index: u32, parent: i32, wl_surfac
     object.context.putI32(y);
     object.context.putI32(width);
     object.context.putI32(height);
+    object.context.putI32(sibling_prev);
+    object.context.putI32(sibling_next);
+    object.context.putI32(children_prev);
+    object.context.putI32(children_next);
     object.context.putU32(input_region_id);
     object.context.finishWrite(object.id, 1);
 }
