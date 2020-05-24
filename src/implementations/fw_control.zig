@@ -7,6 +7,7 @@ const views = @import("../view.zig");
 const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
 const Region = @import("../region.zig").Region;
+const Window = @import("../window.zig").Window;
 
 fn get_clients(context: *Context, fw_control: Object) anyerror!void {
     var it = clients.CLIENTS.iterator();
@@ -98,8 +99,15 @@ fn get_window_trees(context: *Context, fw_control: Object) anyerror!void {
             (if (window.current().input_region) |region| region.wl_region_id else 0),
         );
 
-        var win_it = window.backwardIterator();
-        while(win_it.next()) |subwindow| {
+        try window_tree(fw_control, window);
+    }
+    try prot.fw_control_send_done(fw_control);
+}
+
+fn window_tree(fw_control: Object, window: *Window) anyerror!void {
+    var win_it = window.backwardIterator();
+    while(win_it.prev()) |subwindow| {
+        if (window == subwindow) {
             var subsurface_type: u32 = 0;
 
             if (subwindow.wl_subsurface_id) |wl_subsurface_id| {
@@ -126,9 +134,10 @@ fn get_window_trees(context: *Context, fw_control: Object) anyerror!void {
                 subwindow.height,
                 (if (subwindow.current().input_region) |region| region.wl_region_id else 0),
             );
+        } else {
+            try window_tree(fw_control, subwindow);
         }
-    }
-    try prot.fw_control_send_done(fw_control);
+    }    
 }
 
 fn destroy(context: *Context, fw_control: Object) anyerror!void {
