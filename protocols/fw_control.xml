@@ -76,7 +76,11 @@
       <arg name="y" type="int" summary="window y"/>
       <arg name="width" type="int" summary="window width"/>
       <arg name="height" type="int" summary="window height"/>
-      <arg name="input_region_id" type="uint" summary="input region id" allow-null="true"/>
+      <arg name="sibling_prev" type="int" summary="window index"/>
+      <arg name="sibling_next" type="int" summary="window index"/>
+      <arg name="children_prev" type="int" summary="window index"/>
+      <arg name="children_next" type="int" summary="window index"/>
+      <arg name="input_region_id" type="uint" summary="input region id"/>
     </event>
 
     <event name="toplevel_window">
@@ -88,7 +92,7 @@
       <arg name="y" type="int" summary="window y"/>
       <arg name="width" type="int" summary="window width"/>
       <arg name="height" type="int" summary="window height"/>
-      <arg name="input_region_id" type="uint" summary="input region id" allow-null="true"/>
+      <arg name="input_region_id" type="uint" summary="input region id"/>
     </event>
 
     <event name="region_rect">
