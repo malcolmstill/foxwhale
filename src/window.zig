@@ -458,7 +458,7 @@ pub const Window = struct {
                     wl_keyboard.*,
                     client.nextSerial(),
                     self.wl_surface_id,
-                    &[_]u32{}
+                    &[_]u32{},
                 );
             }
         }
@@ -487,7 +487,7 @@ pub const Window = struct {
                 try prot.wl_keyboard_send_leave(
                     wl_keyboard.*,
                     client.nextSerial(),
-                    self.wl_surface_id
+                    self.wl_surface_id,
                 );
             }
         }
@@ -504,7 +504,7 @@ pub const Window = struct {
                     self.wl_surface_id,
                     @floatCast(f32, pointer_x - @intToFloat(f64, self.current().x)),
                     @floatCast(f32, pointer_y - @intToFloat(f64, self.current().y))
-                    );
+                );
             }
         }
     }
@@ -530,7 +530,8 @@ pub const Window = struct {
                 try prot.wl_pointer_send_leave(
                     wl_pointer.*,
                     client.nextSerial(),
-                    self.wl_surface_id);
+                    self.wl_surface_id,
+                );
             }
         }
     }
@@ -544,7 +545,7 @@ pub const Window = struct {
                     client.nextSerial(),
                     time,
                     button,
-                    action
+                    action,
                 );
 
                 try prot.wl_keyboard_send_modifiers(
@@ -553,7 +554,7 @@ pub const Window = struct {
                     compositor.COMPOSITOR.mods_depressed,
                     compositor.COMPOSITOR.mods_latched,
                     compositor.COMPOSITOR.mods_locked,
-                    compositor.COMPOSITOR.mods_group
+                    compositor.COMPOSITOR.mods_group,
                 );
             }
         }
