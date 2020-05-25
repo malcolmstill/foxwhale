@@ -44,13 +44,19 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
     }
 
     if (window.view) |view| {
-        if (window.xdg_toplevel_id != null and window.toplevel.prev == null and window.toplevel.next == null) {
-            view.remove(window);
-            view.push(window);
+        if (window.xdg_toplevel_id != null) {
+            if (window.toplevel.prev == null and window.toplevel.next == null) {
+                view.remove(window);
+                view.push(window);
+            }
         }
     }
 
+
     window.flip();
+    // if (!window.synchronized) {
+    //     window.flip();
+    // }
 }
 
 fn set_buffer_scale(context: *Context, wl_surface: Object, scale: i32) anyerror!void {

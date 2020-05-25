@@ -44,6 +44,12 @@
       </description>
     </request>
 
+    <request name="get_window_trees">
+      <description summary="get_windows gets current list of windows">
+        Gets metadata about all the windows currently connected to foxwhale.
+      </description>
+    </request>
+
     <request name="destroy" type="destructor">
       <description summary="delete this object, used or not">
         Cleans up fw_control object.
@@ -54,14 +60,39 @@
       <arg name="index" type="uint" summary="client index"/>
     </event>
 
+    <enum name="surface_type">
+      <entry name="wl_surface" value="0" summary=""/>
+      <entry name="wl_subsurface" value="1" summary=""/>
+      <entry name="xdg_toplevel" value="2" summary=""/>
+      <entry name="xdg_popup" value="3" summary=""/>
+    </enum>
+
     <event name="window">
       <arg name="index" type="uint" summary="window index"/>
+      <arg name="parent" type="int" summary="window index of parent" allow-nullable="true"/>
       <arg name="wl_surface_id" type="uint" summary="window wl_surface_id"/>
+      <arg name="surface_type" type="uint" summary="window surface type"/>
       <arg name="x" type="int" summary="window x"/>
       <arg name="y" type="int" summary="window y"/>
       <arg name="width" type="int" summary="window width"/>
       <arg name="height" type="int" summary="window height"/>
-      <arg name="input_region_id" type="uint" summary="input region id" allow-null="true"/>
+      <arg name="sibling_prev" type="int" summary="window index"/>
+      <arg name="sibling_next" type="int" summary="window index"/>
+      <arg name="children_prev" type="int" summary="window index"/>
+      <arg name="children_next" type="int" summary="window index"/>
+      <arg name="input_region_id" type="uint" summary="input region id"/>
+    </event>
+
+    <event name="toplevel_window">
+      <arg name="index" type="uint" summary="window index"/>
+      <arg name="parent" type="int" summary="window index of parent" allow-nullable="true"/>
+      <arg name="wl_surface_id" type="uint" summary="window wl_surface_id"/>
+      <arg name="surface_type" type="uint" summary="window surface type"/>
+      <arg name="x" type="int" summary="window x"/>
+      <arg name="y" type="int" summary="window y"/>
+      <arg name="width" type="int" summary="window width"/>
+      <arg name="height" type="int" summary="window height"/>
+      <arg name="input_region_id" type="uint" summary="input region id"/>
     </event>
 
     <event name="region_rect">

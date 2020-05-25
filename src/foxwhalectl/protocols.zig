@@ -2653,7 +2653,8 @@ pub fn wl_subsurface_send_set_desync(object: Object) anyerror!void {
 pub const fw_control_interface = struct {
     // protocol for querying and controlling foxwhale
     client: ?fn (*Context, Object, u32) anyerror!void,
-    window: ?fn (*Context, Object, u32, u32, i32, i32, i32, i32, u32) anyerror!void,
+    window: ?fn (*Context, Object, u32, i32, u32, u32, i32, i32, i32, i32, i32, i32, i32, i32, u32) anyerror!void,
+    toplevel_window: ?fn (*Context, Object, u32, i32, u32, u32, i32, i32, i32, i32, u32) anyerror!void,
     region_rect: ?fn (*Context, Object, u32, i32, i32, i32, i32, i32) anyerror!void,
     done: ?fn (
         *Context,
@@ -2665,7 +2666,11 @@ fn fw_control_client_default(context: *Context, object: Object, index: u32) anye
     return error.DebugFunctionNotImplemented;
 }
 
-fn fw_control_window_default(context: *Context, object: Object, index: u32, wl_surface_id: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
+fn fw_control_window_default(context: *Context, object: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, sibling_prev: i32, sibling_next: i32, children_prev: i32, children_next: i32, input_region_id: u32) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn fw_control_toplevel_window_default(context: *Context, object: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
@@ -2680,6 +2685,7 @@ fn fw_control_done_default(context: *Context, object: Object) anyerror!void {
 pub var FW_CONTROL = fw_control_interface{
     .client = fw_control_client_default,
     .window = fw_control_window_default,
+    .toplevel_window = fw_control_toplevel_window_default,
     .region_rect = fw_control_region_rect_default,
     .done = fw_control_done_default,
 };
@@ -2706,18 +2712,39 @@ fn fw_control_dispatch(object: Object, opcode: u16) anyerror!void {
         // window
         1 => {
             var index: u32 = try object.context.next_u32();
+            var parent: i32 = try object.context.next_i32();
             var wl_surface_id: u32 = try object.context.next_u32();
+            var surface_type: u32 = try object.context.next_u32();
+            var x: i32 = try object.context.next_i32();
+            var y: i32 = try object.context.next_i32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
+            var sibling_prev: i32 = try object.context.next_i32();
+            var sibling_next: i32 = try object.context.next_i32();
+            var children_prev: i32 = try object.context.next_i32();
+            var children_next: i32 = try object.context.next_i32();
+            var input_region_id: u32 = try object.context.next_u32();
+            if (FW_CONTROL.window) |window| {
+                try window(object.context, object, index, parent, wl_surface_id, surface_type, x, y, width, height, sibling_prev, sibling_next, children_prev, children_next, input_region_id);
+            }
+        },
+        // toplevel_window
+        2 => {
+            var index: u32 = try object.context.next_u32();
+            var parent: i32 = try object.context.next_i32();
+            var wl_surface_id: u32 = try object.context.next_u32();
+            var surface_type: u32 = try object.context.next_u32();
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
             var input_region_id: u32 = try object.context.next_u32();
-            if (FW_CONTROL.window) |window| {
-                try window(object.context, object, index, wl_surface_id, x, y, width, height, input_region_id);
+            if (FW_CONTROL.toplevel_window) |toplevel_window| {
+                try toplevel_window(object.context, object, index, parent, wl_surface_id, surface_type, x, y, width, height, input_region_id);
             }
         },
         // region_rect
-        2 => {
+        3 => {
             var index: u32 = try object.context.next_u32();
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
@@ -2729,7 +2756,7 @@ fn fw_control_dispatch(object: Object, opcode: u16) anyerror!void {
             }
         },
         // done
-        3 => {
+        4 => {
             if (FW_CONTROL.done) |done| {
                 try done(
                     object.context,
@@ -2740,6 +2767,13 @@ fn fw_control_dispatch(object: Object, opcode: u16) anyerror!void {
         else => {},
     }
 }
+
+pub const fw_control_surface_type = enum(u32) {
+    wl_surface = 0,
+    wl_subsurface = 1,
+    xdg_toplevel = 2,
+    xdg_popup = 3,
+};
 //         Gets metadata about all the clients currently connected to foxwhale.
 //
 pub fn fw_control_send_get_clients(object: Object) anyerror!void {
@@ -2752,9 +2786,15 @@ pub fn fw_control_send_get_windows(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 1);
 }
+//         Gets metadata about all the windows currently connected to foxwhale.
+//
+pub fn fw_control_send_get_window_trees(object: Object) anyerror!void {
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 2);
+}
 //         Cleans up fw_control object.
 //
 pub fn fw_control_send_destroy(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 2);
+    object.context.finishWrite(object.id, 3);
 }

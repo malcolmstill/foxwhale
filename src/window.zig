@@ -5,6 +5,7 @@ const compositor = @import("compositor.zig");
 const Client = @import("client.zig").Client;
 const Rectangle = @import("rectangle.zig").Rectangle;
 const Region = @import("region.zig").Region;
+const Positioner = @import("positioner.zig").Positioner;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 const View = @import("view.zig").View;
@@ -23,6 +24,7 @@ pub const Window = struct {
     view: ?*View,
 
     parent: ?*Window,
+    popup: ?*Window,
 
     toplevel: Link,
 
@@ -36,10 +38,14 @@ pub const Window = struct {
     wl_buffer_id: ?u32,
     xdg_surface_id: ?u32,
     xdg_toplevel_id: ?u32,
+    xdg_popup_id: ?u32,
     wl_subsurface_id: ?u32,
+
+    positioner: ?*Positioner,
 
     window_geometry: ?Rectangle,
 
+    synchronized: bool = false,
     state: [2]BufferedState = undefined,
     stateIndex: u1 = 0,
 
@@ -57,6 +63,7 @@ pub const Window = struct {
 
     // flip double-buffered state
     pub fn flip(self: *Self) void {
+        // std.debug.warn("flipping: {}\n", .{self.index});
         self.stateIndex +%= 1;
 
         if (self.current().input_region != self.pending().input_region) {
@@ -70,6 +77,13 @@ pub const Window = struct {
                 try opaque_region.deinit();
             }
         }
+
+        // var it = self.forwardIterator();
+        // while(it.next()) |subwindow| {
+        //     if (subwindow != self and subwindow.synchronized) {
+        //         subwindow.flip();
+        //     }
+        // }
 
         self.pending().* = self.current().*;
     }
@@ -100,14 +114,60 @@ pub const Window = struct {
                 try window.render();
             }
         }
+
+        if (self.popup) |popup| {
+            try popup.render();
+        }
     }
 
     pub fn absoluteX(self: *Self) i32 {
-        return self.current().x + (if (self.parent) |p| p.absoluteX() else 0);
+        var parent_x = (if (self.parent) |p| p.absoluteX() else 0);
+        var self_x = self.current().x;
+        var positioner_x: i32 = 0;
+
+        if (self.positioner) |positioner| {
+            var rect = positioner.anchor_rect;
+            positioner_x = switch (positioner.anchor) {
+                .none => rect.x + @divTrunc(rect.width, 2),
+                .top => rect.x + @divTrunc(rect.width, 2),
+                .bottom => rect.x + @divTrunc(rect.width, 2),
+                .left => rect.x,
+                .right => rect.x + rect.width,
+                .top_left => rect.x,
+                .bottom_left => rect.x,
+                .top_right => rect.x + rect.width,
+                .bottom_right => rect.x + rect.width,
+            } + (if (self.parent) |parent| (if (parent.window_geometry) |wg| wg.x else 0) else 0);
+        }
+
+        var wg_x = (if (self.window_geometry) |wg| wg.x else 0);
+
+        return parent_x + self_x + positioner_x - wg_x;
     }
 
     pub fn absoluteY(self: *Self) i32 {
-        return self.current().y + (if (self.parent) |p| p.absoluteY() else 0);
+        var parent_y = (if (self.parent) |p| p.absoluteY() else 0);
+        var self_y = self.current().y;
+        var positioner_y: i32 = 0;
+
+        if (self.positioner) |positioner| {
+            var rect = positioner.anchor_rect;
+            positioner_y = switch (positioner.anchor) {
+                .none => rect.y + @divTrunc(rect.height, 2),
+                .top => rect.y,
+                .bottom => rect.y + rect.height,
+                .left => rect.y + @divTrunc(rect.height, 2),
+                .right => rect.y + @divTrunc(rect.height, 2),
+                .top_left => rect.y,
+                .bottom_left => rect.y + rect.height,
+                .top_right => rect.y,
+                .bottom_right => rect.y + rect.height,
+            } + (if (self.parent) |parent| (if (parent.window_geometry) |wg| wg.y else 0) else 0);
+        }
+
+        var wg_y = (if (self.window_geometry) |wg| wg.y else 0);
+
+        return parent_y + self_y + positioner_y - wg_y;
     }
 
     pub fn frameCallback(self: *Self) !void {
@@ -171,20 +231,6 @@ pub const Window = struct {
     }
 
     fn isPointerInside(self: *Self, x: f64, y: f64) bool {
-        if (self.window_geometry) |window_geometry| {
-            var x_left = self.absoluteX() + window_geometry.x;
-            var x_right = x_left + window_geometry.width;
-            var y_top = self.absoluteY() + window_geometry.y;
-            var y_bottom = y_top + window_geometry.height;
-            if (x >= @intToFloat(f64, x_left) and x <= @intToFloat(f64, x_right)) {
-                if (y >= @intToFloat(f64, y_top) and y <= @intToFloat(f64, y_bottom)) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         if (self.current().input_region) |input_region| {
             return input_region.pointInside(x - @intToFloat(f64, self.absoluteX()), y - @intToFloat(f64, self.absoluteY()));
         }
@@ -313,9 +359,15 @@ pub const Window = struct {
 
     pub fn insertAbove(self: *Self, reference: *Self) void {
         if (reference == self.parent) {
-            var next = reference.pending().children.next;
+            // If we're inserting above our parent we need to set our
+            // sibling pointers but the parent's children pointers
+
+            // Save the current next child of parent
+            var next = reference.pending().children.next; // should this be current()
+            // Set the next child to be our window
             reference.pending().children.next = self;
 
+            // If next is not null set its previous to be our window
             if (next) |n| {
                 n.pending().siblings.prev = self;
             }
@@ -323,9 +375,13 @@ pub const Window = struct {
             self.pending().siblings.next = next;
             self.pending().siblings.prev = reference;
         } else {
-            var next = reference.pending().siblings.next;
+            // If we're inserting above a sibling we need to set our
+            // sibling pointers and the sibling's sibling pointers
+            var next = reference.pending().siblings.next; // should this be current()?
             reference.pending().siblings.next = self;
 
+            // if next is non-null we have two options. Next is either our
+            // parent or another sibling. Choose .children or .siblings appropriately.
             if (next) |n| {
                 if (n == self.parent) {
                     n.pending().children.prev = self;
@@ -460,8 +516,8 @@ pub const Window = struct {
                 try prot.wl_pointer_send_motion(
                     wl_pointer.*,
                     @truncate(u32, std.time.milliTimestamp()),
-                    @floatCast(f32, pointer_x - @intToFloat(f64, self.current().x)),
-                    @floatCast(f32, pointer_y - @intToFloat(f64, self.current().y))
+                    @floatCast(f32, pointer_x - @intToFloat(f64, self.absoluteX())),
+                    @floatCast(f32, pointer_y - @intToFloat(f64, self.absoluteY())),
                 );
             }
         }
@@ -504,18 +560,24 @@ pub const Window = struct {
     }
 
     pub fn deinit(self: *Self) !void {
-        std.debug.warn("release window\n", .{});
+        std.debug.warn("release window {}\n", .{self.index});
         self.in_use = false;
 
+        if (self.xdg_popup_id != null) {
+            if (self.parent) |parent| {
+                parent.popup = null;
+            }
+        }
         self.parent = null;
+        self.popup = null;
 
         self.wl_buffer_id = null;
         self.xdg_surface_id = null;
         self.xdg_toplevel_id = null;
+        self.xdg_popup_id = null;
         self.wl_subsurface_id = null;
 
-        self.state[0].deinit();
-        self.state[1].deinit();
+        self.positioner = null;
 
         self.ready_for_callback = false;
 
@@ -530,6 +592,9 @@ pub const Window = struct {
         }
         self.view = null;
         self.mapped = false;
+
+        self.state[0].deinit();
+        self.state[1].deinit();
 
         self.cursor = null;
 
@@ -594,6 +659,68 @@ pub fn debug(window: ?*Window) void {
         std.debug.warn("debug: {} <-- window[{}, {}] --> {}\n", .{prev, self.index, self.wl_surface_id, next});
     } else {
         std.debug.warn("debug: null\n", .{});
+    }
+}
+
+pub fn debug_sibling(window: ?*Window) void {
+    if (window) |self| {
+        var next: ?usize = null;
+        var prev: ?usize = null;
+
+        if (self.current().siblings.next) |sibling_next| {
+            next = sibling_next.index;
+        }
+
+        if (self.current().siblings.prev) |sibling_prev| {
+            prev = sibling_prev.index;
+        }
+
+        var next_child: ?usize = null;
+        var prev_child: ?usize = null;
+
+        if (self.current().children.next) |children_next| {
+            next_child = children_next.index;
+        }
+
+        if (self.current().children.prev) |children_prev| {
+            prev_child = children_prev.index;
+        }
+
+        std.debug.warn("debug sibling: {} <-- window[{}, @{}] --> {}\n", .{prev, self.index, self.wl_surface_id, next});
+        std.debug.warn("debug children: {} <-- window[{}, @{}] --> {}\n", .{prev_child, self.index, self.wl_surface_id, next_child});
+    } else {
+        std.debug.warn("debug_sibling: null\n", .{});
+    }
+}
+
+pub fn debug_sibling_pending(window: ?*Window) void {
+    if (window) |self| {
+        var next: ?usize = null;
+        var prev: ?usize = null;
+
+        if (self.pending().siblings.next) |sibling_next| {
+            next = sibling_next.index;
+        }
+
+        if (self.pending().siblings.prev) |sibling_prev| {
+            prev = sibling_prev.index;
+        }
+
+        var next_child: ?usize = null;
+        var prev_child: ?usize = null;
+
+        if (self.pending().children.next) |children_next| {
+            next_child = children_next.index;
+        }
+
+        if (self.pending().children.prev) |children_prev| {
+            prev_child = children_prev.index;
+        }
+
+        std.debug.warn("debug sibling (pending): {} <-- window[{}, @{}] --> {}\n", .{prev, self.index, self.wl_surface_id, next});
+        std.debug.warn("debug children (pending): {} <-- window[{}, @{}] --> {}\n", .{prev_child, self.index, self.wl_surface_id, next_child});
+    } else {
+        std.debug.warn("debug_sibling (pending): null\n", .{});
     }
 }
 

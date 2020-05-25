@@ -1,5 +1,6 @@
 const std = @import("std");
 const prot = @import("../protocols.zig");
+const positioners = @import("../positioner.zig");
 const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
 const Window = @import("../window.zig").Window;
@@ -21,6 +22,20 @@ fn destroy(context: *Context, xdg_wm_base: Object) anyerror!void {
 }
 
 pub fn init() void {
-    prot.XDG_WM_BASE.get_xdg_surface = get_xdg_surface;
-    prot.XDG_WM_BASE.destroy = destroy;
+    prot.XDG_WM_BASE = prot.xdg_wm_base_interface{
+        .destroy = destroy,
+        .create_positioner = create_positioner,
+        .get_xdg_surface = get_xdg_surface,
+        .pong = pong,
+    };
+}
+
+fn create_positioner(context: *Context, xdg_wm_base: Object, new_id: u32) anyerror!void {
+    var positioner = try positioners.newPositioner(context.client, new_id);
+    var xdg_positioner = prot.new_xdg_positioner(new_id, context, @ptrToInt(positioner));
+    try context.register(xdg_positioner);
+}
+
+fn pong(context: *Context, object: Object, serial: u32) anyerror!void {
+    return error.DebugFunctionNotImplemented;
 }

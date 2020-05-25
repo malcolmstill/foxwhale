@@ -6,6 +6,7 @@ const shm_pool = @import("shm_pool.zig");
 const shm_buffer = @import("shm_buffer.zig");
 const window = @import("window.zig");
 const region = @import("region.zig");
+const positioner = @import("positioner.zig");
 const Dispatchable = epoll.Dispatchable;
 const Stalloc = @import("stalloc.zig").Stalloc;
 
@@ -55,6 +56,7 @@ pub const Client = struct {
         shm_buffer.releaseShmBuffers(self);
         try window.releaseWindows(self);
         try region.releaseRegions(self);
+        try positioner.releasePositioners(self);
 
         epoll.removeFd(self.connection.file.handle) catch |err| {
             std.debug.warn("Client not removed from epoll: {}\n", .{ self.getIndexOf() });
