@@ -350,39 +350,24 @@ pub const Window = struct {
         };
     }
 
+    // detach window from parent / siblings. Note this detaches the pending state only
     pub fn detach(self: *Self) void {
-        var prev = self.pending().siblings.prev;
-        var next = self.pending().siblings.next;
+        var maybe_prev = self.pending().siblings.prev;
+        var maybe_next = self.pending().siblings.next;
 
-        if (prev) |p| {
-            if (p == self.parent) {
-                if (next) |n| {
-                    p.pending().children.next = n;
-                } else {
-                    p.pending().children.next = null;
-                }
+        if (maybe_prev) |prev| {
+            if (prev == self.parent) {
+                prev.pending().children.next = maybe_next;
             } else {
-                if (next) |n| {
-                    p.pending().siblings.next = n;
-                } else {
-                    p.pending().siblings.next = null;
-                }
+                prev.pending().siblings.next = maybe_next;
             }
         }
 
-        if (next) |n| {
-            if (n == self.parent) {
-                if (prev) |p| {
-                    n.pending().children.prev = p;
-                } else {
-                    n.pending().children.prev = null;
-                }
+        if (maybe_next) |next| {
+            if (next == self.parent) {
+                next.pending().children.prev = maybe_prev;
             } else {
-                if (prev) |p| {
-                    n.pending().siblings.prev = p;
-                } else {
-                    n.pending().siblings.prev = null;
-                }
+                next.pending().siblings.prev = maybe_prev;
             }
         }
 
