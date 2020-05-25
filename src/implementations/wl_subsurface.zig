@@ -33,12 +33,12 @@ fn place_below(context: *Context, wl_subsurface: Object, wl_surface_sibling: Obj
 
 fn set_sync(context: *Context, wl_subsurface: Object) anyerror!void { 
     var window = @intToPtr(*Window, wl_subsurface.container);
-    window.pending().sync = true;
+    window.synchronized = true;
 }
 
 fn set_desync(context: *Context, wl_subsurface: Object) anyerror!void {
     var window = @intToPtr(*Window, wl_subsurface.container);
-    window.pending().sync = false;
+    window.synchronized = false;
 }
 
 pub fn init() void {
