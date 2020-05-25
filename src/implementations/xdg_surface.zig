@@ -36,7 +36,14 @@ fn get_popup(context: *Context, xdg_surface: Object, new_id: u32, parent_wl_surf
     var positioner = @intToPtr(*Positioner, xdg_positioner.container);
 
     if (parent_wl_surface) |parent| {
-        window.parent = @intToPtr(*Window, parent.container);
+        var parent_window = @intToPtr(*Window, parent.container);
+        window.parent = parent_window;
+        parent_window.popup = window;
+    } else {
+        if (window.parent) |parent| {
+            parent.popup = null;
+        }
+        window.parent = null;
     }
     window.positioner = positioner;
     window.xdg_popup_id = new_id;

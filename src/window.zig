@@ -24,6 +24,7 @@ pub const Window = struct {
     view: ?*View,
 
     parent: ?*Window,
+    popup: ?*Window,
 
     toplevel: Link,
 
@@ -62,7 +63,7 @@ pub const Window = struct {
 
     // flip double-buffered state
     pub fn flip(self: *Self) void {
-        std.debug.warn("flipping: {}\n", .{self.index});
+        // std.debug.warn("flipping: {}\n", .{self.index});
         self.stateIndex +%= 1;
 
         if (self.current().input_region != self.pending().input_region) {
@@ -105,13 +106,17 @@ pub const Window = struct {
                     try renderer.translate(@intToFloat(f32, window.absoluteX()), @intToFloat(f32, window.absoluteY()));
                     try renderer.setUniformMatrix(renderer.PROGRAM, "origin", renderer.identity);
                     try renderer.setUniformMatrix(renderer.PROGRAM, "originInverse", renderer.identity);
-                    try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 0.5);
+                    try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 1.0);
                     renderer.setGeometry(window);
                     try renderer.renderSurface(renderer.PROGRAM, texture);
                 }
             } else {
                 try window.render();
             }
+        }
+
+        if (self.popup) |popup| {
+            try popup.render();
         }
     }
 
@@ -530,7 +535,13 @@ pub const Window = struct {
         std.debug.warn("release window {}\n", .{self.index});
         self.in_use = false;
 
+        if (self.xdg_popup_id != null) {
+            if (self.parent) |parent| {
+                parent.popup = null;
+            }
+        }
         self.parent = null;
+        self.popup = null;
 
         self.wl_buffer_id = null;
         self.xdg_surface_id = null;
