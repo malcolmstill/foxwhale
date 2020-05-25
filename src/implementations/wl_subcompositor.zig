@@ -16,6 +16,7 @@ fn get_subsurface(context: *Context, wl_subcompositor: Object, new_id: u32, wl_s
 
     child.wl_subsurface_id = new_id;
     child.parent = parent;
+    child.synchronized = true;
 
     child.detach();
     child.placeAbove(parent);
