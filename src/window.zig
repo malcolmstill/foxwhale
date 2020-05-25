@@ -582,6 +582,10 @@ pub const Window = struct {
         std.debug.warn("release window {}\n", .{self.index});
         self.in_use = false;
 
+        // Before doing anything else, such as deiniting the parent
+        // detach this surface from its siblings
+        self.detach(); // maybe we also need to detach current, i.e. self.detachCurrent()?
+
         if (self.xdg_popup_id != null) {
             if (self.parent) |parent| {
                 parent.popup = null;
