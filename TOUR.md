@@ -19,17 +19,31 @@ in terms of this repo).
    Wayland protocol types from the buffers. A hashmap is used to store and allocate
    objects as requested.
 
+- `src/`: the code directly under `src/` then is the "bulk" of the implementation of
+   compositor-specific code such as in`window.zig`. A lot of the logic is also contained
+   in `src/implementations` (see below) but for the sake of organising the repo those
+   are kept separately.
+
+   The foxwhale binary is generated from `src/main.zig`.
+
    Finally, `protocols.zig` is generated code from XML-specified protocols. This generated
    code is what is actually used by the compositor code.
-- `src/`: the code directly under `src/` then is the "bulk" of the implementation of the
-   compositor. It has files that implement the Wayland messages (e.g. `wl_surface.zig` and
-   `xdg_surface.zig`) and then files which are more specific to the compositor such as
-   `window.zig`. There's an argument to be made for the Wayland implementation functions to
-   be in, say, `src/implementations` but this is not currently the case. The foxwhale binary
-   is generated from `src/main.zig`.
+
+- `src/implementations`: It has files that implement functions that are dispatched on incoming
+   Wayland messages (e.g. `wl_surface.zig` and `xdg_surface.zig`)
+
 - `src/backend`: this directory contains implementations of backend specific code.
    Examples of backends are GLFW and Headless.
+
 - `src/shaders`: just a bunch of GLSL files used by the compositor for rendering.
+
+- `src/foxwhalectl/`: implementation of a command-line tool for inspecting and debugging
+  the state of the compositor. It implements `fw_control.xml`.
+
 - `generator/`: this director contains code for generating `protocols.zig` from Wayland XML
   files. Ostensibly this is also written in zig, but it is actually hacked together in python.
-   
+
+- `procotols/`: contains custom protocols. The only custom protocol that currently exists
+   is `fw_control.xml`. This provides a protocol implement both by the compositor and
+   `foxwhalectl` that allows inspecting compositor state (for debugging purposes) but
+   in the future may also allow for setting state.
