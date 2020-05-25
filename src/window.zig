@@ -64,6 +64,19 @@ pub const Window = struct {
     // flip double-buffered state
     pub fn flip(self: *Self) void {
         // std.debug.warn("flipping: {}\n", .{self.index});
+        self.stateIndex +%= 1;
+        if (self.current().input_region != self.pending().input_region) {
+            if (self.pending().input_region) |input_region| {
+                try input_region.deinit();
+            }
+        }
+
+        if (self.current().opaque_region != self.pending().opaque_region) {
+            if (self.pending().opaque_region) |opaque_region| {
+                try opaque_region.deinit();
+            }
+        }
+        self.pending().* = self.current().*;
 
         // flip synchronized subwindows above self
         var forward_it = self.subwindowIterator();
@@ -80,20 +93,6 @@ pub const Window = struct {
                 subwindow.flip();
             }
         }
-
-        self.stateIndex +%= 1;
-        if (self.current().input_region != self.pending().input_region) {
-            if (self.pending().input_region) |input_region| {
-                try input_region.deinit();
-            }
-        }
-
-        if (self.current().opaque_region != self.pending().opaque_region) {
-            if (self.pending().opaque_region) |opaque_region| {
-                try opaque_region.deinit();
-            }
-        }
-        self.pending().* = self.current().*;
     }
 
     pub fn current(self: *Self) *BufferedState {
