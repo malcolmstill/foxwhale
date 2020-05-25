@@ -21,6 +21,9 @@ fn resize(context: *Context, wl_shm_pool: Object, size: i32) anyerror!void {
 fn destroy(context: *Context, wl_shm_pool: Object) anyerror!void {
     var pool = @intToPtr(*ShmPool, wl_shm_pool.container);
     pool.to_be_destroyed = true;
+    if (pool.ref_count == 0) {
+        pool.deinit();
+    }
 }
 
 pub fn init() void {
