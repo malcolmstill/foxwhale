@@ -3,6 +3,7 @@ const renderer = @import("renderer.zig");
 const Stalloc = @import("stalloc.zig").Stalloc;
 const Client = @import("client.zig").Client;
 const Rectangle = @import("rectangle.zig").Rectangle;
+const Window = @import("window.zig").Window;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 const RectangleBuffer = LinearFifo(RectangleOp, LinearFifoBufferType{ .Static = 64 });
@@ -12,6 +13,7 @@ pub var REGIONS: Stalloc(Client, Region, 1024) = undefined;
 pub const Region = struct {
     wl_region_id: u32,
     rectangles: RectangleBuffer,
+    window: ?*Window,
 
     const Self = @This();
 
@@ -36,6 +38,7 @@ pub const Region = struct {
     pub fn deinit(self: *Self) !void {
         self.rectangles = RectangleBuffer.init();
         var freed_index = REGIONS.deinit(self);
+        self.window = null;
         std.debug.warn("released region {}\n", .{freed_index});
     }
 };
