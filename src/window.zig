@@ -44,6 +44,7 @@ pub const Window = struct {
 
     window_geometry: ?Rectangle,
 
+    synchronized: bool = false,
     state: [2]BufferedState = undefined,
     stateIndex: u1 = 0,
 
@@ -61,6 +62,7 @@ pub const Window = struct {
 
     // flip double-buffered state
     pub fn flip(self: *Self) void {
+        std.debug.warn("flipping: {}\n", .{self.index});
         self.stateIndex +%= 1;
 
         if (self.current().input_region != self.pending().input_region) {
@@ -74,6 +76,13 @@ pub const Window = struct {
                 try opaque_region.deinit();
             }
         }
+
+        // var it = self.forwardIterator();
+        // while(it.next()) |subwindow| {
+        //     if (subwindow != self and subwindow.synchronized) {
+        //         subwindow.flip();
+        //     }
+        // }
 
         self.pending().* = self.current().*;
     }
@@ -96,7 +105,7 @@ pub const Window = struct {
                     try renderer.translate(@intToFloat(f32, window.absoluteX()), @intToFloat(f32, window.absoluteY()));
                     try renderer.setUniformMatrix(renderer.PROGRAM, "origin", renderer.identity);
                     try renderer.setUniformMatrix(renderer.PROGRAM, "originInverse", renderer.identity);
-                    try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 1.0);
+                    try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 0.5);
                     renderer.setGeometry(window);
                     try renderer.renderSurface(renderer.PROGRAM, texture);
                 }
@@ -317,9 +326,15 @@ pub const Window = struct {
 
     pub fn insertAbove(self: *Self, reference: *Self) void {
         if (reference == self.parent) {
-            var next = reference.pending().children.next;
+            // If we're inserting above our parent we need to set our
+            // sibling pointers but the parent's children pointers
+
+            // Save the current next child of parent
+            var next = reference.pending().children.next; // should this be current()
+            // Set the next child to be our window
             reference.pending().children.next = self;
 
+            // If next is not null set its previous to be our window
             if (next) |n| {
                 n.pending().siblings.prev = self;
             }
@@ -327,9 +342,13 @@ pub const Window = struct {
             self.pending().siblings.next = next;
             self.pending().siblings.prev = reference;
         } else {
-            var next = reference.pending().siblings.next;
+            // If we're inserting above a sibling we need to set our
+            // sibling pointers and the sibling's sibling pointers
+            var next = reference.pending().siblings.next; // should this be current()?
             reference.pending().siblings.next = self;
 
+            // if next is non-null we have two options. Next is either our
+            // parent or another sibling. Choose .children or .siblings appropriately.
             if (next) |n| {
                 if (n == self.parent) {
                     n.pending().children.prev = self;
@@ -508,7 +527,7 @@ pub const Window = struct {
     }
 
     pub fn deinit(self: *Self) !void {
-        std.debug.warn("release window\n", .{});
+        std.debug.warn("release window {}\n", .{self.index});
         self.in_use = false;
 
         self.parent = null;
@@ -520,9 +539,6 @@ pub const Window = struct {
         self.wl_subsurface_id = null;
 
         self.positioner = null;
-
-        self.state[0].deinit();
-        self.state[1].deinit();
 
         self.ready_for_callback = false;
 
@@ -537,6 +553,9 @@ pub const Window = struct {
         }
         self.view = null;
         self.mapped = false;
+
+        self.state[0].deinit();
+        self.state[1].deinit();
 
         self.cursor = null;
 
