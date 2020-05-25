@@ -24,6 +24,9 @@ fn destroy(context: *Context, wl_shm_pool: Object) anyerror!void {
     if (pool.ref_count == 0) {
         pool.deinit();
     }
+
+    try prot.wl_display_send_delete_id(context.client.wl_display, wl_shm_pool.id);
+    try context.unregister(wl_shm_pool);
 }
 
 pub fn init() void {
