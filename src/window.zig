@@ -121,11 +121,53 @@ pub const Window = struct {
     }
 
     pub fn absoluteX(self: *Self) i32 {
-        return self.current().x + (if (self.parent) |p| p.absoluteX() else 0);
+        var parent_x = (if (self.parent) |p| p.absoluteX() else 0);
+        var self_x = self.current().x;
+        var positioner_x: i32 = 0;
+
+        if (self.positioner) |positioner| {
+            var rect = positioner.anchor_rect;
+            positioner_x = switch (positioner.anchor) {
+                .none => rect.x + @divTrunc(rect.width, 2),
+                .top => rect.x + @divTrunc(rect.width, 2),
+                .bottom => rect.x + @divTrunc(rect.width, 2),
+                .left => rect.x,
+                .right => rect.x + rect.width,
+                .top_left => rect.x,
+                .bottom_left => rect.x,
+                .top_right => rect.x + rect.width,
+                .bottom_right => rect.x + rect.width,
+            } + (if (self.parent) |parent| (if (parent.window_geometry) |wg| wg.x else 0) else 0);
+        }
+
+        var wg_x = (if (self.window_geometry) |wg| wg.x else 0);
+
+        return parent_x + self_x + positioner_x - wg_x;
     }
 
     pub fn absoluteY(self: *Self) i32 {
-        return self.current().y + (if (self.parent) |p| p.absoluteY() else 0);
+        var parent_y = (if (self.parent) |p| p.absoluteY() else 0);
+        var self_y = self.current().y;
+        var positioner_y: i32 = 0;
+
+        if (self.positioner) |positioner| {
+            var rect = positioner.anchor_rect;
+            positioner_y = switch (positioner.anchor) {
+                .none => rect.y + @divTrunc(rect.height, 2),
+                .top => rect.y,
+                .bottom => rect.y + rect.height,
+                .left => rect.y + @divTrunc(rect.height, 2),
+                .right => rect.y + @divTrunc(rect.height, 2),
+                .top_left => rect.y,
+                .bottom_left => rect.y + rect.height,
+                .top_right => rect.y,
+                .bottom_right => rect.y + rect.height,
+            } + (if (self.parent) |parent| (if (parent.window_geometry) |wg| wg.y else 0) else 0);
+        }
+
+        var wg_y = (if (self.window_geometry) |wg| wg.y else 0);
+
+        return parent_y + self_y + positioner_y - wg_y;
     }
 
     pub fn frameCallback(self: *Self) !void {
@@ -189,20 +231,6 @@ pub const Window = struct {
     }
 
     fn isPointerInside(self: *Self, x: f64, y: f64) bool {
-        if (self.window_geometry) |window_geometry| {
-            var x_left = self.absoluteX() + window_geometry.x;
-            var x_right = x_left + window_geometry.width;
-            var y_top = self.absoluteY() + window_geometry.y;
-            var y_bottom = y_top + window_geometry.height;
-            if (x >= @intToFloat(f64, x_left) and x <= @intToFloat(f64, x_right)) {
-                if (y >= @intToFloat(f64, y_top) and y <= @intToFloat(f64, y_bottom)) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         if (self.current().input_region) |input_region| {
             return input_region.pointInside(x - @intToFloat(f64, self.absoluteX()), y - @intToFloat(f64, self.absoluteY()));
         }
@@ -488,8 +516,8 @@ pub const Window = struct {
                 try prot.wl_pointer_send_motion(
                     wl_pointer.*,
                     @truncate(u32, std.time.milliTimestamp()),
-                    @floatCast(f32, pointer_x - @intToFloat(f64, self.current().x)),
-                    @floatCast(f32, pointer_y - @intToFloat(f64, self.current().y))
+                    @floatCast(f32, pointer_x - @intToFloat(f64, self.absoluteX())),
+                    @floatCast(f32, pointer_y - @intToFloat(f64, self.absoluteY())),
                 );
             }
         }
