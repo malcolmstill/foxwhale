@@ -90,8 +90,23 @@ fn set_opaque_region(context: *Context, wl_surface: Object, optional_wl_region: 
     var window = @intToPtr(*Window, wl_surface.container);
     if (optional_wl_region) |wl_region| {
         var region = @intToPtr(*Region, wl_region.container);
+        region.window = window;
+
+        // If we set a second pending input region before the first pending input region has been
+        // flipped, we need to deinit the origin pending region
+        if (window.pending().opaque_region) |old_pending_region| {
+            if (old_pending_region != region and old_pending_region != window.current().opaque_region) {
+                try old_pending_region.deinit();
+            }
+        }
+
         window.pending().opaque_region = region;
     } else {
+        if (window.pending().opaque_region) |old_pending_region| {
+            if (old_pending_region != window.current().opaque_region) {
+                try old_pending_region.deinit();
+            }
+        }
         window.pending().opaque_region = null;
     }
 }
@@ -101,8 +116,24 @@ fn set_input_region(context: *Context, wl_surface: Object, optional_wl_region: ?
     var window = @intToPtr(*Window, wl_surface.container);
     if (optional_wl_region) |wl_region| {
         var region = @intToPtr(*Region, wl_region.container);
+        region.window = window;
+
+        // If we set a second pending input region before the first pending input region has been
+        // flipped, we need to deinit the original pending region
+        if (window.pending().input_region) |old_pending_region| {
+            if (old_pending_region != region and old_pending_region != window.current().input_region) {
+                try old_pending_region.deinit();
+            }
+        }
+
         window.pending().input_region = region;
     } else {
+        if (window.pending().input_region) |old_pending_region| {
+            if (old_pending_region != window.current().input_region) {
+                try old_pending_region.deinit();
+            }
+        }
+
         window.pending().input_region = null;
     }
 }
