@@ -39,6 +39,11 @@ fn set_sync(context: *Context, wl_subsurface: Object) anyerror!void {
 fn set_desync(context: *Context, wl_subsurface: Object) anyerror!void {
     var window = @intToPtr(*Window, wl_subsurface.container);
     window.synchronized = false;
+    if (window.parent) |parent| {
+        if (!parent.synchronized) {
+            window.flip();
+        }
+    }
 }
 
 pub fn init() void {

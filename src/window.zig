@@ -78,12 +78,14 @@ pub const Window = struct {
             }
         }
 
-        // var it = self.forwardIterator();
-        // while(it.next()) |subwindow| {
-        //     if (subwindow != self and subwindow.synchronized) {
-        //         subwindow.flip();
-        //     }
-        // }
+        // TODO: this is only going to flip subsurfaces that we're connected
+        // to through current(). Does this also need to consider pending siblings?
+        var it = self.forwardIterator();
+        while(it.next()) |subwindow| {
+            if (subwindow != self and subwindow.synchronized) {
+                subwindow.flip();
+            }
+        }
 
         self.pending().* = self.current().*;
     }
@@ -581,6 +583,8 @@ pub const Window = struct {
         self.positioner = null;
 
         self.ready_for_callback = false;
+
+        self.synchronized = false;
 
         if (self.view) |view| {
             view.remove(self);
