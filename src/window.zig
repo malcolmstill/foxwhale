@@ -604,6 +604,68 @@ pub fn debug(window: ?*Window) void {
     }
 }
 
+pub fn debug_sibling(window: ?*Window) void {
+    if (window) |self| {
+        var next: ?usize = null;
+        var prev: ?usize = null;
+
+        if (self.current().siblings.next) |sibling_next| {
+            next = sibling_next.index;
+        }
+
+        if (self.current().siblings.prev) |sibling_prev| {
+            prev = sibling_prev.index;
+        }
+
+        var next_child: ?usize = null;
+        var prev_child: ?usize = null;
+
+        if (self.current().children.next) |children_next| {
+            next_child = children_next.index;
+        }
+
+        if (self.current().children.prev) |children_prev| {
+            prev_child = children_prev.index;
+        }
+
+        std.debug.warn("debug sibling: {} <-- window[{}, @{}] --> {}\n", .{prev, self.index, self.wl_surface_id, next});
+        std.debug.warn("debug children: {} <-- window[{}, @{}] --> {}\n", .{prev_child, self.index, self.wl_surface_id, next_child});
+    } else {
+        std.debug.warn("debug_sibling: null\n", .{});
+    }
+}
+
+pub fn debug_sibling_pending(window: ?*Window) void {
+    if (window) |self| {
+        var next: ?usize = null;
+        var prev: ?usize = null;
+
+        if (self.pending().siblings.next) |sibling_next| {
+            next = sibling_next.index;
+        }
+
+        if (self.pending().siblings.prev) |sibling_prev| {
+            prev = sibling_prev.index;
+        }
+
+        var next_child: ?usize = null;
+        var prev_child: ?usize = null;
+
+        if (self.pending().children.next) |children_next| {
+            next_child = children_next.index;
+        }
+
+        if (self.pending().children.prev) |children_prev| {
+            prev_child = children_prev.index;
+        }
+
+        std.debug.warn("debug sibling (pending): {} <-- window[{}, @{}] --> {}\n", .{prev, self.index, self.wl_surface_id, next});
+        std.debug.warn("debug children (pending): {} <-- window[{}, @{}] --> {}\n", .{prev_child, self.index, self.wl_surface_id, next_child});
+    } else {
+        std.debug.warn("debug_sibling (pending): null\n", .{});
+    }
+}
+
 pub const XdgOperation = enum {
     Maximize,
     Unmaximize,
