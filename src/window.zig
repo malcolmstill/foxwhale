@@ -64,8 +64,24 @@ pub const Window = struct {
     // flip double-buffered state
     pub fn flip(self: *Self) void {
         // std.debug.warn("flipping: {}\n", .{self.index});
-        self.stateIndex +%= 1;
 
+        // flip synchronized subwindows above self
+        var forward_it = self.subwindowIterator();
+        while(forward_it.nextPending()) |subwindow| {
+            if (subwindow != self and subwindow.synchronized) {
+                subwindow.flip();
+            }
+        }
+
+        // flip synchronized subwindows below self
+        var backward_it = self.subwindowIterator();
+        while(backward_it.prevPending()) |subwindow| {
+            if (subwindow != self and subwindow.synchronized) {
+                subwindow.flip();
+            }
+        }
+
+        self.stateIndex +%= 1;
         if (self.current().input_region != self.pending().input_region) {
             if (self.pending().input_region) |input_region| {
                 try input_region.deinit();
@@ -77,16 +93,6 @@ pub const Window = struct {
                 try opaque_region.deinit();
             }
         }
-
-        // TODO: this is only going to flip subsurfaces that we're connected
-        // to through current(). Does this also need to consider pending siblings?
-        var it = self.forwardIterator();
-        while(it.next()) |subwindow| {
-            if (subwindow != self and subwindow.synchronized) {
-                subwindow.flip();
-            }
-        }
-
         self.pending().* = self.current().*;
     }
 
@@ -257,7 +263,7 @@ pub const Window = struct {
 
     pub const SubwindowIterator = struct {
         current: ?*Window,
-        parent: ?*Window,
+        parent: *Window,
 
         pub fn next(self: *SubwindowIterator) ?*Window {
             if (self.current) |window| {
@@ -278,6 +284,32 @@ pub const Window = struct {
                     self.current = window.current().children.prev;
                 } else {
                     self.current = window.current().siblings.prev;
+                }
+                return window;
+            }
+
+            return null;
+        }
+
+        pub fn nextPending(self: *SubwindowIterator) ?*Window {
+            if (self.current) |window| {
+                if (self.current == self.parent) {
+                    self.current = window.pending().children.next;
+                } else {
+                    self.current = window.pending().siblings.next;
+                }
+                return window;
+            }
+
+            return null;
+        }
+
+        pub fn prevPending(self: *SubwindowIterator) ?*Window {
+            if (self.current) |window| {
+                if (self.current == self.parent) {
+                    self.current = window.pending().children.prev;
+                } else {
+                    self.current = window.pending().siblings.prev;
                 }
                 return window;
             }
