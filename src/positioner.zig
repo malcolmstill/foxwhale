@@ -23,6 +23,17 @@ pub const Positioner = struct {
 
     pub fn deinit(self: *Self) !void {
         var freed_index = POSITIONERS.deinit(self);
+        self.xdg_positioner_id = 0;
+        self.width = 0;
+        self.height = 0;
+        self.x = 0;
+        self.y = 0;
+        self.anchor_rect.x = 0;
+        self.anchor_rect.y = 0;
+        self.anchor_rect.width = 0;
+        self.anchor_rect.height = 0;
+        self.anchor = .none;
+        self.gravity = .none;
         std.debug.warn("Freed positioner: {}\n", .{freed_index});
     }
 };
