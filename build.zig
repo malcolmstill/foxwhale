@@ -1,4 +1,5 @@
 const Builder = @import("std").build.Builder;
+const std = @import("std");
 
 pub fn build(b: *Builder) void {
     // Standard target options allows the person running `zig build` to choose
@@ -18,11 +19,19 @@ pub fn build(b: *Builder) void {
     exe.linkSystemLibrary("glfw3");
     exe.linkSystemLibrary("gl");
     exe.linkSystemLibrary("xkbcommon");
+    if (mode != .Debug) {
+        exe.strip = true;
+    }
+    exe.single_threaded = true;
     exe.install();
 
     const foxwhalectl_exe = b.addExecutable("foxwhalectl", "src/foxwhalectl/main.zig");
     foxwhalectl_exe.setTarget(target);
     foxwhalectl_exe.setBuildMode(mode);
+    if (mode != .Debug) {
+        foxwhalectl_exe.strip = true;
+    }
+    foxwhalectl_exe.single_threaded = true;
     foxwhalectl_exe.install();
     foxwhalectl_exe.addPackagePath("epoll", "src/epoll.zig");
     foxwhalectl_exe.addPackagePath("wl", "src/wl/context.zig");
