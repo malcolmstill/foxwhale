@@ -866,9 +866,17 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
         1 => {
             var serial: u32 = try object.context.next_u32();
             var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (surface.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             var x: f32 = try object.context.next_fixed();
             var y: f32 = try object.context.next_fixed();
             var id: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            if (id != null) {
+                if (id.?.dispatch != wl_data_offer_dispatch) {
+                    return error.ObjectWrongType;
+                }
+            }
             if (WL_DATA_DEVICE.enter) |enter| {
                 try enter(object.context, object, serial, surface, x, y, id);
             }
@@ -903,6 +911,11 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
         // selection
         5 => {
             var id: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            if (id != null) {
+                if (id.?.dispatch != wl_data_offer_dispatch) {
+                    return error.ObjectWrongType;
+                }
+            }
             if (WL_DATA_DEVICE.selection) |selection| {
                 try selection(object.context, object, id);
             }
@@ -1357,6 +1370,9 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         // enter
         0 => {
             var output: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (output.dispatch != wl_output_dispatch) {
+                return error.ObjectWrongType;
+            }
             if (WL_SURFACE.enter) |enter| {
                 try enter(object.context, object, output);
             }
@@ -1364,6 +1380,9 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         // leave
         1 => {
             var output: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (output.dispatch != wl_output_dispatch) {
+                return error.ObjectWrongType;
+            }
             if (WL_SURFACE.leave) |leave| {
                 try leave(object.context, object, output);
             }
@@ -1866,6 +1885,9 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!void {
         0 => {
             var serial: u32 = try object.context.next_u32();
             var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (surface.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             var surface_x: f32 = try object.context.next_fixed();
             var surface_y: f32 = try object.context.next_fixed();
             if (WL_POINTER.enter) |enter| {
@@ -1876,6 +1898,9 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!void {
         1 => {
             var serial: u32 = try object.context.next_u32();
             var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (surface.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             if (WL_POINTER.leave) |leave| {
                 try leave(object.context, object, serial, surface);
             }
@@ -2084,6 +2109,9 @@ fn wl_keyboard_dispatch(object: Object, opcode: u16) anyerror!void {
         1 => {
             var serial: u32 = try object.context.next_u32();
             var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (surface.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             var keys: []u32 = try object.context.next_array();
             if (WL_KEYBOARD.enter) |enter| {
                 try enter(object.context, object, serial, surface, keys);
@@ -2093,6 +2121,9 @@ fn wl_keyboard_dispatch(object: Object, opcode: u16) anyerror!void {
         2 => {
             var serial: u32 = try object.context.next_u32();
             var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (surface.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             if (WL_KEYBOARD.leave) |leave| {
                 try leave(object.context, object, serial, surface);
             }
@@ -2218,6 +2249,9 @@ fn wl_touch_dispatch(object: Object, opcode: u16) anyerror!void {
             var serial: u32 = try object.context.next_u32();
             var time: u32 = try object.context.next_u32();
             var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (surface.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             var id: i32 = try object.context.next_i32();
             var x: f32 = try object.context.next_fixed();
             var y: f32 = try object.context.next_fixed();

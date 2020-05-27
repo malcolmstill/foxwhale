@@ -866,8 +866,21 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
         // start_drag
         0 => {
             var source: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            if (source != null) {
+                if (source.?.dispatch != wl_data_source_dispatch) {
+                    return error.ObjectWrongType;
+                }
+            }
             var origin: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (origin.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             var icon: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            if (icon != null) {
+                if (icon.?.dispatch != wl_surface_dispatch) {
+                    return error.ObjectWrongType;
+                }
+            }
             var serial: u32 = try object.context.next_u32();
             if (WL_DATA_DEVICE.start_drag) |start_drag| {
                 try start_drag(object.context, object, source, origin, icon, serial);
@@ -876,6 +889,11 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
         // set_selection
         1 => {
             var source: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            if (source != null) {
+                if (source.?.dispatch != wl_data_source_dispatch) {
+                    return error.ObjectWrongType;
+                }
+            }
             var serial: u32 = try object.context.next_u32();
             if (WL_DATA_DEVICE.set_selection) |set_selection| {
                 try set_selection(object.context, object, source, serial);
@@ -1023,6 +1041,9 @@ fn wl_data_device_manager_dispatch(object: Object, opcode: u16) anyerror!void {
         1 => {
             var id: u32 = try object.context.next_u32();
             var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (seat.dispatch != wl_seat_dispatch) {
+                return error.ObjectWrongType;
+            }
             if (WL_DATA_DEVICE_MANAGER.get_data_device) |get_data_device| {
                 try get_data_device(object.context, object, id, seat);
             }
@@ -1068,6 +1089,9 @@ fn wl_shell_dispatch(object: Object, opcode: u16) anyerror!void {
         0 => {
             var id: u32 = try object.context.next_u32();
             var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (surface.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             if (WL_SHELL.get_shell_surface) |get_shell_surface| {
                 try get_shell_surface(object.context, object, id, surface);
             }
@@ -1173,6 +1197,9 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         // move
         1 => {
             var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (seat.dispatch != wl_seat_dispatch) {
+                return error.ObjectWrongType;
+            }
             var serial: u32 = try object.context.next_u32();
             if (WL_SHELL_SURFACE.move) |move| {
                 try move(object.context, object, seat, serial);
@@ -1181,6 +1208,9 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         // resize
         2 => {
             var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (seat.dispatch != wl_seat_dispatch) {
+                return error.ObjectWrongType;
+            }
             var serial: u32 = try object.context.next_u32();
             var edges: u32 = try object.context.next_u32();
             if (WL_SHELL_SURFACE.resize) |resize| {
@@ -1199,6 +1229,9 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         // set_transient
         4 => {
             var parent: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (parent.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
             var flags: u32 = try object.context.next_u32();
@@ -1211,6 +1244,11 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
             var method: u32 = try object.context.next_u32();
             var framerate: u32 = try object.context.next_u32();
             var output: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            if (output != null) {
+                if (output.?.dispatch != wl_output_dispatch) {
+                    return error.ObjectWrongType;
+                }
+            }
             if (WL_SHELL_SURFACE.set_fullscreen) |set_fullscreen| {
                 try set_fullscreen(object.context, object, method, framerate, output);
             }
@@ -1218,8 +1256,14 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         // set_popup
         6 => {
             var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (seat.dispatch != wl_seat_dispatch) {
+                return error.ObjectWrongType;
+            }
             var serial: u32 = try object.context.next_u32();
             var parent: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (parent.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
             var flags: u32 = try object.context.next_u32();
@@ -1230,6 +1274,11 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         // set_maximized
         7 => {
             var output: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            if (output != null) {
+                if (output.?.dispatch != wl_output_dispatch) {
+                    return error.ObjectWrongType;
+                }
+            }
             if (WL_SHELL_SURFACE.set_maximized) |set_maximized| {
                 try set_maximized(object.context, object, output);
             }
@@ -1414,6 +1463,11 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         // attach
         1 => {
             var buffer: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            if (buffer != null) {
+                if (buffer.?.dispatch != wl_buffer_dispatch) {
+                    return error.ObjectWrongType;
+                }
+            }
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
             if (WL_SURFACE.attach) |attach| {
@@ -1440,6 +1494,11 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         // set_opaque_region
         4 => {
             var region: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            if (region != null) {
+                if (region.?.dispatch != wl_region_dispatch) {
+                    return error.ObjectWrongType;
+                }
+            }
             if (WL_SURFACE.set_opaque_region) |set_opaque_region| {
                 try set_opaque_region(object.context, object, region);
             }
@@ -1447,6 +1506,11 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         // set_input_region
         5 => {
             var region: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            if (region != null) {
+                if (region.?.dispatch != wl_region_dispatch) {
+                    return error.ObjectWrongType;
+                }
+            }
             if (WL_SURFACE.set_input_region) |set_input_region| {
                 try set_input_region(object.context, object, region);
             }
@@ -1678,6 +1742,11 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!void {
         0 => {
             var serial: u32 = try object.context.next_u32();
             var surface: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            if (surface != null) {
+                if (surface.?.dispatch != wl_surface_dispatch) {
+                    return error.ObjectWrongType;
+                }
+            }
             var hotspot_x: i32 = try object.context.next_i32();
             var hotspot_y: i32 = try object.context.next_i32();
             if (WL_POINTER.set_cursor) |set_cursor| {
@@ -2503,7 +2572,13 @@ fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!void {
         1 => {
             var id: u32 = try object.context.next_u32();
             var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (surface.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             var parent: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (parent.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             if (WL_SUBCOMPOSITOR.get_subsurface) |get_subsurface| {
                 try get_subsurface(object.context, object, id, surface, parent);
             }
@@ -2601,6 +2676,9 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!void {
         // place_above
         2 => {
             var sibling: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (sibling.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             if (WL_SUBSURFACE.place_above) |place_above| {
                 try place_above(object.context, object, sibling);
             }
@@ -2608,6 +2686,9 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!void {
         // place_below
         3 => {
             var sibling: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (sibling.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             if (WL_SUBSURFACE.place_below) |place_below| {
                 try place_below(object.context, object, sibling);
             }
@@ -2705,6 +2786,9 @@ fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!void {
         2 => {
             var id: u32 = try object.context.next_u32();
             var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (surface.dispatch != wl_surface_dispatch) {
+                return error.ObjectWrongType;
+            }
             if (XDG_WM_BASE.get_xdg_surface) |get_xdg_surface| {
                 try get_xdg_surface(object.context, object, id, surface);
             }
@@ -2982,7 +3066,15 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         2 => {
             var id: u32 = try object.context.next_u32();
             var parent: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            if (parent != null) {
+                if (parent.?.dispatch != xdg_surface_dispatch) {
+                    return error.ObjectWrongType;
+                }
+            }
             var positioner: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (positioner.dispatch != xdg_positioner_dispatch) {
+                return error.ObjectWrongType;
+            }
             if (XDG_SURFACE.get_popup) |get_popup| {
                 try get_popup(object.context, object, id, parent, positioner);
             }
@@ -3167,6 +3259,11 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
         // set_parent
         1 => {
             var parent: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            if (parent != null) {
+                if (parent.?.dispatch != xdg_toplevel_dispatch) {
+                    return error.ObjectWrongType;
+                }
+            }
             if (XDG_TOPLEVEL.set_parent) |set_parent| {
                 try set_parent(object.context, object, parent);
             }
@@ -3188,6 +3285,9 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
         // show_window_menu
         4 => {
             var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (seat.dispatch != wl_seat_dispatch) {
+                return error.ObjectWrongType;
+            }
             var serial: u32 = try object.context.next_u32();
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
@@ -3198,6 +3298,9 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
         // move
         5 => {
             var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (seat.dispatch != wl_seat_dispatch) {
+                return error.ObjectWrongType;
+            }
             var serial: u32 = try object.context.next_u32();
             if (XDG_TOPLEVEL.move) |move| {
                 try move(object.context, object, seat, serial);
@@ -3206,6 +3309,9 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
         // resize
         6 => {
             var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (seat.dispatch != wl_seat_dispatch) {
+                return error.ObjectWrongType;
+            }
             var serial: u32 = try object.context.next_u32();
             var edges: u32 = try object.context.next_u32();
             if (XDG_TOPLEVEL.resize) |resize| {
@@ -3249,6 +3355,11 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
         // set_fullscreen
         11 => {
             var output: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            if (output != null) {
+                if (output.?.dispatch != wl_output_dispatch) {
+                    return error.ObjectWrongType;
+                }
+            }
             if (XDG_TOPLEVEL.set_fullscreen) |set_fullscreen| {
                 try set_fullscreen(object.context, object, output);
             }
@@ -3385,6 +3496,9 @@ fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!void {
         // grab
         1 => {
             var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            if (seat.dispatch != wl_seat_dispatch) {
+                return error.ObjectWrongType;
+            }
             var serial: u32 = try object.context.next_u32();
             if (XDG_POPUP.grab) |grab| {
                 try grab(object.context, object, seat, serial);
