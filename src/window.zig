@@ -600,6 +600,9 @@ pub const Window = struct {
         self.xdg_popup_id = null;
         self.wl_subsurface_id = null;
 
+        if (self.positioner) |positioner| {
+            try positioner.deinit();
+        }
         self.positioner = null;
         self.window_geometry = null;
 
