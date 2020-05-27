@@ -601,6 +601,7 @@ pub const Window = struct {
         self.wl_subsurface_id = null;
 
         self.positioner = null;
+        self.window_geometry = null;
 
         self.ready_for_callback = false;
 
