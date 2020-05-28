@@ -230,7 +230,7 @@ fn setVertexAttrib(program: c_uint, attribute_string: []const u8, offset: c_uint
     try checkGLError();
 }
 
-pub fn makeTexture(width: i32, height: i32, stride: i32, format: u32, data: []u8) !u32 {
+pub fn makeTexture(width: i32, height: i32, stride: i32, format: u32, data: []const u8) !u32 {
     if (stride*height > data.len) {
         return error.NotEnoughTextureDataForDimensions;
     }
