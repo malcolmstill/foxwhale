@@ -114,7 +114,7 @@ pub const Window = struct {
                     try renderer.setUniformMatrix(renderer.PROGRAM, "origin", renderer.identity);
                     try renderer.setUniformMatrix(renderer.PROGRAM, "originInverse", renderer.identity);
                     try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 1.0);
-                    renderer.setGeometry(window);
+                    renderer.setGeometry(window.width, window.height);
                     try renderer.renderSurface(renderer.PROGRAM, texture);
                 }
             } else {

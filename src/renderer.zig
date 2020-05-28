@@ -138,34 +138,34 @@ fn orthographicProjection(m: *[16]f32, left: f32, right: f32, top: f32, bottom: 
     m[12] = 0.0;              m[13] = 0.0;              m[14] = 0.0;             m[15] = 1.0;
 }
 
-pub fn setGeometry(window: *Window) void {
+pub fn setGeometry(width: i32, height: i32) void {
     rectangle[0] = 0.0;
     rectangle[1] = 0.0;
     rectangle[2] = 0.0;
     rectangle[3] = 0.0;
 
-    rectangle[4] = @intToFloat(f32, window.width);
+    rectangle[4] = @intToFloat(f32, width);
     rectangle[5] = 0.0;
     rectangle[6] = 1.0;
     rectangle[7] = 0.0;
 
     rectangle[8] = 0.0;
-    rectangle[9] = @intToFloat(f32, window.height);
+    rectangle[9] = @intToFloat(f32, height);
     rectangle[10] = 0.0;
     rectangle[11] = 1.0;
 
     rectangle[12] = 0.0;
-    rectangle[13] = @intToFloat(f32, window.height);
+    rectangle[13] = @intToFloat(f32, height);
     rectangle[14] = 0.0;
     rectangle[15] = 1.0;
 
-    rectangle[16] = @intToFloat(f32, window.width);
+    rectangle[16] = @intToFloat(f32, width);
     rectangle[17] = 0.0;
     rectangle[18] = 1.0;
     rectangle[19] = 0.0;
 
-    rectangle[20] = @intToFloat(f32, window.width);
-    rectangle[21] = @intToFloat(f32, window.height);
+    rectangle[20] = @intToFloat(f32, width);
+    rectangle[21] = @intToFloat(f32, height);
     rectangle[22] = 1.0;
     rectangle[23] = 1.0;
 }
