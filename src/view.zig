@@ -3,6 +3,7 @@ const prot = @import("protocols.zig");
 const Focus = @import("focus.zig").Focus;
 const Output = @import("output.zig").Output;
 const Window = @import("window.zig").Window;
+const compositor = @import("compositor.zig");
 
 pub var CURRENT_VIEW: *View = undefined;
 
@@ -109,6 +110,7 @@ pub const View = struct {
                 }
             } else {
                 std.debug.warn("new pointer_window: null\n", .{});
+                compositor.COMPOSITOR.client_cursor = null;
             }
         }
 

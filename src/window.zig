@@ -57,8 +57,6 @@ pub const Window = struct {
     app_id: [256]u8 = undefined,
     callbacks: LinearFifo(u32, LinearFifoBufferType{ .Static = 32 }),
 
-    cursor: ?Cursor = null,
-
     const Self = @This();
 
     // flip double-buffered state
@@ -103,27 +101,27 @@ pub const Window = struct {
         return &self.state[self.stateIndex +% 1];
     }
 
-    pub fn render(self: *Self) anyerror!void {
+    pub fn render(self: *Self, x: i32, y: i32) anyerror!void {
         var it = self.forwardIterator();
         while(it.next()) |window| {
             window.ready_for_callback = true;
             if (window == self) {
                 if (window.texture) |texture| {
                     try renderer.scale(1.0, 1.0);
-                    try renderer.translate(@intToFloat(f32, window.absoluteX()), @intToFloat(f32, window.absoluteY()));
+                    try renderer.translate(@intToFloat(f32, x + window.absoluteX()), @intToFloat(f32, y + window.absoluteY()));
                     try renderer.setUniformMatrix(renderer.PROGRAM, "origin", renderer.identity);
                     try renderer.setUniformMatrix(renderer.PROGRAM, "originInverse", renderer.identity);
                     try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 1.0);
-                    renderer.setGeometry(window);
+                    renderer.setGeometry(window.width, window.height);
                     try renderer.renderSurface(renderer.PROGRAM, texture);
                 }
             } else {
-                try window.render();
+                try window.render(x, y);
             }
         }
 
         if (self.popup) |popup| {
-            try popup.render();
+            try popup.render(x, y);
         }
     }
 
@@ -625,8 +623,6 @@ pub const Window = struct {
         self.state[0].deinit();
         self.state[1].deinit();
 
-        self.cursor = null;
-
         if (self.texture) |texture| {
             self.texture = null;
             // Note that while this can fail, we're doing
@@ -652,8 +648,6 @@ pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
             window.xdg_toplevel_id = null;
 
             window.callbacks = LinearFifo(u32, LinearFifoBufferType{ .Static = 32 }).init();
-
-            window.cursor = null;
 
             window.texture = null;
             window.width = 0;

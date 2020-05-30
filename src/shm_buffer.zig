@@ -72,7 +72,8 @@ pub const ShmBuffer = struct {
     }
 
     pub fn makeTexture(self: *Self) !u32 {
-        return renderer.makeTexture(self.width, self.height, self.stride, self.format, self.shm_pool.data);
+        var offset = @intCast(usize, self.offset);
+        return renderer.makeTexture(self.width, self.height, self.stride, self.format, self.shm_pool.data[offset..]);
     }
 };
 

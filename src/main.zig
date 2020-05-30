@@ -1,6 +1,7 @@
 const std = @import("std");
 const Context = @import("client.zig").Context;
 const Display = @import("display.zig").Display;
+const Cursor = @import("cursor.zig").Cursor;
 const epoll = @import("epoll.zig");
 const Backend = @import("backend/backend.zig").Backend;
 const bknd = @import("backend/backend.zig");
@@ -20,7 +21,7 @@ pub fn main() anyerror!void {
     try compositor.COMPOSITOR.init();
 
     var o1: *Output = try out.newOutput(&backend, 640, 480);
-    // var o2: *Output = try out.newOutput(&backend, 300, 300);
+    var o2: *Output = try out.newOutput(&backend, 300, 300);
 
     views.CURRENT_VIEW = &o1.views[0];
 
@@ -31,6 +32,8 @@ pub fn main() anyerror!void {
     try display.addToEpoll();
 
     try render.init();
+
+    var cursor = try Cursor.init();
 
     var running = true;
     while (running) {
@@ -54,8 +57,15 @@ pub fn main() anyerror!void {
 
                 var it = view.back();
                 while(it) |window| : (it = window.toplevel.next) {
-                    try window.render();
+                    try window.render(0, 0);
                 }
+            }
+
+            if (views.CURRENT_VIEW.output == output) {
+                try cursor.render(
+                    @floatToInt(i32, compositor.COMPOSITOR.pointer_x),
+                    @floatToInt(i32, compositor.COMPOSITOR.pointer_y),
+                );
             }
 
             output.swap();
