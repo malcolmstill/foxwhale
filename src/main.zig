@@ -57,7 +57,7 @@ pub fn main() anyerror!void {
 
                 var it = view.back();
                 while(it) |window| : (it = window.toplevel.next) {
-                    try window.render();
+                    try window.render(0, 0);
                 }
             }
 

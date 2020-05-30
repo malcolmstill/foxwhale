@@ -20,6 +20,16 @@ pub const Cursor = struct {
     }
 
     pub fn render(self: *Cursor, x: i32, y: i32) !void {
+        if (compositor.COMPOSITOR.client_cursor) |client_cursor| {
+            switch (client_cursor) {
+                .CursorWindow => |client_cursor_window| {
+                    try client_cursor_window.render(x, y);
+                    return;
+                },
+                .CursorHidden => return,
+            }
+        }
+
         if (self.texture) |texture| {
             try renderer.scale(1.0, 1.0);
             try renderer.translate(@intToFloat(f32, x), @intToFloat(f32, y));

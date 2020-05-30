@@ -4,13 +4,14 @@ const xkbcommon = @import("xkb.zig");
 const Xkb = @import("xkb.zig").Xkb;
 const Move = @import("move.zig").Move;
 const Resize = @import("resize.zig").Resize;
+const ClientCursor = @import("cursor.zig").ClientCursor;
 pub var COMPOSITOR: Compositor = makeCompositor();
 
 const Compositor = struct {
     pointer_x: f64,
     pointer_y: f64,
 
-    cursor_wl_surface_id: ?u32,
+    client_cursor: ?ClientCursor,
 
     move: ?Move,
     resize: ?Resize,
@@ -81,7 +82,7 @@ fn makeCompositor() Compositor {
     return Compositor {
         .pointer_x = 0.0,
         .pointer_y = 0.0,
-        .cursor_wl_surface_id = null,
+        .client_cursor = null,
         .move = null,
         .resize = null,
         .xkb = null,
