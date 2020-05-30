@@ -103,14 +103,14 @@ pub const Window = struct {
         return &self.state[self.stateIndex +% 1];
     }
 
-    pub fn render(self: *Self) anyerror!void {
+    pub fn render(self: *Self, x: i32, y: i32) anyerror!void {
         var it = self.forwardIterator();
         while(it.next()) |window| {
             window.ready_for_callback = true;
             if (window == self) {
                 if (window.texture) |texture| {
                     try renderer.scale(1.0, 1.0);
-                    try renderer.translate(@intToFloat(f32, window.absoluteX()), @intToFloat(f32, window.absoluteY()));
+                    try renderer.translate(@intToFloat(f32, x + window.absoluteX()), @intToFloat(f32, y + window.absoluteY()));
                     try renderer.setUniformMatrix(renderer.PROGRAM, "origin", renderer.identity);
                     try renderer.setUniformMatrix(renderer.PROGRAM, "originInverse", renderer.identity);
                     try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 1.0);
@@ -118,12 +118,12 @@ pub const Window = struct {
                     try renderer.renderSurface(renderer.PROGRAM, texture);
                 }
             } else {
-                try window.render();
+                try window.render(x, y);
             }
         }
 
         if (self.popup) |popup| {
-            try popup.render();
+            try popup.render(x, y);
         }
     }
 
