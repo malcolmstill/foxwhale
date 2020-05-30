@@ -1,6 +1,8 @@
 
 var cursor = @embedFile("../assets/cursor.data");
 const renderer = @import("renderer.zig");
+const compositor = @import("compositor.zig");
+const Window = @import("window.zig").Window;
 
 pub const Cursor = struct {
     texture: ?u32,
@@ -28,4 +30,14 @@ pub const Cursor = struct {
             try renderer.renderSurface(renderer.PROGRAM, texture);
         }        
     }
+};
+
+pub const ClientCursorType = enum {
+    CursorWindow,
+    CursorHidden,
+};
+
+pub const ClientCursor = union(ClientCursorType) {
+    CursorWindow: *Window,
+    CursorHidden,
 };
