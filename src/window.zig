@@ -560,6 +560,16 @@ pub const Window = struct {
         }
     }
 
+    pub fn mouseAxis(self: *Self, time: u32, axis: u32, value: f64) !void {
+        var client = self.client;
+        if (client.wl_pointer_id) |wl_pointer_id| {
+            if (client.context.objects.get(wl_pointer_id)) |wl_pointer| {
+                var now = @truncate(u32, std.time.milliTimestamp());
+                try prot.wl_pointer_send_axis(wl_pointer.value, time, axis, @floatCast(f32, value));
+            }
+        }
+    }
+
     pub fn keyboardKey(self: *Self, time: u32, button: u32, action: u32) !void {
         var client = self.client;
         if (client.wl_keyboard_id) |wl_keyboard_id| {

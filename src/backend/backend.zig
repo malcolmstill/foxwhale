@@ -181,6 +181,7 @@ pub const BackendFns = struct {
     keyboard: ?fn (u32, u32, u32) anyerror!void,
     mouseClick: ?fn (u32, u32, u32) anyerror!void,
     mouseMove: ?fn (u32, f64, f64) anyerror!void,
+    mouseAxis: ?fn (u32, u32, f64) anyerror!void,
     pageFlip: ?fn () anyerror!void,
 };
 
@@ -191,6 +192,7 @@ fn makeBackendFns() BackendFns{
         .keyboard = null,
         .mouseClick = null,
         .mouseMove = null,
+        .mouseAxis = null,
         .pageFlip = null,
     };
 }

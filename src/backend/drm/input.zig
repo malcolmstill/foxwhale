@@ -100,7 +100,20 @@ pub fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
                 if (backend.BACKEND_FNS.mouseMove) |mouseMove| {
                     try mouseMove(time, dx, dy);
                 }
-            },            
+            },
+            EventType.LIBINPUT_EVENT_POINTER_AXIS => {
+                var pointer_event = c.libinput_event_get_pointer_event(event);
+                var vertical = @intToEnum(c.enum_libinput_pointer_axis, c.LIBINPUT_POINTER_AXIS_SCROLL_VERTICAL);
+                var has_vertical = c.libinput_event_pointer_has_axis(pointer_event, vertical);
+                if (has_vertical != 0) {
+                    var value = c.libinput_event_pointer_get_axis_value(pointer_event, vertical);
+                    var time = c.libinput_event_pointer_get_time(pointer_event);
+
+                    if (backend.BACKEND_FNS.mouseAxis) |mouseAxis| {
+                        try mouseAxis(time, c.LIBINPUT_POINTER_AXIS_SCROLL_VERTICAL, value);
+                    }
+                }
+            },
             else => std.debug.warn("unhandled event\n", .{}),
         }
 

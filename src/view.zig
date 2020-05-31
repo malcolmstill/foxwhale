@@ -127,6 +127,12 @@ pub const View = struct {
         }
     }
 
+    pub fn mouseAxis(self: *Self, time: u32, axis: u32, value: f64) !void {
+        if (self.pointer_window) |pointer_window| {
+            try pointer_window.mouseAxis(time, axis, value);
+        }
+    }
+
     pub fn deinit(self: *Self) void {
         self.* = makeView(self.output);
     }

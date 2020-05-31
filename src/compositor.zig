@@ -31,12 +31,44 @@ const Compositor = struct {
     pub fn init(self: *Self) !void {
         self.xkb = try xkbcommon.init();
 
-        backend.BACKEND_FNS.mouseMove = mouseMoveHandler;
-        backend.BACKEND_FNS.mouseClick = mouseClickHandler;
         backend.BACKEND_FNS.keyboard = keyboardHandler;
+        backend.BACKEND_FNS.mouseClick = mouseClickHandler;
+        backend.BACKEND_FNS.mouseMove = mouseMoveHandler;
+        backend.BACKEND_FNS.mouseAxis = mouseAxisHandler;
     }
 
-    pub fn updatePointer(self: *Self, dx: f64, dy: f64) !void {
+    pub fn keyboard(self: *Self, time: u32, button: u32, action: u32) !void {
+        if (button == 224) {
+            self.running = false;
+        }
+
+        if (self.xkb) |*xkb| {
+            xkb.updateKey(button, action);
+            self.mods_depressed = xkb.serializeDepressed();
+            self.mods_latched = xkb.serializeLatched();
+            self.mods_locked = xkb.serializeLocked();
+            self.mods_group = xkb.serializeGroup();
+        }
+        try views.CURRENT_VIEW.keyboard(time, button, action);
+    }
+
+    pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
+        if (self.move) |move| {
+            if (action == 0) {
+                self.move = null;
+            }
+        }
+
+        if (self.resize) |resize| {
+            if (action == 0) {
+                self.resize = null;
+            }
+        }
+
+        try views.CURRENT_VIEW.mouseClick(button, action);
+    }
+
+    pub fn mouseMove(self: *Self, dx: f64, dy: f64) !void {
         self.pointer_x = self.pointer_x + dx;
         self.pointer_y = self.pointer_y + dy;
 
@@ -74,48 +106,25 @@ const Compositor = struct {
         try views.CURRENT_VIEW.updatePointer(self.pointer_x, self.pointer_y);
     }
 
-    pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
-        if (self.move) |move| {
-            if (action == 0) {
-                self.move = null;
-            }
-        }
-
-        if (self.resize) |resize| {
-            if (action == 0) {
-                self.resize = null;
-            }
-        }
-
-        try views.CURRENT_VIEW.mouseClick(button, action);
-    }
-
-    pub fn keyboard(self: *Self, time: u32, button: u32, action: u32) !void {
-        if (button == 224) {
-            self.running = false;
-        }
-
-        if (self.xkb) |*xkb| {
-            xkb.updateKey(button, action);
-            self.mods_depressed = xkb.serializeDepressed();
-            self.mods_latched = xkb.serializeLatched();
-            self.mods_locked = xkb.serializeLocked();
-            self.mods_group = xkb.serializeGroup();
-        }
-        try views.CURRENT_VIEW.keyboard(time, button, action);
+    pub fn mouseAxis(self: *Self, time: u32, axis: u32, value: f64) !void {
+        try views.CURRENT_VIEW.mouseAxis(time, axis, -1.0 * value);
     }
 };
 
-fn mouseMoveHandler(time: u32, x: f64, y: f64) !void {
-    try COMPOSITOR.updatePointer(x, y);
+fn keyboardHandler(time: u32, button: u32, state: u32) !void {
+    try COMPOSITOR.keyboard(time, button, state);
 }
 
 fn mouseClickHandler(time: u32, button: u32, state: u32) !void {
     try COMPOSITOR.mouseClick(button, state);
 }
 
-fn keyboardHandler(time: u32, button: u32, state: u32) !void {
-    try COMPOSITOR.keyboard(time, button, state);
+fn mouseMoveHandler(time: u32, x: f64, y: f64) !void {
+    try COMPOSITOR.mouseMove(x, y);
+}
+
+fn mouseAxisHandler(time: u32, axis: u32, value: f64) !void {
+    try COMPOSITOR.mouseAxis(time, axis, value);
 }
 
 fn makeCompositor() Compositor {
