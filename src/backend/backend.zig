@@ -113,19 +113,20 @@ pub fn Backend(comptime T: type) type {
 
         const Self = @This();
 
-        pub fn init(backend_type: BackendType) !Self {
+        pub fn new(backend_type: BackendType) !Self {
             return switch (backend_type) {
-                BackendType.Headless => Self { .Headless = try headless.init() },
-                BackendType.GLFW => Self { .GLFW = try glfw.init() },
-                BackendType.DRM => Self { .DRM = try drm.init() },
+                BackendType.Headless => Self { .Headless = try headless.new() },
+                BackendType.GLFW => Self { .GLFW = try glfw.new() },
+                BackendType.DRM => Self { .DRM = try drm.new() },
             };
         }
 
-        pub fn addToEpoll(self: *Self) !void {
+        pub fn init(self: *Self) !void {
             return switch (self.*) {
-                BackendType.Headless => {},
-                BackendType.GLFW => {},
-                BackendType.DRM => |*drm_backend| try drm_backend.addToEpoll(),
+                BackendType.Headless => |*backend| backend.init(),
+                BackendType.GLFW => |*backend| backend.init(),
+                BackendType.DRM => |*backend| backend.init(),
+                else => {},
             };
         }
 

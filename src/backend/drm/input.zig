@@ -11,7 +11,7 @@ const c = @cImport({
     @cInclude("libinput.h");
 });
 
-var global_logind: *Logind = undefined;
+pub var global_logind: *Logind = undefined;
 
 pub const Input = struct {
     udev_context: ?*c.udev,
@@ -60,6 +60,7 @@ pub fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
 
     while(c.libinput_get_event(input.context)) |event| {
         var input_event_type = c.libinput_event_get_type(event);
+
         switch (input_event_type) {
             EventType.LIBINPUT_EVENT_DEVICE_ADDED => {
                 var device = c.libinput_event_get_device(event);

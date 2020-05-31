@@ -1,5 +1,6 @@
 const systemd = @import("drm/systemd.zig");
 const Logind = @import("drm/systemd.zig").Logind;
+const inputs = @import("drm/input.zig");
 const Input = @import("drm/input.zig").Input;
 const DRM = @import("drm/drm.zig").DRM;
 const GBM = @import("drm/gbm.zig").GBM;
@@ -11,8 +12,9 @@ pub const DRMBackend = struct {
 
     const Self = @This();
 
-    pub fn addToEpoll(self: *DRMBackend) !void {
+    pub fn init(self: *Self) !void {
         try self.input.addToEpoll();
+        inputs.global_logind = &self.systemd;
     }
 
     pub fn newOutput(self: *Self) !DRMOutput {
@@ -33,7 +35,7 @@ pub const DRMBackend = struct {
     }
 };
 
-pub fn init() !DRMBackend {
+pub fn new() !DRMBackend {
     var sysd = try systemd.create();
     try sysd.init();
 

@@ -2,6 +2,10 @@
 pub const HeadlessBackend = struct {
     const Self = @This();
 
+    pub fn init(self: *Self) !void {
+    }
+
+
     pub fn newOutput(self: *Self, w: i32, h: i32) !HeadlessOutput {
         return HeadlessOutput {
 
@@ -12,7 +16,7 @@ pub const HeadlessBackend = struct {
     }
 };
 
-pub fn init() !HeadlessBackend {
+pub fn new() !HeadlessBackend {
     return HeadlessBackend {
     };
 }

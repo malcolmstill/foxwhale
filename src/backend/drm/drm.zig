@@ -126,6 +126,5 @@ var event_handler = c.drmEventContext {
 var PAGE_FLIP_SCHEDULED: bool = false;
 fn handlePageFlip(fd: i32, sequence: u32, tv_sec: u32, tv_usec: u32, crtc_id: u32, user_data: ?*c_void) callconv(.C) void {
     PAGE_FLIP_SCHEDULED = false;
-
 }
 

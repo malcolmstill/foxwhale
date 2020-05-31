@@ -15,10 +15,9 @@ const Backend = backends.Backend(Output);
 pub fn main() anyerror!void {
     try epoll.init();
     var detected_type = backends.detect();
-    var backend: Backend = try Backend.init(detected_type);
+    var backend: Backend = try Backend.new(detected_type);
+    try backend.init();
     defer backend.deinit();
-
-    try backend.addToEpoll();
 
     try compositor.COMPOSITOR.init();
 

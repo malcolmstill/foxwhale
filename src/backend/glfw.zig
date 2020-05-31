@@ -13,6 +13,9 @@ pub const GLFWBackend = struct {
 
     const Self = @This();
 
+    pub fn init(self: *Self) !void {
+    }
+
     pub fn newOutput(self: *Self, width: i32, height: i32) !GLFWOutput {
         var window = c.glfwCreateWindow(width, height, "foxwhale", null, self.hidden) orelse return error.GLFWWindowCreationFailed;
 
@@ -35,7 +38,7 @@ pub const GLFWBackend = struct {
     }
 };
 
-pub fn init() !GLFWBackend {
+pub fn new() !GLFWBackend {
     if(c.glfwInit() != 1) {
         return error.GLFWInitFailed;
     }
