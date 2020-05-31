@@ -3,7 +3,6 @@ const Context = @import("client.zig").Context;
 const Display = @import("display.zig").Display;
 const Cursor = @import("cursor.zig").Cursor;
 const epoll = @import("epoll.zig");
-const Backend = @import("backend/backend.zig").Backend;
 const bknd = @import("backend/backend.zig");
 const render = @import("renderer.zig");
 const out = @import("output.zig");
@@ -11,19 +10,20 @@ const Output = @import("output.zig").Output;
 const views = @import("view.zig");
 const windows = @import("window.zig");
 const compositor = @import("compositor.zig");
+const Backend = bknd.Backend(Output);
 
 pub fn main() anyerror!void {
     try epoll.init();
     var detected_type = bknd.detect();
-    var backend: Backend = try bknd.init(detected_type);
+    var backend: Backend = try Backend.init(detected_type);
     defer backend.deinit();
 
     try compositor.COMPOSITOR.init();
 
-    var o1: *Output = try out.newOutput(&backend, 640, 480);
-    var o2: *Output = try out.newOutput(&backend, 300, 300);
+    var o1 = try out.newOutput(&backend, 640, 480);
+    var o2 = try out.newOutput(&backend, 300, 300);
 
-    views.CURRENT_VIEW = &o1.views[0];
+    views.CURRENT_VIEW = &o1.data.views[0];
 
     std.debug.warn("==> backend: {}\n", .{backend.name()});
 
@@ -48,9 +48,11 @@ pub fn main() anyerror!void {
         var out_it = out.OUTPUTS.iterator();
         while (out_it.next()) |output| {
             try output.begin();
+
+            try render.clear();
             try render.render(output);
 
-            for (output.views) |*view| {
+            for (output.data.views) |*view| {
                 if (view.visible() == false) {
                     continue;
                 }
