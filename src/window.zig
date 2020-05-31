@@ -220,6 +220,13 @@ pub const Window = struct {
     }
 
     pub fn windowUnderPointer(self: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
+        if (self.popup) |popup| {
+            var maybe_popup_window = popup.windowUnderPointer(pointer_x, pointer_y);
+            if (maybe_popup_window) |popup_window| {
+                return popup_window;
+            }
+        }
+
         var it = self.backwardIterator();
         while(it.prev()) |window| {
             if (self == window) {
@@ -232,6 +239,7 @@ pub const Window = struct {
                 }
             }
         }
+
         return null;
     }
 
