@@ -1,14 +1,14 @@
 const std = @import("std");
 const prot = @import("protocols.zig");
 const Focus = @import("focus.zig").Focus;
-const Output = @import("output.zig").Output;
+const CompositorOutput = @import("output.zig").CompositorOutput;
 const Window = @import("window.zig").Window;
 const compositor = @import("compositor.zig");
 
 pub var CURRENT_VIEW: *View = undefined;
 
 pub const View = struct {
-    output: ?*Output,
+    output: ?*CompositorOutput,
     top: ?*Window,
     pointer_window: ?*Window,
     active_window: ?*Window,
@@ -132,7 +132,7 @@ pub const View = struct {
     }
 };
 
-pub fn makeView(output: ?*Output) View {
+pub fn makeView(output: ?*CompositorOutput) View {
     return View{
         .output = output,
         .top = null,
