@@ -121,7 +121,7 @@ pub const View = struct {
         }
     }
 
-    pub fn keyboard(self: *Self, time: u32, button: u32, action: u32, mods: u32) !void {
+    pub fn keyboard(self: *Self, time: u32, button: u32, action: u32) !void {
         if (self.active_window) |active_window| {
             try active_window.keyboardKey(time, button, action);
         }

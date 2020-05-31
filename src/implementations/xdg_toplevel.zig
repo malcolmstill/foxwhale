@@ -17,7 +17,7 @@ fn set_title(context: *Context, xdg_toplevel: Object, title: []u8) anyerror!void
     var window = @intToPtr(*Window, xdg_toplevel.container);
     var len = std.math.min(window.title.len, title.len);
     std.mem.copy(u8, window.title[0..len], title[0..len]);
-    std.debug.warn("window: {}\n", .{window.title});
+    // std.debug.warn("window: {}\n", .{window.title});
 }
 
 fn set_app_id(context: *Context, xdg_toplevel: Object, app_id: []u8) anyerror!void {

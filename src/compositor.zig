@@ -5,6 +5,8 @@ const Xkb = @import("xkb.zig").Xkb;
 const Move = @import("move.zig").Move;
 const Resize = @import("resize.zig").Resize;
 const ClientCursor = @import("cursor.zig").ClientCursor;
+const backend = @import("backend/backend.zig");
+
 pub var COMPOSITOR: Compositor = makeCompositor();
 
 const Compositor = struct {
@@ -22,19 +24,41 @@ const Compositor = struct {
     mods_locked: u32,
     mods_group: u32,
 
+    running: bool,
+
     const Self = @This();
 
     pub fn init(self: *Self) !void {
         self.xkb = try xkbcommon.init();
+
+        backend.BACKEND_FNS.mouseMove = mouseMoveHandler;
+        backend.BACKEND_FNS.mouseClick = mouseClickHandler;
+        backend.BACKEND_FNS.keyboard = keyboardHandler;
     }
 
-    pub fn updatePointer(self: *Self, new_x: f64, new_y: f64) !void {
-        self.pointer_x = new_x;
-        self.pointer_y = new_y;
+    pub fn updatePointer(self: *Self, dx: f64, dy: f64) !void {
+        self.pointer_x = self.pointer_x + dx;
+        self.pointer_y = self.pointer_y + dy;
+
+        if (self.pointer_x < 0) {
+            self.pointer_x = 0;
+        }
+
+        if (self.pointer_x > @intToFloat(f64, views.CURRENT_VIEW.output.?.getWidth())) {
+            self.pointer_x = @intToFloat(f64, views.CURRENT_VIEW.output.?.getWidth());
+        }
+
+        if (self.pointer_y < 0) {
+            self.pointer_y = 0;
+        }
+
+        if (self.pointer_y > @intToFloat(f64, views.CURRENT_VIEW.output.?.getHeight())) {
+            self.pointer_y = @intToFloat(f64, views.CURRENT_VIEW.output.?.getHeight());
+        }
 
         if (self.move) |move| {
-            var new_window_x = move.window_x + @floatToInt(i32, new_x - move.pointer_x);
-            var new_window_y = move.window_y + @floatToInt(i32, new_y - move.pointer_y);
+            var new_window_x = move.window_x + @floatToInt(i32, self.pointer_x - move.pointer_x);
+            var new_window_y = move.window_y + @floatToInt(i32, self.pointer_y - move.pointer_y);
             move.window.current().x = new_window_x;
             move.window.pending().x = new_window_x;
             move.window.current().y = new_window_y;
@@ -43,11 +67,11 @@ const Compositor = struct {
         }
 
         if (self.resize) |resize| {
-            try resize.resize(new_x, new_y);
+            try resize.resize(self.pointer_x, self.pointer_y);
             return;
         }
 
-        try views.CURRENT_VIEW.updatePointer(new_x, new_y);
+        try views.CURRENT_VIEW.updatePointer(self.pointer_x, self.pointer_y);
     }
 
     pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
@@ -66,7 +90,11 @@ const Compositor = struct {
         try views.CURRENT_VIEW.mouseClick(button, action);
     }
 
-    pub fn keyboard(self: *Self, time: u32, button: u32, action: u32, mods: u32) !void {
+    pub fn keyboard(self: *Self, time: u32, button: u32, action: u32) !void {
+        if (button == 224) {
+            self.running = false;
+        }
+
         if (self.xkb) |*xkb| {
             xkb.updateKey(button, action);
             self.mods_depressed = xkb.serializeDepressed();
@@ -74,9 +102,21 @@ const Compositor = struct {
             self.mods_locked = xkb.serializeLocked();
             self.mods_group = xkb.serializeGroup();
         }
-        try views.CURRENT_VIEW.keyboard(time, button, action, mods);
+        try views.CURRENT_VIEW.keyboard(time, button, action);
     }
 };
+
+fn mouseMoveHandler(time: u32, x: f64, y: f64) !void {
+    try COMPOSITOR.updatePointer(x, y);
+}
+
+fn mouseClickHandler(time: u32, button: u32, state: u32) !void {
+    try COMPOSITOR.mouseClick(button, state);
+}
+
+fn keyboardHandler(time: u32, button: u32, state: u32) !void {
+    try COMPOSITOR.keyboard(time, button, state);
+}
 
 fn makeCompositor() Compositor {
     return Compositor {
@@ -90,5 +130,6 @@ fn makeCompositor() Compositor {
         .mods_latched = 0,
         .mods_locked = 0,
         .mods_group = 0,
+        .running = true,
     };
 }
