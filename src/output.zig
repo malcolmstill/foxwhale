@@ -1,75 +1,16 @@
-const std = @import("std");
-const clients = @import("client.zig");
-const prot = @import("protocols.zig");
-const renderer = @import("renderer.zig");
-const views = @import("view.zig");
-const Stalloc = @import("stalloc.zig").Stalloc;
-const Backend = @import("backend/backend.zig").Backend;
-const BackendType = @import("backend/backend.zig").BackendType;
-const HeadlessOutput = @import("backend/headless.zig").HeadlessOutput;
-const GLFWOutput = @import("backend/glfw.zig").GLFWOutput;
-const View = @import("view.zig").View;
 
-pub var OUTPUTS: Stalloc(void, Output, 16) = undefined;
+pub const CompositorOutput = backends.BackendOutput(Output);
+pub var OUTPUTS: Stalloc(void, CompositorOutput, 16) = undefined;
 pub const OUTPUT_BASE: usize = 1000;
 
-pub const OutputBackend = union(BackendType) {
-    Headless: HeadlessOutput,
-    GLFW: GLFWOutput,
-};
-
 pub const Output = struct {
-    backend: OutputBackend,
     views: [4]View,
 
     const Self = @This();
 
-    pub fn begin(self: Self) !void {
-        switch (self.backend) {
-            BackendType.Headless => |headless_output| headless_output.begin(),
-            BackendType.GLFW => |glfw_output| glfw_output.begin(),
-        }
-
-        try renderer.clear();
-    }
-
-    pub fn end(self: Self) void {
-        return switch (self.backend) {
-            BackendType.Headless => |headless_output| headless_output.end(),
-            BackendType.GLFW => |glfw_output| glfw_output.end(),
-        };
-    }
-
-    pub fn swap(self: Self) void {
-        return switch (self.backend) {
-            BackendType.Headless => |headless_output| headless_output.swap(),
-            BackendType.GLFW => |glfw_output| glfw_output.swap(),
-        };
-    }
-
-    pub fn shouldClose(self: Self) bool {
-        return switch (self.backend) {
-            BackendType.Headless => |headless_output| headless_output.shouldClose(),
-            BackendType.GLFW => |glfw_output| glfw_output.shouldClose(),
-        };
-    }
-
-    pub fn getWidth(self: Self) i32 {
-        return switch (self.backend) {
-            BackendType.Headless => |headless_output| headless_output.getWidth(),
-            BackendType.GLFW => |glfw_output| glfw_output.getWidth(),
-        };
-    }
-
-    pub fn getHeight(self: Self) i32 {
-        return switch (self.backend) {
-            BackendType.Headless => |headless_output| headless_output.getHeight(),
-            BackendType.GLFW => |glfw_output| glfw_output.getHeight(),
-        };
-    }
-
     pub fn deinit(self: *Self) !void {
-        var freed_index = OUTPUTS.deinit(self);
+        var parent = @fieldParentPtr(CompositorOutput, "data", self);
+        var freed_index = OUTPUTS.deinit(parent);
 
         // Inform all clients that have bound this output
         // that it is going away
@@ -93,12 +34,6 @@ pub const Output = struct {
                 }
             }
         }
-
-        return switch (self.backend) {
-            BackendType.Headless => |*headless_output| headless_output.deinit(),
-            BackendType.GLFW => |*glfw_output| glfw_output.deinit(),
-            else => return,
-        };
     }
 
     pub fn getIndexOf(self: *Self) usize {
@@ -106,10 +41,10 @@ pub const Output = struct {
     }
 };
 
-pub fn newOutput(backend: *Backend, width: i32, height: i32) !*Output {
-    var output = try OUTPUTS.new(undefined);
+pub fn newOutput(backend: *CompositorBackend, width: i32, height: i32) !*CompositorOutput {
+    var output: *CompositorOutput = try OUTPUTS.new(undefined);
     output.* = try backend.newOutput(width, height);
-    for (output.views) |*view| {
+    for (output.data.views) |*view| {
         view.* = views.makeView(output);
     }
 
@@ -127,3 +62,12 @@ pub fn newOutput(backend: *Backend, width: i32, height: i32) !*Output {
 
     return output;
 }
+
+const std = @import("std");
+const clients = @import("client.zig");
+const prot = @import("protocols.zig");
+const views = @import("view.zig");
+const backends = @import("backend/backend.zig");
+const Stalloc = @import("stalloc.zig").Stalloc;
+const View = @import("view.zig").View;
+const CompositorBackend = @import("backend/backend.zig").Backend(Output);
