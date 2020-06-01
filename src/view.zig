@@ -1,14 +1,14 @@
 const std = @import("std");
 const prot = @import("protocols.zig");
 const Focus = @import("focus.zig").Focus;
-const Output = @import("output.zig").Output;
+const CompositorOutput = @import("output.zig").CompositorOutput;
 const Window = @import("window.zig").Window;
 const compositor = @import("compositor.zig");
 
 pub var CURRENT_VIEW: *View = undefined;
 
 pub const View = struct {
-    output: ?*Output,
+    output: ?*CompositorOutput,
     top: ?*Window,
     pointer_window: ?*Window,
     active_window: ?*Window,
@@ -53,14 +53,11 @@ pub const View = struct {
     pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
         if (self.pointer_window) |pointer_window| {
             if (action == 1) {
-                if (self.top != pointer_window) {
-                        std.debug.warn("raise: {}\n", .{pointer_window.index});
-                        var root = pointer_window.root();
-                        self.remove(root);
-                        self.push(root);
+                if (self.top != pointer_window.toplevelWindow()) {
+                    self.raise(pointer_window.toplevelWindow());
                 }
 
-                if (pointer_window != self.active_window) {
+                if (pointer_window.toplevelWindow() != self.active_window) {
                     if (self.active_window) |active_window| {
                         try active_window.deactivate();
                     }
@@ -77,6 +74,43 @@ pub const View = struct {
                     try active_window.deactivate();
                     self.active_window = null;
                 }
+            }
+        }
+    }
+
+    pub fn raise(self: *Self, raising_window: *Window) void {
+        // 1. iterate down, removing any marks
+        var it = self.top;
+        while(it) |window| : (it = window.toplevel.prev) {
+            window.toplevel.mark = false;
+        }
+
+        // 2. Raise our parent if it exists
+        if (raising_window.parent) |parent| {
+            // var root = pointer_window.root();
+            var parent_toplevel = parent.toplevelWindow();
+            parent.toplevel.mark = true;
+            self.remove(parent_toplevel);
+            self.push(parent_toplevel);
+        }
+
+        // 3. Raise our window
+        var raising_window_toplevel = raising_window.toplevelWindow();
+        self.remove(raising_window_toplevel);
+        self.push(raising_window_toplevel);
+        raising_window_toplevel.toplevel.mark = true;
+
+        // 4. Raise any of our children
+        var it = self.back();
+        while(it) |window| : (it = window.toplevel.next) {
+            if (window.toplevel.mark == true) {
+                break;
+            }
+
+            if (window.parent == raising_window.toplevelWindow()) {
+                self.remove(window);
+                self.push(window);
+                window.toplevel.mark = true;
             }
         }
     }
@@ -121,9 +155,15 @@ pub const View = struct {
         }
     }
 
-    pub fn keyboard(self: *Self, time: u32, button: u32, action: u32, mods: u32) !void {
+    pub fn keyboard(self: *Self, time: u32, button: u32, action: u32) !void {
         if (self.active_window) |active_window| {
             try active_window.keyboardKey(time, button, action);
+        }
+    }
+
+    pub fn mouseAxis(self: *Self, time: u32, axis: u32, value: f64) !void {
+        if (self.pointer_window) |pointer_window| {
+            try pointer_window.mouseAxis(time, axis, value);
         }
     }
 
@@ -132,7 +172,7 @@ pub const View = struct {
     }
 };
 
-pub fn makeView(output: ?*Output) View {
+pub fn makeView(output: ?*CompositorOutput) View {
     return View{
         .output = output,
         .top = null,

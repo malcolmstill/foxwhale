@@ -3,7 +3,7 @@ const vertex_shader_source = @embedFile("shaders/vertex.glsl");
 const fragment_shader_source = @embedFile("shaders/fragment.glsl");
 const windows = @import("window.zig");
 const Window = @import("window.zig").Window;
-const Output = @import("output.zig").Output;
+const CompositorOutput = @import("output.zig").CompositorOutput;
 const c = @cImport({
     @cInclude("GLES3/gl3.h");
 });
@@ -20,7 +20,7 @@ pub fn clear() !void {
     try checkGLError();
 }
 
-pub fn render(output: *Output) !void {
+pub fn render(output: *CompositorOutput) !void {
     var width = output.getWidth();
     var height = output.getHeight();
 

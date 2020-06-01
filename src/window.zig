@@ -203,6 +203,18 @@ pub const Window = struct {
         }
     }
 
+    pub fn toplevelWindow(self: *Window) *Window {
+        if (self.xdg_toplevel_id != null) {
+            return self;
+        }
+
+        if (self.parent) |parent| {
+            return parent.root();
+        } else {
+            return self;
+        }
+    }
+
     pub fn toplevelUnderPointer(self: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
         var it = self.backwardIterator();
         while(it.prev()) |window| {
@@ -220,6 +232,13 @@ pub const Window = struct {
     }
 
     pub fn windowUnderPointer(self: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
+        if (self.popup) |popup| {
+            var maybe_popup_window = popup.windowUnderPointer(pointer_x, pointer_y);
+            if (maybe_popup_window) |popup_window| {
+                return popup_window;
+            }
+        }
+
         var it = self.backwardIterator();
         while(it.prev()) |window| {
             if (self == window) {
@@ -232,6 +251,7 @@ pub const Window = struct {
                 }
             }
         }
+
         return null;
     }
 
@@ -552,6 +572,16 @@ pub const Window = struct {
         }
     }
 
+    pub fn mouseAxis(self: *Self, time: u32, axis: u32, value: f64) !void {
+        var client = self.client;
+        if (client.wl_pointer_id) |wl_pointer_id| {
+            if (client.context.objects.get(wl_pointer_id)) |wl_pointer| {
+                var now = @truncate(u32, std.time.milliTimestamp());
+                try prot.wl_pointer_send_axis(wl_pointer.value, time, axis, @floatCast(f32, value));
+            }
+        }
+    }
+
     pub fn keyboardKey(self: *Self, time: u32, button: u32, action: u32) !void {
         var client = self.client;
         if (client.wl_keyboard_id) |wl_keyboard_id| {
@@ -815,6 +845,7 @@ pub fn releaseWindows(client: *Client) !void {
 pub const Link = struct {
     prev: ?*Window,
     next: ?*Window,
+    mark: bool,
 
     pub fn unanchored(self: Link) bool {
         return (self.prev == null) and (self.next == null);

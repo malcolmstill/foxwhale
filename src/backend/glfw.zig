@@ -1,14 +1,20 @@
 const std = @import("std");
-const compositor = @import("../compositor.zig");
+const backend = @import("backend.zig");
 const c = @cImport({
     @cInclude("GLFW/glfw3.h");
 });
+
+var previous_x: f64 = 0;
+var previous_y: f64 = 0;
 
 pub const GLFWBackend = struct {
     windowCount: i32,
     hidden: *c.GLFWwindow,
 
     const Self = @This();
+
+    pub fn init(self: *Self) !void {
+    }
 
     pub fn newOutput(self: *Self, width: i32, height: i32) !GLFWOutput {
         var window = c.glfwCreateWindow(width, height, "foxwhale", null, self.hidden) orelse return error.GLFWWindowCreationFailed;
@@ -32,7 +38,7 @@ pub const GLFWBackend = struct {
     }
 };
 
-pub fn init() !GLFWBackend {
+pub fn new() !GLFWBackend {
     if(c.glfwInit() != 1) {
         return error.GLFWInitFailed;
     }
@@ -58,8 +64,10 @@ fn keyCallback(window: ?*c.GLFWwindow, key: c_int, scancode: c_int, action: c_in
         }
     }
 
-    var time = @truncate(u32, std.time.milliTimestamp());
-    compositor.COMPOSITOR.keyboard(time, @intCast(u32, scancode-8), @intCast(u32, action), @intCast(u32, mods)) catch return;
+    if (backend.BACKEND_FNS.keyboard) |keyboard| {
+        var time = @truncate(u32, std.time.milliTimestamp());
+        keyboard(time, @intCast(u32, scancode-8), @intCast(u32, action)) catch return;
+    }
 }
 
 fn mouseButtonCallback(window: ?*c.GLFWwindow, button: c_int, action: c_int, mods: c_int) callconv(.C) void {
@@ -72,7 +80,10 @@ fn mouseButtonCallback(window: ?*c.GLFWwindow, button: c_int, action: c_int, mod
         else => 0x0,
     };
 
-    compositor.COMPOSITOR.mouseClick(@intCast(u32, button_code), @intCast(u32, action)) catch return;
+    if (backend.BACKEND_FNS.mouseClick) |mouseClick| {
+        var time = @truncate(u32, std.time.milliTimestamp());
+        mouseClick(time, @intCast(u32, button_code), @intCast(u32, action)) catch return;
+    }
 }
 
 fn resizeCallback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.C) void {
@@ -81,7 +92,14 @@ fn resizeCallback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(
 }
 
 fn cursorPositionCallback(window: ?*c.GLFWwindow, x: f64, y: f64) callconv(.C) void {
-    compositor.COMPOSITOR.updatePointer(x, y) catch return;
+    var dx = x - previous_x;
+    var dy = y - previous_y;
+    previous_x = previous_x + dx;
+    previous_y = previous_y + dy;
+    if (backend.BACKEND_FNS.mouseMove) |mouseMove| {
+        var time = @truncate(u32, std.time.milliTimestamp());
+        mouseMove(time, dx, dy) catch return;
+    }
 }
 
 pub const GLFWOutput = struct {

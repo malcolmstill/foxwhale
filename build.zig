@@ -19,6 +19,12 @@ pub fn build(b: *Builder) void {
     exe.linkSystemLibrary("glfw3");
     exe.linkSystemLibrary("gl");
     exe.linkSystemLibrary("xkbcommon");
+    exe.linkSystemLibrary("libsystemd");
+    exe.linkSystemLibrary("libudev");
+    exe.linkSystemLibrary("libinput");
+    exe.linkSystemLibrary("libdrm");
+    exe.linkSystemLibrary("gbm");
+    exe.linkSystemLibrary("egl");
     if (mode != .Debug) {
         exe.strip = true;
     }
