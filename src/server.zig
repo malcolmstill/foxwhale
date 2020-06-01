@@ -5,16 +5,16 @@ const clients = @import("client.zig");
 const epoll = @import("epoll.zig");
 const implementations = @import("implementations.zig");
 
-pub const Display = struct {
+pub const Server = struct {
     server: std.net.StreamServer,
     dispatchable: epoll.Dispatchable,
 
     const Self = @This();
 
-    pub fn init() !Display {
+    pub fn init() !Server {
         implementations.init();
 
-        return Display {
+        return Server {
             .dispatchable = epoll.Dispatchable {
                 .impl = dispatch,
             },
@@ -42,9 +42,9 @@ pub fn socket() !std.net.StreamServer {
 }
 
 pub fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!void {
-    var display = @fieldParentPtr(Display, "dispatchable", dispatchable);
+    var server = @fieldParentPtr(Server, "dispatchable", dispatchable);
     
-    var conn = try display.server.accept();
+    var conn = try server.server.accept();
     errdefer { std.os.close(conn.file.handle); }
     
     var client = try clients.newClient(conn);

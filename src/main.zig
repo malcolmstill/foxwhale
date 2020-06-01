@@ -1,17 +1,3 @@
-const std = @import("std");
-const Context = @import("client.zig").Context;
-const Display = @import("display.zig").Display;
-const Cursor = @import("cursor.zig").Cursor;
-const epoll = @import("epoll.zig");
-const backends = @import("backend/backend.zig");
-const render = @import("renderer.zig");
-const out = @import("output.zig");
-const Output = @import("output.zig").Output;
-const views = @import("view.zig");
-const windows = @import("window.zig");
-const compositor = @import("compositor.zig");
-const Backend = backends.Backend(Output);
-
 pub fn main() anyerror!void {
     try epoll.init();
     var detected_type = backends.detect();
@@ -29,9 +15,9 @@ pub fn main() anyerror!void {
 
     std.debug.warn("==> backend: {}\n", .{backend.name()});
 
-    var display = try Display.init();
-    defer { display.deinit(); }
-    try display.addToEpoll();
+    var server = try Server.init();
+    defer { server.deinit(); }
+    try server.addToEpoll();
 
     try render.init();
 
@@ -99,3 +85,17 @@ pub fn main() anyerror!void {
         }
     }
 }
+
+const std = @import("std");
+const epoll = @import("epoll.zig");
+const backends = @import("backend/backend.zig");
+const render = @import("renderer.zig");
+const out = @import("output.zig");
+const views = @import("view.zig");
+const windows = @import("window.zig");
+const compositor = @import("compositor.zig");
+const Context = @import("client.zig").Context;
+const Server = @import("server.zig").Server;
+const Cursor = @import("cursor.zig").Cursor;
+const Output = @import("output.zig").Output;
+const Backend = backends.Backend(Output);

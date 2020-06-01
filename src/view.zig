@@ -101,7 +101,7 @@ pub const View = struct {
         raising_window_toplevel.toplevel.mark = true;
 
         // 4. Raise any of our children
-        var it = self.back();
+        it = self.back();
         while(it) |window| : (it = window.toplevel.next) {
             if (window.toplevel.mark == true) {
                 break;
