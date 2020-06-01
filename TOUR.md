@@ -47,3 +47,5 @@ in terms of this repo).
    is `fw_control.xml`. This provides a protocol implement both by the compositor and
    `foxwhalectl` that allows inspecting compositor state (for debugging purposes) but
    in the future may also allow for setting state.
+
+- `assets/`: contains any other assets used by the compositor such as cursor images
