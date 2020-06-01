@@ -53,14 +53,11 @@ pub const View = struct {
     pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
         if (self.pointer_window) |pointer_window| {
             if (action == 1) {
-                if (self.top != pointer_window) {
-                        std.debug.warn("raise: {}\n", .{pointer_window.index});
-                        var root = pointer_window.root();
-                        self.remove(root);
-                        self.push(root);
+                if (self.top != pointer_window.toplevelWindow()) {
+                    self.raise(pointer_window.toplevelWindow());
                 }
 
-                if (pointer_window != self.active_window) {
+                if (pointer_window.toplevelWindow() != self.active_window) {
                     if (self.active_window) |active_window| {
                         try active_window.deactivate();
                     }
@@ -77,6 +74,43 @@ pub const View = struct {
                     try active_window.deactivate();
                     self.active_window = null;
                 }
+            }
+        }
+    }
+
+    pub fn raise(self: *Self, raising_window: *Window) void {
+        // 1. iterate down, removing any marks
+        var it = self.top;
+        while(it) |window| : (it = window.toplevel.prev) {
+            window.toplevel.mark = false;
+        }
+
+        // 2. Raise our parent if it exists
+        if (raising_window.parent) |parent| {
+            // var root = pointer_window.root();
+            var parent_toplevel = parent.toplevelWindow();
+            parent.toplevel.mark = true;
+            self.remove(parent_toplevel);
+            self.push(parent_toplevel);
+        }
+
+        // 3. Raise our window
+        var raising_window_toplevel = raising_window.toplevelWindow();
+        self.remove(raising_window_toplevel);
+        self.push(raising_window_toplevel);
+        raising_window_toplevel.toplevel.mark = true;
+
+        // 4. Raise any of our children
+        var it = self.back();
+        while(it) |window| : (it = window.toplevel.next) {
+            if (window.toplevel.mark == true) {
+                break;
+            }
+
+            if (window.parent == raising_window.toplevelWindow()) {
+                self.remove(window);
+                self.push(window);
+                window.toplevel.mark = true;
             }
         }
     }

@@ -203,6 +203,18 @@ pub const Window = struct {
         }
     }
 
+    pub fn toplevelWindow(self: *Window) *Window {
+        if (self.xdg_toplevel_id != null) {
+            return self;
+        }
+
+        if (self.parent) |parent| {
+            return parent.root();
+        } else {
+            return self;
+        }
+    }
+
     pub fn toplevelUnderPointer(self: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
         var it = self.backwardIterator();
         while(it.prev()) |window| {
@@ -833,6 +845,7 @@ pub fn releaseWindows(client: *Client) !void {
 pub const Link = struct {
     prev: ?*Window,
     next: ?*Window,
+    mark: bool,
 
     pub fn unanchored(self: Link) bool {
         return (self.prev == null) and (self.next == null);
