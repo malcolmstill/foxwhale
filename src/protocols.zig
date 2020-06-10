@@ -3536,6 +3536,235 @@ pub fn xdg_popup_send_popup_done(object: Object) anyerror!void {
     object.context.finishWrite(object.id, 1);
 }
 
+// zwp_linux_dmabuf_v1
+pub const zwp_linux_dmabuf_v1_interface = struct {
+    // factory for creating dmabuf-based wl_buffers
+    destroy: ?fn (
+        *Context,
+        Object,
+    ) anyerror!void,
+    create_params: ?fn (*Context, Object, u32) anyerror!void,
+};
+
+fn zwp_linux_dmabuf_v1_destroy_default(context: *Context, object: Object) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn zwp_linux_dmabuf_v1_create_params_default(context: *Context, object: Object, params_id: u32) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+pub var ZWP_LINUX_DMABUF_V1 = zwp_linux_dmabuf_v1_interface{
+    .destroy = zwp_linux_dmabuf_v1_destroy_default,
+    .create_params = zwp_linux_dmabuf_v1_create_params_default,
+};
+
+pub fn new_zwp_linux_dmabuf_v1(id: u32, context: *Context, container: usize) Object {
+    return Object{
+        .id = id,
+        .dispatch = zwp_linux_dmabuf_v1_dispatch,
+        .context = context,
+        .version = 0,
+        .container = container,
+    };
+}
+
+fn zwp_linux_dmabuf_v1_dispatch(object: Object, opcode: u16) anyerror!void {
+    switch (opcode) {
+        // destroy
+        0 => {
+            if (ZWP_LINUX_DMABUF_V1.destroy) |destroy| {
+                try destroy(
+                    object.context,
+                    object,
+                );
+            }
+        },
+        // create_params
+        1 => {
+            var params_id: u32 = try object.context.next_u32();
+            if (ZWP_LINUX_DMABUF_V1.create_params) |create_params| {
+                try create_params(object.context, object, params_id);
+            }
+        },
+        else => {},
+    }
+}
+//         This event advertises one buffer format that the server supports.
+//         All the supported formats are advertised once when the client
+//         binds to this interface. A roundtrip after binding guarantees
+//         that the client has received all supported formats.
+//
+//         For the definition of the format codes, see the
+//         zwp_linux_buffer_params_v1::create request.
+//
+//         Warning: the 'format' event is likely to be deprecated and replaced
+//         with the 'modifier' event introduced in zwp_linux_dmabuf_v1
+//         version 3, described below. Please refrain from using the information
+//         received from this event.
+//
+pub fn zwp_linux_dmabuf_v1_send_format(object: Object, format: u32) anyerror!void {
+    object.context.startWrite();
+    object.context.putU32(format);
+    object.context.finishWrite(object.id, 0);
+}
+//         This event advertises the formats that the server supports, along with
+//         the modifiers supported for each format. All the supported modifiers
+//         for all the supported formats are advertised once when the client
+//         binds to this interface. A roundtrip after binding guarantees that
+//         the client has received all supported format-modifier pairs.
+//
+//         For legacy support, DRM_FORMAT_MOD_INVALID (that is, modifier_hi ==
+//         0x00ffffff and modifier_lo == 0xffffffff) is allowed in this event.
+//         It indicates that the server can support the format with an implicit
+//         modifier. When a plane has DRM_FORMAT_MOD_INVALID as its modifier, it
+//         is as if no explicit modifier is specified. The effective modifier
+//         will be derived from the dmabuf.
+//
+//         For the definition of the format and modifier codes, see the
+//         zwp_linux_buffer_params_v1::create and zwp_linux_buffer_params_v1::add
+//         requests.
+//
+pub fn zwp_linux_dmabuf_v1_send_modifier(object: Object, format: u32, modifier_hi: u32, modifier_lo: u32) anyerror!void {
+    object.context.startWrite();
+    object.context.putU32(format);
+    object.context.putU32(modifier_hi);
+    object.context.putU32(modifier_lo);
+    object.context.finishWrite(object.id, 1);
+}
+
+// zwp_linux_buffer_params_v1
+pub const zwp_linux_buffer_params_v1_interface = struct {
+    // parameters for creating a dmabuf-based wl_buffer
+    destroy: ?fn (
+        *Context,
+        Object,
+    ) anyerror!void,
+    add: ?fn (*Context, Object, i32, u32, u32, u32, u32, u32) anyerror!void,
+    create: ?fn (*Context, Object, i32, i32, u32, u32) anyerror!void,
+    create_immed: ?fn (*Context, Object, u32, i32, i32, u32, u32) anyerror!void,
+};
+
+fn zwp_linux_buffer_params_v1_destroy_default(context: *Context, object: Object) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn zwp_linux_buffer_params_v1_add_default(context: *Context, object: Object, fd: i32, plane_idx: u32, offset: u32, stride: u32, modifier_hi: u32, modifier_lo: u32) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn zwp_linux_buffer_params_v1_create_default(context: *Context, object: Object, width: i32, height: i32, format: u32, flags: u32) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn zwp_linux_buffer_params_v1_create_immed_default(context: *Context, object: Object, buffer_id: u32, width: i32, height: i32, format: u32, flags: u32) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+pub var ZWP_LINUX_BUFFER_PARAMS_V1 = zwp_linux_buffer_params_v1_interface{
+    .destroy = zwp_linux_buffer_params_v1_destroy_default,
+    .add = zwp_linux_buffer_params_v1_add_default,
+    .create = zwp_linux_buffer_params_v1_create_default,
+    .create_immed = zwp_linux_buffer_params_v1_create_immed_default,
+};
+
+pub fn new_zwp_linux_buffer_params_v1(id: u32, context: *Context, container: usize) Object {
+    return Object{
+        .id = id,
+        .dispatch = zwp_linux_buffer_params_v1_dispatch,
+        .context = context,
+        .version = 0,
+        .container = container,
+    };
+}
+
+fn zwp_linux_buffer_params_v1_dispatch(object: Object, opcode: u16) anyerror!void {
+    switch (opcode) {
+        // destroy
+        0 => {
+            if (ZWP_LINUX_BUFFER_PARAMS_V1.destroy) |destroy| {
+                try destroy(
+                    object.context,
+                    object,
+                );
+            }
+        },
+        // add
+        1 => {
+            var fd: i32 = try object.context.next_fd();
+            var plane_idx: u32 = try object.context.next_u32();
+            var offset: u32 = try object.context.next_u32();
+            var stride: u32 = try object.context.next_u32();
+            var modifier_hi: u32 = try object.context.next_u32();
+            var modifier_lo: u32 = try object.context.next_u32();
+            if (ZWP_LINUX_BUFFER_PARAMS_V1.add) |add| {
+                try add(object.context, object, fd, plane_idx, offset, stride, modifier_hi, modifier_lo);
+            }
+        },
+        // create
+        2 => {
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
+            var format: u32 = try object.context.next_u32();
+            var flags: u32 = try object.context.next_u32();
+            if (ZWP_LINUX_BUFFER_PARAMS_V1.create) |create| {
+                try create(object.context, object, width, height, format, flags);
+            }
+        },
+        // create_immed
+        3 => {
+            var buffer_id: u32 = try object.context.next_u32();
+            var width: i32 = try object.context.next_i32();
+            var height: i32 = try object.context.next_i32();
+            var format: u32 = try object.context.next_u32();
+            var flags: u32 = try object.context.next_u32();
+            if (ZWP_LINUX_BUFFER_PARAMS_V1.create_immed) |create_immed| {
+                try create_immed(object.context, object, buffer_id, width, height, format, flags);
+            }
+        },
+        else => {},
+    }
+}
+
+pub const zwp_linux_buffer_params_v1_error = enum(u32) {
+    already_used = 0,
+    plane_idx = 1,
+    plane_set = 2,
+    incomplete = 3,
+    invalid_format = 4,
+    invalid_dimensions = 5,
+    out_of_bounds = 6,
+    invalid_wl_buffer = 7,
+};
+
+pub const zwp_linux_buffer_params_v1_flags = enum(u32) {
+    y_invert = 1,
+    interlaced = 2,
+    bottom_first = 4,
+};
+//         This event indicates that the attempted buffer creation was
+//         successful. It provides the new wl_buffer referencing the dmabuf(s).
+//
+//         Upon receiving this event, the client should destroy the
+//         zlinux_dmabuf_params object.
+//
+pub fn zwp_linux_buffer_params_v1_send_created(object: Object, buffer: u32) anyerror!void {
+    object.context.startWrite();
+    object.context.putU32(buffer);
+    object.context.finishWrite(object.id, 0);
+}
+//         This event indicates that the attempted buffer creation has
+//         failed. It usually means that one of the dmabuf constraints
+//         has not been fulfilled.
+//
+//         Upon receiving this event, the client should destroy the
+//         zlinux_buffer_params object.
+//
+pub fn zwp_linux_buffer_params_v1_send_failed(object: Object) anyerror!void {
+    object.context.startWrite();
+    object.context.finishWrite(object.id, 1);
+}
+
 // fw_control
 pub const fw_control_interface = struct {
     // protocol for querying and controlling foxwhale
