@@ -3,6 +3,7 @@ const prot = @import("../protocols.zig");
 const out = @import("../output.zig");
 const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
+const dmabuf = @import("../dmabuf.zig");
 
 fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, version: u32, new_id: u32) anyerror!void {
     std.debug.warn("bind for {} ({}) with id {} at version {}\n", .{name_string, name, new_id, version});
@@ -97,7 +98,18 @@ fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, ve
             }
         },
         9 => {},
-        10 => {},
+        10 => {
+            var zwp_linux_dmabuf = prot.new_zwp_linux_dmabuf_v1(new_id, context, 0);
+            zwp_linux_dmabuf.version = version;
+            context.client.zwp_linux_dmabuf_id = zwp_linux_dmabuf.id;
+
+            try prot.zwp_linux_dmabuf_v1_send_modifier(zwp_linux_dmabuf, dmabuf.DRM_FORMAT_XRGB8888, 0x0, 0x0);
+            try prot.zwp_linux_dmabuf_v1_send_modifier(zwp_linux_dmabuf, dmabuf.DRM_FORMAT_XRGB8888, 16777216, 0x1);
+            try prot.zwp_linux_dmabuf_v1_send_modifier(zwp_linux_dmabuf, dmabuf.DRM_FORMAT_XRGB8888, 16777216, 0x2);
+
+            try context.register(zwp_linux_dmabuf);
+            return;
+        },
         11 => {
             std.debug.warn("name: {}\n", .{name_string});
             if (std.mem.eql(u8, name_string, "fw_control\x00\x00")) {
