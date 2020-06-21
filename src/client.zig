@@ -33,6 +33,7 @@ pub const Client = struct {
     wl_shm_id: ?u32,
     xdg_wm_base_id: ?u32,
     fw_control_id: ?u32,
+    zwp_linux_dmabuf_id: ?u32,
 
     const Self = @This();
 
@@ -51,6 +52,7 @@ pub const Client = struct {
         self.wl_shm_id = null;
         self.xdg_wm_base_id = null;
         self.fw_control_id = null;
+        self.zwp_linux_dmabuf_id = null;
 
         shm_pool.releaseShmPools(self);
         shm_buffer.releaseShmBuffers(self);
