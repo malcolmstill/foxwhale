@@ -14,11 +14,31 @@ fn add(context: *Context, zwp_linux_buffer_params: Object, fd: i32, plane_idx: u
     });
 }
 
-fn create(context: *Context, object: Object, width: i32, height: i32, format: u32, flags: u32) anyerror!void {
-    return error.DebugFunctionNotImplemented;
+fn create(context: *Context, zwp_linux_buffer_params: Object, width: i32, height: i32, format: u32, flags: u32) anyerror!void {
+    var params = @intToPtr(*Params, zwp_linux_buffer_params.container);
+    var next_id: usize = 0;
+    var attribs: [49]i32 = [_]i32{c.EGL_NONE} ** 49;
+    var i: usize = 0;
+
+    while(params.planes.readItem()) |plane| {
+        attribs[i] = c.EGL_WIDTH; i+=1;
+        attribs[i] = width; i+=1;
+        attribs[i] = c.EGL_HEIGHT; i+=1;
+        attribs[i] = height; i+=1;
+        attribs[i] = c.EGL_LINUX_DRM_FOURCC_EXT; i+=1;
+        attribs[i] = @intCast(i32, format); i+=1;
+        attribs[i] = c.EGL_DMA_BUF_PLANE0_FD_EXT; i+=1;
+        attribs[i] = plane.fd; i+=1;
+        attribs[i] = c.EGL_DMA_BUF_PLANE0_OFFSET_EXT; i+=1;
+        attribs[i] = @intCast(i32, plane.offset); i+=1;
+        attribs[i] = c.EGL_DMA_BUF_PLANE0_PITCH_EXT; i+=1;
+        attribs[i] = @intCast(i32, plane.stride); i+=1;
+    } else |err| {
+
+    }
 }
 
-fn create_immed(context: *Context, object: Object, buffer_id: u32, width: i32, height: i32, format: u32, flags: u32) anyerror!void {
+fn create_immed(context: *Context, zwp_linux_buffer_params: Object, buffer_id: u32, width: i32, height: i32, format: u32, flags: u32) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
@@ -37,3 +57,8 @@ const Params = @import("../dmabuf.zig").Params;
 const Plane = @import("../dmabuf.zig").Plane;
 const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
+
+const c = @cImport({
+    @cInclude("EGL/egl.h");
+    @cInclude("EGL/eglext.h");
+});
