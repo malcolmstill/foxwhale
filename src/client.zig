@@ -20,6 +20,7 @@ pub const Client = struct {
     dispatchable: Dispatchable,
     context: WlContext(*Self),
     serial: u32 = 0,
+    server_id: u32 = 0,
 
     wl_display: Object,
     wl_registry_id: ?u32,
@@ -72,6 +73,11 @@ pub const Client = struct {
         return self.serial;
     }
 
+    pub fn nextServerId(self: *Self) u32 {
+        self.server_id += 1;
+        return self.server_id;
+    }
+
     pub fn getIndexOf(self: *Self) usize {
         return CLIENTS.getIndexOf(self);
     }
@@ -83,6 +89,7 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
     client.dispatchable.impl = dispatch;
     client.connection = conn;
     client.context.init(conn.file.handle, client);
+    client.server_id = 0xff000000 - 1;
 
     client.wl_display = prot.new_wl_display(1, &client.context, 0);
     try client.context.register(client.wl_display);
