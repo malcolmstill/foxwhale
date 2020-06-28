@@ -16,8 +16,8 @@ fn add(context: *Context, zwp_linux_buffer_params: Object, fd: i32, plane_idx: u
 
 fn create(context: *Context, zwp_linux_buffer_params: Object, width: i32, height: i32, format: u32, flags: u32) anyerror!void {
     var params = @intToPtr(*Params, zwp_linux_buffer_params.container);
-    var next_id: usize = 0;
-    var attribs: [49]i32 = [_]i32{c.EGL_NONE} ** 49;
+    var next_id: u32 = context.client.nextServerId();
+    var attribs: [49]isize = [_]isize{c.EGL_NONE} ** 49;
     var i: usize = 0;
 
     while(params.planes.readItem()) |plane| {
@@ -36,6 +36,17 @@ fn create(context: *Context, zwp_linux_buffer_params: Object, width: i32, height
     } else |err| {
 
     }
+
+    switch (main.OUTPUT.backend) {
+        .DRM => |drm| {
+            var image = c.eglCreateImage(drm.egl.display, null, c.EGL_LINUX_DMA_BUF_EXT, null, &attribs[0]);
+            var wl_buffer = prot.new_wl_buffer(next_id, context, 0);
+            try prot.zwp_linux_buffer_params_v1_send_created(zwp_linux_buffer_params, next_id);
+        },
+        else => {
+            try prot.zwp_linux_buffer_params_v1_send_failed(zwp_linux_buffer_params);
+        },
+    }
 }
 
 fn create_immed(context: *Context, zwp_linux_buffer_params: Object, buffer_id: u32, width: i32, height: i32, format: u32, flags: u32) anyerror!void {
@@ -53,6 +64,7 @@ pub fn init() void {
 
 const prot = @import("../protocols.zig");
 const dmabuf = @import("../dmabuf.zig");
+const main = @import("../main.zig");
 const Params = @import("../dmabuf.zig").Params;
 const Plane = @import("../dmabuf.zig").Plane;
 const Context = @import("../client.zig").Context;
