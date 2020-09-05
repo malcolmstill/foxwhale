@@ -1,5 +1,5 @@
 fn destroy(context: *Context, object: Object) anyerror!void {
-    return error.DebugFunctionNotImplemented;
+    // return error.DebugFunctionNotImplemented;
 }
 
 fn add(context: *Context, zwp_linux_buffer_params: Object, fd: i32, plane_idx: u32, offset: u32, stride: u32, modifier_hi: u32, modifier_lo: u32) anyerror!void {
@@ -39,9 +39,13 @@ fn create(context: *Context, zwp_linux_buffer_params: Object, width: i32, height
 
     switch (main.OUTPUT.backend) {
         .DRM => |drm| {
+            // TODO: We should save image into `buffer`
             var image = c.eglCreateImage(drm.egl.display, null, c.EGL_LINUX_DMA_BUF_EXT, null, &attribs[0]);
-            var wl_buffer = prot.new_wl_buffer(next_id, context, 0);
+
+            var buffer = try dmabuf.newDmaBuffer(context.client, zwp_linux_buffer_params.id, next_id, width, height, format);
+            var wl_buffer = prot.new_wl_buffer(next_id, context, @ptrToInt(buffer));
             try prot.zwp_linux_buffer_params_v1_send_created(zwp_linux_buffer_params, next_id);
+            try context.register(wl_buffer);
         },
         else => {
             try prot.zwp_linux_buffer_params_v1_send_failed(zwp_linux_buffer_params);
