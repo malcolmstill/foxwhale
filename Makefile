@@ -6,3 +6,16 @@ protocols:
 foxwhalectl_protocols:
 	python generator/generate.py connection.zig client /usr/share/wayland/wayland.xml protocols/fw_control.xml > src/foxwhalectl/protocols.zig
 	zig fmt src/foxwhalectl/protocols.zig
+
+build:
+	zig build install --prefix ./
+
+build-small:
+	zig build install -Drelease-small --prefix ./
+
+build-really-small:
+	zig build install -Drelease-small --prefix ./
+	strip bin/foxwhale
+	upx bin/foxwhale
+	strip bin/foxwhalectl
+	upx bin/foxwhalectl
