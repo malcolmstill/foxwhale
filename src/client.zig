@@ -7,6 +7,7 @@ const shm_buffer = @import("shm_buffer.zig");
 const window = @import("window.zig");
 const region = @import("region.zig");
 const positioner = @import("positioner.zig");
+const buffer = @import("buffer.zig");
 const Dispatchable = epoll.Dispatchable;
 const Stalloc = @import("stalloc.zig").Stalloc;
 
@@ -56,7 +57,7 @@ pub const Client = struct {
         self.zwp_linux_dmabuf_id = null;
 
         shm_pool.releaseShmPools(self);
-        shm_buffer.releaseShmBuffers(self);
+        try buffer.releaseBuffers(self);
         try window.releaseWindows(self);
         try region.releaseRegions(self);
         try positioner.releasePositioners(self);

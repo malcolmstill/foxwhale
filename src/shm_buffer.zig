@@ -5,41 +5,29 @@ const Object = @import("client.zig").Object;
 const Context = @import("client.zig").Context;
 const Client = @import("client.zig").Client;
 const ShmPool = @import("shm_pool.zig").ShmPool;
+const buffer = @import("buffer.zig");
+const Buffer = buffer.Buffer;
 
-const MAX_SHM_BUFFERS = 2048;
-var SHM_BUFFERS: [MAX_SHM_BUFFERS]ShmBuffer = undefined;
+pub fn newShmBuffer(client: *Client, id: u32, wl_shm_pool: Object, offset: i32, width: i32, height: i32, stride: i32, format: u32) !*Buffer {
+    const shm_buffer = ShmBuffer {
+        .client = client,
+        .shm_pool = @intToPtr(*ShmPool, wl_shm_pool.container),
+        .offset = offset,
+        .width = width,
+        .height = height,
+        .stride = stride,
+        .format = format,
+        .wl_buffer_id = id,
+    };
 
-pub fn newShmBuffer(client: *Client, id: u32, wl_shm_pool: Object, offset: i32, width: i32, height: i32, stride: i32, format: u32) !*ShmBuffer {
-    var i: usize = 0;
-    while (i < MAX_SHM_BUFFERS) {
-        var shm_buffer: *ShmBuffer = &SHM_BUFFERS[i];
-        if (shm_buffer.in_use == false) {
-            shm_buffer.index = i;
-            shm_buffer.client = client;
-            shm_buffer.in_use = true;
-            shm_buffer.shm_pool = @intToPtr(*ShmPool, wl_shm_pool.container);
-            shm_buffer.offset = offset;
-            shm_buffer.width = width;
-            shm_buffer.height = height;
-            shm_buffer.stride = stride;
-            shm_buffer.format = format;
-            shm_buffer.wl_buffer_id = id;
+    var buf = try buffer.newBuffer(client);
+    buf.* = Buffer{ .Shm = shm_buffer };
 
-            shm_buffer.shm_pool.incrementRefCount();
-
-            return shm_buffer;
-        } else {
-            i = i + 1;
-            continue;
-        }
-    }
-
-    return ShmBuffersError.ShmBuffersExhausted;
+    @intToPtr(*ShmPool, wl_shm_pool.container).incrementRefCount();
+    return buf;
 }
 
 pub const ShmBuffer = struct {
-    index: usize,
-    in_use: bool = false,
     client: *Client,
     wl_buffer_id: u32,
     shm_pool: *ShmPool,
@@ -52,7 +40,6 @@ pub const ShmBuffer = struct {
     const Self = @This();
 
     pub fn deinit(self: *Self) void {
-        self.in_use = false;
     }
 
     pub fn beginAccess(self: *Self) void {
@@ -76,19 +63,6 @@ pub const ShmBuffer = struct {
         return renderer.makeTexture(self.width, self.height, self.stride, self.format, self.shm_pool.data[offset..]);
     }
 };
-
-pub fn releaseShmBuffers(client: *Client) void {
-    var i: usize = 0;
-    while (i < MAX_SHM_BUFFERS) {
-        var shm_buffer: *ShmBuffer = &SHM_BUFFERS[i];
-        if (shm_buffer.in_use and shm_buffer.client == client) {
-            shm_buffer.deinit();
-        }
-        i = i + 1;
-    }
-}
-
-const ShmBuffersError = error{ShmBuffersExhausted};
 
 var SIGBUS_ERROR = false;
 var CURRENT_POOL_ADDRESS: [*]align(4096) u8 = undefined;
