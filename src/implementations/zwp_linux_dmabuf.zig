@@ -4,7 +4,7 @@ fn destroy(context: *Context, zwp_linux_dmabuf: Object) anyerror!void {
 }
 
 fn create_params(context: *Context, zwp_linux_dmabuf: Object, new_id: u32) anyerror!void {
-    var params = try dmabuf.newParams(context.client, new_id);
+    var params = try dmabuf_params.newParams(context.client, new_id);
     var zwp_linux_dmabuf_params = prot.new_zwp_linux_buffer_params_v1(new_id, context, @ptrToInt(params));
     try context.register(zwp_linux_dmabuf_params);
 }
@@ -17,6 +17,6 @@ pub fn init() void {
 }
 
 const prot = @import("../protocols.zig");
-const dmabuf = @import("../dmabuf.zig");
+const dmabuf_params = @import("../dmabuf_params.zig");
 const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;

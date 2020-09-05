@@ -65,8 +65,8 @@ pub fn init() void {
 const prot = @import("../protocols.zig");
 const dmabuf = @import("../dmabuf.zig");
 const main = @import("../main.zig");
-const Params = @import("../dmabuf.zig").Params;
-const Plane = @import("../dmabuf.zig").Plane;
+const Params = @import("../dmabuf_params.zig").Params;
+const Plane = @import("../dmabuf_params.zig").Plane;
 const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
 
