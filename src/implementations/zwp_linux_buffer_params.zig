@@ -40,12 +40,14 @@ fn create(context: *Context, zwp_linux_buffer_params: Object, width: i32, height
     switch (main.OUTPUT.backend) {
         .DRM => |drm| {
             // TODO: We should save image into `buffer`
-            var image = c.eglCreateImage(drm.egl.display, null, c.EGL_LINUX_DMA_BUF_EXT, null, &attribs[0]);
+            const optional_image = c.eglCreateImage(drm.egl.display, null, c.EGL_LINUX_DMA_BUF_EXT, null, &attribs[0]);
 
-            var buffer = try dmabuf.newDmaBuffer(context.client, zwp_linux_buffer_params.id, next_id, width, height, format);
-            var wl_buffer = prot.new_wl_buffer(next_id, context, @ptrToInt(buffer));
-            try prot.zwp_linux_buffer_params_v1_send_created(zwp_linux_buffer_params, next_id);
-            try context.register(wl_buffer);
+            if (optional_image) |image| {
+                const buffer = try dmabuf.newDmaBuffer(context.client, zwp_linux_buffer_params.id, next_id, width, height, format, image);
+                const wl_buffer = prot.new_wl_buffer(next_id, context, @ptrToInt(buffer));
+                try prot.zwp_linux_buffer_params_v1_send_created(zwp_linux_buffer_params, next_id);
+                try context.register(wl_buffer);
+            }
         },
         else => {
             try prot.zwp_linux_buffer_params_v1_send_failed(zwp_linux_buffer_params);

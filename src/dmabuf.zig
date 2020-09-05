@@ -7,7 +7,7 @@ const Client = @import("client.zig").Client;
 const buffer = @import("buffer.zig");
 const Buffer = buffer.Buffer;
 
-pub fn newDmaBuffer(client: *Client, params_id: u32, id: u32, width: i32, height: i32, format: u32) !*Buffer {
+pub fn newDmaBuffer(client: *Client, params_id: u32, id: u32, width: i32, height: i32, format: u32, image: *c_void) !*Buffer {
     const dmabuf = DmaBuffer {
         .client = client,
         .width = width,
@@ -15,6 +15,7 @@ pub fn newDmaBuffer(client: *Client, params_id: u32, id: u32, width: i32, height
         .format = format,
         .wl_buffer_id = id,
         .dmabuf_params_id = params_id,
+        .image = image,
     };
 
     var buf = try buffer.newBuffer(client);
@@ -30,6 +31,7 @@ pub const DmaBuffer = struct {
     format: u32,
     dmabuf_params_id: u32,
     wl_buffer_id: u32,
+    image: *c_void,
 
     const Self = @This();
 
@@ -43,6 +45,6 @@ pub const DmaBuffer = struct {
     }
 
     pub fn makeTexture(self: *Self) !u32 {
-        return 0;
+        return renderer.makeDmaTexture(self.image, self.width, self.height, self.format);
     }
 };

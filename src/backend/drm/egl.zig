@@ -24,6 +24,7 @@ pub const EGL = struct {
     surface: *c_void,
 
     pub fn init(gbm: *GBM) !EGL {
+        glEGLImageTargetTexture2DOES = @ptrCast(?fn(i32, *c_void) callconv(.C) void, c.eglGetProcAddress("glEGLImageTargetTexture2DOES"));
         var display = c.eglGetDisplay(@ptrCast(*c.struct__XDisplay, gbm.device));
         if (display == null) {
             return error.EGLGetDisplayError;
@@ -72,3 +73,5 @@ pub const EGL = struct {
         _ = c.eglSwapBuffers(self.display, self.surface);
     }
 };
+
+pub var glEGLImageTargetTexture2DOES: ?fn(i32, *c_void) callconv(.C) void = undefined;
