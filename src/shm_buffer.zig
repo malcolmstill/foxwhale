@@ -40,6 +40,7 @@ pub const ShmBuffer = struct {
     const Self = @This();
 
     pub fn deinit(self: *Self) void {
+        self.shm_pool.decrementRefCount();
     }
 
     pub fn beginAccess(self: *Self) void {
