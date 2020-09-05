@@ -7,7 +7,10 @@ const Buffer = @import("../buffer.zig").Buffer;
 
 fn destroy(context: *Context, wl_buffer: Object) anyerror!void {
     var buffer = @intToPtr(*Buffer, wl_buffer.container);
-    // buffer.shm_pool.decrementRefCount(); call this in shm buffer deninit?
+    switch (buffer.*) {
+        Buffer.Shm => |*shmbuf| shmbuf.shm_pool.decrementRefCount(),
+        else => {},
+    }
     try buffer.deinit();
 
     // We still want to do this
