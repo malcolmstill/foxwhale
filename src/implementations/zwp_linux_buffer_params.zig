@@ -39,7 +39,6 @@ fn create(context: *Context, zwp_linux_buffer_params: Object, width: i32, height
 
     switch (main.OUTPUT.backend) {
         .DRM => |drm| {
-            // TODO: We should save image into `buffer`
             const optional_image = c.eglCreateImage(drm.egl.display, null, c.EGL_LINUX_DMA_BUF_EXT, null, &attribs[0]);
 
             if (optional_image) |image| {
