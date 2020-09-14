@@ -3,6 +3,7 @@ const prot = @import("../protocols.zig");
 const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
 const shm_pool = @import("../shm_pool.zig");
+const shm_buffer = @import("../shm_buffer.zig");
 const ShmPool = @import("../shm_pool.zig").ShmPool;
 
 fn create_pool(context: *Context, wl_shm: Object, new_id: u32, fd: i32, size: i32) anyerror!void {
@@ -11,6 +12,13 @@ fn create_pool(context: *Context, wl_shm: Object, new_id: u32, fd: i32, size: i3
 
     var wl_pool = prot.new_wl_shm_pool(new_id, context, @ptrToInt(pool));
     try context.register(wl_pool);
+}
+
+fn create_buffer(context: *Context, wl_shm_pool: Object, new_id: u32, offset: i32, width: i32, height: i32, stride: i32, format: u32) anyerror!void {
+    var buffer = try shm_buffer.newShmBuffer(context.client, new_id, wl_shm_pool, offset, width, height, stride, format);
+
+    var wl_buffer = prot.new_wl_buffer(new_id, context, @ptrToInt(buffer));
+    try context.register(wl_buffer);
 }
 
 fn resize(context: *Context, wl_shm_pool: Object, size: i32) anyerror!void {
@@ -31,6 +39,7 @@ fn destroy(context: *Context, wl_shm_pool: Object) anyerror!void {
 
 pub fn init() void {
     prot.WL_SHM.create_pool = create_pool;
+    prot.WL_SHM_POOL.create_buffer = create_buffer;
     prot.WL_SHM_POOL.resize = resize;
     prot.WL_SHM_POOL.destroy = destroy;
 }

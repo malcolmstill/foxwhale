@@ -7,6 +7,7 @@ const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
 const Client = @import("../client.zig").Client;
 const ShmBuffer = @import("../shm_buffer.zig").ShmBuffer;
+const Buffer = @import("../buffer.zig").Buffer;
 const Window = @import("../window.zig").Window;
 const Region = @import("../region.zig").Region;
 const Link = @import("../window.zig").Link;
@@ -16,7 +17,7 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
 
     if (window.wl_buffer_id) |wl_buffer_id| {
         if (context.get(wl_buffer_id)) |wl_buffer| {
-            var buffer = @intToPtr(*ShmBuffer, wl_buffer.container);
+            var buffer = @intToPtr(*Buffer, wl_buffer.container);
             buffer.beginAccess();
 
             if (window.texture) |texture| {
@@ -28,13 +29,13 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
             // we need to know the width and height of the new buffer
             if (compositor.COMPOSITOR.resize) |resize| {
                 if (resize.window == window) {
-                    window.pending().x += resize.offsetX(window.width, buffer.width);
-                    window.pending().y += resize.offsetY(window.height, buffer.height);
+                    window.pending().x += resize.offsetX(window.width, buffer.width());
+                    window.pending().y += resize.offsetY(window.height, buffer.height());
                 }
             }
 
-            window.width = buffer.width;
-            window.height = buffer.height;
+            window.width = buffer.width();
+            window.height = buffer.height();
             window.texture = try buffer.makeTexture();
 
             try buffer.endAccess();

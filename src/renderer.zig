@@ -4,9 +4,13 @@ const fragment_shader_source = @embedFile("shaders/fragment.glsl");
 const windows = @import("window.zig");
 const Window = @import("window.zig").Window;
 const CompositorOutput = @import("output.zig").CompositorOutput;
+const main = @import("main.zig");
 const c = @cImport({
     @cInclude("GLES3/gl3.h");
+    @cInclude("EGL/egl.h");
+    @cInclude("GLES2/gl2ext.h");
 });
+const egl = @import("backend/drm/egl.zig");
 
 var ortho: [16]f32 = undefined;
 var rectangle: [28]f32 = undefined;
@@ -260,6 +264,45 @@ pub fn makeTexture(width: i32, height: i32, stride: i32, format: u32, data: []co
     try checkGLError();
 
     return texture;
+}
+
+pub fn makeDmaTexture(image: *c_void, width: i32, height: i32, format: u32) !u32 {
+    switch (main.OUTPUT.backend) {
+        .DRM => |drm| {
+            var texture: u32 = undefined;
+            var err: c_uint = undefined;
+
+            c.glGenTextures(1, &texture);
+            try checkGLError();
+
+            c.glBindTexture(c.GL_TEXTURE_2D, texture);
+            try checkGLError();
+
+            c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_LINEAR);
+            try checkGLError();
+
+            c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_LINEAR);
+            try checkGLError();
+
+            c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_CLAMP_TO_EDGE);
+            try checkGLError();
+
+            c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_T, c.GL_CLAMP_TO_EDGE);
+            try checkGLError();
+
+            if (egl.glEGLImageTargetTexture2DOES) |glEGLImageTargetTexture2DOES| {
+                glEGLImageTargetTexture2DOES(c.GL_TEXTURE_2D, image);
+            } else {
+                return error.EGLImageTargetTexture2DOESNotAvailable;
+            }
+            try checkGLError();
+
+            return texture;
+        },
+        else => {
+            return error.AttemptedToMakeDmaTextureWithNoEGLContext;
+        },
+    }
 }
 
 pub fn releaseTexture(texture: u32) !void {

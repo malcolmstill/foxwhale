@@ -7,6 +7,7 @@ const shm_buffer = @import("shm_buffer.zig");
 const window = @import("window.zig");
 const region = @import("region.zig");
 const positioner = @import("positioner.zig");
+const buffer = @import("buffer.zig");
 const Dispatchable = epoll.Dispatchable;
 const Stalloc = @import("stalloc.zig").Stalloc;
 
@@ -20,6 +21,7 @@ pub const Client = struct {
     dispatchable: Dispatchable,
     context: WlContext(*Self),
     serial: u32 = 0,
+    server_id: u32 = 0,
 
     wl_display: Object,
     wl_registry_id: ?u32,
@@ -33,6 +35,7 @@ pub const Client = struct {
     wl_shm_id: ?u32,
     xdg_wm_base_id: ?u32,
     fw_control_id: ?u32,
+    zwp_linux_dmabuf_id: ?u32,
 
     const Self = @This();
 
@@ -51,9 +54,10 @@ pub const Client = struct {
         self.wl_shm_id = null;
         self.xdg_wm_base_id = null;
         self.fw_control_id = null;
+        self.zwp_linux_dmabuf_id = null;
 
         shm_pool.releaseShmPools(self);
-        shm_buffer.releaseShmBuffers(self);
+        try buffer.releaseBuffers(self);
         try window.releaseWindows(self);
         try region.releaseRegions(self);
         try positioner.releasePositioners(self);
@@ -70,6 +74,11 @@ pub const Client = struct {
         return self.serial;
     }
 
+    pub fn nextServerId(self: *Self) u32 {
+        self.server_id += 1;
+        return self.server_id;
+    }
+
     pub fn getIndexOf(self: *Self) usize {
         return CLIENTS.getIndexOf(self);
     }
@@ -81,6 +90,7 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
     client.dispatchable.impl = dispatch;
     client.connection = conn;
     client.context.init(conn.file.handle, client);
+    client.server_id = 0xff000000 - 1;
 
     client.wl_display = prot.new_wl_display(1, &client.context, 0);
     try client.context.register(client.wl_display);

@@ -1,0 +1,81 @@
+fn destroy(context: *Context, object: Object) anyerror!void {
+    // return error.DebugFunctionNotImplemented;
+}
+
+fn add(context: *Context, zwp_linux_buffer_params: Object, fd: i32, plane_idx: u32, offset: u32, stride: u32, modifier_hi: u32, modifier_lo: u32) anyerror!void {
+    var params = @intToPtr(*Params, zwp_linux_buffer_params.container);
+    try params.planes.writeItem(Plane{
+        .fd = fd,
+        .plane_idx = plane_idx,
+        .offset = offset,
+        .stride = stride,
+        .modifier_hi = modifier_hi,
+        .modifier_lo = modifier_lo,
+    });
+}
+
+fn create(context: *Context, zwp_linux_buffer_params: Object, width: i32, height: i32, format: u32, flags: u32) anyerror!void {
+    var params = @intToPtr(*Params, zwp_linux_buffer_params.container);
+    var next_id: u32 = context.client.nextServerId();
+    var attribs: [49]isize = [_]isize{c.EGL_NONE} ** 49;
+    var i: usize = 0;
+
+    while(params.planes.readItem()) |plane| {
+        attribs[i] = c.EGL_WIDTH; i+=1;
+        attribs[i] = width; i+=1;
+        attribs[i] = c.EGL_HEIGHT; i+=1;
+        attribs[i] = height; i+=1;
+        attribs[i] = c.EGL_LINUX_DRM_FOURCC_EXT; i+=1;
+        attribs[i] = @intCast(i32, format); i+=1;
+        attribs[i] = c.EGL_DMA_BUF_PLANE0_FD_EXT; i+=1;
+        attribs[i] = plane.fd; i+=1;
+        attribs[i] = c.EGL_DMA_BUF_PLANE0_OFFSET_EXT; i+=1;
+        attribs[i] = @intCast(i32, plane.offset); i+=1;
+        attribs[i] = c.EGL_DMA_BUF_PLANE0_PITCH_EXT; i+=1;
+        attribs[i] = @intCast(i32, plane.stride); i+=1;
+    } else |err| {
+
+    }
+
+    switch (main.OUTPUT.backend) {
+        .DRM => |drm| {
+            const optional_image = c.eglCreateImage(drm.egl.display, null, c.EGL_LINUX_DMA_BUF_EXT, null, &attribs[0]);
+
+            if (optional_image) |image| {
+                const buffer = try dmabuf.newDmaBuffer(context.client, zwp_linux_buffer_params.id, next_id, width, height, format, image);
+                const wl_buffer = prot.new_wl_buffer(next_id, context, @ptrToInt(buffer));
+                try prot.zwp_linux_buffer_params_v1_send_created(zwp_linux_buffer_params, next_id);
+                try context.register(wl_buffer);
+            }
+        },
+        else => {
+            try prot.zwp_linux_buffer_params_v1_send_failed(zwp_linux_buffer_params);
+        },
+    }
+}
+
+fn create_immed(context: *Context, zwp_linux_buffer_params: Object, buffer_id: u32, width: i32, height: i32, format: u32, flags: u32) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+pub fn init() void {
+    prot.ZWP_LINUX_BUFFER_PARAMS_V1 = prot.zwp_linux_buffer_params_v1_interface{
+        .destroy = destroy,
+        .add = add,
+        .create = create,
+        .create_immed = create_immed,
+    };
+}
+
+const prot = @import("../protocols.zig");
+const dmabuf = @import("../dmabuf.zig");
+const main = @import("../main.zig");
+const Params = @import("../dmabuf_params.zig").Params;
+const Plane = @import("../dmabuf_params.zig").Plane;
+const Context = @import("../client.zig").Context;
+const Object = @import("../client.zig").Object;
+
+const c = @cImport({
+    @cInclude("EGL/egl.h");
+    @cInclude("EGL/eglext.h");
+});

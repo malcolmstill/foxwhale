@@ -1,3 +1,5 @@
+pub var OUTPUT: *CompositorOutput = undefined;
+
 pub fn main() anyerror!void {
     try epoll.init();
     var detected_type = backends.detect();
@@ -9,6 +11,7 @@ pub fn main() anyerror!void {
 
     var o1 = try out.newOutput(&backend, 640, 480);
     try o1.addToEpoll();
+    OUTPUT = o1;
     // var o2 = try out.newOutput(&backend, 300, 300);
 
     views.CURRENT_VIEW = &o1.data.views[0];
@@ -98,4 +101,5 @@ const Context = @import("client.zig").Context;
 const Server = @import("server.zig").Server;
 const Cursor = @import("cursor.zig").Cursor;
 const Output = @import("output.zig").Output;
+const CompositorOutput = @import("output.zig").CompositorOutput;
 const Backend = backends.Backend(Output);
