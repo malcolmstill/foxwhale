@@ -20,17 +20,12 @@ pub const Output = struct {
             while(obj_it.next()) |wl_object_entry| {
                 var wl_object = wl_object_entry.value;
                 if (@ptrToInt(self) == wl_object.container) {
-                    if (client.wl_registry_id) |wl_registry_id| {
-                        // TODO: in release mode do not error
-                        if (client.context.get(wl_registry_id)) |wl_registry| {
-                            try prot.wl_registry_send_global_remove(wl_registry.*, @intCast(u32, OUTPUT_BASE + freed_index));
-                            std.debug.warn("OUTPUTS[{}] removed from CLIENTS[{}] (wl_output@{})\n", .{freed_index, client.getIndexOf(), wl_object.id});
-                        } else {
-                            return error.ContextHasNoRegistry;
-                        }
-                    } else {
-                        return error.ClientHasNoRegistry;
-                    }
+                    // TODO: in release mode do not error
+                    const wl_registry_id = client.wl_registry_id orelse return error.ClientHasNoRegistry;
+                    const wl_registry = client.context.get(wl_registry_id) orelse return error.ContextHasNoRegistry;
+
+                    try prot.wl_registry_send_global_remove(wl_registry.*, @intCast(u32, OUTPUT_BASE + freed_index));
+                    std.debug.warn("OUTPUTS[{}] removed from CLIENTS[{}] (wl_output@{})\n", .{freed_index, client.getIndexOf(), wl_object.id});
                 }
             }
         }
@@ -50,14 +45,11 @@ pub fn newOutput(backend: *CompositorBackend, width: i32, height: i32) !*Composi
 
     var it = clients.CLIENTS.iterator();
     while(it.next()) |client| {
-        if (client.wl_registry_id) |wl_registry_id| {
-            if (client.context.get(wl_registry_id)) |wl_registry| {
-                var global_id = @intCast(u32, OUTPUTS.getIndexOf(output) + OUTPUT_BASE);
-                try prot.wl_registry_send_global(wl_registry.*, global_id, "wl_output\x00", 2);
-            } else {
-                return error.ContextHasNoRegistry;
-            }
-        }
+        // TODO: in release mode do not error
+        const wl_registry_id = client.wl_registry_id orelse return error.ClientHasNoRegistry;
+        const wl_registry = client.context.get(wl_registry_id) orelse return error.ContextHasNoRegistry;
+        const global_id = @intCast(u32, OUTPUTS.getIndexOf(output) + OUTPUT_BASE);
+        try prot.wl_registry_send_global(wl_registry.*, global_id, "wl_output\x00", 2);
     }
 
     return output;
