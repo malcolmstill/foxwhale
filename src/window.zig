@@ -279,55 +279,47 @@ pub const Window = struct {
         parent: *Window,
 
         pub fn next(self: *SubwindowIterator) ?*Window {
-            if (self.current) |window| {
-                if (self.current == self.parent) {
-                    self.current = window.current().children.next;
-                } else {
-                    self.current = window.current().siblings.next;
-                }
-                return window;
-            }
+            const window = self.current orelse return null;
 
-            return null;
+            if (self.current == self.parent) {
+                self.current = window.current().children.next;
+            } else {
+                self.current = window.current().siblings.next;
+            }
+            return window;
         }
 
         pub fn prev(self: *SubwindowIterator) ?*Window {
-            if (self.current) |window| {
-                if (self.current == self.parent) {
-                    self.current = window.current().children.prev;
-                } else {
-                    self.current = window.current().siblings.prev;
-                }
-                return window;
-            }
+            const window = self.current orelse return null;
 
-            return null;
+            if (self.current == self.parent) {
+                self.current = window.current().children.prev;
+            } else {
+                self.current = window.current().siblings.prev;
+            }
+            return window;
         }
 
         pub fn nextPending(self: *SubwindowIterator) ?*Window {
-            if (self.current) |window| {
-                if (self.current == self.parent) {
-                    self.current = window.pending().children.next;
-                } else {
-                    self.current = window.pending().siblings.next;
-                }
-                return window;
-            }
+            const window = self.current orelse return null;
 
-            return null;
+            if (self.current == self.parent) {
+                self.current = window.pending().children.next;
+            } else {
+                self.current = window.pending().siblings.next;
+            }
+            return window;
         }
 
         pub fn prevPending(self: *SubwindowIterator) ?*Window {
-            if (self.current) |window| {
-                if (self.current == self.parent) {
-                    self.current = window.pending().children.prev;
-                } else {
-                    self.current = window.pending().siblings.prev;
-                }
-                return window;
-            }
+            const window = self.current orelse return null;
 
-            return null;
+            if (self.current == self.parent) {
+                self.current = window.pending().children.prev;
+            } else {
+                self.current = window.pending().siblings.prev;
+            }
+            return window;
         }
     };
 
