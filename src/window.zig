@@ -181,13 +181,10 @@ pub const Window = struct {
         }
 
         while(self.callbacks.readItem()) |wl_callback_id| {
-            if (self.client.context.get(wl_callback_id)) |wl_callback| {
-                try prot.wl_callback_send_done(wl_callback.*, @truncate(u32, std.time.milliTimestamp()));
-                try self.client.context.unregister(wl_callback.*);
-                try prot.wl_display_send_delete_id(self.client.context.client.wl_display, wl_callback_id);
-            } else {
-                return error.CallbackIdNotFound;
-            }
+            const wl_callback = self.client.context.get(wl_callback_id) orelse return error.CallbackIdNotFound;
+            try prot.wl_callback_send_done(wl_callback.*, @truncate(u32, std.time.milliTimestamp()));
+            try self.client.context.unregister(wl_callback.*);
+            try prot.wl_display_send_delete_id(self.client.context.client.wl_display, wl_callback_id);
         } else |err| {
 
         }
