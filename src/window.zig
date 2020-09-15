@@ -266,13 +266,12 @@ pub const Window = struct {
     }
 
     pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
-        var client = self.client;
-        if (client.wl_pointer_id) |wl_pointer_id| {
-            if (client.context.objects.get(wl_pointer_id)) |wl_pointer| {
-                var now = @truncate(u32, std.time.milliTimestamp());
-                try prot.wl_pointer_send_button(wl_pointer.value, client.nextSerial(), now, button, action);
-            }
-        }
+        const client = self.client;
+        const wl_pointer_id = client.wl_pointer_id orelse return;
+        const wl_pointer = client.context.objects.get(wl_pointer_id) orelse return;
+
+        const now = @truncate(u32, std.time.milliTimestamp());
+        try prot.wl_pointer_send_button(wl_pointer.value, client.nextSerial(), now, button, action);
     }
 
     pub const SubwindowIterator = struct {
