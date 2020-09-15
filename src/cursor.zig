@@ -30,15 +30,14 @@ pub const Cursor = struct {
             }
         }
 
-        if (self.texture) |texture| {
-            try renderer.scale(1.0, 1.0);
-            try renderer.translate(@intToFloat(f32, x), @intToFloat(f32, y));
-            try renderer.setUniformMatrix(renderer.PROGRAM, "origin", renderer.identity);
-            try renderer.setUniformMatrix(renderer.PROGRAM, "originInverse", renderer.identity);
-            try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 1.0);
-            renderer.setGeometry(self.width, self.height);
-            try renderer.renderSurface(renderer.PROGRAM, texture);
-        }        
+        const texture = self.texture orelse return;
+        try renderer.scale(1.0, 1.0);
+        try renderer.translate(@intToFloat(f32, x), @intToFloat(f32, y));
+        try renderer.setUniformMatrix(renderer.PROGRAM, "origin", renderer.identity);
+        try renderer.setUniformMatrix(renderer.PROGRAM, "originInverse", renderer.identity);
+        try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 1.0);
+        renderer.setGeometry(self.width, self.height);
+        try renderer.renderSurface(renderer.PROGRAM, texture);
     }
 };
 
