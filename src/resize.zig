@@ -14,28 +14,26 @@ pub const Resize = struct {
     direction: u32,
 
     pub fn resize(self: Resize, pointer_x: f64, pointer_y: f64) !void {
-        var window = self.window;
-        var client = window.client;
+        const window = self.window;
+        const client = window.client;
 
-        if (window.xdg_surface_id) |xdg_surface_id| {
-            if (client.context.get(xdg_surface_id)) |xdg_surface| {
-                if (window.xdg_toplevel_id) |xdg_toplevel_id| {
-                    if (client.context.get(xdg_toplevel_id)) |xdg_toplevel| {
-                        var state: [2]u32 = [_]u32{
-                            @enumToInt(prot.xdg_toplevel_state.activated),
-                            @enumToInt(prot.xdg_toplevel_state.resizing),
-                        };
+        const xdg_surface_id = window.xdg_surface_id orelse return;
+        const xdg_surface = client.context.get(xdg_surface_id) orelse return;
 
-                        try prot.xdg_toplevel_send_configure(
-                            xdg_toplevel.*,
-                            self.newWidth(pointer_x),
-                            self.newHeight(pointer_y),
-                            &state);
-                        try prot.xdg_surface_send_configure(xdg_surface.*, client.nextSerial());
-                    }
-                }
-            }
-        }
+        const xdg_toplevel_id = window.xdg_toplevel_id orelse return;
+        const xdg_toplevel = client.context.get(xdg_toplevel_id) orelse return;
+
+        var state: [2]u32 = [_]u32{
+            @enumToInt(prot.xdg_toplevel_state.activated),
+            @enumToInt(prot.xdg_toplevel_state.resizing),
+        };
+
+        try prot.xdg_toplevel_send_configure(
+            xdg_toplevel.*,
+            self.newWidth(pointer_x),
+            self.newHeight(pointer_y),
+            &state);
+        try prot.xdg_surface_send_configure(xdg_surface.*, client.nextSerial());
     }
 
     fn newWidth(self: Resize, pointer_x: f64) i32 {
