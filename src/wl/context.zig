@@ -75,16 +75,12 @@ pub fn Context(comptime T: type) type {
                 }
 
                 self.read_offset += @sizeOf(Header);
-                if (self.objects.get(header.id)) |object| {
-                    // std.debug.warn("got id: {}\n", .{object.value.id});
-                    try object.value.dispatch(object.value, header.opcode);
-                    if ((self.read_offset - message_start_offset) != header.length) {
-                        self.read_offset = 0;
-                        return error.MessageWrongLength;
-                    }
-                } else {
-                    std.debug.warn("couldn't find id: {}\n", .{header.id});
-                    return error.CouldntFindExpectedId;
+                const object = self.objects.get(header.id) orelse return error.CouldntFindExpectedId;
+                try object.value.dispatch(object.value, header.opcode);
+
+                if ((self.read_offset - message_start_offset) != header.length) {
+                    self.read_offset = 0;
+                    return error.MessageWrongLength;
                 }
             }
         }
