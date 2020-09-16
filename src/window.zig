@@ -508,46 +508,42 @@ pub const Window = struct {
     }
 
     pub fn pointerEnter(self: *Self, pointer_x: f64, pointer_y: f64) !void {
-        var client = self.client;
+        const client = self.client;
+        const wl_pointer_id = client.wl_pointer_id orelse return;
+        const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
-        if (client.wl_pointer_id) |wl_pointer_id| {
-            if (client.context.get(wl_pointer_id)) |wl_pointer| {
-                try prot.wl_pointer_send_enter(
-                    wl_pointer.*,
-                    client.nextSerial(),
-                    self.wl_surface_id,
-                    @floatCast(f32, pointer_x - @intToFloat(f64, self.current().x)),
-                    @floatCast(f32, pointer_y - @intToFloat(f64, self.current().y))
-                );
-            }
-        }
+        try prot.wl_pointer_send_enter(
+            wl_pointer.*,
+            client.nextSerial(),
+            self.wl_surface_id,
+            @floatCast(f32, pointer_x - @intToFloat(f64, self.current().x)),
+            @floatCast(f32, pointer_y - @intToFloat(f64, self.current().y))
+        );
     }
 
     pub fn pointerMotion(self: *Self, pointer_x: f64, pointer_y: f64) !void {
-        var client = self.client;
-        if (client.wl_pointer_id) |wl_pointer_id| {
-            if (client.context.get(wl_pointer_id)) |wl_pointer| {
-                try prot.wl_pointer_send_motion(
-                    wl_pointer.*,
-                    @truncate(u32, std.time.milliTimestamp()),
-                    @floatCast(f32, pointer_x - @intToFloat(f64, self.absoluteX())),
-                    @floatCast(f32, pointer_y - @intToFloat(f64, self.absoluteY())),
-                );
-            }
-        }
+        const client = self.client;
+        const wl_pointer_id = client.wl_pointer_id orelse return;
+        const wl_pointer = client.context.get(wl_pointer_id) orelse return;
+
+        try prot.wl_pointer_send_motion(
+            wl_pointer.*,
+            @truncate(u32, std.time.milliTimestamp()),
+            @floatCast(f32, pointer_x - @intToFloat(f64, self.absoluteX())),
+            @floatCast(f32, pointer_y - @intToFloat(f64, self.absoluteY())),
+        );
     }
 
     pub fn pointerLeave(self: *Self) !void {
-        var client = self.client;
-        if (client.wl_pointer_id) |wl_pointer_id| {
-            if (client.context.get(wl_pointer_id)) |wl_pointer| {
-                try prot.wl_pointer_send_leave(
-                    wl_pointer.*,
-                    client.nextSerial(),
-                    self.wl_surface_id,
-                );
-            }
-        }
+        const client = self.client;
+        const wl_pointer_id = client.wl_pointer_id orelse return;
+        const wl_pointer = client.context.get(wl_pointer_id) orelse return;
+
+        try prot.wl_pointer_send_leave(
+            wl_pointer.*,
+            client.nextSerial(),
+            self.wl_surface_id,
+        );
     }
 
     pub fn mouseAxis(self: *Self, time: u32, axis: u32, value: f64) !void {
