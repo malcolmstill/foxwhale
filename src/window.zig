@@ -106,15 +106,14 @@ pub const Window = struct {
         while(it.next()) |window| {
             window.ready_for_callback = true;
             if (window == self) {
-                if (window.texture) |texture| {
-                    try renderer.scale(1.0, 1.0);
-                    try renderer.translate(@intToFloat(f32, x + window.absoluteX()), @intToFloat(f32, y + window.absoluteY()));
-                    try renderer.setUniformMatrix(renderer.PROGRAM, "origin", renderer.identity);
-                    try renderer.setUniformMatrix(renderer.PROGRAM, "originInverse", renderer.identity);
-                    try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 1.0);
-                    renderer.setGeometry(window.width, window.height);
-                    try renderer.renderSurface(renderer.PROGRAM, texture);
-                }
+                const texture = window.texture orelse continue;
+                try renderer.scale(1.0, 1.0);
+                try renderer.translate(@intToFloat(f32, x + window.absoluteX()), @intToFloat(f32, y + window.absoluteY()));
+                try renderer.setUniformMatrix(renderer.PROGRAM, "origin", renderer.identity);
+                try renderer.setUniformMatrix(renderer.PROGRAM, "originInverse", renderer.identity);
+                try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 1.0);
+                renderer.setGeometry(window.width, window.height);
+                try renderer.renderSurface(renderer.PROGRAM, texture);
             } else {
                 try window.render(x, y);
             }
