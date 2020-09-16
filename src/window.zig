@@ -267,10 +267,10 @@ pub const Window = struct {
     pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
         const client = self.client;
         const wl_pointer_id = client.wl_pointer_id orelse return;
-        const wl_pointer = client.context.objects.get(wl_pointer_id) orelse return;
+        const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
         const now = @truncate(u32, std.time.milliTimestamp());
-        try prot.wl_pointer_send_button(wl_pointer.value, client.nextSerial(), now, button, action);
+        try prot.wl_pointer_send_button(wl_pointer.*, client.nextSerial(), now, button, action);
     }
 
     pub const SubwindowIterator = struct {
@@ -547,37 +547,35 @@ pub const Window = struct {
     }
 
     pub fn mouseAxis(self: *Self, time: u32, axis: u32, value: f64) !void {
-        var client = self.client;
-        if (client.wl_pointer_id) |wl_pointer_id| {
-            if (client.context.objects.get(wl_pointer_id)) |wl_pointer| {
-                var now = @truncate(u32, std.time.milliTimestamp());
-                try prot.wl_pointer_send_axis(wl_pointer.value, time, axis, @floatCast(f32, value));
-            }
-        }
+        const client = self.client;
+        const wl_pointer_id = client.wl_pointer_id orelse return;
+        const wl_pointer = client.context.get(wl_pointer_id) orelse return;
+
+        const now = @truncate(u32, std.time.milliTimestamp());
+        try prot.wl_pointer_send_axis(wl_pointer.*, time, axis, @floatCast(f32, value));
     }
 
     pub fn keyboardKey(self: *Self, time: u32, button: u32, action: u32) !void {
-        var client = self.client;
-        if (client.wl_keyboard_id) |wl_keyboard_id| {
-            if (client.context.get(wl_keyboard_id)) |wl_keyboard| {
-                try prot.wl_keyboard_send_key(
-                    wl_keyboard.*,
-                    client.nextSerial(),
-                    time,
-                    button,
-                    action,
-                );
+        const client = self.client;
+        const wl_keyboard_id = client.wl_keyboard_id orelse return;
+        const wl_keyboard = client.context.get(wl_keyboard_id) orelse return;
 
-                try prot.wl_keyboard_send_modifiers(
-                    wl_keyboard.*,
-                    client.nextSerial(),
-                    compositor.COMPOSITOR.mods_depressed,
-                    compositor.COMPOSITOR.mods_latched,
-                    compositor.COMPOSITOR.mods_locked,
-                    compositor.COMPOSITOR.mods_group,
-                );
-            }
-        }
+        try prot.wl_keyboard_send_key(
+            wl_keyboard.*,
+            client.nextSerial(),
+            time,
+            button,
+            action,
+        );
+
+        try prot.wl_keyboard_send_modifiers(
+            wl_keyboard.*,
+            client.nextSerial(),
+            compositor.COMPOSITOR.mods_depressed,
+            compositor.COMPOSITOR.mods_latched,
+            compositor.COMPOSITOR.mods_locked,
+            compositor.COMPOSITOR.mods_group,
+        );
     }
 
     pub fn deinit(self: *Self) !void {
