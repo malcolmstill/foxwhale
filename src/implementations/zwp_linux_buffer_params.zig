@@ -20,6 +20,8 @@ fn create(context: *Context, zwp_linux_buffer_params: Object, width: i32, height
     var attribs: [49]isize = [_]isize{c.EGL_NONE} ** 49;
     var i: usize = 0;
 
+    // TODO: this is currently wrong because it only references PLANE0
+    // see: https://github.com/wayland-project/weston/blob/ad41ad968afbab4c56cb81becf79bb47d575d388/libweston/renderer-gl/gl-renderer.c#L1930
     while(params.planes.readItem()) |plane| {
         attribs[i] = c.EGL_WIDTH; i+=1;
         attribs[i] = width; i+=1;
