@@ -80,6 +80,11 @@ const sigbus_handler_reset = linux.Sigaction{
     .flags = linux.SA_RESETHAND,
 };
 
+// libwayland uses a cool trick of mmap'ing some new data underneath (i.e. at the
+// same address as) the SHM buffer, essentially throwing away the SHM'ness of the
+// memory and guaranteeing that when the code is retried that SIGBUS will not be
+// raised.
+// See: https://github.com/wayland-project/wayland/blob/11623e8fddb924c7ae317f2eabac23785ae5e8d5/src/wayland-shm.c#L514
 fn sigbusHandler(sig: i32, info: *linux.siginfo_t, data: ?*c_void) callconv(.C) void {
     SIGBUS_ERROR = true;
     _ = linux.mmap(CURRENT_POOL_ADDRESS, CURRENT_POOL_SIZE, linux.PROT_READ|linux.PROT_WRITE, linux.MAP_FIXED | linux.MAP_PRIVATE | linux.MAP_ANONYMOUS, -1, 0);
