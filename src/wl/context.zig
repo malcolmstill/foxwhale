@@ -7,7 +7,7 @@ const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 const FdBuffer = LinearFifo(i32, LinearFifoBufferType{ .Static = MAX_FDS });
 const MAX_FDS = @import("txrx.zig").MAX_FDS;
-const BUFFER_SIZE = 512;
+const BUFFER_SIZE = 4096;
 
 pub fn Context(comptime T: type) type {
     return struct {
