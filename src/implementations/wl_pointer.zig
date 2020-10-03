@@ -7,21 +7,20 @@ const views = @import("../view.zig");
 const compositor = @import("../compositor.zig");
 
 fn set_cursor(context: *Context, wl_pointer: Object, serial: u32, optional_wl_surface: ?Object, hotspot_x: i32, hotspot_y: i32) anyerror!void {
-    if (views.CURRENT_VIEW.pointer_window) |pointer_window| {
-        if(&pointer_window.client.context == context) {
-            if (optional_wl_surface) |wl_surface| {
-                const cursor_window = @intToPtr(*Window, wl_surface.container);
+    const pointer_window = views.CURRENT_VIEW.pointer_window orelse return;
+    if(&pointer_window.client.context != context) return;
 
-                cursor_window.pending().x = -hotspot_x;
-                cursor_window.pending().y = -hotspot_y;
-                cursor_window.current().x = -hotspot_x;
-                cursor_window.current().y = -hotspot_y;
+    if (optional_wl_surface) |wl_surface| {
+        const cursor_window = @intToPtr(*Window, wl_surface.container);
 
-                compositor.COMPOSITOR.client_cursor = ClientCursor{ .CursorWindow = cursor_window };
-            } else {
-                compositor.COMPOSITOR.client_cursor = ClientCursor.CursorHidden;
-            }
-        }
+        cursor_window.pending().x = -hotspot_x;
+        cursor_window.pending().y = -hotspot_y;
+        cursor_window.current().x = -hotspot_x;
+        cursor_window.current().y = -hotspot_y;
+
+        compositor.COMPOSITOR.client_cursor = ClientCursor{ .CursorWindow = cursor_window };
+    } else {
+        compositor.COMPOSITOR.client_cursor = ClientCursor.CursorHidden;
     }
 }
 
