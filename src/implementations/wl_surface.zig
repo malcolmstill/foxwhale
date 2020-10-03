@@ -13,49 +13,46 @@ const Region = @import("../region.zig").Region;
 const Link = @import("../window.zig").Link;
 
 fn commit(context: *Context, wl_surface: Object) anyerror!void {
-    var window = @intToPtr(*Window, wl_surface.container);
+    const window = @intToPtr(*Window, wl_surface.container);
+    defer {
+        if (!window.synchronized) window.flip();
+    }
 
-    if (window.wl_buffer_id) |wl_buffer_id| {
-        if (context.get(wl_buffer_id)) |wl_buffer| {
-            var buffer = @intToPtr(*Buffer, wl_buffer.container);
-            buffer.beginAccess();
+    const wl_buffer_id = window.wl_buffer_id orelse return;
+    const wl_buffer = context.get(wl_buffer_id) orelse return;
 
-            if (window.texture) |texture| {
-                window.texture = null;
-                try renderer.releaseTexture(texture);
-            }
+    const buffer = @intToPtr(*Buffer, wl_buffer.container);
+    buffer.beginAccess();
 
-            // We need to set pending here (rather than in ack_configure) because
-            // we need to know the width and height of the new buffer
-            if (compositor.COMPOSITOR.resize) |resize| {
-                if (resize.window == window) {
-                    window.pending().x += resize.offsetX(window.width, buffer.width());
-                    window.pending().y += resize.offsetY(window.height, buffer.height());
-                }
-            }
+    if (window.texture) |texture| {
+        window.texture = null;
+        try renderer.releaseTexture(texture);
+    }
 
-            window.width = buffer.width();
-            window.height = buffer.height();
-            window.texture = try buffer.makeTexture();
-
-            try buffer.endAccess();
-            try prot.wl_buffer_send_release(wl_buffer.*);
-            window.wl_buffer_id = null;
-
-
-            if (window.view) |view| {
-                if (window.xdg_toplevel_id != null) {
-                    if (window.toplevel.prev == null and window.toplevel.next == null) {
-                        view.remove(window);
-                        view.push(window);
-                    }
-                }
-            }
+    // We need to set pending here (rather than in ack_configure) because
+    // we need to know the width and height of the new buffer
+    if (compositor.COMPOSITOR.resize) |resize| {
+        if (resize.window == window) {
+            window.pending().x += resize.offsetX(window.width, buffer.width());
+            window.pending().y += resize.offsetY(window.height, buffer.height());
         }
     }
 
-    if (!window.synchronized) {
-        window.flip();
+    window.width = buffer.width();
+    window.height = buffer.height();
+    window.texture = try buffer.makeTexture();
+
+    try buffer.endAccess();
+    try prot.wl_buffer_send_release(wl_buffer.*);
+    window.wl_buffer_id = null;
+
+    if (window.view) |view| {
+        if (window.xdg_toplevel_id != null) {
+            if (window.toplevel.prev == null and window.toplevel.next == null) {
+                view.remove(window);
+                view.push(window);
+            }
+        }
     }
 }
 
