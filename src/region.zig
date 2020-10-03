@@ -20,10 +20,10 @@ pub const Region = struct {
     pub fn pointInside(self: *Self, local_x: f64, local_y: f64) bool {
         var slice = self.rectangles.readableSlice(0);
         for(slice) |rect| {
-            var left = @intToFloat(f64, rect.rectangle.x);
-            var right = left + @intToFloat(f64, rect.rectangle.width);
-            var top = @intToFloat(f64, rect.rectangle.y);
-            var bottom = top + @intToFloat(f64, rect.rectangle.height);
+            const left = @intToFloat(f64, rect.rectangle.x);
+            const right = left + @intToFloat(f64, rect.rectangle.width);
+            const top = @intToFloat(f64, rect.rectangle.y);
+            const bottom = top + @intToFloat(f64, rect.rectangle.height);
 
             if (local_x >= left and local_x <= right) {
                 if (local_y >= top and local_y <= bottom) {
@@ -44,7 +44,7 @@ pub const Region = struct {
 };
 
 pub fn newRegion(client: *Client, wl_region_id: u32) !*Region {
-    var region: *Region = try REGIONS.new(client);
+    const region: *Region = try REGIONS.new(client);
     region.wl_region_id = wl_region_id;
     return region;
 }
