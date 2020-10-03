@@ -22,8 +22,9 @@ pub const DRM = struct {
     pub fn init() !DRM {
         std.debug.warn("Loading DRM\n", .{});
         var fd = @intCast(i32, linux.open("/dev/dri/card0", linux.O_RDWR, 0));
-        var r = c.drmModeGetResources(fd);
-        var n = @intCast(usize, r.*.count_connectors);
+        const r = c.drmModeGetResources(fd);
+        defer c.drmModeFreeResources(r);
+        const n = @intCast(usize, r.*.count_connectors);
         std.debug.warn("drm: resources: {}, {}\n", .{r, n});
 
         var i: usize = 0;
@@ -34,6 +35,7 @@ pub const DRM = struct {
 
             if (conn.*.connection == c.drmModeConnection.DRM_MODE_CONNECTED and conn.*.encoder_id != 0) {
                 var enc = c.drmModeGetEncoder(fd, conn.*.encoder_id);
+                defer c.drmModeFreeEncoder(enc);
                 
                 return DRM {
                     .fd = fd,

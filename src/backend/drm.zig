@@ -31,7 +31,9 @@ pub const DRMBackend = struct {
         };
     }
 
-    pub fn deinit(self: Self) void {
+    pub fn deinit(self: *Self) void {
+        self.systemd.deinit();
+        self.input.deinit();
     }
 };
 
@@ -114,5 +116,6 @@ pub const DRMOutput = struct {
     }
 
     pub fn deinit(self: *Self) void {
+        self.egl.deinit();
     }
 };

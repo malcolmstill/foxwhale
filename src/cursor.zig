@@ -19,6 +19,12 @@ pub const Cursor = struct {
         };
     }
 
+    pub fn deinit(self: *Cursor) void {
+        if (self.texture) |texture| {
+            renderer.releaseTexture(texture) catch |err| {};
+        }
+    }
+
     pub fn render(self: *Cursor, x: i32, y: i32) !void {
         if (compositor.COMPOSITOR.client_cursor) |client_cursor| {
             switch (client_cursor) {

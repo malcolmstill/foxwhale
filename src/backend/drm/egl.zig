@@ -69,6 +69,13 @@ pub const EGL = struct {
         };
     }
 
+    pub fn deinit(self: EGL) void {
+        const ds = c.eglDestroySurface(self.display, self.surface);
+        _ = c.eglDestroyContext(self.display, self.context);
+        _ = c.eglTerminate(self.display);
+        std.debug.warn("EGL deinit: {}\n", .{ds});
+    }
+
     pub fn swapBuffers(self: EGL) void {
         _ = c.eglSwapBuffers(self.display, self.surface);
     }

@@ -7,6 +7,7 @@ const c = @cImport({
     @cInclude("sys/types.h");
     @cInclude("sys/stat.h");
     @cInclude("fcntl.h");
+    @cInclude("stdlib.h");
     @cInclude("unistd.h");
     @cInclude("systemd/sd-bus.h");
     @cInclude("systemd/sd-login.h");
@@ -21,7 +22,7 @@ pub const Logind = struct {
 
     fn init(self: *Logind) !void {
         var session_path = try getSessionPath(self.bus, self.session_id);
-        std.mem.copy(u8, self.session_path[0..], std.mem.span(session_path));
+        std.mem.copy(u8, self.session_path[0..std.mem.len(session_path)], std.mem.span(session_path));
         
         try activate(self.bus, self.session_path);
         try takeControl(self.bus, self.session_path);
@@ -29,6 +30,14 @@ pub const Logind = struct {
 
     fn deinit(self: *Logind) void {
         releaseControl(self.bus, self.session_path) catch |e| {};
+        c.free(self.session_id);
+
+        // var it = self.devices.iterator();
+        // while(it.next()) |device| {
+        //     std.heap.c_allocator.free(device.value);
+        // }
+
+        // self.devices.deinit();
     }
 
     fn open(self: *Logind, path: [*:0]const u8) !i32 {
@@ -304,7 +313,7 @@ fn releaseDevice(bus: *c.struct_sd_bus, session_path: [256]u8, fd: i32) !i32 {
     );
     defer {
         c.sd_bus_error_free(&err);
-        _ = c.sd_bus_message_unref(msg);
+        // _ = c.sd_bus_message_unref(msg);
     }
 
     if (rs < 0) {

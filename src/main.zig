@@ -10,6 +10,9 @@ pub fn main() anyerror!void {
     try compositor.COMPOSITOR.init();
 
     var o1 = try out.newOutput(&backend, 640, 480);
+    defer {
+        o1.deinit() catch |err| {};
+    }
     try o1.addToEpoll();
     OUTPUT = o1;
     // var o2 = try out.newOutput(&backend, 300, 300);
@@ -23,8 +26,11 @@ pub fn main() anyerror!void {
     try server.addToEpoll();
 
     try render.init();
+    defer render.deinit();
 
     var cursor = try Cursor.init();
+    defer cursor.deinit();
+
     var frames: u32 = 0;
     var now = std.time.milliTimestamp();
     var then = now;

@@ -90,6 +90,10 @@ pub fn init() !void {
     PROGRAM = try initShaders();
 }
 
+pub fn deinit() void {
+    c.glDeleteProgram(PROGRAM);
+}
+
 fn initShaders() !c_uint{
     var vertex_shader = try compileShader(vertex_shader_source, c.GL_VERTEX_SHADER);
     var fragment_shader = try compileShader(fragment_shader_source, c.GL_FRAGMENT_SHADER);
@@ -104,6 +108,12 @@ fn initShaders() !c_uint{
     try checkGLError();
 
     c.glLinkProgram(program);
+    try checkGLError();
+
+    c.glDeleteShader(vertex_shader);
+    try checkGLError();
+
+    c.glDeleteShader(fragment_shader);
     try checkGLError();
 
     return program;

@@ -159,11 +159,12 @@ pub fn Backend(comptime T: type) type {
             };
         }
 
-        pub fn deinit(self: Self) void {
-            return switch (self) {
-                BackendType.Headless => |headless_backend| headless_backend.deinit(),
-                BackendType.GLFW => |glfw_backend| glfw_backend.deinit(),
-                BackendType.DRM => |drm_backend| drm_backend.deinit(),
+        pub fn deinit(self: *Self) void {
+            return switch (self.*) {
+                BackendType.Headless => |*headless_backend| headless_backend.deinit(),
+                BackendType.GLFW => |*glfw_backend| glfw_backend.deinit(),
+                BackendType.DRM => |*drm_backend| drm_backend.deinit(),
+                else => {}
             };
         }
     };

@@ -42,6 +42,10 @@ pub const Input = struct {
         };
     }
 
+    pub fn deinit(self: *Input) void {
+        _ = c.libinput_unref(self.context);
+    }
+
     fn getFd(self: *Input) i32 {
         return c.libinput_get_fd(self.context);
     }
