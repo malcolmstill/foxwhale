@@ -8,10 +8,10 @@ const Window = @import("../window.zig").Window;
 fn get_xdg_surface(context: *Context, xdg_wm_base: Object, new_id: u32, surface: Object) anyerror!void {
     std.debug.warn("get_xdg_surface: {}\n", .{new_id});
 
-    var window = @intToPtr(*Window, surface.container);
+    const window = @intToPtr(*Window, surface.container);
     window.xdg_surface_id = new_id;
 
-    var xdg_surface = prot.new_xdg_surface(new_id, context, @ptrToInt(window));
+    const xdg_surface = prot.new_xdg_surface(new_id, context, @ptrToInt(window));
     try context.register(xdg_surface);
 }
 
@@ -31,8 +31,8 @@ pub fn init() void {
 }
 
 fn create_positioner(context: *Context, xdg_wm_base: Object, new_id: u32) anyerror!void {
-    var positioner = try positioners.newPositioner(context.client, new_id);
-    var xdg_positioner = prot.new_xdg_positioner(new_id, context, @ptrToInt(positioner));
+    const positioner = try positioners.newPositioner(context.client, new_id);
+    const xdg_positioner = prot.new_xdg_positioner(new_id, context, @ptrToInt(positioner));
     try context.register(xdg_positioner);
 }
 

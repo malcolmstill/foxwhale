@@ -8,7 +8,7 @@ const RectangleOp = @import("../region.zig").RectangleOp;
 const Rectangle = @import("../rectangle.zig").Rectangle;
 
 fn add(context: *Context, wl_region: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    var region = @intToPtr(*Region, wl_region.container);
+    const region = @intToPtr(*Region, wl_region.container);
 
     var rect = RectangleOp {
         .rectangle = Rectangle {
@@ -24,7 +24,7 @@ fn add(context: *Context, wl_region: Object, x: i32, y: i32, width: i32, height:
 }
 
 fn subtract(context: *Context, wl_region: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    var region = @intToPtr(*Region, wl_region.container);
+    const region = @intToPtr(*Region, wl_region.container);
 
     var rect = RectangleOp {
         .rectangle = Rectangle {
@@ -40,7 +40,7 @@ fn subtract(context: *Context, wl_region: Object, x: i32, y: i32, width: i32, he
 }
 
 fn destroy(context: *Context, wl_region: Object) anyerror!void {
-    var region = @intToPtr(*Region, wl_region.container);
+    const region = @intToPtr(*Region, wl_region.container);
     if (region.window == null) {
         try region.deinit();
     }

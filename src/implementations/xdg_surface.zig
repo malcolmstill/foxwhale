@@ -8,7 +8,7 @@ const Window = @import("../window.zig").Window;
 const XdgConfigurations = @import("../window.zig").XdgConfigurations;
 
 fn destroy(context: *Context, xdg_surface: Object) anyerror!void {
-    var window = @intToPtr(*Window, xdg_surface.container);
+    const window = @intToPtr(*Window, xdg_surface.container);
     window.xdg_surface_id = null;
 
     try prot.wl_display_send_delete_id(context.client.wl_display, xdg_surface.id);
@@ -18,13 +18,13 @@ fn destroy(context: *Context, xdg_surface: Object) anyerror!void {
 fn get_toplevel(context: *Context, xdg_surface: Object, new_id: u32) anyerror!void {
     std.debug.warn("get_toplevel: {}\n", .{new_id});
 
-    var window = @intToPtr(*Window, xdg_surface.container);
+    const window = @intToPtr(*Window, xdg_surface.container);
     window.xdg_toplevel_id = new_id;
 
-    var xdg_toplevel = prot.new_xdg_toplevel(new_id, context, @ptrToInt(window));
+    const xdg_toplevel = prot.new_xdg_toplevel(new_id, context, @ptrToInt(window));
 
     var array = [_]u32{};
-    var serial = window.client.nextSerial();
+    const serial = window.client.nextSerial();
     try prot.xdg_toplevel_send_configure(xdg_toplevel, 0, 0, array[0..array.len]);
     try prot.xdg_surface_send_configure(xdg_surface, serial);
 
@@ -32,11 +32,11 @@ fn get_toplevel(context: *Context, xdg_surface: Object, new_id: u32) anyerror!vo
 }
 
 fn get_popup(context: *Context, xdg_surface: Object, new_id: u32, parent_wl_surface: ?Object, xdg_positioner: Object) anyerror!void {
-    var window = @intToPtr(*Window, xdg_surface.container);
-    var positioner = @intToPtr(*Positioner, xdg_positioner.container);
+    const window = @intToPtr(*Window, xdg_surface.container);
+    const positioner = @intToPtr(*Positioner, xdg_positioner.container);
 
     if (parent_wl_surface) |parent| {
-        var parent_window = @intToPtr(*Window, parent.container);
+        const parent_window = @intToPtr(*Window, parent.container);
         window.parent = parent_window;
         parent_window.popup = window;
     } else {
@@ -48,9 +48,9 @@ fn get_popup(context: *Context, xdg_surface: Object, new_id: u32, parent_wl_surf
     window.positioner = positioner;
     window.xdg_popup_id = new_id;
 
-    var xdg_popup = prot.new_xdg_popup(new_id, context, @ptrToInt(window));
+    const xdg_popup = prot.new_xdg_popup(new_id, context, @ptrToInt(window));
 
-    var serial = window.client.nextSerial();
+    const serial = window.client.nextSerial();
     try prot.xdg_popup_send_configure(
         xdg_popup,
         positioner.anchor_rect.x,
@@ -64,7 +64,7 @@ fn get_popup(context: *Context, xdg_surface: Object, new_id: u32, parent_wl_surf
 }
 
 fn set_window_geometry(context: *Context, xdg_surface: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    var window = @intToPtr(*Window, xdg_surface.container);
+    const window = @intToPtr(*Window, xdg_surface.container);
 
     window.window_geometry = Rectangle {
         .x = x,
@@ -75,7 +75,7 @@ fn set_window_geometry(context: *Context, xdg_surface: Object, x: i32, y: i32, w
 }
 
 fn ack_configure(context: *Context, xdg_surface: Object, serial: u32) anyerror!void {
-    var window = @intToPtr(*Window, xdg_surface.container);
+    const window = @intToPtr(*Window, xdg_surface.container);
 
     while(window.xdg_configurations.readItem()) |xdg_configuration| {
         if (serial == xdg_configuration.serial) {

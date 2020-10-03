@@ -11,13 +11,13 @@ fn destroy(context: *Context, xdg_positioner: Object) anyerror!void {
 }
 
 fn set_size(context: *Context, xdg_positioner: Object, width: i32, height: i32) anyerror!void {
-    var positioner = @intToPtr(*Positioner, xdg_positioner.container);
+    const positioner = @intToPtr(*Positioner, xdg_positioner.container);
     positioner.width = width;
     positioner.height = height;
 }
 
 fn set_anchor_rect(context: *Context, xdg_positioner: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    var positioner = @intToPtr(*Positioner, xdg_positioner.container);
+    const positioner = @intToPtr(*Positioner, xdg_positioner.container);
     positioner.anchor_rect = Rectangle {
         .x = x,
         .y = y,
@@ -27,23 +27,23 @@ fn set_anchor_rect(context: *Context, xdg_positioner: Object, x: i32, y: i32, wi
 }
 
 fn set_anchor(context: *Context, xdg_positioner: Object, anchor: u32) anyerror!void {
-    var positioner = @intToPtr(*Positioner, xdg_positioner.container);
+    const positioner = @intToPtr(*Positioner, xdg_positioner.container);
     positioner.anchor = @intToEnum(prot.xdg_positioner_anchor, anchor);
 }
 
 fn set_gravity(context: *Context, xdg_positioner: Object, gravity: u32) anyerror!void {
-    var positioner = @intToPtr(*Positioner, xdg_positioner.container);
+    const positioner = @intToPtr(*Positioner, xdg_positioner.container);
     positioner.gravity = @intToEnum(prot.xdg_positioner_gravity, gravity);
 }
 
 fn set_constraint_adjustment(context: *Context, xdg_positioner: Object, constraint_adjustment: u32) anyerror!void {
-    var positioner = @intToPtr(*Positioner, xdg_positioner.container);
+    const positioner = @intToPtr(*Positioner, xdg_positioner.container);
     // std.debug.warn("constraint_adjustment: {}\n", .{constraint_adjustment});
     // positioner.constraint_adjustment = @intToEnum(prot.xdg_positioner_constraint_adjustment, constraint_adjustment);
 }
 
 fn set_offset(context: *Context, xdg_positioner: Object, x: i32, y: i32) anyerror!void {
-    var positioner = @intToPtr(*Positioner, xdg_positioner.container);
+    const positioner = @intToPtr(*Positioner, xdg_positioner.container);
     positioner.x = x;
     positioner.y = y;
 }

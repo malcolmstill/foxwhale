@@ -9,25 +9,25 @@ const Move = @import("../move.zig").Move;
 const Resize = @import("../resize.zig").Resize;
 
 fn set_parent(context: *Context, xdg_toplevel: Object, parent: ?Object) anyerror!void {
-    var window = @intToPtr(*Window, xdg_toplevel.container);
+    const window = @intToPtr(*Window, xdg_toplevel.container);
     window.parent = if (parent) |p| @intToPtr(*Window, p.container) else null;
 }
 
 fn set_title(context: *Context, xdg_toplevel: Object, title: []u8) anyerror!void {
-    var window = @intToPtr(*Window, xdg_toplevel.container);
-    var len = std.math.min(window.title.len, title.len);
+    const window = @intToPtr(*Window, xdg_toplevel.container);
+    const len = std.math.min(window.title.len, title.len);
     std.mem.copy(u8, window.title[0..len], title[0..len]);
     // std.debug.warn("window: {}\n", .{window.title});
 }
 
 fn set_app_id(context: *Context, xdg_toplevel: Object, app_id: []u8) anyerror!void {
-    var window = @intToPtr(*Window, xdg_toplevel.container);
-    var len = std.math.min(window.app_id.len, app_id.len);
+    const window = @intToPtr(*Window, xdg_toplevel.container);
+    const len = std.math.min(window.app_id.len, app_id.len);
     std.mem.copy(u8, window.app_id[0..len], app_id[0..len]);
 }
 
 fn set_max_size(context: *Context, xdg_toplevel: Object, width: i32, height: i32) anyerror!void {
-    var pending = @intToPtr(*Window, xdg_toplevel.container).pending();
+    const pending = @intToPtr(*Window, xdg_toplevel.container).pending();
 
     if (width <= 0) {
         pending.max_width = null;
@@ -43,7 +43,7 @@ fn set_max_size(context: *Context, xdg_toplevel: Object, width: i32, height: i32
 }
 
 fn set_min_size(context: *Context, xdg_toplevel: Object, width: i32, height: i32) anyerror!void {
-    var pending = @intToPtr(*Window, xdg_toplevel.container).pending();
+    const pending = @intToPtr(*Window, xdg_toplevel.container).pending();
 
     if (width <= 0) {
         pending.min_width = null;
@@ -59,7 +59,7 @@ fn set_min_size(context: *Context, xdg_toplevel: Object, width: i32, height: i32
 }
 
 fn destroy(context: *Context, xdg_toplevel: Object) anyerror!void {
-    var window = @intToPtr(*Window, xdg_toplevel.container);
+    const window = @intToPtr(*Window, xdg_toplevel.container);
     window.xdg_toplevel_id = null;
 
     try prot.wl_display_send_delete_id(context.client.wl_display, xdg_toplevel.id);
@@ -91,7 +91,7 @@ fn show_window_menu(context: *Context, object: Object, seat: Object, serial: u32
 
 // TODO: Moving should be delegated to the current view's mode
 fn move(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32) anyerror!void {
-    var window = @intToPtr(*Window, xdg_toplevel.container);
+    const window = @intToPtr(*Window, xdg_toplevel.container);
 
     if (window.maximized == null) {
         compositor.COMPOSITOR.move = Move {
@@ -105,7 +105,7 @@ fn move(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32) anye
 }
 
 fn resize(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32, edges: u32) anyerror!void {
-    var window = @intToPtr(*Window, xdg_toplevel.container);
+    const window = @intToPtr(*Window, xdg_toplevel.container);
 
     compositor.COMPOSITOR.resize = Resize {
         .window = window,
@@ -120,14 +120,14 @@ fn resize(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32, ed
 }
 
 fn set_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
-    var window = @intToPtr(*Window, xdg_toplevel.container);
+    const window = @intToPtr(*Window, xdg_toplevel.container);
 
     if (window.view == null or window.view.?.output == null or window.xdg_surface_id == null) {
         return;
     }
 
     if (window.client.context.get(window.xdg_surface_id.?)) |xdg_surface| {
-        var serial = window.client.nextSerial();
+        const serial = window.client.nextSerial();
         try window.xdg_configurations.writeItem(XdgConfiguration {
             .serial = serial,
             .operation = .Maximize,
@@ -148,14 +148,14 @@ fn set_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
 }
 
 fn unset_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
-    var window = @intToPtr(*Window, xdg_toplevel.container);
+    const window = @intToPtr(*Window, xdg_toplevel.container);
 
     if (window.view == null or window.view.?.output == null or window.xdg_surface_id == null) {
         return;
     }
 
     if (window.client.context.get(window.xdg_surface_id.?)) |xdg_surface| {
-        var serial = window.client.nextSerial();
+        const serial = window.client.nextSerial();
         try window.xdg_configurations.writeItem(XdgConfiguration {
             .serial = serial,
             .operation = .Unmaximize,

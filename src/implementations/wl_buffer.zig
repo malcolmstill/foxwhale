@@ -6,7 +6,7 @@ const Context = @import("../client.zig").Context;
 const Buffer = @import("../buffer.zig").Buffer;
 
 fn destroy(context: *Context, wl_buffer: Object) anyerror!void {
-    var buffer = @intToPtr(*Buffer, wl_buffer.container);
+    const buffer = @intToPtr(*Buffer, wl_buffer.container);
     switch (buffer.*) {
         Buffer.Shm => |*shmbuf| shmbuf.shm_pool.decrementRefCount(),
         else => {},

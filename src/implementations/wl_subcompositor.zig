@@ -11,8 +11,8 @@ fn destroy(context: *Context, wl_subcompositor: Object) anyerror!void {
 }
 
 fn get_subsurface(context: *Context, wl_subcompositor: Object, new_id: u32, wl_surface_child: Object, wl_surface_parent: Object) anyerror!void {
-    var child = @intToPtr(*Window, wl_surface_child.container);
-    var parent = @intToPtr(*Window, wl_surface_parent.container);
+    const child = @intToPtr(*Window, wl_surface_child.container);
+    const parent = @intToPtr(*Window, wl_surface_parent.container);
 
     child.wl_subsurface_id = new_id;
     child.parent = parent;
@@ -21,7 +21,7 @@ fn get_subsurface(context: *Context, wl_subcompositor: Object, new_id: u32, wl_s
     child.detach();
     child.placeAbove(parent);
 
-    var wl_subsurface_child = prot.new_wl_subsurface(new_id, context, @ptrToInt(child));
+    const wl_subsurface_child = prot.new_wl_subsurface(new_id, context, @ptrToInt(child));
     try context.register(wl_subsurface_child);
 }
 

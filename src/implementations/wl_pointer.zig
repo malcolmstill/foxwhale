@@ -10,7 +10,7 @@ fn set_cursor(context: *Context, wl_pointer: Object, serial: u32, optional_wl_su
     if (views.CURRENT_VIEW.pointer_window) |pointer_window| {
         if(&pointer_window.client.context == context) {
             if (optional_wl_surface) |wl_surface| {
-                var cursor_window = @intToPtr(*Window, wl_surface.container);
+                const cursor_window = @intToPtr(*Window, wl_surface.container);
 
                 cursor_window.pending().x = -hotspot_x;
                 cursor_window.pending().y = -hotspot_y;
