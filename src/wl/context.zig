@@ -59,20 +59,16 @@ pub fn Context(comptime T: type) type {
             }
 
             while (self.read_offset < n) {
-                var remaining = n - self.read_offset;
+                const remaining = n - self.read_offset;
 
                 // We need to have read at least a header
-                if (remaining < @sizeOf(Header)) {
-                    return;
-                }
+                if (remaining < @sizeOf(Header)) return;
 
-                var message_start_offset = self.read_offset;
-                var header = @ptrCast(*Header, &self.rx_buf[message_start_offset]);
+                const message_start_offset = self.read_offset;
+                const header = @ptrCast(*Header, &self.rx_buf[message_start_offset]);
 
                 // We need to have read a full message
-                if (remaining < header.length) {
-                    return;
-                }
+                if (remaining < header.length) return;
 
                 self.read_offset += @sizeOf(Header);
                 const object = self.objects.get(header.id) orelse return error.CouldntFindExpectedId;
