@@ -19,51 +19,51 @@ fn get_clients(context: *Context, fw_control: Object) anyerror!void {
 
 fn get_windows(context: *Context, fw_control: Object) anyerror!void {
     for (windows.WINDOWS) |*window| {
-        if (window.in_use) {
-            var surface_type: u32 = 0;
+        if (!window.in_use) continue;
 
-            if (window.wl_subsurface_id) |wl_subsurface_id| {
-                surface_type = @enumToInt(prot.fw_control_surface_type.wl_subsurface);
-            }
+        var surface_type: u32 = 0;
 
-            if (window.xdg_toplevel_id) |xdg_toplevel_id| {
-                surface_type = @enumToInt(prot.fw_control_surface_type.xdg_toplevel);
-            }
+        if (window.wl_subsurface_id) |wl_subsurface_id| {
+            surface_type = @enumToInt(prot.fw_control_surface_type.wl_subsurface);
+        }
 
-            if (window.xdg_popup_id) |xdg_popup_id| {
-                surface_type = @enumToInt(prot.fw_control_surface_type.xdg_popup);
-            }
+        if (window.xdg_toplevel_id) |xdg_toplevel_id| {
+            surface_type = @enumToInt(prot.fw_control_surface_type.xdg_toplevel);
+        }
 
-            try prot.fw_control_send_window(
-                fw_control,
-                @intCast(u32, window.index),
-                (if (window.parent) |parent| @intCast(i32, parent.index) else -1),
-                window.wl_surface_id,
-                surface_type,
-                window.current().x,
-                window.current().y,
-                window.width,
-                window.height,
-                (if (window.current().siblings.prev) |prev| @intCast(i32, prev.index) else -1),
-                (if (window.current().siblings.next) |next| @intCast(i32, next.index) else -1),
-                (if (window.current().children.prev) |prev| @intCast(i32, prev.index) else -1),
-                (if (window.current().children.next) |next| @intCast(i32, next.index) else -1),
-                (if (window.current().input_region) |region| region.wl_region_id else 0),
-            );
+        if (window.xdg_popup_id) |xdg_popup_id| {
+            surface_type = @enumToInt(prot.fw_control_surface_type.xdg_popup);
+        }
 
-            if (window.current().input_region) |input_region| {
-                var slice = input_region.rectangles.readableSlice(0);
-                for(slice) |rect| {
-                    try prot.fw_control_send_region_rect(
-                        fw_control,
-                        @intCast(u32, regions.REGIONS.getIndexOf(input_region)),
-                        rect.rectangle.x,
-                        rect.rectangle.y,
-                        rect.rectangle.width,
-                        rect.rectangle.height,
-                        if (rect.op == .Add) 1 else 0,
-                    );
-                }
+        try prot.fw_control_send_window(
+            fw_control,
+            @intCast(u32, window.index),
+            (if (window.parent) |parent| @intCast(i32, parent.index) else -1),
+            window.wl_surface_id,
+            surface_type,
+            window.current().x,
+            window.current().y,
+            window.width,
+            window.height,
+            (if (window.current().siblings.prev) |prev| @intCast(i32, prev.index) else -1),
+            (if (window.current().siblings.next) |next| @intCast(i32, next.index) else -1),
+            (if (window.current().children.prev) |prev| @intCast(i32, prev.index) else -1),
+            (if (window.current().children.next) |next| @intCast(i32, next.index) else -1),
+            (if (window.current().input_region) |region| region.wl_region_id else 0),
+        );
+
+        if (window.current().input_region) |input_region| {
+            var slice = input_region.rectangles.readableSlice(0);
+            for(slice) |rect| {
+                try prot.fw_control_send_region_rect(
+                    fw_control,
+                    @intCast(u32, regions.REGIONS.getIndexOf(input_region)),
+                    rect.rectangle.x,
+                    rect.rectangle.y,
+                    rect.rectangle.width,
+                    rect.rectangle.height,
+                    if (rect.op == .Add) 1 else 0,
+                );
             }
         }
     }
