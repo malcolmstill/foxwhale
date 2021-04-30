@@ -1,5 +1,3 @@
-
-
 pub var PARAMS: Stalloc(Client, Params, 1024) = undefined;
 pub const PlaneFifo = LinearFifo(Plane, LinearFifoBufferType{ .Static = 4 });
 

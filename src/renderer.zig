@@ -51,7 +51,7 @@ pub fn renderSurface(program: c_uint, texture: u32) !void {
     c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
     try checkGLError();
 
-    c.glBufferData(c.GL_ARRAY_BUFFER, 4*rectangle.len, &rectangle[0], c.GL_STATIC_DRAW);
+    c.glBufferData(c.GL_ARRAY_BUFFER, 4 * rectangle.len, &rectangle[0], c.GL_STATIC_DRAW);
     try checkGLError();
 
     var vao: u32 = undefined;
@@ -76,7 +76,7 @@ pub fn renderSurface(program: c_uint, texture: u32) !void {
     c.glBindTexture(c.GL_TEXTURE_2D, texture);
     try checkGLError();
 
-    c.glDrawArrays(c.GL_TRIANGLES, 0, rectangle.len/4);
+    c.glDrawArrays(c.GL_TRIANGLES, 0, rectangle.len / 4);
     try checkGLError();
 
     c.glDeleteVertexArrays(1, &vao);
@@ -94,7 +94,7 @@ pub fn deinit() void {
     c.glDeleteProgram(PROGRAM);
 }
 
-fn initShaders() !c_uint{
+fn initShaders() !c_uint {
     var vertex_shader = try compileShader(vertex_shader_source, c.GL_VERTEX_SHADER);
     var fragment_shader = try compileShader(fragment_shader_source, c.GL_FRAGMENT_SHADER);
 
@@ -146,10 +146,22 @@ fn compileShader(source: []const u8, shader_type: c_uint) !c_uint {
 }
 
 fn orthographicProjection(m: *[16]f32, left: f32, right: f32, top: f32, bottom: f32, near: f32, far: f32) void {
-    m[0] = 2.0/(right-left);  m[1] = 0.0;               m[2] = 0.0;              m[3] = -((right + left)/(right-left));
-    m[4] = 0.0;               m[5] = 2.0/(top-bottom);  m[6] = 0.0;              m[7] = -((top + bottom)/(top-bottom));
-    m[8] = 0.0;               m[9] = 0.0;               m[10] = -2.0/(far-near); m[11] = -((far + near)/(far-near));
-    m[12] = 0.0;              m[13] = 0.0;              m[14] = 0.0;             m[15] = 1.0;
+    m[0] = 2.0 / (right - left);
+    m[1] = 0.0;
+    m[2] = 0.0;
+    m[3] = -((right + left) / (right - left));
+    m[4] = 0.0;
+    m[5] = 2.0 / (top - bottom);
+    m[6] = 0.0;
+    m[7] = -((top + bottom) / (top - bottom));
+    m[8] = 0.0;
+    m[9] = 0.0;
+    m[10] = -2.0 / (far - near);
+    m[11] = -((far + near) / (far - near));
+    m[12] = 0.0;
+    m[13] = 0.0;
+    m[14] = 0.0;
+    m[15] = 1.0;
 }
 
 pub fn setGeometry(width: i32, height: i32) void {
@@ -245,7 +257,7 @@ fn setVertexAttrib(program: c_uint, attribute_string: []const u8, offset: c_uint
 }
 
 pub fn makeTexture(width: i32, height: i32, stride: i32, format: u32, data: []const u8) !u32 {
-    if (stride*height > data.len) {
+    if (stride * height > data.len) {
         return error.NotEnoughTextureDataForDimensions;
     }
 
@@ -322,7 +334,7 @@ pub fn releaseTexture(texture: u32) !void {
 
 fn checkGLError() !void {
     var err = c.glGetError();
-    if(err != c.GL_NO_ERROR) {
+    if (err != c.GL_NO_ERROR) {
         std.debug.warn("error: {}\n", .{err});
         return error.GL_ERROR;
     }

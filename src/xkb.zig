@@ -22,7 +22,7 @@ pub const Xkb = struct {
         var filename: [128]u8 = [_]u8{0} ** 128;
         var random = "/XXXXXX";
         std.mem.copy(u8, filename[0..filename.len], xdg_runtime_dir);
-        if (xdg_runtime_dir.len >= filename.len-1) {
+        if (xdg_runtime_dir.len >= filename.len - 1) {
             return error.FilenameBufferTooSmall;
         }
         std.mem.copy(u8, filename[xdg_runtime_dir.len..], random);
@@ -38,13 +38,13 @@ pub const Xkb = struct {
 
                 var fd: i32 = c.mkstemp(&filename[0]); // O_CLOEXEC?
                 try std.os.ftruncate(fd, size);
-                var data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT_READ|std.os.linux.PROT_WRITE, std.os.linux.MAP_SHARED, fd, 0);
+                var data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT_READ | std.os.linux.PROT_WRITE, std.os.linux.MAP_SHARED, fd, 0);
 
                 std.mem.copy(u8, data, keymap_string);
 
                 std.os.munmap(data);
 
-                return FdSize {
+                return FdSize{
                     .fd = fd,
                     .size = size,
                 };
@@ -57,7 +57,7 @@ pub const Xkb = struct {
 
     pub fn updateKey(self: *Self, keycode: u32, state: u32) void {
         var direction = if (state == 1) c.enum_xkb_key_direction.XKB_KEY_DOWN else c.enum_xkb_key_direction.XKB_KEY_UP;
-        _ = c.xkb_state_update_key(self.state, keycode+8, direction);
+        _ = c.xkb_state_update_key(self.state, keycode + 8, direction);
     }
 
     pub fn serializeDepressed(self: *Self) u32 {
@@ -83,7 +83,7 @@ pub fn init() !Xkb {
     var keymap = try newKeymapFromNames(context, "evdev\x00", "apple\x00", "gb\x00", "\x00", "\x00");
     var state = try newState(keymap);
 
-    return Xkb {
+    return Xkb{
         .context = context,
         .keymap = keymap,
         .state = state,
@@ -95,7 +95,7 @@ fn newContext(flags: c.enum_xkb_context_flags) !*c.xkb_context {
 }
 
 fn newKeymapFromNames(context: *c.xkb_context, rules: []const u8, model: []const u8, layout: []const u8, variant: []const u8, options: []const u8) !*c.xkb_keymap {
-    var names = c.xkb_rule_names {
+    var names = c.xkb_rule_names{
         .rules = &rules[0],
         .model = &model[0],
         .layout = &layout[0],

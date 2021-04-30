@@ -45,7 +45,7 @@ pub const Buffer = union(enum) {
             Buffer.Dma => |*dmabuf| dmabuf.endAccess(),
             else => unreachable,
         };
-    }    
+    }
 
     pub fn makeTexture(buffer: *Buffer) anyerror!u32 {
         return switch (buffer.*) {
@@ -53,7 +53,7 @@ pub const Buffer = union(enum) {
             Buffer.Dma => |*dmabuf| dmabuf.makeTexture(),
             else => unreachable,
         };
-    }    
+    }
 
     pub fn width(buffer: *Buffer) i32 {
         switch (buffer.*) {

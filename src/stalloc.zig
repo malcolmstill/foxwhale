@@ -134,13 +134,13 @@ const Payload = struct {
 var memory: Stalloc(TestClient, Payload, 4) = undefined;
 
 test "stalloc test" {
-    var test_client_1 = TestClient {
+    var test_client_1 = TestClient{
         .i = 1,
     };
 
-    var test_client_2 = TestClient {
+    var test_client_2 = TestClient{
         .i = 2,
-    };    
+    };
 
     std.debug.assert(memory.freeCount() == 4);
 

@@ -9,7 +9,7 @@ const buffer = @import("buffer.zig");
 const Buffer = buffer.Buffer;
 
 pub fn newShmBuffer(client: *Client, id: u32, wl_shm_pool: Object, offset: i32, width: i32, height: i32, stride: i32, format: u32) !*Buffer {
-    const shm_buffer = ShmBuffer {
+    const shm_buffer = ShmBuffer{
         .client = client,
         .shm_pool = @intToPtr(*ShmPool, wl_shm_pool.container),
         .offset = offset,
@@ -39,8 +39,7 @@ pub const ShmBuffer = struct {
 
     const Self = @This();
 
-    pub fn deinit(self: *Self) void {
-    }
+    pub fn deinit(self: *Self) void {}
 
     pub fn beginAccess(self: *Self) void {
         CURRENT_POOL_ADDRESS = self.shm_pool.data.ptr;
@@ -87,5 +86,5 @@ const sigbus_handler_reset = linux.Sigaction{
 // See: https://github.com/wayland-project/wayland/blob/11623e8fddb924c7ae317f2eabac23785ae5e8d5/src/wayland-shm.c#L514
 fn sigbusHandler(sig: i32, info: *linux.siginfo_t, data: ?*c_void) callconv(.C) void {
     SIGBUS_ERROR = true;
-    _ = linux.mmap(CURRENT_POOL_ADDRESS, CURRENT_POOL_SIZE, linux.PROT_READ|linux.PROT_WRITE, linux.MAP_FIXED | linux.MAP_PRIVATE | linux.MAP_ANONYMOUS, -1, 0);
+    _ = linux.mmap(CURRENT_POOL_ADDRESS, CURRENT_POOL_SIZE, linux.PROT_READ | linux.PROT_WRITE, linux.MAP_FIXED | linux.MAP_PRIVATE | linux.MAP_ANONYMOUS, -1, 0);
 }

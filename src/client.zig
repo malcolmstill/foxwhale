@@ -63,7 +63,7 @@ pub const Client = struct {
         try positioner.releasePositioners(self);
 
         epoll.removeFd(self.connection.file.handle) catch |err| {
-            std.debug.warn("Client not removed from epoll: {}\n", .{ self.getIndexOf() });
+            std.debug.warn("Client not removed from epoll: {}\n", .{self.getIndexOf()});
         };
 
         std.os.close(self.connection.file.handle);
@@ -104,9 +104,9 @@ fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
     var client = @fieldParentPtr(Client, "dispatchable", dispatchable);
 
     if (event_type & std.os.linux.EPOLLHUP > 0) {
-        std.debug.warn("client {}: hung up.\n", .{ client.getIndexOf() });
+        std.debug.warn("client {}: hung up.\n", .{client.getIndexOf()});
         try client.deinit();
-        std.debug.warn("client {}: freed.\n", .{ client.getIndexOf() });
+        std.debug.warn("client {}: freed.\n", .{client.getIndexOf()});
         return;
     }
 
@@ -116,10 +116,10 @@ fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
             try client.deinit();
         } else {
             if (std.builtin.mode == std.builtin.Mode.Debug) {
-                std.debug.warn("DEBUG: client[{}] error: {}\n", .{client.getIndexOf(), err});
+                std.debug.warn("DEBUG: client[{}] error: {}\n", .{ client.getIndexOf(), err });
                 return err;
             } else {
-                std.debug.warn("RELEASE: client[{}] error: {}\n", .{client.getIndexOf(), err});
+                std.debug.warn("RELEASE: client[{}] error: {}\n", .{ client.getIndexOf(), err });
                 try client.deinit();
             }
         }

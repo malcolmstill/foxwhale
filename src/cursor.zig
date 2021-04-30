@@ -1,4 +1,3 @@
-
 var cursor = @embedFile("../assets/cursor.data");
 const renderer = @import("renderer.zig");
 const compositor = @import("compositor.zig");
@@ -12,7 +11,7 @@ pub const Cursor = struct {
     pub fn init() !Cursor {
         var texture = try renderer.makeTexture(32, 32, 32 * 4, 0, cursor[0..]);
 
-        return Cursor {
+        return Cursor{
             .width = 32,
             .height = 32,
             .texture = texture,

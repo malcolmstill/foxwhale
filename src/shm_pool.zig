@@ -27,7 +27,7 @@ pub const ShmPool = struct {
 
     pub fn resize(self: *Self, size: i32) !void {
         std.os.munmap(self.data);
-        self.data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT_READ|std.os.linux.PROT_WRITE, std.os.linux.MAP_SHARED, self.fd, 0);
+        self.data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT_READ | std.os.linux.PROT_WRITE, std.os.linux.MAP_SHARED, self.fd, 0);
     }
 
     pub fn incrementRefCount(self: *Self) void {
@@ -41,7 +41,7 @@ pub const ShmPool = struct {
                 self.deinit();
             }
         }
-    }    
+    }
 };
 
 pub fn newShmPool(client: *Client, fd: i32, wl_shm_pool_id: u32, size: i32) !*ShmPool {
@@ -56,7 +56,7 @@ pub fn newShmPool(client: *Client, fd: i32, wl_shm_pool_id: u32, size: i32) !*Sh
             shm_pool.fd = fd;
             shm_pool.ref_count = 0;
             shm_pool.wl_shm_pool_id = wl_shm_pool_id;
-            shm_pool.data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT_READ|std.os.linux.PROT_WRITE, std.os.linux.MAP_SHARED, fd, 0);
+            shm_pool.data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT_READ | std.os.linux.PROT_WRITE, std.os.linux.MAP_SHARED, fd, 0);
 
             // std.debug.warn("data length: {}\n", .{shm_pool.data.len});
 
@@ -81,6 +81,6 @@ pub fn releaseShmPools(client: *Client) void {
     }
 }
 
-const ShmPoolsError = error {
+const ShmPoolsError = error{
     ShmPoolsExhausted,
 };

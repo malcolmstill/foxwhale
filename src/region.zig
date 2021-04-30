@@ -19,7 +19,7 @@ pub const Region = struct {
 
     pub fn pointInside(self: *Self, local_x: f64, local_y: f64) bool {
         var slice = self.rectangles.readableSlice(0);
-        for(slice) |rect| {
+        for (slice) |rect| {
             const left = @intToFloat(f64, rect.rectangle.x);
             const right = left + @intToFloat(f64, rect.rectangle.width);
             const top = @intToFloat(f64, rect.rectangle.y);
