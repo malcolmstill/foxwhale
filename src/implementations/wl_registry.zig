@@ -6,10 +6,10 @@ const Object = @import("../client.zig").Object;
 const dmabuf = @import("../dmabuf_params.zig");
 
 fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, version: u32, new_id: u32) anyerror!void {
-    std.debug.warn("bind for {} ({}) with id {} at version {}\n", .{name_string, name, new_id, version});
+    std.debug.warn("bind for {s} ({}) with id {} at version {}\n", .{ name_string, name, new_id, version });
 
     if (name >= out.OUTPUT_BASE and name < (out.OUTPUTS.entries.len + out.OUTPUT_BASE)) {
-        if(out.OUTPUTS.getAtIndex(name - out.OUTPUT_BASE)) |output| {
+        if (out.OUTPUTS.getAtIndex(name - out.OUTPUT_BASE)) |output| {
             if (std.mem.eql(u8, name_string, "wl_output\x00")) {
                 var wl_output = prot.new_wl_output(new_id, context, @ptrToInt(output));
                 wl_output.version = version;
@@ -111,7 +111,7 @@ fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, ve
             return;
         },
         11 => {
-            std.debug.warn("name: {}\n", .{name_string});
+            std.debug.warn("name: {s}\n", .{name_string});
             if (std.mem.eql(u8, name_string, "fw_control\x00\x00")) {
                 var fw_control = prot.new_fw_control(new_id, context, 0);
                 fw_control.version = version;

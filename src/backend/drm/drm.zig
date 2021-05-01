@@ -25,7 +25,7 @@ pub const DRM = struct {
         const r = c.drmModeGetResources(fd);
         defer c.drmModeFreeResources(r);
         const n = @intCast(usize, r.*.count_connectors);
-        std.debug.warn("drm: resources: {}, {}\n", .{r, n});
+        std.debug.warn("drm: resources: {any}, {any}\n", .{ r, n });
 
         var i: usize = 0;
         while (i < n) {
@@ -36,19 +36,10 @@ pub const DRM = struct {
             if (conn.*.connection == c.drmModeConnection.DRM_MODE_CONNECTED and conn.*.encoder_id != 0) {
                 var enc = c.drmModeGetEncoder(fd, conn.*.encoder_id);
                 defer c.drmModeFreeEncoder(enc);
-                
-                return DRM {
-                    .fd = fd,
-                    .conn_id = id,
-                    .conn = conn,
-                    .mode_info = conn.*.modes,
-                    .crtc_id = enc.*.crtc_id,
-                    .crtc = c.drmModeGetCrtc(fd, enc.*.crtc_id),
-                    .fb = null,
-                    .dispatchable = Dispatchable {
-                        .impl = dispatch,
-                    }
-                };
+
+                return DRM{ .fd = fd, .conn_id = id, .conn = conn, .mode_info = conn.*.modes, .crtc_id = enc.*.crtc_id, .crtc = c.drmModeGetCrtc(fd, enc.*.crtc_id), .fb = null, .dispatchable = Dispatchable{
+                    .impl = dispatch,
+                } };
             }
             i += 1;
         }
@@ -56,15 +47,15 @@ pub const DRM = struct {
         return error.NoConnectorFound;
     }
 
-    fn modeWidth(self: DRM) i32 {
+    pub fn modeWidth(self: DRM) i32 {
         return self.mode_info.*.hdisplay;
     }
 
-    fn modeHeight(self: DRM) i32 {
+    pub fn modeHeight(self: DRM) i32 {
         return self.mode_info.*.vdisplay;
     }
 
-    fn modeAddFb(self: DRM, depth: u8, bpp: u8, pitch: u32, handle: u32, fb: *u32) i32 {
+    pub fn modeAddFb(self: DRM, depth: u8, bpp: u8, pitch: u32, handle: u32, fb: *u32) i32 {
         return c.drmModeAddFB(
             self.fd,
             self.mode_info.*.hdisplay,
@@ -77,7 +68,7 @@ pub const DRM = struct {
         );
     }
 
-    fn modePageFlip(self: DRM, fb: u32) i32 {
+    pub fn modePageFlip(self: DRM, fb: u32) i32 {
         return c.drmModePageFlip(
             self.fd,
             self.crtc_id,
@@ -87,7 +78,7 @@ pub const DRM = struct {
         );
     }
 
-    fn modeRmFb(self: DRM) !void {
+    pub fn modeRmFb(self: DRM) !void {
         if (self.fb) |fb| {
             if (c.drmModeRmFB(self.fd, fb) != 0) {
                 return error.DrmModeRmFBFailed;
@@ -117,7 +108,7 @@ pub fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
     _ = c.drmHandleEvent(drm.fd, &event_handler);
 }
 
-var event_handler = c.drmEventContext {
+var event_handler = c.drmEventContext{
     .version = 3,
     .vblank_handler = null,
     .page_flip_handler = null,
@@ -129,4 +120,3 @@ var PAGE_FLIP_SCHEDULED: bool = false;
 fn handlePageFlip(fd: i32, sequence: u32, tv_sec: u32, tv_usec: u32, crtc_id: u32, user_data: ?*c_void) callconv(.C) void {
     PAGE_FLIP_SCHEDULED = false;
 }
-

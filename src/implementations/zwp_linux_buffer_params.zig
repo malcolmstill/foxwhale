@@ -22,21 +22,31 @@ fn create(context: *Context, zwp_linux_buffer_params: Object, width: i32, height
 
     // TODO: this is currently wrong because it only references PLANE0
     // see: https://github.com/wayland-project/weston/blob/ad41ad968afbab4c56cb81becf79bb47d575d388/libweston/renderer-gl/gl-renderer.c#L1930
-    while(params.planes.readItem()) |plane| {
-        attribs[i] = c.EGL_WIDTH; i+=1;
-        attribs[i] = width; i+=1;
-        attribs[i] = c.EGL_HEIGHT; i+=1;
-        attribs[i] = height; i+=1;
-        attribs[i] = c.EGL_LINUX_DRM_FOURCC_EXT; i+=1;
-        attribs[i] = @intCast(i32, format); i+=1;
-        attribs[i] = c.EGL_DMA_BUF_PLANE0_FD_EXT; i+=1;
-        attribs[i] = plane.fd; i+=1;
-        attribs[i] = c.EGL_DMA_BUF_PLANE0_OFFSET_EXT; i+=1;
-        attribs[i] = @intCast(i32, plane.offset); i+=1;
-        attribs[i] = c.EGL_DMA_BUF_PLANE0_PITCH_EXT; i+=1;
-        attribs[i] = @intCast(i32, plane.stride); i+=1;
-    } else |err| {
-
+    while (params.planes.readItem()) |plane| {
+        attribs[i] = c.EGL_WIDTH;
+        i += 1;
+        attribs[i] = width;
+        i += 1;
+        attribs[i] = c.EGL_HEIGHT;
+        i += 1;
+        attribs[i] = height;
+        i += 1;
+        attribs[i] = c.EGL_LINUX_DRM_FOURCC_EXT;
+        i += 1;
+        attribs[i] = @intCast(i32, format);
+        i += 1;
+        attribs[i] = c.EGL_DMA_BUF_PLANE0_FD_EXT;
+        i += 1;
+        attribs[i] = plane.fd;
+        i += 1;
+        attribs[i] = c.EGL_DMA_BUF_PLANE0_OFFSET_EXT;
+        i += 1;
+        attribs[i] = @intCast(i32, plane.offset);
+        i += 1;
+        attribs[i] = c.EGL_DMA_BUF_PLANE0_PITCH_EXT;
+        i += 1;
+        attribs[i] = @intCast(i32, plane.stride);
+        i += 1;
     }
 
     switch (main.OUTPUT.backend) {

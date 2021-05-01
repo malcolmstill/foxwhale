@@ -22,7 +22,7 @@ pub fn main() anyerror!void {
     try epoll.init();
 
     var args_it = std.process.args();
-    while(args_it.nextPosix()) |arg| {
+    while (args_it.nextPosix()) |arg| {
         if (args_it.inner.index == 2) {
             if (std.mem.eql(u8, arg, "clients")) {
                 operation = .Clients;
@@ -80,7 +80,7 @@ pub fn main() anyerror!void {
 
 fn delete_id(context: *Context, wl_display: Object, id: u32) anyerror!void {
     if (context.objects.get(id)) |wl_object| {
-        try context.unregister(wl_object.value);
+        try context.unregister(wl_object);
     }
 }
 
@@ -125,15 +125,14 @@ fn windowsWindow(index: u32, parent: i32, wl_surface_id: u32, surface_type: u32,
         std.debug.warn(" {}]", .{parent});
     }
     std.debug.warn(" @{}", .{wl_surface_id});
-    switch(st) {
+    switch (st) {
         prot.fw_control_surface_type.wl_surface => std.debug.warn(" (wl_surface)", .{}),
         prot.fw_control_surface_type.wl_subsurface => std.debug.warn(" (wl_subsurface)", .{}),
         prot.fw_control_surface_type.xdg_toplevel => std.debug.warn(" (xdg_toplevel)", .{}),
         prot.fw_control_surface_type.xdg_popup => std.debug.warn(" (xdg_popup)", .{}),
     }
 
-    std.debug.warn(" ({}, {}) ({}, {}) [{}, {}] [{}, {}]\n", .{x, y, width, height, sibling_prev, sibling_next, children_prev, children_next});
-
+    std.debug.warn(" ({}, {}) ({}, {}) [{}, {}] [{}, {}]\n", .{ x, y, width, height, sibling_prev, sibling_next, children_prev, children_next });
 
     if (input_region_id > 0) {
         std.debug.warn("\tinput_region_id: {}\n", .{input_region_id});
@@ -149,14 +148,14 @@ fn windowTressWindow(index: u32, parent: i32, wl_surface_id: u32, surface_type: 
         std.debug.warn(" {}]", .{parent});
     }
     std.debug.warn(" @{}", .{wl_surface_id});
-    switch(st) {
+    switch (st) {
         prot.fw_control_surface_type.wl_surface => std.debug.warn(" (wl_surface)", .{}),
         prot.fw_control_surface_type.wl_subsurface => std.debug.warn(" (wl_subsurface)", .{}),
         prot.fw_control_surface_type.xdg_toplevel => std.debug.warn(" (xdg_toplevel)", .{}),
         prot.fw_control_surface_type.xdg_popup => std.debug.warn(" (xdg_popup)", .{}),
     }
 
-    std.debug.warn(" ({}, {}) ({}, {}) [{}, {}] [{}, {}]\n", .{x, y, width, height, sibling_prev, sibling_next, children_prev, children_next});    
+    std.debug.warn(" ({}, {}) ({}, {}) [{}, {}] [{}, {}]\n", .{ x, y, width, height, sibling_prev, sibling_next, children_prev, children_next });
 }
 
 fn toplevel_window(context: *Context, fw_control: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
@@ -169,7 +168,7 @@ fn toplevel_window(context: *Context, fw_control: Object, index: u32, parent: i3
         std.debug.warn(" {}]", .{parent});
     }
     std.debug.warn(" @{}", .{wl_surface_id});
-    switch(st) {
+    switch (st) {
         prot.fw_control_surface_type.wl_surface => std.debug.warn(" (wl_surface)", .{}),
         prot.fw_control_surface_type.wl_subsurface => std.debug.warn(" (wl_subsurface)", .{}),
         prot.fw_control_surface_type.xdg_toplevel => std.debug.warn(" (xdg_toplevel)", .{}),
@@ -188,7 +187,7 @@ fn region_rect(context: *Context, fw_control: Object, index: u32, x: i32, y: i32
     std.debug.warn("\t\t\ty: {}\n", .{y});
     std.debug.warn("\t\t\twidth: {}\n", .{width});
     std.debug.warn("\t\t\theight: {}\n", .{height});
-    std.debug.warn("\t\t\top: {}\n", .{if (op == 1) "Add" else "Sub"});
+    std.debug.warn("\t\t\top: {s}\n", .{if (op == 1) "Add" else "Sub"});
 }
 
 fn done(context: *Context, fw_control: Object) anyerror!void {

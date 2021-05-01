@@ -45,7 +45,7 @@ pub fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!v
 
     var conn = try server.server.accept();
     errdefer {
-        std.os.close(conn.file.handle);
+        std.os.close(conn.stream.handle);
     }
 
     var client = try clients.newClient(conn);

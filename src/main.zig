@@ -19,7 +19,7 @@ pub fn main() anyerror!void {
 
     views.CURRENT_VIEW = &o1.data.views[0];
 
-    std.debug.warn("==> backend: {}\n", .{backend.name()});
+    std.debug.warn("==> backend: {s}\n", .{backend.name()});
 
     var server = try Server.init();
     defer {

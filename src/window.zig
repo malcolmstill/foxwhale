@@ -181,10 +181,10 @@ pub const Window = struct {
 
         while (self.callbacks.readItem()) |wl_callback_id| {
             const wl_callback = self.client.context.get(wl_callback_id) orelse return error.CallbackIdNotFound;
-            try prot.wl_callback_send_done(wl_callback.*, @truncate(u32, std.time.milliTimestamp()));
+            try prot.wl_callback_send_done(wl_callback.*, @truncate(u32, @intCast(u64, std.time.milliTimestamp())));
             try self.client.context.unregister(wl_callback.*);
             try prot.wl_display_send_delete_id(self.client.context.client.wl_display, wl_callback_id);
-        } else |err| {}
+        }
 
         self.ready_for_callback = false;
     }
@@ -267,7 +267,7 @@ pub const Window = struct {
         const wl_pointer_id = client.wl_pointer_id orelse return;
         const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
-        const now = @truncate(u32, std.time.milliTimestamp());
+        const now = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
         try prot.wl_pointer_send_button(wl_pointer.*, client.nextSerial(), now, button, action);
     }
 
@@ -520,7 +520,7 @@ pub const Window = struct {
 
         try prot.wl_pointer_send_motion(
             wl_pointer.*,
-            @truncate(u32, std.time.milliTimestamp()),
+            @truncate(u32, @intCast(u64, std.time.milliTimestamp())),
             @floatCast(f32, pointer_x - @intToFloat(f64, self.absoluteX())),
             @floatCast(f32, pointer_y - @intToFloat(f64, self.absoluteY())),
         );
@@ -543,7 +543,7 @@ pub const Window = struct {
         const wl_pointer_id = client.wl_pointer_id orelse return;
         const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
-        const now = @truncate(u32, std.time.milliTimestamp());
+        const now = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
         try prot.wl_pointer_send_axis(wl_pointer.*, time, axis, @floatCast(f32, value));
     }
 

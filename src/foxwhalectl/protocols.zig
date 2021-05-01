@@ -36,7 +36,7 @@ fn wl_display_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // error
         0 => {
-            var object_id: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var object_id: Object = object.context.objects.get(try object.context.next_u32()).?;
             var code: u32 = try object.context.next_u32();
             var message: []u8 = try object.context.next_string();
             if (WL_DISPLAY.@"error") |@"error"| {
@@ -60,6 +60,8 @@ pub const wl_display_error = enum(u32) {
     no_memory = 2,
     implementation = 3,
 };
+
+//
 // The sync request asks the server to emit the 'done' event
 // on the returned wl_callback object.  Since requests are
 // handled in-order and events are delivered in-order, this can
@@ -77,6 +79,8 @@ pub fn wl_display_send_sync(object: Object, callback: u32) anyerror!void {
     object.context.putU32(callback);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // This request creates a registry object that allows the client
 // to list and bind the global objects available from the
 // compositor.
@@ -144,6 +148,8 @@ fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!void {
         else => {},
     }
 }
+
+//
 // Binds a new, client-created object to the server using the
 // specified name as the identifier.
 //
@@ -215,6 +221,8 @@ fn wl_compositor_dispatch(object: Object, opcode: u16) anyerror!void {
         else => {},
     }
 }
+
+//
 // Ask the compositor to create a new surface.
 //
 pub fn wl_compositor_send_create_surface(object: Object, id: u32) anyerror!void {
@@ -222,6 +230,8 @@ pub fn wl_compositor_send_create_surface(object: Object, id: u32) anyerror!void 
     object.context.putU32(id);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // Ask the compositor to create a new region.
 //
 pub fn wl_compositor_send_create_region(object: Object, id: u32) anyerror!void {
@@ -252,6 +262,8 @@ fn wl_shm_pool_dispatch(object: Object, opcode: u16) anyerror!void {
         else => {},
     }
 }
+
+//
 // Create a wl_buffer object from the pool.
 //
 // The buffer is created offset bytes into the pool and has
@@ -274,6 +286,8 @@ pub fn wl_shm_pool_send_create_buffer(object: Object, id: u32, offset: i32, widt
     object.context.putU32(format);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // Destroy the shared memory pool.
 //
 // The mmapped memory will be released when all
@@ -284,6 +298,8 @@ pub fn wl_shm_pool_send_destroy(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // This request will cause the server to remap the backing memory
 // for the pool from the file descriptor passed when the pool was
 // created, but using the new size.  This request can only be
@@ -398,6 +414,8 @@ pub const wl_shm_format = enum(u32) {
     yuv444 = 0x34325559,
     yvu444 = 0x34325659,
 };
+
+//
 // Create a new wl_shm_pool object.
 //
 // The pool can be used to create shared memory based buffer
@@ -453,6 +471,8 @@ fn wl_buffer_dispatch(object: Object, opcode: u16) anyerror!void {
         else => {},
     }
 }
+
+//
 // Destroy a buffer. If and how you need to release the backing
 // storage is defined by the buffer factory interface.
 //
@@ -532,6 +552,8 @@ pub const wl_data_offer_error = enum(u32) {
     invalid_action = 2,
     invalid_offer = 3,
 };
+
+//
 // Indicate that the client can accept the given mime type, or
 // NULL for not accepted.
 //
@@ -553,6 +575,8 @@ pub fn wl_data_offer_send_accept(object: Object, serial: u32, mime_type: []const
     object.context.putString(mime_type);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // To transfer the offered data, the client issues this request
 // and indicates the mime type it wants to receive.  The transfer
 // happens through the passed file descriptor (typically created
@@ -575,12 +599,16 @@ pub fn wl_data_offer_send_receive(object: Object, mime_type: []const u8, fd: i32
     object.context.putFd(fd);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // Destroy the data offer.
 //
 pub fn wl_data_offer_send_destroy(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 2);
 }
+
+//
 // Notifies the compositor that the drag destination successfully
 // finished the drag-and-drop operation.
 //
@@ -597,6 +625,8 @@ pub fn wl_data_offer_send_finish(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 3);
 }
+
+//
 // Sets the actions that the destination side client supports for
 // this operation. This request may trigger the emission of
 // wl_data_source.action and wl_data_offer.action events if the compositor
@@ -758,6 +788,8 @@ pub const wl_data_source_error = enum(u32) {
     invalid_action_mask = 0,
     invalid_source = 1,
 };
+
+//
 // This request adds a mime type to the set of mime types
 // advertised to targets.  Can be called several times to offer
 // multiple types.
@@ -767,12 +799,16 @@ pub fn wl_data_source_send_offer(object: Object, mime_type: []const u8) anyerror
     object.context.putString(mime_type);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // Destroy the data source.
 //
 pub fn wl_data_source_send_destroy(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // Sets the actions that the source side client supports for this
 // operation. This request may trigger wl_data_source.action and
 // wl_data_offer.action events if the compositor needs to change the
@@ -865,13 +901,13 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
         // enter
         1 => {
             var serial: u32 = try object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var surface: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (surface.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
             var x: f32 = try object.context.next_fixed();
             var y: f32 = try object.context.next_fixed();
-            var id: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var id: ?Object = object.context.objects.get(try object.context.next_u32());
             if (id != null) {
                 if (id.?.dispatch != wl_data_offer_dispatch) {
                     return error.ObjectWrongType;
@@ -910,7 +946,7 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // selection
         5 => {
-            var id: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var id: ?Object = object.context.objects.get(try object.context.next_u32());
             if (id != null) {
                 if (id.?.dispatch != wl_data_offer_dispatch) {
                     return error.ObjectWrongType;
@@ -927,6 +963,8 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
 pub const wl_data_device_error = enum(u32) {
     role = 0,
 };
+
+//
 // This request asks the compositor to start a drag-and-drop
 // operation on behalf of the client.
 //
@@ -963,6 +1001,8 @@ pub fn wl_data_device_send_start_drag(object: Object, source: u32, origin: u32, 
     object.context.putU32(serial);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // This request asks the compositor to set the selection
 // to the data from the source on behalf of the client.
 //
@@ -974,6 +1014,8 @@ pub fn wl_data_device_send_set_selection(object: Object, source: u32, serial: u3
     object.context.putU32(serial);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // This request destroys the data device.
 //
 pub fn wl_data_device_send_release(object: Object) anyerror!void {
@@ -1010,6 +1052,8 @@ pub const wl_data_device_manager_dnd_action = enum(u32) {
     move = 2,
     ask = 4,
 };
+
+//
 // Create a new data source.
 //
 pub fn wl_data_device_manager_send_create_data_source(object: Object, id: u32) anyerror!void {
@@ -1017,6 +1061,8 @@ pub fn wl_data_device_manager_send_create_data_source(object: Object, id: u32) a
     object.context.putU32(id);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // Create a new data device for a given seat.
 //
 pub fn wl_data_device_manager_send_get_data_device(object: Object, id: u32, seat: u32) anyerror!void {
@@ -1052,6 +1098,8 @@ fn wl_shell_dispatch(object: Object, opcode: u16) anyerror!void {
 pub const wl_shell_error = enum(u32) {
     role = 0,
 };
+
+//
 // Create a shell surface for an existing surface. This gives
 // the wl_surface the role of a shell surface. If the wl_surface
 // already has another role, it raises a protocol error.
@@ -1157,6 +1205,8 @@ pub const wl_shell_surface_fullscreen_method = enum(u32) {
     driver = 2,
     fill = 3,
 };
+
+//
 // A client must respond to a ping event with a pong request or
 // the client may be deemed unresponsive.
 //
@@ -1165,6 +1215,8 @@ pub fn wl_shell_surface_send_pong(object: Object, serial: u32) anyerror!void {
     object.context.putU32(serial);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // Start a pointer-driven move of the surface.
 //
 // This request must be used in response to a button press event.
@@ -1177,6 +1229,8 @@ pub fn wl_shell_surface_send_move(object: Object, seat: u32, serial: u32) anyerr
     object.context.putU32(serial);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // Start a pointer-driven resizing of the surface.
 //
 // This request must be used in response to a button press event.
@@ -1190,6 +1244,8 @@ pub fn wl_shell_surface_send_resize(object: Object, seat: u32, serial: u32, edge
     object.context.putU32(edges);
     object.context.finishWrite(object.id, 2);
 }
+
+//
 // Map the surface as a toplevel surface.
 //
 // A toplevel surface is not fullscreen, maximized or transient.
@@ -1198,6 +1254,8 @@ pub fn wl_shell_surface_send_set_toplevel(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 3);
 }
+
+//
 // Map the surface relative to an existing surface.
 //
 // The x and y arguments specify the location of the upper left
@@ -1214,6 +1272,8 @@ pub fn wl_shell_surface_send_set_transient(object: Object, parent: u32, x: i32, 
     object.context.putU32(flags);
     object.context.finishWrite(object.id, 4);
 }
+
+//
 // Map the surface as a fullscreen surface.
 //
 // If an output parameter is given then the surface will be made
@@ -1255,6 +1315,8 @@ pub fn wl_shell_surface_send_set_fullscreen(object: Object, method: u32, framera
     object.context.putU32(output);
     object.context.finishWrite(object.id, 5);
 }
+
+//
 // Map the surface as a popup.
 //
 // A popup surface is a transient surface with an added pointer
@@ -1285,6 +1347,8 @@ pub fn wl_shell_surface_send_set_popup(object: Object, seat: u32, serial: u32, p
     object.context.putU32(flags);
     object.context.finishWrite(object.id, 6);
 }
+
+//
 // Map the surface as a maximized surface.
 //
 // If an output parameter is given then the surface will be
@@ -1309,6 +1373,8 @@ pub fn wl_shell_surface_send_set_maximized(object: Object, output: u32) anyerror
     object.context.putU32(output);
     object.context.finishWrite(object.id, 7);
 }
+
+//
 // Set a short title for the surface.
 //
 // This string may be used to identify the surface in a task bar,
@@ -1322,6 +1388,8 @@ pub fn wl_shell_surface_send_set_title(object: Object, title: []const u8) anyerr
     object.context.putString(title);
     object.context.finishWrite(object.id, 8);
 }
+
+//
 // Set a class for the surface.
 //
 // The surface class identifies the general class of applications
@@ -1369,7 +1437,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // enter
         0 => {
-            var output: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var output: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (output.dispatch != wl_output_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -1379,7 +1447,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // leave
         1 => {
-            var output: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var output: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (output.dispatch != wl_output_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -1395,12 +1463,16 @@ pub const wl_surface_error = enum(u32) {
     invalid_scale = 0,
     invalid_transform = 1,
 };
+
+//
 // Deletes the surface and invalidates its object ID.
 //
 pub fn wl_surface_send_destroy(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // Set a buffer as the content of this surface.
 //
 // The new size of the surface is calculated based on the buffer
@@ -1448,6 +1520,8 @@ pub fn wl_surface_send_attach(object: Object, buffer: u32, x: i32, y: i32) anyer
     object.context.putI32(y);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // This request is used to describe the regions where the pending
 // buffer is different from the current surface contents, and where
 // the surface therefore needs to be repainted. The compositor
@@ -1478,6 +1552,8 @@ pub fn wl_surface_send_damage(object: Object, x: i32, y: i32, width: i32, height
     object.context.putI32(height);
     object.context.finishWrite(object.id, 2);
 }
+
+//
 // Request a notification when it is a good time to start drawing a new
 // frame, by creating a frame callback. This is useful for throttling
 // redrawing operations, and driving animations.
@@ -1516,6 +1592,8 @@ pub fn wl_surface_send_frame(object: Object, callback: u32) anyerror!void {
     object.context.putU32(callback);
     object.context.finishWrite(object.id, 3);
 }
+
+//
 // This request sets the region of the surface that contains
 // opaque content.
 //
@@ -1546,6 +1624,8 @@ pub fn wl_surface_send_set_opaque_region(object: Object, region: u32) anyerror!v
     object.context.putU32(region);
     object.context.finishWrite(object.id, 4);
 }
+
+//
 // This request sets the region of the surface that can receive
 // pointer and touch events.
 //
@@ -1574,6 +1654,8 @@ pub fn wl_surface_send_set_input_region(object: Object, region: u32) anyerror!vo
     object.context.putU32(region);
     object.context.finishWrite(object.id, 5);
 }
+
+//
 // Surface state (input, opaque, and damage regions, attached buffers,
 // etc.) is double-buffered. Protocol requests modify the pending state,
 // as opposed to the current state in use by the compositor. A commit
@@ -1596,6 +1678,8 @@ pub fn wl_surface_send_commit(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 6);
 }
+
+//
 // This request sets an optional transformation on how the compositor
 // interprets the contents of the buffer attached to the surface. The
 // accepted values for the transform parameter are the values for
@@ -1631,6 +1715,8 @@ pub fn wl_surface_send_set_buffer_transform(object: Object, transform: i32) anye
     object.context.putI32(transform);
     object.context.finishWrite(object.id, 7);
 }
+
+//
 // This request sets an optional scaling factor on how the compositor
 // interprets the contents of the buffer attached to the window.
 //
@@ -1660,6 +1746,8 @@ pub fn wl_surface_send_set_buffer_scale(object: Object, scale: i32) anyerror!voi
     object.context.putI32(scale);
     object.context.finishWrite(object.id, 8);
 }
+
+//
 // This request is used to describe the regions where the pending
 // buffer is different from the current surface contents, and where
 // the surface therefore needs to be repainted. The compositor
@@ -1757,6 +1845,8 @@ pub const wl_seat_capability = enum(u32) {
     keyboard = 2,
     touch = 4,
 };
+
+//
 // The ID provided will be initialized to the wl_pointer interface
 // for this seat.
 //
@@ -1770,6 +1860,8 @@ pub fn wl_seat_send_get_pointer(object: Object, id: u32) anyerror!void {
     object.context.putU32(id);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // The ID provided will be initialized to the wl_keyboard interface
 // for this seat.
 //
@@ -1783,6 +1875,8 @@ pub fn wl_seat_send_get_keyboard(object: Object, id: u32) anyerror!void {
     object.context.putU32(id);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // The ID provided will be initialized to the wl_touch interface
 // for this seat.
 //
@@ -1796,6 +1890,8 @@ pub fn wl_seat_send_get_touch(object: Object, id: u32) anyerror!void {
     object.context.putU32(id);
     object.context.finishWrite(object.id, 2);
 }
+
+//
 // Using this request a client can tell the server that it is not going to
 // use the seat object anymore.
 //
@@ -1884,7 +1980,7 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!void {
         // enter
         0 => {
             var serial: u32 = try object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var surface: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (surface.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -1897,7 +1993,7 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!void {
         // leave
         1 => {
             var serial: u32 = try object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var surface: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (surface.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -1989,6 +2085,8 @@ pub const wl_pointer_axis_source = enum(u32) {
     continuous = 2,
     wheel_tilt = 3,
 };
+
+//
 // Set the pointer surface, i.e., the surface that contains the
 // pointer image (cursor). This request gives the surface the role
 // of a cursor. If the surface already has another role, it raises
@@ -2029,6 +2127,8 @@ pub fn wl_pointer_send_set_cursor(object: Object, serial: u32, surface: u32, hot
     object.context.putI32(hotspot_y);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // Using this request a client can tell the server that it is not going to
 // use the pointer object anymore.
 //
@@ -2108,7 +2208,7 @@ fn wl_keyboard_dispatch(object: Object, opcode: u16) anyerror!void {
         // enter
         1 => {
             var serial: u32 = try object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var surface: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (surface.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -2120,7 +2220,7 @@ fn wl_keyboard_dispatch(object: Object, opcode: u16) anyerror!void {
         // leave
         2 => {
             var serial: u32 = try object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var surface: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (surface.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -2248,7 +2348,7 @@ fn wl_touch_dispatch(object: Object, opcode: u16) anyerror!void {
         0 => {
             var serial: u32 = try object.context.next_u32();
             var time: u32 = try object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var surface: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (surface.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -2437,6 +2537,8 @@ pub const wl_output_mode = enum(u32) {
     current = 0x1,
     preferred = 0x2,
 };
+
+//
 // Using this request a client can tell the server that it is not going to
 // use the output object anymore.
 //
@@ -2467,12 +2569,16 @@ fn wl_region_dispatch(object: Object, opcode: u16) anyerror!void {
         else => {},
     }
 }
+
+//
 // Destroy the region.  This will invalidate the object ID.
 //
 pub fn wl_region_send_destroy(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // Add the specified rectangle to the region.
 //
 pub fn wl_region_send_add(object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
@@ -2483,6 +2589,8 @@ pub fn wl_region_send_add(object: Object, x: i32, y: i32, width: i32, height: i3
     object.context.putI32(height);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // Subtract the specified rectangle from the region.
 //
 pub fn wl_region_send_subtract(object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
@@ -2520,6 +2628,8 @@ fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!void {
 pub const wl_subcompositor_error = enum(u32) {
     bad_surface = 0,
 };
+
+//
 // Informs the server that the client will not be using this
 // protocol object anymore. This does not affect any other
 // objects, wl_subsurface objects included.
@@ -2528,6 +2638,8 @@ pub fn wl_subcompositor_send_destroy(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // Create a sub-surface interface for the given surface, and
 // associate it with the given parent surface. This turns a
 // plain wl_surface into a sub-surface.
@@ -2578,6 +2690,8 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!void {
 pub const wl_subsurface_error = enum(u32) {
     bad_surface = 0,
 };
+
+//
 // The sub-surface interface is removed from the wl_surface object
 // that was turned into a sub-surface with a
 // wl_subcompositor.get_subsurface request. The wl_surface's association
@@ -2588,6 +2702,8 @@ pub fn wl_subsurface_send_destroy(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // This schedules a sub-surface position change.
 // The sub-surface will be moved so that its origin (top left
 // corner pixel) will be at the location x, y of the parent surface
@@ -2611,6 +2727,8 @@ pub fn wl_subsurface_send_set_position(object: Object, x: i32, y: i32) anyerror!
     object.context.putI32(y);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // This sub-surface is taken from the stack, and put back just
 // above the reference surface, changing the z-order of the sub-surfaces.
 // The reference surface must be one of the sibling surfaces, or the
@@ -2632,6 +2750,8 @@ pub fn wl_subsurface_send_place_above(object: Object, sibling: u32) anyerror!voi
     object.context.putU32(sibling);
     object.context.finishWrite(object.id, 2);
 }
+
+//
 // The sub-surface is placed just below the reference surface.
 // See wl_subsurface.place_above.
 //
@@ -2640,6 +2760,8 @@ pub fn wl_subsurface_send_place_below(object: Object, sibling: u32) anyerror!voi
     object.context.putU32(sibling);
     object.context.finishWrite(object.id, 3);
 }
+
+//
 // Change the commit behaviour of the sub-surface to synchronized
 // mode, also described as the parent dependent mode.
 //
@@ -2658,6 +2780,8 @@ pub fn wl_subsurface_send_set_sync(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 4);
 }
+
+//
 // Change the commit behaviour of the sub-surface to desynchronized
 // mode, also described as independent or freely running mode.
 //
@@ -2808,24 +2932,32 @@ pub const fw_control_surface_type = enum(u32) {
     xdg_toplevel = 2,
     xdg_popup = 3,
 };
+
+//
 //         Gets metadata about all the clients currently connected to foxwhale.
 //
 pub fn fw_control_send_get_clients(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 0);
 }
+
+//
 //         Gets metadata about all the windows currently connected to foxwhale.
 //
 pub fn fw_control_send_get_windows(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 1);
 }
+
+//
 //         Gets metadata about all the windows currently connected to foxwhale.
 //
 pub fn fw_control_send_get_window_trees(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 2);
 }
+
+//
 //         Cleans up fw_control object.
 //
 pub fn fw_control_send_destroy(object: Object) anyerror!void {

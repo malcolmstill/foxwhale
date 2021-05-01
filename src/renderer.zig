@@ -137,7 +137,7 @@ fn compileShader(source: []const u8, shader_type: c_uint) !c_uint {
         c.glGetShaderInfoLog(shader, log_length, null, log[0..]);
         try checkGLError();
 
-        std.debug.warn("log: {}\n", .{log[0..std.math.min(log.len, @intCast(usize, log_length))]});
+        std.debug.warn("log: {any}\n", .{log[0..std.math.min(log.len, @intCast(usize, log_length))]});
 
         return error.FailedToCompileShader;
     }

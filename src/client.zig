@@ -62,11 +62,11 @@ pub const Client = struct {
         try region.releaseRegions(self);
         try positioner.releasePositioners(self);
 
-        epoll.removeFd(self.connection.file.handle) catch |err| {
+        epoll.removeFd(self.connection.stream.handle) catch |err| {
             std.debug.warn("Client not removed from epoll: {}\n", .{self.getIndexOf()});
         };
 
-        std.os.close(self.connection.file.handle);
+        std.os.close(self.connection.stream.handle);
     }
 
     pub fn nextSerial(self: *Self) u32 {
@@ -89,13 +89,13 @@ pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
 
     client.dispatchable.impl = dispatch;
     client.connection = conn;
-    client.context.init(conn.file.handle, client);
+    client.context.init(conn.stream.handle, client);
     client.server_id = 0xff000000 - 1;
 
     client.wl_display = prot.new_wl_display(1, &client.context, 0);
     try client.context.register(client.wl_display);
 
-    try epoll.addFd(conn.file.handle, &client.dispatchable);
+    try epoll.addFd(conn.stream.handle, &client.dispatchable);
 
     return client;
 }
