@@ -28,8 +28,8 @@ pub const Resize = struct {
             @enumToInt(prot.xdg_toplevel_state.resizing),
         };
 
-        try prot.xdg_toplevel_send_configure(xdg_toplevel.*, self.newWidth(pointer_x), self.newHeight(pointer_y), &state);
-        try prot.xdg_surface_send_configure(xdg_surface.*, client.nextSerial());
+        try prot.xdg_toplevel_send_configure(xdg_toplevel, self.newWidth(pointer_x), self.newHeight(pointer_y), &state);
+        try prot.xdg_surface_send_configure(xdg_surface, client.nextSerial());
     }
 
     fn newWidth(self: Resize, pointer_x: f64) i32 {

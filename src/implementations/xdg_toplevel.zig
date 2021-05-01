@@ -94,7 +94,7 @@ fn move(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32) anye
     const window = @intToPtr(*Window, xdg_toplevel.container);
 
     if (window.maximized == null) {
-        compositor.COMPOSITOR.move = Move {
+        compositor.COMPOSITOR.move = Move{
             .window = window,
             .window_x = window.current().x,
             .window_y = window.current().y,
@@ -107,7 +107,7 @@ fn move(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32) anye
 fn resize(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32, edges: u32) anyerror!void {
     const window = @intToPtr(*Window, xdg_toplevel.container);
 
-    compositor.COMPOSITOR.resize = Resize {
+    compositor.COMPOSITOR.resize = Resize{
         .window = window,
         .window_x = window.current().x,
         .window_y = window.current().y,
@@ -128,7 +128,7 @@ fn set_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
 
     if (window.client.context.get(window.xdg_surface_id.?)) |xdg_surface| {
         const serial = window.client.nextSerial();
-        try window.xdg_configurations.writeItem(XdgConfiguration {
+        try window.xdg_configurations.writeItem(XdgConfiguration{
             .serial = serial,
             .operation = .Maximize,
         });
@@ -138,12 +138,8 @@ fn set_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
             @enumToInt(prot.xdg_toplevel_state.activated),
         };
 
-        try prot.xdg_toplevel_send_configure(
-            xdg_toplevel,
-            window.view.?.output.?.getWidth(),
-            window.view.?.output.?.getHeight(),
-            &states);
-        try prot.xdg_surface_send_configure(xdg_surface.*, serial);
+        try prot.xdg_toplevel_send_configure(xdg_toplevel, window.view.?.output.?.getWidth(), window.view.?.output.?.getHeight(), &states);
+        try prot.xdg_surface_send_configure(xdg_surface, serial);
     }
 }
 
@@ -156,7 +152,7 @@ fn unset_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
 
     if (window.client.context.get(window.xdg_surface_id.?)) |xdg_surface| {
         const serial = window.client.nextSerial();
-        try window.xdg_configurations.writeItem(XdgConfiguration {
+        try window.xdg_configurations.writeItem(XdgConfiguration{
             .serial = serial,
             .operation = .Unmaximize,
         });
@@ -166,19 +162,11 @@ fn unset_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
         };
 
         if (window.maximized) |maximized| {
-            try prot.xdg_toplevel_send_configure(
-                xdg_toplevel,
-                maximized.width,
-                maximized.height,
-                &states);
+            try prot.xdg_toplevel_send_configure(xdg_toplevel, maximized.width, maximized.height, &states);
         } else {
-            try prot.xdg_toplevel_send_configure(
-                xdg_toplevel,
-                window.width,
-                window.height,
-                &states);
+            try prot.xdg_toplevel_send_configure(xdg_toplevel, window.width, window.height, &states);
         }
-        try prot.xdg_surface_send_configure(xdg_surface.*, serial);
+        try prot.xdg_surface_send_configure(xdg_surface, serial);
     }
 }
 

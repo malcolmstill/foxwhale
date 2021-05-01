@@ -23,7 +23,7 @@ pub const Output = struct {
                     const wl_registry_id = client.wl_registry_id orelse return error.ClientHasNoRegistry;
                     const wl_registry = client.context.get(wl_registry_id) orelse return error.ContextHasNoRegistry;
 
-                    try prot.wl_registry_send_global_remove(wl_registry.*, @intCast(u32, OUTPUT_BASE + freed_index));
+                    try prot.wl_registry_send_global_remove(wl_registry, @intCast(u32, OUTPUT_BASE + freed_index));
                     std.debug.warn("OUTPUTS[{}] removed from CLIENTS[{}] (wl_output@{})\n", .{ freed_index, client.getIndexOf(), wl_object.id });
                 }
             }
@@ -48,7 +48,7 @@ pub fn newOutput(backend: *CompositorBackend, width: i32, height: i32) !*Composi
         const wl_registry_id = client.wl_registry_id orelse return error.ClientHasNoRegistry;
         const wl_registry = client.context.get(wl_registry_id) orelse return error.ContextHasNoRegistry;
         const global_id = @intCast(u32, OUTPUTS.getIndexOf(output) + OUTPUT_BASE);
-        try prot.wl_registry_send_global(wl_registry.*, global_id, "wl_output\x00", 2);
+        try prot.wl_registry_send_global(wl_registry, global_id, "wl_output\x00", 2);
     }
 
     return output;

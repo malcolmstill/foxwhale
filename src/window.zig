@@ -181,8 +181,8 @@ pub const Window = struct {
 
         while (self.callbacks.readItem()) |wl_callback_id| {
             const wl_callback = self.client.context.get(wl_callback_id) orelse return error.CallbackIdNotFound;
-            try prot.wl_callback_send_done(wl_callback.*, @truncate(u32, @intCast(u64, std.time.milliTimestamp())));
-            try self.client.context.unregister(wl_callback.*);
+            try prot.wl_callback_send_done(wl_callback, 23);
+            try self.client.context.unregister(wl_callback);
             try prot.wl_display_send_delete_id(self.client.context.client.wl_display, wl_callback_id);
         }
 
@@ -268,7 +268,7 @@ pub const Window = struct {
         const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
         const now = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
-        try prot.wl_pointer_send_button(wl_pointer.*, client.nextSerial(), now, button, action);
+        try prot.wl_pointer_send_button(wl_pointer, client.nextSerial(), now, button, action);
     }
 
     pub const SubwindowIterator = struct {
@@ -465,18 +465,18 @@ pub const Window = struct {
 
             var state: [1]u32 = [_]u32{@enumToInt(prot.xdg_toplevel_state.activated)};
             if (self.window_geometry) |window_geometry| {
-                try prot.xdg_toplevel_send_configure(xdg_toplevel.*, window_geometry.width, window_geometry.height, &state);
+                try prot.xdg_toplevel_send_configure(xdg_toplevel, window_geometry.width, window_geometry.height, &state);
             } else {
-                try prot.xdg_toplevel_send_configure(xdg_toplevel.*, self.width, self.height, &state);
+                try prot.xdg_toplevel_send_configure(xdg_toplevel, self.width, self.height, &state);
             }
-            try prot.xdg_surface_send_configure(xdg_surface.*, client.nextSerial());
+            try prot.xdg_surface_send_configure(xdg_surface, client.nextSerial());
         }
 
         keyboard: {
             const wl_keyboard_id = client.wl_keyboard_id orelse break :keyboard;
             const wl_keyboard = client.context.get(wl_keyboard_id) orelse break :keyboard;
 
-            try prot.wl_keyboard_send_enter(wl_keyboard.*, client.nextSerial(), self.wl_surface_id, &[_]u32{});
+            try prot.wl_keyboard_send_enter(wl_keyboard, client.nextSerial(), self.wl_surface_id, &[_]u32{});
         }
     }
 
@@ -490,18 +490,18 @@ pub const Window = struct {
             const xdg_toplevel = client.context.get(xdg_toplevel_id) orelse break :config;
 
             if (self.window_geometry) |window_geometry| {
-                try prot.xdg_toplevel_send_configure(xdg_toplevel.*, window_geometry.width, window_geometry.height, &[_]u32{});
+                try prot.xdg_toplevel_send_configure(xdg_toplevel, window_geometry.width, window_geometry.height, &[_]u32{});
             } else {
-                try prot.xdg_toplevel_send_configure(xdg_toplevel.*, self.width, self.height, &[_]u32{});
+                try prot.xdg_toplevel_send_configure(xdg_toplevel, self.width, self.height, &[_]u32{});
             }
-            try prot.xdg_surface_send_configure(xdg_surface.*, client.nextSerial());
+            try prot.xdg_surface_send_configure(xdg_surface, client.nextSerial());
         }
 
         keyboard: {
             const wl_keyboard_id = client.wl_keyboard_id orelse break :keyboard;
             const wl_keyboard = client.context.get(wl_keyboard_id) orelse break :keyboard;
 
-            try prot.wl_keyboard_send_leave(wl_keyboard.*, client.nextSerial(), self.wl_surface_id);
+            try prot.wl_keyboard_send_leave(wl_keyboard, client.nextSerial(), self.wl_surface_id);
         }
     }
 
@@ -510,7 +510,7 @@ pub const Window = struct {
         const wl_pointer_id = client.wl_pointer_id orelse return;
         const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
-        try prot.wl_pointer_send_enter(wl_pointer.*, client.nextSerial(), self.wl_surface_id, @floatCast(f32, pointer_x - @intToFloat(f64, self.current().x)), @floatCast(f32, pointer_y - @intToFloat(f64, self.current().y)));
+        try prot.wl_pointer_send_enter(wl_pointer, client.nextSerial(), self.wl_surface_id, @floatCast(f32, pointer_x - @intToFloat(f64, self.current().x)), @floatCast(f32, pointer_y - @intToFloat(f64, self.current().y)));
     }
 
     pub fn pointerMotion(self: *Self, pointer_x: f64, pointer_y: f64) !void {
@@ -519,7 +519,7 @@ pub const Window = struct {
         const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
         try prot.wl_pointer_send_motion(
-            wl_pointer.*,
+            wl_pointer,
             @truncate(u32, @intCast(u64, std.time.milliTimestamp())),
             @floatCast(f32, pointer_x - @intToFloat(f64, self.absoluteX())),
             @floatCast(f32, pointer_y - @intToFloat(f64, self.absoluteY())),
@@ -532,7 +532,7 @@ pub const Window = struct {
         const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
         try prot.wl_pointer_send_leave(
-            wl_pointer.*,
+            wl_pointer,
             client.nextSerial(),
             self.wl_surface_id,
         );
@@ -544,7 +544,7 @@ pub const Window = struct {
         const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
         const now = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
-        try prot.wl_pointer_send_axis(wl_pointer.*, time, axis, @floatCast(f32, value));
+        try prot.wl_pointer_send_axis(wl_pointer, time, axis, @floatCast(f32, value));
     }
 
     pub fn keyboardKey(self: *Self, time: u32, button: u32, action: u32) !void {
@@ -553,7 +553,7 @@ pub const Window = struct {
         const wl_keyboard = client.context.get(wl_keyboard_id) orelse return;
 
         try prot.wl_keyboard_send_key(
-            wl_keyboard.*,
+            wl_keyboard,
             client.nextSerial(),
             time,
             button,
@@ -561,7 +561,7 @@ pub const Window = struct {
         );
 
         try prot.wl_keyboard_send_modifiers(
-            wl_keyboard.*,
+            wl_keyboard,
             client.nextSerial(),
             compositor.COMPOSITOR.mods_depressed,
             compositor.COMPOSITOR.mods_latched,

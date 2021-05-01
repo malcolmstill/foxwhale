@@ -147,15 +147,12 @@ pub fn Context(comptime T: type) type {
             return self.rx_fds.readItem() orelse return error.FdReadFailed;
         }
 
-        pub fn get(self: *Self, id: u32) ?*Object {
-            if (self.objects.get(id)) |*o| {
-                return o;
-            }
-            return null;
+        pub fn get(self: *Self, id: u32) ?Object {
+            return self.objects.get(id);
         }
 
         pub fn register(self: *Self, object: Object) !void {
-            var x = try self.objects.put(object.id, object);
+            _ = try self.objects.put(object.id, object);
             return;
         }
 
