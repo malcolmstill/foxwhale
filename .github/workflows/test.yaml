@@ -11,8 +11,8 @@ jobs:
       - uses: goto-bus-stop/setup-zig@v1
         with:
           version: master
-      - run: apt-get update
-      - run: apt-get install glfw
+      - run: sudo apt-get update
+      - run: sudo apt-get install glfw
       - run: zig build
   lint:
     runs-on: ubuntu-latest
