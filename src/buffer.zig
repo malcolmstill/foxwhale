@@ -27,7 +27,6 @@ pub const Buffer = union(enum) {
         switch (buffer.*) {
             Buffer.Shm => |*shm_buffer| shm_buffer.deinit(),
             Buffer.Dma => |*dmabuf| dmabuf.deinit(),
-            else => unreachable,
         }
     }
 
@@ -35,7 +34,6 @@ pub const Buffer = union(enum) {
         switch (buffer.*) {
             Buffer.Shm => |*shm_buffer| shm_buffer.beginAccess(),
             Buffer.Dma => |*dmabuf| dmabuf.beginAccess(),
-            else => unreachable,
         }
     }
 
@@ -43,23 +41,20 @@ pub const Buffer = union(enum) {
         return switch (buffer.*) {
             Buffer.Shm => |*shm_buffer| shm_buffer.endAccess(),
             Buffer.Dma => |*dmabuf| dmabuf.endAccess(),
-            else => unreachable,
         };
-    }    
+    }
 
     pub fn makeTexture(buffer: *Buffer) anyerror!u32 {
         return switch (buffer.*) {
             Buffer.Shm => |*shm_buffer| shm_buffer.makeTexture(),
             Buffer.Dma => |*dmabuf| dmabuf.makeTexture(),
-            else => unreachable,
         };
-    }    
+    }
 
     pub fn width(buffer: *Buffer) i32 {
         switch (buffer.*) {
             Buffer.Shm => |*shm_buffer| return shm_buffer.width,
             Buffer.Dma => |*dmabuf| return dmabuf.width,
-            else => unreachable,
         }
     }
 
@@ -67,7 +62,6 @@ pub const Buffer = union(enum) {
         switch (buffer.*) {
             Buffer.Shm => |*shm_buffer| return shm_buffer.height,
             Buffer.Dma => |*dmabuf| return dmabuf.height,
-            else => unreachable,
         }
     }
 };

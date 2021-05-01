@@ -128,7 +128,7 @@ fn mouseAxisHandler(time: u32, axis: u32, value: f64) !void {
 }
 
 fn makeCompositor() Compositor {
-    return Compositor {
+    return Compositor{
         .pointer_x = 0.0,
         .pointer_y = 0.0,
         .client_cursor = null,

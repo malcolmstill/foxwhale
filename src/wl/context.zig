@@ -25,7 +25,7 @@ pub fn Context(comptime T: type) type {
         const Self = @This();
 
         pub const Object = struct {
-            dispatch: fn(Object, u16) anyerror!void,
+            dispatch: fn (Object, u16) anyerror!void,
             context: *Self,
             container: usize,
             id: u32,
@@ -72,7 +72,7 @@ pub fn Context(comptime T: type) type {
 
                 self.read_offset += @sizeOf(Header);
                 const object = self.objects.get(header.id) orelse return error.CouldntFindExpectedId;
-                try object.value.dispatch(object.value, header.opcode);
+                try object.dispatch(object, header.opcode);
 
                 if ((self.read_offset - message_start_offset) != header.length) {
                     self.read_offset = 0;
@@ -87,7 +87,9 @@ pub fn Context(comptime T: type) type {
                 return error.NextReadsPastEndOfBuffer;
             }
 
-            defer { self.read_offset = next_offset; }
+            defer {
+                self.read_offset = next_offset;
+            }
             return @ptrCast(*u32, @alignCast(@alignOf(u32), &self.rx_buf[self.read_offset])).*;
         }
 
@@ -97,7 +99,9 @@ pub fn Context(comptime T: type) type {
                 return error.NextReadsPastEndOfBuffer;
             }
 
-            defer { self.read_offset = next_offset; }
+            defer {
+                self.read_offset = next_offset;
+            }
             return @ptrCast(*i32, @alignCast(@alignOf(i32), &self.rx_buf[self.read_offset])).*;
         }
 
@@ -134,24 +138,21 @@ pub fn Context(comptime T: type) type {
 
             var s: []u32 = undefined;
             s.ptr = @ptrCast(*u32, @alignCast(@alignOf(u32), &self.rx_buf[self.read_offset]));
-            s.len = length/@sizeOf(u32);
+            s.len = length / @sizeOf(u32);
             self.read_offset = next_offset;
             return s;
         }
 
         pub fn next_fd(self: *Self) !i32 {
-            return self.rx_fds.readItem();
+            return self.rx_fds.readItem() orelse return error.FdReadFailed;
         }
 
-        pub fn get(self: *Self, id: u32) ?*Object {
-            if (self.objects.get(id)) |o| {
-                return &o.value;
-            }
-            return null;
+        pub fn get(self: *Self, id: u32) ?Object {
+            return self.objects.get(id);
         }
 
         pub fn register(self: *Self, object: Object) !void {
-            var x = try self.objects.put(object.id, object);
+            _ = try self.objects.put(object.id, object);
             return;
         }
 
@@ -170,7 +171,7 @@ pub fn Context(comptime T: type) type {
         }
 
         pub fn finishWrite(self: *Self, id: u32, opcode: u16) void {
-            var h = Header {
+            var h = Header{
                 .id = id,
                 .opcode = opcode,
                 .length = @intCast(u16, self.tx_write_offset),
@@ -213,7 +214,7 @@ pub fn Context(comptime T: type) type {
             // Copy data from array into tx_buf
             var tx_buf: []u32 = undefined;
             tx_buf.ptr = @ptrCast([*]u32, @alignCast(@alignOf(u32), &self.tx_buf[self.tx_write_offset]));
-            tx_buf.len = (self.tx_buf.len - self.tx_write_offset)/@sizeOf(u32); 
+            tx_buf.len = (self.tx_buf.len - self.tx_write_offset) / @sizeOf(u32);
 
             std.mem.copy(u32, tx_buf, array[0..array.len]);
             self.tx_write_offset += @sizeOf(u32) * array.len;
@@ -227,8 +228,8 @@ pub fn Context(comptime T: type) type {
             len_ptr.* = @intCast(u32, length);
             self.tx_write_offset += @sizeOf(u32);
 
-            std.mem.copy(u8, self.tx_buf[self.tx_write_offset..self.tx_write_offset+string.len], string);
-            std.mem.set(u8, self.tx_buf[self.tx_write_offset+string.len..self.tx_write_offset+length], 0);
+            std.mem.copy(u8, self.tx_buf[self.tx_write_offset .. self.tx_write_offset + string.len], string);
+            std.mem.set(u8, self.tx_buf[self.tx_write_offset + string.len .. self.tx_write_offset + length], 0);
             self.tx_write_offset += length;
         }
     };

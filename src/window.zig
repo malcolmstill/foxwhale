@@ -78,7 +78,7 @@ pub const Window = struct {
 
         // flip synchronized subwindows above self
         var forward_it = self.subwindowIterator();
-        while(forward_it.nextPending()) |subwindow| {
+        while (forward_it.nextPending()) |subwindow| {
             if (subwindow != self and subwindow.synchronized) {
                 subwindow.flip();
             }
@@ -86,7 +86,7 @@ pub const Window = struct {
 
         // flip synchronized subwindows below self
         var backward_it = self.subwindowIterator();
-        while(backward_it.prevPending()) |subwindow| {
+        while (backward_it.prevPending()) |subwindow| {
             if (subwindow != self and subwindow.synchronized) {
                 subwindow.flip();
             }
@@ -103,7 +103,7 @@ pub const Window = struct {
 
     pub fn render(self: *Self, x: i32, y: i32) anyerror!void {
         var it = self.forwardIterator();
-        while(it.next()) |window| {
+        while (it.next()) |window| {
             window.ready_for_callback = true;
             if (window == self) {
                 const texture = window.texture orelse continue;
@@ -179,13 +179,11 @@ pub const Window = struct {
             return;
         }
 
-        while(self.callbacks.readItem()) |wl_callback_id| {
+        while (self.callbacks.readItem()) |wl_callback_id| {
             const wl_callback = self.client.context.get(wl_callback_id) orelse return error.CallbackIdNotFound;
-            try prot.wl_callback_send_done(wl_callback.*, @truncate(u32, std.time.milliTimestamp()));
-            try self.client.context.unregister(wl_callback.*);
+            try prot.wl_callback_send_done(wl_callback, 23);
+            try self.client.context.unregister(wl_callback);
             try prot.wl_display_send_delete_id(self.client.context.client.wl_display, wl_callback_id);
-        } else |err| {
-
         }
 
         self.ready_for_callback = false;
@@ -213,7 +211,7 @@ pub const Window = struct {
 
     pub fn toplevelUnderPointer(self: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
         var it = self.backwardIterator();
-        while(it.prev()) |window| {
+        while (it.prev()) |window| {
             if (self == window) {
                 if (isPointerInside(self, pointer_x, pointer_y)) {
                     return self;
@@ -236,7 +234,7 @@ pub const Window = struct {
         }
 
         var it = self.backwardIterator();
-        while(it.prev()) |window| {
+        while (it.prev()) |window| {
             if (self == window) {
                 if (isPointerInside(self, pointer_x, pointer_y)) {
                     return window;
@@ -269,8 +267,8 @@ pub const Window = struct {
         const wl_pointer_id = client.wl_pointer_id orelse return;
         const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
-        const now = @truncate(u32, std.time.milliTimestamp());
-        try prot.wl_pointer_send_button(wl_pointer.*, client.nextSerial(), now, button, action);
+        const now = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
+        try prot.wl_pointer_send_button(wl_pointer, client.nextSerial(), now, button, action);
     }
 
     pub const SubwindowIterator = struct {
@@ -323,7 +321,7 @@ pub const Window = struct {
     };
 
     pub fn subwindowIterator(self: *Self) SubwindowIterator {
-        return SubwindowIterator {
+        return SubwindowIterator{
             .current = self,
             .parent = self,
         };
@@ -332,11 +330,11 @@ pub const Window = struct {
     pub fn forwardIterator(self: *Self) SubwindowIterator {
         var backward_it = self.subwindowIterator();
         var rear: ?*Window = null;
-        while(backward_it.prev()) |p| {
+        while (backward_it.prev()) |p| {
             rear = p;
         }
 
-        return SubwindowIterator {
+        return SubwindowIterator{
             .current = rear,
             .parent = self,
         };
@@ -345,11 +343,11 @@ pub const Window = struct {
     pub fn backwardIterator(self: *Self) SubwindowIterator {
         var forward_it = self.subwindowIterator();
         var front: ?*Window = null;
-        while(forward_it.next()) |p| {
+        while (forward_it.next()) |p| {
             front = p;
         }
 
-        return SubwindowIterator {
+        return SubwindowIterator{
             .current = front,
             .parent = self,
         };
@@ -467,18 +465,18 @@ pub const Window = struct {
 
             var state: [1]u32 = [_]u32{@enumToInt(prot.xdg_toplevel_state.activated)};
             if (self.window_geometry) |window_geometry| {
-                try prot.xdg_toplevel_send_configure(xdg_toplevel.*, window_geometry.width, window_geometry.height, &state);
+                try prot.xdg_toplevel_send_configure(xdg_toplevel, window_geometry.width, window_geometry.height, &state);
             } else {
-                try prot.xdg_toplevel_send_configure(xdg_toplevel.*, self.width, self.height, &state);
+                try prot.xdg_toplevel_send_configure(xdg_toplevel, self.width, self.height, &state);
             }
-            try prot.xdg_surface_send_configure(xdg_surface.*, client.nextSerial());
+            try prot.xdg_surface_send_configure(xdg_surface, client.nextSerial());
         }
 
         keyboard: {
             const wl_keyboard_id = client.wl_keyboard_id orelse break :keyboard;
             const wl_keyboard = client.context.get(wl_keyboard_id) orelse break :keyboard;
 
-            try prot.wl_keyboard_send_enter(wl_keyboard.*, client.nextSerial(), self.wl_surface_id, &[_]u32{});
+            try prot.wl_keyboard_send_enter(wl_keyboard, client.nextSerial(), self.wl_surface_id, &[_]u32{});
         }
     }
 
@@ -492,18 +490,18 @@ pub const Window = struct {
             const xdg_toplevel = client.context.get(xdg_toplevel_id) orelse break :config;
 
             if (self.window_geometry) |window_geometry| {
-                try prot.xdg_toplevel_send_configure(xdg_toplevel.*, window_geometry.width, window_geometry.height, &[_]u32{});
+                try prot.xdg_toplevel_send_configure(xdg_toplevel, window_geometry.width, window_geometry.height, &[_]u32{});
             } else {
-                try prot.xdg_toplevel_send_configure(xdg_toplevel.*, self.width, self.height, &[_]u32{});
+                try prot.xdg_toplevel_send_configure(xdg_toplevel, self.width, self.height, &[_]u32{});
             }
-            try prot.xdg_surface_send_configure(xdg_surface.*, client.nextSerial());
+            try prot.xdg_surface_send_configure(xdg_surface, client.nextSerial());
         }
 
         keyboard: {
             const wl_keyboard_id = client.wl_keyboard_id orelse break :keyboard;
             const wl_keyboard = client.context.get(wl_keyboard_id) orelse break :keyboard;
 
-            try prot.wl_keyboard_send_leave(wl_keyboard.*, client.nextSerial(), self.wl_surface_id);
+            try prot.wl_keyboard_send_leave(wl_keyboard, client.nextSerial(), self.wl_surface_id);
         }
     }
 
@@ -512,13 +510,7 @@ pub const Window = struct {
         const wl_pointer_id = client.wl_pointer_id orelse return;
         const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
-        try prot.wl_pointer_send_enter(
-            wl_pointer.*,
-            client.nextSerial(),
-            self.wl_surface_id,
-            @floatCast(f32, pointer_x - @intToFloat(f64, self.current().x)),
-            @floatCast(f32, pointer_y - @intToFloat(f64, self.current().y))
-        );
+        try prot.wl_pointer_send_enter(wl_pointer, client.nextSerial(), self.wl_surface_id, @floatCast(f32, pointer_x - @intToFloat(f64, self.current().x)), @floatCast(f32, pointer_y - @intToFloat(f64, self.current().y)));
     }
 
     pub fn pointerMotion(self: *Self, pointer_x: f64, pointer_y: f64) !void {
@@ -527,8 +519,8 @@ pub const Window = struct {
         const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
         try prot.wl_pointer_send_motion(
-            wl_pointer.*,
-            @truncate(u32, std.time.milliTimestamp()),
+            wl_pointer,
+            @truncate(u32, @intCast(u64, std.time.milliTimestamp())),
             @floatCast(f32, pointer_x - @intToFloat(f64, self.absoluteX())),
             @floatCast(f32, pointer_y - @intToFloat(f64, self.absoluteY())),
         );
@@ -540,7 +532,7 @@ pub const Window = struct {
         const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
         try prot.wl_pointer_send_leave(
-            wl_pointer.*,
+            wl_pointer,
             client.nextSerial(),
             self.wl_surface_id,
         );
@@ -551,8 +543,8 @@ pub const Window = struct {
         const wl_pointer_id = client.wl_pointer_id orelse return;
         const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
-        const now = @truncate(u32, std.time.milliTimestamp());
-        try prot.wl_pointer_send_axis(wl_pointer.*, time, axis, @floatCast(f32, value));
+        const now = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
+        try prot.wl_pointer_send_axis(wl_pointer, time, axis, @floatCast(f32, value));
     }
 
     pub fn keyboardKey(self: *Self, time: u32, button: u32, action: u32) !void {
@@ -561,7 +553,7 @@ pub const Window = struct {
         const wl_keyboard = client.context.get(wl_keyboard_id) orelse return;
 
         try prot.wl_keyboard_send_key(
-            wl_keyboard.*,
+            wl_keyboard,
             client.nextSerial(),
             time,
             button,
@@ -569,7 +561,7 @@ pub const Window = struct {
         );
 
         try prot.wl_keyboard_send_modifiers(
-            wl_keyboard.*,
+            wl_keyboard,
             client.nextSerial(),
             compositor.COMPOSITOR.mods_depressed,
             compositor.COMPOSITOR.mods_latched,
@@ -681,7 +673,7 @@ pub fn debug(window: ?*Window) void {
             prev = toplevel_prev.index;
         }
 
-        std.debug.warn("debug: {} <-- window[{}, {}] --> {}\n", .{prev, self.index, self.wl_surface_id, next});
+        std.debug.warn("debug: {} <-- window[{}, {}] --> {}\n", .{ prev, self.index, self.wl_surface_id, next });
     } else {
         std.debug.warn("debug: null\n", .{});
     }
@@ -711,8 +703,8 @@ pub fn debug_sibling(window: ?*Window) void {
             prev_child = children_prev.index;
         }
 
-        std.debug.warn("debug sibling: {} <-- window[{}, @{}] --> {}\n", .{prev, self.index, self.wl_surface_id, next});
-        std.debug.warn("debug children: {} <-- window[{}, @{}] --> {}\n", .{prev_child, self.index, self.wl_surface_id, next_child});
+        std.debug.warn("debug sibling: {} <-- window[{}, @{}] --> {}\n", .{ prev, self.index, self.wl_surface_id, next });
+        std.debug.warn("debug children: {} <-- window[{}, @{}] --> {}\n", .{ prev_child, self.index, self.wl_surface_id, next_child });
     } else {
         std.debug.warn("debug_sibling: null\n", .{});
     }
@@ -742,8 +734,8 @@ pub fn debug_sibling_pending(window: ?*Window) void {
             prev_child = children_prev.index;
         }
 
-        std.debug.warn("debug sibling (pending): {} <-- window[{}, @{}] --> {}\n", .{prev, self.index, self.wl_surface_id, next});
-        std.debug.warn("debug children (pending): {} <-- window[{}, @{}] --> {}\n", .{prev_child, self.index, self.wl_surface_id, next_child});
+        std.debug.warn("debug sibling (pending): {} <-- window[{}, @{}] --> {}\n", .{ prev, self.index, self.wl_surface_id, next });
+        std.debug.warn("debug children (pending): {} <-- window[{}, @{}] --> {}\n", .{ prev_child, self.index, self.wl_surface_id, next_child });
     } else {
         std.debug.warn("debug_sibling (pending): null\n", .{});
     }
@@ -799,7 +791,7 @@ const BufferedState = struct {
         self.max_height = null;
 
         self.children.prev = null;
-        self.children.next = null;        
+        self.children.next = null;
     }
 };
 
@@ -844,7 +836,7 @@ pub const Cursor = struct {
 
 test "Window + View" {
     var c: Client = undefined;
-    var v: View = View {
+    var v: View = View{
         .top = null,
         .pointer_window = null,
         .active_window = null,

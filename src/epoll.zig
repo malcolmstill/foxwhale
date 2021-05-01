@@ -11,11 +11,11 @@ pub fn init() !void {
 pub fn wait(timeout: i32) usize {
     return std.os.epoll_wait(epfd, events[0..events.len], timeout);
 }
- 
+
 pub fn addFd(fd: i32, dis: *Dispatchable) !void {
     var ev = linux.epoll_event{
         .events = linux.EPOLLIN,
-        .data = linux.epoll_data {
+        .data = linux.epoll_data{
             .ptr = @ptrToInt(dis),
         },
     };
@@ -26,7 +26,7 @@ pub fn addFd(fd: i32, dis: *Dispatchable) !void {
 pub fn removeFd(fd: i32) !void {
     var ev = std.os.linux.epoll_event{
         .events = std.os.linux.EPOLLIN,
-        .data = std.os.linux.epoll_data {
+        .data = std.os.linux.epoll_data{
             .ptr = undefined,
         },
     };
@@ -47,7 +47,7 @@ pub fn dispatch(i: usize) !void {
 // will be passed a pointer to container. The container
 // will typically be (a pointer to) the struct itself.
 pub const Dispatchable = struct {
-    impl: fn(*Self, usize) anyerror!void,
+    impl: fn (*Self, usize) anyerror!void,
 
     const Self = @This();
 

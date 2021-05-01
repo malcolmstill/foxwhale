@@ -51,13 +51,7 @@ fn get_popup(context: *Context, xdg_surface: Object, new_id: u32, parent_wl_surf
     const xdg_popup = prot.new_xdg_popup(new_id, context, @ptrToInt(window));
 
     const serial = window.client.nextSerial();
-    try prot.xdg_popup_send_configure(
-        xdg_popup,
-        positioner.anchor_rect.x,
-        positioner.anchor_rect.y,
-        positioner.width,
-        positioner.height
-    );
+    try prot.xdg_popup_send_configure(xdg_popup, positioner.anchor_rect.x, positioner.anchor_rect.y, positioner.width, positioner.height);
     try prot.xdg_surface_send_configure(xdg_surface, serial);
 
     try context.register(xdg_popup);
@@ -66,7 +60,7 @@ fn get_popup(context: *Context, xdg_surface: Object, new_id: u32, parent_wl_surf
 fn set_window_geometry(context: *Context, xdg_surface: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     const window = @intToPtr(*Window, xdg_surface.container);
 
-    window.window_geometry = Rectangle {
+    window.window_geometry = Rectangle{
         .x = x,
         .y = y,
         .width = width,
@@ -77,7 +71,7 @@ fn set_window_geometry(context: *Context, xdg_surface: Object, x: i32, y: i32, w
 fn ack_configure(context: *Context, xdg_surface: Object, serial: u32) anyerror!void {
     const window = @intToPtr(*Window, xdg_surface.container);
 
-    while(window.xdg_configurations.readItem()) |xdg_configuration| {
+    while (window.xdg_configurations.readItem()) |xdg_configuration| {
         if (serial == xdg_configuration.serial) {
             switch (xdg_configuration.operation) {
                 .Maximize => {
@@ -85,7 +79,7 @@ fn ack_configure(context: *Context, xdg_surface: Object, serial: u32) anyerror!v
                         window.pending().x = 0;
                         window.pending().y = 0;
 
-                        window.maximized = Rectangle {
+                        window.maximized = Rectangle{
                             .x = window.current().x,
                             .y = window.current().y,
                             .width = if (window.window_geometry) |wg| wg.width else window.width,
@@ -102,14 +96,10 @@ fn ack_configure(context: *Context, xdg_surface: Object, serial: u32) anyerror!v
                 },
             }
         }
-    } else |err| {
-
     }
 
     window.xdg_configurations = XdgConfigurations.init();
 }
-
-
 
 pub fn init() void {
     prot.XDG_SURFACE = prot.xdg_surface_interface{

@@ -43,7 +43,7 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
     window.texture = try buffer.makeTexture();
 
     try buffer.endAccess();
-    try prot.wl_buffer_send_release(wl_buffer.*);
+    try prot.wl_buffer_send_release(wl_buffer);
     window.wl_buffer_id = null;
 
     if (window.view) |view| {
@@ -160,10 +160,6 @@ pub fn init() void {
     };
 }
 
-fn set_buffer_transform(context: *Context, object: Object, transform: i32) anyerror!void {
+fn set_buffer_transform(context: *Context, object: Object, transform: i32) anyerror!void {}
 
-}
-
-fn damage_buffer(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-
-}
+fn damage_buffer(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {}

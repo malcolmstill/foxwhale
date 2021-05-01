@@ -13,8 +13,7 @@ pub const GLFWBackend = struct {
 
     const Self = @This();
 
-    pub fn init(self: *Self) !void {
-    }
+    pub fn init(self: *Self) !void {}
 
     pub fn newOutput(self: *Self, width: i32, height: i32) !GLFWOutput {
         var window = c.glfwCreateWindow(width, height, "foxwhale", null, self.hidden) orelse return error.GLFWWindowCreationFailed;
@@ -27,7 +26,7 @@ pub const GLFWBackend = struct {
 
         self.windowCount += 1;
 
-        return GLFWOutput {
+        return GLFWOutput{
             .window = window,
             .backend = self,
         };
@@ -39,7 +38,7 @@ pub const GLFWBackend = struct {
 };
 
 pub fn new() !GLFWBackend {
-    if(c.glfwInit() != 1) {
+    if (c.glfwInit() != 1) {
         return error.GLFWInitFailed;
     }
     errdefer c.glfwTerminate();
@@ -49,7 +48,7 @@ pub fn new() !GLFWBackend {
     c.glfwSwapInterval(1);
     var hidden = c.glfwCreateWindow(1, 1, "foxwhale", null, null) orelse return error.GLFWWindowCreationFailed;
 
-    return GLFWBackend {
+    return GLFWBackend{
         .windowCount = 0,
         .hidden = hidden,
     };
@@ -65,8 +64,8 @@ fn keyCallback(window: ?*c.GLFWwindow, key: c_int, scancode: c_int, action: c_in
     }
 
     if (backend.BACKEND_FNS.keyboard) |keyboard| {
-        var time = @truncate(u32, std.time.milliTimestamp());
-        keyboard(time, @intCast(u32, scancode-8), @intCast(u32, action)) catch return;
+        var time = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
+        keyboard(time, @intCast(u32, scancode - 8), @intCast(u32, action)) catch return;
     }
 }
 
@@ -75,13 +74,13 @@ fn mouseButtonCallback(window: ?*c.GLFWwindow, button: c_int, action: c_int, mod
         c.glfwSetInputMode(window, c.GLFW_CURSOR, c.GLFW_CURSOR_DISABLED);
     }
 
-    var button_code: u32 = switch(button) {
+    var button_code: u32 = switch (button) {
         0 => 0x110,
         else => 0x0,
     };
 
     if (backend.BACKEND_FNS.mouseClick) |mouseClick| {
-        var time = @truncate(u32, std.time.milliTimestamp());
+        var time = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
         mouseClick(time, @intCast(u32, button_code), @intCast(u32, action)) catch return;
     }
 }
@@ -97,7 +96,7 @@ fn cursorPositionCallback(window: ?*c.GLFWwindow, x: f64, y: f64) callconv(.C) v
     previous_x = previous_x + dx;
     previous_y = previous_y + dy;
     if (backend.BACKEND_FNS.mouseMove) |mouseMove| {
-        var time = @truncate(u32, std.time.milliTimestamp());
+        var time = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
         mouseMove(time, dx, dy) catch return;
     }
 }

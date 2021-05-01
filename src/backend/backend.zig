@@ -99,7 +99,6 @@ pub fn BackendOutput(comptime T: type) type {
                 BackendType.Headless => |*headless_output| headless_output.deinit(),
                 BackendType.GLFW => |*glfw_output| glfw_output.deinit(),
                 BackendType.DRM => |*drm_output| drm_output.deinit(),
-                else => return,
             };
         }
     };
@@ -115,9 +114,9 @@ pub fn Backend(comptime T: type) type {
 
         pub fn new(backend_type: BackendType) !Self {
             return switch (backend_type) {
-                BackendType.Headless => Self { .Headless = try headless.new() },
-                BackendType.GLFW => Self { .GLFW = try glfw.new() },
-                BackendType.DRM => Self { .DRM = try drm.new() },
+                BackendType.Headless => Self{ .Headless = try headless.new() },
+                BackendType.GLFW => Self{ .GLFW = try glfw.new() },
+                BackendType.DRM => Self{ .DRM = try drm.new() },
             };
         }
 
@@ -126,7 +125,6 @@ pub fn Backend(comptime T: type) type {
                 BackendType.Headless => |*backend| backend.init(),
                 BackendType.GLFW => |*backend| backend.init(),
                 BackendType.DRM => |*backend| backend.init(),
-                else => {},
             };
         }
 
@@ -164,7 +162,6 @@ pub fn Backend(comptime T: type) type {
                 BackendType.Headless => |*headless_backend| headless_backend.deinit(),
                 BackendType.GLFW => |*glfw_backend| glfw_backend.deinit(),
                 BackendType.DRM => |*drm_backend| drm_backend.deinit(),
-                else => {}
             };
         }
     };
@@ -188,8 +185,8 @@ pub const BackendFns = struct {
 
 pub var BACKEND_FNS: BackendFns = makeBackendFns();
 
-fn makeBackendFns() BackendFns{
-    return BackendFns {
+fn makeBackendFns() BackendFns {
+    return BackendFns{
         .keyboard = null,
         .mouseClick = null,
         .mouseMove = null,

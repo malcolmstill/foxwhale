@@ -1,6 +1,7 @@
 const std = @import("std");
 const os = std.os;
 const linux = std.os.linux;
+// const file = std.file;
 const AutoHashMap = std.AutoHashMap;
 
 const c = @cImport({
@@ -20,15 +21,15 @@ pub const Logind = struct {
     session_id: [*c]u8,
     devices: AutoHashMap(c_int, []u8),
 
-    fn init(self: *Logind) !void {
+    pub fn init(self: *Logind) !void {
         var session_path = try getSessionPath(self.bus, self.session_id);
         std.mem.copy(u8, self.session_path[0..std.mem.len(session_path)], std.mem.span(session_path));
-        
+
         try activate(self.bus, self.session_path);
         try takeControl(self.bus, self.session_path);
     }
 
-    fn deinit(self: *Logind) void {
+    pub fn deinit(self: *Logind) void {
         releaseControl(self.bus, self.session_path) catch |e| {};
         c.free(self.session_id);
 
@@ -40,7 +41,7 @@ pub const Logind = struct {
         // self.devices.deinit();
     }
 
-    fn open(self: *Logind, path: [*:0]const u8) !i32 {
+    pub fn open(self: *Logind, path: [*:0]const u8) !i32 {
         var path_copy = try std.heap.c_allocator.alloc(u8, 256);
         std.mem.copy(u8, path_copy[0..], std.mem.span(path));
 
@@ -50,7 +51,7 @@ pub const Logind = struct {
         return fd;
     }
 
-    fn close(self: *Logind, fd: i32) !void {
+    pub fn close(self: *Logind, fd: i32) !void {
         var x = try releaseDevice(self.bus, self.session_path, fd);
         var y = linux.close(fd);
         if (self.devices.remove(fd)) |path| {
@@ -63,7 +64,7 @@ pub fn create() !Logind {
     var session_id = try pidGetSession();
     var bus = try busDefaultSystem();
     var fd = try busGetFd(bus);
-    
+
     return Logind{
         .fd = fd,
         .bus = bus,
@@ -105,22 +106,13 @@ fn busGetFd(bus: *c.struct_sd_bus) !i32 {
 
 fn getSessionPath(bus: *c.struct_sd_bus, session_id: [*c]u8) ![*c]u8 {
     var msg: *c.sd_bus_message = undefined;
-    var err: c.sd_bus_error = c.sd_bus_error {
+    var err: c.sd_bus_error = c.sd_bus_error{
         .name = undefined,
         .message = undefined,
         ._need_free = 0,
     };
-    
-    var res = c.sd_bus_call_method(
-        bus,
-        "org.freedesktop.login1",
-        "/org/freedesktop/login1",
-        "org.freedesktop.login1.Manager",
-        "GetSession",
-        &err,
-        @ptrCast([*c]?*c.struct_sd_bus_message, &msg),
-        "s",
-        &session_id[0]);
+
+    var res = c.sd_bus_call_method(bus, "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "GetSession", &err, @ptrCast([*c]?*c.struct_sd_bus_message, &msg), "s", &session_id[0]);
     defer {
         c.sd_bus_error_free(&err);
         var x = c.sd_bus_message_unref(msg);
@@ -129,7 +121,7 @@ fn getSessionPath(bus: *c.struct_sd_bus, session_id: [*c]u8) ![*c]u8 {
     if (res < 0) {
         return error.GetSessionFailed;
     }
-    
+
     var session_path: [*c]u8 = undefined;
     res = c.sd_bus_message_read(msg, "o", &session_path);
     if (res < 0) {
@@ -141,7 +133,7 @@ fn getSessionPath(bus: *c.struct_sd_bus, session_id: [*c]u8) ![*c]u8 {
 
 fn activate(bus: *c.struct_sd_bus, session_path: [256]u8) !void {
     var msg: ?*c.sd_bus_message = null;
-    var err: c.sd_bus_error = c.sd_bus_error {
+    var err: c.sd_bus_error = c.sd_bus_error{
         .name = undefined,
         .message = undefined,
         ._need_free = 0,
@@ -171,7 +163,7 @@ fn activate(bus: *c.struct_sd_bus, session_path: [256]u8) !void {
 
 fn takeControl(bus: *c.struct_sd_bus, session_path: [256]u8) !void {
     var msg: ?*c.sd_bus_message = null;
-    var err: c.sd_bus_error = c.sd_bus_error {
+    var err: c.sd_bus_error = c.sd_bus_error{
         .name = undefined,
         .message = undefined,
         ._need_free = 0,
@@ -202,7 +194,7 @@ fn takeControl(bus: *c.struct_sd_bus, session_path: [256]u8) !void {
 
 fn releaseControl(bus: *c.struct_sd_bus, session_path: [256]u8) !void {
     var msg: *c.sd_bus_message = undefined;
-    var err: c.sd_bus_error = c.sd_bus_error {
+    var err: c.sd_bus_error = c.sd_bus_error{
         .name = undefined,
         .message = undefined,
         ._need_free = 0,
@@ -232,13 +224,13 @@ fn releaseControl(bus: *c.struct_sd_bus, session_path: [256]u8) !void {
 
 fn takeDevice(bus: *c.struct_sd_bus, session_path: [256]u8, path: [*:0]const u8) !i32 {
     var msg: *c.sd_bus_message = undefined;
-    var err: c.sd_bus_error = c.sd_bus_error {
+    var err: c.sd_bus_error = c.sd_bus_error{
         .name = undefined,
         .message = undefined,
         ._need_free = 0,
     };
 
-    var st: linux.Stat = undefined;
+    var st: os.Stat = undefined;
     var res = linux.stat(path, &st);
 
     if (res < 0) {
@@ -286,13 +278,13 @@ fn takeDevice(bus: *c.struct_sd_bus, session_path: [256]u8, path: [*:0]const u8)
 
 fn releaseDevice(bus: *c.struct_sd_bus, session_path: [256]u8, fd: i32) !i32 {
     var msg: *c.sd_bus_message = undefined;
-    var err: c.sd_bus_error = c.sd_bus_error {
+    var err: c.sd_bus_error = c.sd_bus_error{
         .name = undefined,
         .message = undefined,
         ._need_free = 0,
     };
 
-    var st: linux.Stat = undefined;
+    var st: os.Stat = undefined;
     var res = linux.fstat(fd, &st);
 
     if (res < 0) {
@@ -325,14 +317,14 @@ fn releaseDevice(bus: *c.struct_sd_bus, session_path: [256]u8, fd: i32) !i32 {
 
 pub fn changeVt(bus: *c.struct_sd_bus, vt: i32) !void {
     var msg: *c.sd_bus_message = undefined;
-    var err: c.sd_bus_error = c.sd_bus_error {
+    var err: c.sd_bus_error = c.sd_bus_error{
         .name = undefined,
         .message = undefined,
         ._need_free = 0,
     };
 
     var res = c.sd_bus_call_method(
-        bus, 
+        bus,
         "org.freedesktop.login1",
         "/org/freedesktop/login1/seat/self",
         "org.freedesktop.login1.Seat",

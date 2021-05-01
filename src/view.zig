@@ -23,7 +23,7 @@ pub const View = struct {
     pub fn back(self: *Self) ?*Window {
         var it = self.top;
         var window: ?*Window = null;
-        while(it) |w| : (it = w.toplevel.prev) {
+        while (it) |w| : (it = w.toplevel.prev) {
             window = w;
         }
 
@@ -81,7 +81,7 @@ pub const View = struct {
     pub fn raise(self: *Self, raising_window: *Window) void {
         // 1. iterate down, removing any marks
         var it = self.top;
-        while(it) |window| : (it = window.toplevel.prev) {
+        while (it) |window| : (it = window.toplevel.prev) {
             window.toplevel.mark = false;
         }
 
@@ -102,7 +102,7 @@ pub const View = struct {
 
         // 4. Raise any of our children
         it = self.back();
-        while(it) |window| : (it = window.toplevel.next) {
+        while (it) |window| : (it = window.toplevel.next) {
             if (window.toplevel.mark == true) {
                 break;
             }
@@ -119,7 +119,7 @@ pub const View = struct {
         var new_pointer_window: ?*Window = null;
 
         var it = self.top;
-        while(it) |window| : (it = window.toplevel.prev) {
+        while (it) |window| : (it = window.toplevel.prev) {
             if (window.windowUnderPointer(x, y)) |w| {
                 new_pointer_window = w;
                 break;

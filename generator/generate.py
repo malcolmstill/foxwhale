@@ -114,12 +114,12 @@ def generate_next(arg):
     atype = lookup_type(arg.attrib["type"], arg)
     if arg.attrib["type"] == "object":
         if "allow-null" in arg.attrib and arg.attrib["allow-null"] == "true":
-            print(f"\t\t\tvar {name}: ?Object = object.context.objects.getValue(try object.context.next_u32());")
+            print(f"\t\t\tvar {name}: ?Object = object.context.objects.get(try object.context.next_u32());")
             if "interface" in arg.attrib:
                 object_interface = arg.attrib["interface"]
                 print(f"\t\t\tif ({name} != null) {{if ({name}.?.dispatch != {object_interface}_dispatch) {{ return error.ObjectWrongType; }} }}")
         else:
-            print(f"\t\t\tvar {name}: Object = object.context.objects.getValue(try object.context.next_u32()).?;")
+            print(f"\t\t\tvar {name}: Object = object.context.objects.get(try object.context.next_u32()).?;")
             if "interface" in arg.attrib:
                 object_interface = arg.attrib["interface"]
                 print(f"\t\t\tif ({name}.dispatch != {object_interface}_dispatch) {{ return error.ObjectWrongType; }}")

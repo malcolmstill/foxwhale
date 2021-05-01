@@ -1,0 +1,24 @@
+name: foxwren tests
+on: push
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{matrix.os}}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: goto-bus-stop/setup-zig@v1
+        with:
+          version: master
+      - run: sudo apt-get update
+      - run: sudo apt-get install libglfw3 libglfw3-dev libsystemd-dev libudev-dev libinput-dev libdrm-dev libxkbcommon-dev
+      - run: zig build
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: goto-bus-stop/setup-zig@v1
+        with:
+          version: master
+      - run: zig fmt --check src/*.zig

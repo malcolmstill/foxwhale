@@ -19,10 +19,12 @@ pub fn main() anyerror!void {
 
     views.CURRENT_VIEW = &o1.data.views[0];
 
-    std.debug.warn("==> backend: {}\n", .{backend.name()});
+    std.debug.warn("==> backend: {s}\n", .{backend.name()});
 
     var server = try Server.init();
-    defer { server.deinit(); }
+    defer {
+        server.deinit();
+    }
     try server.addToEpoll();
 
     try render.init();
@@ -58,7 +60,7 @@ pub fn main() anyerror!void {
                     }
 
                     var it = view.back();
-                    while(it) |window| : (it = window.toplevel.next) {
+                    while (it) |window| : (it = window.toplevel.next) {
                         try window.render(0, 0);
                     }
                 }
@@ -76,7 +78,7 @@ pub fn main() anyerror!void {
                 output.end();
 
                 if ((now - then) > 5000) {
-                    std.debug.warn("fps: {}\n", .{frames/5});
+                    std.debug.warn("fps: {}\n", .{frames / 5});
                     then = now;
                     frames = 0;
                 }

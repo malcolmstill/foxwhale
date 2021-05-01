@@ -1,4 +1,3 @@
-
 const std = @import("std");
 const Logind = @import("systemd.zig").Logind;
 const backend = @import("../backend.zig");
@@ -32,11 +31,11 @@ pub const Input = struct {
         }
         var fd = c.libinput_get_fd(ctx);
 
-        return Input {
+        return Input{
             .udev_context = udev_context,
             .context = ctx,
             .fd = fd,
-            .dispatchable = Dispatchable {
+            .dispatchable = Dispatchable{
                 .impl = dispatch,
             },
         };
@@ -59,17 +58,17 @@ const EventType = c.enum_libinput_event_type;
 
 pub fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
     var input = @fieldParentPtr(Input, "dispatchable", dispatchable);
-    
+
     _ = c.libinput_dispatch(input.context);
 
-    while(c.libinput_get_event(input.context)) |event| {
+    while (c.libinput_get_event(input.context)) |event| {
         var input_event_type = c.libinput_event_get_type(event);
 
         switch (input_event_type) {
             EventType.LIBINPUT_EVENT_DEVICE_ADDED => {
                 var device = c.libinput_event_get_device(event);
                 var name = c.libinput_device_get_name(device);
-                std.debug.warn("Added device: {}\n", .{std.mem.span(name)});
+                std.debug.warn("Added device: {s}\n", .{std.mem.span(name)});
                 _ = c.libinput_device_ref(device);
                 var seat = c.libinput_device_get_seat(device);
                 _ = c.libinput_seat_ref(seat);
@@ -127,22 +126,22 @@ pub fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
 }
 
 pub fn open(path: [*c]const u8, flags: c_int, user_data: ?*c_void) callconv(.C) c_int {
-    var fd = global_logind.open(path) catch
-        |e| {
-            return -1;
+    var fd = global_logind.open(path) catch |e|
+        {
+        return -1;
     };
     return fd;
 }
 
 pub fn close(fd: c_int, user_data: ?*c_void) callconv(.C) void {
-    var x = global_logind.close(fd) catch
-        |e| {
-            return;
+    var x = global_logind.close(fd) catch |e|
+        {
+        return;
     };
     return;
 }
 
-const input_interface = c.struct_libinput_interface {
+const input_interface = c.struct_libinput_interface{
     .open_restricted = open,
     .close_restricted = close,
 };

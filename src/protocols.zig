@@ -58,6 +58,8 @@ pub const wl_display_error = enum(u32) {
     no_memory = 2,
     implementation = 3,
 };
+
+//
 // The error event is sent out when a fatal (non-recoverable)
 // error has occurred.  The object_id argument is the object
 // where the error occurred, most often in response to a request
@@ -73,6 +75,8 @@ pub fn wl_display_send_error(object: Object, object_id: u32, code: u32, message:
     object.context.putString(message);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // This event is used internally by the object ID management
 // logic.  When a client deletes an object, the server will send
 // this event to acknowledge that it has seen the delete request.
@@ -124,6 +128,8 @@ fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!void {
         else => {},
     }
 }
+
+//
 // Notify the client of global objects.
 //
 // The event notifies the client that a global object with
@@ -137,6 +143,8 @@ pub fn wl_registry_send_global(object: Object, name: u32, interface: []const u8,
     object.context.putU32(version);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // Notify the client of removed global objects.
 //
 // This event notifies the client that the global identified
@@ -176,6 +184,8 @@ fn wl_callback_dispatch(object: Object, opcode: u16) anyerror!void {
         else => {},
     }
 }
+
+//
 // Notify the client when the related request is done.
 //
 pub fn wl_callback_send_done(object: Object, callback_data: u32) anyerror!void {
@@ -412,6 +422,8 @@ pub const wl_shm_format = enum(u32) {
     yuv444 = 0x34325559,
     yvu444 = 0x34325659,
 };
+
+//
 // Informs the client about a valid pixel format that
 // can be used for buffers. Known formats include
 // argb8888 and xrgb8888.
@@ -463,6 +475,8 @@ fn wl_buffer_dispatch(object: Object, opcode: u16) anyerror!void {
         else => {},
     }
 }
+
+//
 // Sent when this wl_buffer is no longer used by the compositor.
 // The client is now free to reuse or destroy this buffer and its
 // backing storage.
@@ -589,6 +603,8 @@ pub const wl_data_offer_error = enum(u32) {
     invalid_action = 2,
     invalid_offer = 3,
 };
+
+//
 // Sent immediately after creating the wl_data_offer object.  One
 // event per offered mime type.
 //
@@ -597,6 +613,8 @@ pub fn wl_data_offer_send_offer(object: Object, mime_type: []const u8) anyerror!
     object.context.putString(mime_type);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // This event indicates the actions offered by the data source. It
 // will be sent right after wl_data_device.enter, or anytime the source
 // side changes its offered actions through wl_data_source.set_actions.
@@ -606,6 +624,8 @@ pub fn wl_data_offer_send_source_actions(object: Object, source_actions: u32) an
     object.context.putU32(source_actions);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // This event indicates the action selected by the compositor after
 // matching the source/destination side actions. Only one action (or
 // none) will be offered here.
@@ -720,6 +740,8 @@ pub const wl_data_source_error = enum(u32) {
     invalid_action_mask = 0,
     invalid_source = 1,
 };
+
+//
 // Sent when a target accepts pointer_focus or motion events.  If
 // a target does not accept any of the offered types, type is NULL.
 //
@@ -730,6 +752,8 @@ pub fn wl_data_source_send_target(object: Object, mime_type: []const u8) anyerro
     object.context.putString(mime_type);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // Request for data from the client.  Send the data as the
 // specified mime type over the passed file descriptor, then
 // close it.
@@ -740,6 +764,8 @@ pub fn wl_data_source_send_send(object: Object, mime_type: []const u8, fd: i32) 
     object.context.putFd(fd);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // This data source is no longer valid. There are several reasons why
 // this could happen:
 //
@@ -765,6 +791,8 @@ pub fn wl_data_source_send_cancelled(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 2);
 }
+
+//
 // The user performed the drop action. This event does not indicate
 // acceptance, wl_data_source.cancelled may still be emitted afterwards
 // if the drop destination does not accept any mime type.
@@ -779,6 +807,8 @@ pub fn wl_data_source_send_dnd_drop_performed(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 3);
 }
+
+//
 // The drop destination finished interoperating with this data
 // source, so the client is now free to destroy this data source and
 // free all associated data.
@@ -790,6 +820,8 @@ pub fn wl_data_source_send_dnd_finished(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 4);
 }
+
+//
 // This event indicates the action selected by the compositor after
 // matching the source/destination side actions. Only one action (or
 // none) will be offered here.
@@ -865,17 +897,17 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
     switch (opcode) {
         // start_drag
         0 => {
-            var source: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var source: ?Object = object.context.objects.get(try object.context.next_u32());
             if (source != null) {
                 if (source.?.dispatch != wl_data_source_dispatch) {
                     return error.ObjectWrongType;
                 }
             }
-            var origin: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var origin: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (origin.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
-            var icon: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var icon: ?Object = object.context.objects.get(try object.context.next_u32());
             if (icon != null) {
                 if (icon.?.dispatch != wl_surface_dispatch) {
                     return error.ObjectWrongType;
@@ -888,7 +920,7 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_selection
         1 => {
-            var source: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var source: ?Object = object.context.objects.get(try object.context.next_u32());
             if (source != null) {
                 if (source.?.dispatch != wl_data_source_dispatch) {
                     return error.ObjectWrongType;
@@ -915,6 +947,8 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
 pub const wl_data_device_error = enum(u32) {
     role = 0,
 };
+
+//
 // The data_offer event introduces a new wl_data_offer object,
 // which will subsequently be used in either the
 // data_device.enter event (for drag-and-drop) or the
@@ -928,6 +962,8 @@ pub fn wl_data_device_send_data_offer(object: Object, id: u32) anyerror!void {
     object.context.putU32(id);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // This event is sent when an active drag-and-drop pointer enters
 // a surface owned by the client.  The position of the pointer at
 // enter time is provided by the x and y arguments, in surface-local
@@ -942,6 +978,8 @@ pub fn wl_data_device_send_enter(object: Object, serial: u32, surface: u32, x: f
     object.context.putU32(id);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // This event is sent when the drag-and-drop pointer leaves the
 // surface and the session ends.  The client must destroy the
 // wl_data_offer introduced at enter time at this point.
@@ -950,6 +988,8 @@ pub fn wl_data_device_send_leave(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 2);
 }
+
+//
 // This event is sent when the drag-and-drop pointer moves within
 // the currently focused surface. The new position of the pointer
 // is provided by the x and y arguments, in surface-local
@@ -962,6 +1002,8 @@ pub fn wl_data_device_send_motion(object: Object, time: u32, x: f32, y: f32) any
     object.context.putFixed(y);
     object.context.finishWrite(object.id, 3);
 }
+
+//
 // The event is sent when a drag-and-drop operation is ended
 // because the implicit grab is removed.
 //
@@ -980,6 +1022,8 @@ pub fn wl_data_device_send_drop(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 4);
 }
+
+//
 // The selection event is sent out to notify the client of a new
 // wl_data_offer for the selection for this device.  The
 // data_device.data_offer and the data_offer.offer events are
@@ -1040,7 +1084,7 @@ fn wl_data_device_manager_dispatch(object: Object, opcode: u16) anyerror!void {
         // get_data_device
         1 => {
             var id: u32 = try object.context.next_u32();
-            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var seat: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (seat.dispatch != wl_seat_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -1088,7 +1132,7 @@ fn wl_shell_dispatch(object: Object, opcode: u16) anyerror!void {
         // get_shell_surface
         0 => {
             var id: u32 = try object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var surface: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (surface.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -1196,7 +1240,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // move
         1 => {
-            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var seat: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (seat.dispatch != wl_seat_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -1207,7 +1251,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // resize
         2 => {
-            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var seat: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (seat.dispatch != wl_seat_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -1228,7 +1272,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_transient
         4 => {
-            var parent: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var parent: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (parent.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -1243,7 +1287,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         5 => {
             var method: u32 = try object.context.next_u32();
             var framerate: u32 = try object.context.next_u32();
-            var output: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var output: ?Object = object.context.objects.get(try object.context.next_u32());
             if (output != null) {
                 if (output.?.dispatch != wl_output_dispatch) {
                     return error.ObjectWrongType;
@@ -1255,12 +1299,12 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_popup
         6 => {
-            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var seat: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (seat.dispatch != wl_seat_dispatch) {
                 return error.ObjectWrongType;
             }
             var serial: u32 = try object.context.next_u32();
-            var parent: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var parent: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (parent.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -1273,7 +1317,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_maximized
         7 => {
-            var output: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var output: ?Object = object.context.objects.get(try object.context.next_u32());
             if (output != null) {
                 if (output.?.dispatch != wl_output_dispatch) {
                     return error.ObjectWrongType;
@@ -1323,6 +1367,8 @@ pub const wl_shell_surface_fullscreen_method = enum(u32) {
     driver = 2,
     fill = 3,
 };
+
+//
 // Ping a client to check if it is receiving events and sending
 // requests. A client is expected to reply with a pong request.
 //
@@ -1331,6 +1377,8 @@ pub fn wl_shell_surface_send_ping(object: Object, serial: u32) anyerror!void {
     object.context.putU32(serial);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // The configure event asks the client to resize its surface.
 //
 // The size is a hint, in the sense that the client is free to
@@ -1356,6 +1404,8 @@ pub fn wl_shell_surface_send_configure(object: Object, edges: u32, width: i32, h
     object.context.putI32(height);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // The popup_done event is sent out when a popup grab is broken,
 // that is, when the user clicks a surface that doesn't belong
 // to the client owning the popup surface.
@@ -1462,7 +1512,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // attach
         1 => {
-            var buffer: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var buffer: ?Object = object.context.objects.get(try object.context.next_u32());
             if (buffer != null) {
                 if (buffer.?.dispatch != wl_buffer_dispatch) {
                     return error.ObjectWrongType;
@@ -1493,7 +1543,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_opaque_region
         4 => {
-            var region: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var region: ?Object = object.context.objects.get(try object.context.next_u32());
             if (region != null) {
                 if (region.?.dispatch != wl_region_dispatch) {
                     return error.ObjectWrongType;
@@ -1505,7 +1555,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_input_region
         5 => {
-            var region: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var region: ?Object = object.context.objects.get(try object.context.next_u32());
             if (region != null) {
                 if (region.?.dispatch != wl_region_dispatch) {
                     return error.ObjectWrongType;
@@ -1556,6 +1606,8 @@ pub const wl_surface_error = enum(u32) {
     invalid_scale = 0,
     invalid_transform = 1,
 };
+
+//
 // This is emitted whenever a surface's creation, movement, or resizing
 // results in some part of it being within the scanout region of an
 // output.
@@ -1567,6 +1619,8 @@ pub fn wl_surface_send_enter(object: Object, output: u32) anyerror!void {
     object.context.putU32(output);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // This is emitted whenever a surface's creation, movement, or resizing
 // results in it no longer having any part of it within the scanout region
 // of an output.
@@ -1663,6 +1717,8 @@ pub const wl_seat_capability = enum(u32) {
     keyboard = 2,
     touch = 4,
 };
+
+//
 // This is emitted whenever a seat gains or loses the pointer,
 // keyboard or touch capabilities.  The argument is a capability
 // enum containing the complete set of capabilities this seat has.
@@ -1693,6 +1749,8 @@ pub fn wl_seat_send_capabilities(object: Object, capabilities: u32) anyerror!voi
     object.context.putU32(capabilities);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // In a multiseat configuration this can be used by the client to help
 // identify which physical devices the seat represents. Based on
 // the seat configuration used by the compositor.
@@ -1741,7 +1799,7 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!void {
         // set_cursor
         0 => {
             var serial: u32 = try object.context.next_u32();
-            var surface: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var surface: ?Object = object.context.objects.get(try object.context.next_u32());
             if (surface != null) {
                 if (surface.?.dispatch != wl_surface_dispatch) {
                     return error.ObjectWrongType;
@@ -1786,6 +1844,8 @@ pub const wl_pointer_axis_source = enum(u32) {
     continuous = 2,
     wheel_tilt = 3,
 };
+
+//
 // Notification that this seat's pointer is focused on a certain
 // surface.
 //
@@ -1801,6 +1861,8 @@ pub fn wl_pointer_send_enter(object: Object, serial: u32, surface: u32, surface_
     object.context.putFixed(surface_y);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // Notification that this seat's pointer is no longer focused on
 // a certain surface.
 //
@@ -1813,6 +1875,8 @@ pub fn wl_pointer_send_leave(object: Object, serial: u32, surface: u32) anyerror
     object.context.putU32(surface);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // Notification of pointer location change. The arguments
 // surface_x and surface_y are the location relative to the
 // focused surface.
@@ -1824,6 +1888,8 @@ pub fn wl_pointer_send_motion(object: Object, time: u32, surface_x: f32, surface
     object.context.putFixed(surface_y);
     object.context.finishWrite(object.id, 2);
 }
+
+//
 // Mouse button click and release notifications.
 //
 // The location of the click is given by the last motion or
@@ -1847,6 +1913,8 @@ pub fn wl_pointer_send_button(object: Object, serial: u32, time: u32, button: u3
     object.context.putU32(state);
     object.context.finishWrite(object.id, 3);
 }
+
+//
 // Scroll and other axis notifications.
 //
 // For scroll events (vertical and horizontal scroll axes), the
@@ -1871,6 +1939,8 @@ pub fn wl_pointer_send_axis(object: Object, time: u32, axis: u32, value: f32) an
     object.context.putFixed(value);
     object.context.finishWrite(object.id, 4);
 }
+
+//
 // Indicates the end of a set of events that logically belong together.
 // A client is expected to accumulate the data in all events within the
 // frame before proceeding.
@@ -1910,6 +1980,8 @@ pub fn wl_pointer_send_frame(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 5);
 }
+
+//
 // Source information for scroll and other axes.
 //
 // This event does not occur on its own. It is sent before a
@@ -1941,6 +2013,8 @@ pub fn wl_pointer_send_axis_source(object: Object, axis_source: u32) anyerror!vo
     object.context.putU32(axis_source);
     object.context.finishWrite(object.id, 6);
 }
+
+//
 // Stop notification for scroll and other axes.
 //
 // For some wl_pointer.axis_source types, a wl_pointer.axis_stop event
@@ -1962,6 +2036,8 @@ pub fn wl_pointer_send_axis_stop(object: Object, time: u32, axis: u32) anyerror!
     object.context.putU32(axis);
     object.context.finishWrite(object.id, 7);
 }
+
+//
 // Discrete step information for scroll and other axes.
 //
 // This event carries the axis value of the wl_pointer.axis event in
@@ -2047,6 +2123,8 @@ pub const wl_keyboard_key_state = enum(u32) {
     released = 0,
     pressed = 1,
 };
+
+//
 // This event provides a file descriptor to the client which can be
 // memory-mapped to provide a keyboard mapping description.
 //
@@ -2060,6 +2138,8 @@ pub fn wl_keyboard_send_keymap(object: Object, format: u32, fd: i32, size: u32) 
     object.context.putU32(size);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // Notification that this seat's keyboard focus is on a certain
 // surface.
 //
@@ -2070,6 +2150,8 @@ pub fn wl_keyboard_send_enter(object: Object, serial: u32, surface: u32, keys: [
     object.context.putArray(keys);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // Notification that this seat's keyboard focus is no longer on
 // a certain surface.
 //
@@ -2082,6 +2164,8 @@ pub fn wl_keyboard_send_leave(object: Object, serial: u32, surface: u32) anyerro
     object.context.putU32(surface);
     object.context.finishWrite(object.id, 2);
 }
+
+//
 // A key was pressed or released.
 // The time argument is a timestamp with millisecond
 // granularity, with an undefined base.
@@ -2094,6 +2178,8 @@ pub fn wl_keyboard_send_key(object: Object, serial: u32, time: u32, key: u32, st
     object.context.putU32(state);
     object.context.finishWrite(object.id, 3);
 }
+
+//
 // Notifies clients that the modifier and/or group state has
 // changed, and it should update its local state.
 //
@@ -2106,6 +2192,8 @@ pub fn wl_keyboard_send_modifiers(object: Object, serial: u32, mods_depressed: u
     object.context.putU32(group);
     object.context.finishWrite(object.id, 4);
 }
+
+//
 // Informs the client about the keyboard's repeat rate and delay.
 //
 // This event is sent as soon as the wl_keyboard object has been created,
@@ -2167,6 +2255,8 @@ fn wl_touch_dispatch(object: Object, opcode: u16) anyerror!void {
         else => {},
     }
 }
+
+//
 // A new touch point has appeared on the surface. This touch point is
 // assigned a unique ID. Future events from this touch point reference
 // this ID. The ID ceases to be valid after a touch up event and may be
@@ -2182,6 +2272,8 @@ pub fn wl_touch_send_down(object: Object, serial: u32, time: u32, surface: u32, 
     object.context.putFixed(y);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // The touch point has disappeared. No further events will be sent for
 // this touch point and the touch point's ID is released and may be
 // reused in a future touch down event.
@@ -2193,6 +2285,8 @@ pub fn wl_touch_send_up(object: Object, serial: u32, time: u32, id: i32) anyerro
     object.context.putI32(id);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // A touch point has changed coordinates.
 //
 pub fn wl_touch_send_motion(object: Object, time: u32, id: i32, x: f32, y: f32) anyerror!void {
@@ -2203,6 +2297,8 @@ pub fn wl_touch_send_motion(object: Object, time: u32, id: i32, x: f32, y: f32) 
     object.context.putFixed(y);
     object.context.finishWrite(object.id, 2);
 }
+
+//
 // Indicates the end of a set of events that logically belong together.
 // A client is expected to accumulate the data in all events within the
 // frame before proceeding.
@@ -2216,6 +2312,8 @@ pub fn wl_touch_send_frame(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 3);
 }
+
+//
 // Sent if the compositor decides the touch stream is a global
 // gesture. No further events are sent to the clients from that
 // particular gesture. Touch cancellation applies to all touch points
@@ -2227,6 +2325,8 @@ pub fn wl_touch_send_cancel(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 4);
 }
+
+//
 // Sent when a touchpoint has changed its shape.
 //
 // This event does not occur on its own. It is sent before a
@@ -2260,6 +2360,8 @@ pub fn wl_touch_send_shape(object: Object, id: i32, major: f32, minor: f32) anye
     object.context.putFixed(minor);
     object.context.finishWrite(object.id, 5);
 }
+
+//
 // Sent when a touchpoint has changed its orientation.
 //
 // This event does not occur on its own. It is sent before a
@@ -2357,6 +2459,8 @@ pub const wl_output_mode = enum(u32) {
     current = 0x1,
     preferred = 0x2,
 };
+
+//
 // The geometry event describes geometric properties of the output.
 // The event is sent when binding to the output object and whenever
 // any of the properties change.
@@ -2383,6 +2487,8 @@ pub fn wl_output_send_geometry(object: Object, x: i32, y: i32, physical_width: i
     object.context.putI32(transform);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // The mode event describes an available mode for the output.
 //
 // The event is sent when binding to the output object and there
@@ -2415,6 +2521,8 @@ pub fn wl_output_send_mode(object: Object, flags: u32, width: i32, height: i32, 
     object.context.putI32(refresh);
     object.context.finishWrite(object.id, 1);
 }
+
+//
 // This event is sent after all other properties have been
 // sent after binding to the output object and after any
 // other property changes done after that. This allows
@@ -2425,6 +2533,8 @@ pub fn wl_output_send_done(object: Object) anyerror!void {
     object.context.startWrite();
     object.context.finishWrite(object.id, 2);
 }
+
+//
 // This event contains scaling geometry information
 // that is not in the geometry event. It may be sent after
 // binding the output object or if the output scale changes
@@ -2571,11 +2681,11 @@ fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!void {
         // get_subsurface
         1 => {
             var id: u32 = try object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var surface: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (surface.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
-            var parent: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var parent: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (parent.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -2675,7 +2785,7 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // place_above
         2 => {
-            var sibling: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var sibling: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (sibling.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -2685,7 +2795,7 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // place_below
         3 => {
-            var sibling: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var sibling: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (sibling.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -2785,7 +2895,7 @@ fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!void {
         // get_xdg_surface
         2 => {
             var id: u32 = try object.context.next_u32();
-            var surface: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var surface: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (surface.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -2812,6 +2922,8 @@ pub const xdg_wm_base_error = enum(u32) {
     invalid_surface_state = 4,
     invalid_positioner = 5,
 };
+
+//
 // The ping event asks the client if it's still alive. Pass the
 // serial specified in the event back to the compositor by sending
 // a "pong" request back with the specified serial. See xdg_wm_base.pong.
@@ -3065,13 +3177,13 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!void {
         // get_popup
         2 => {
             var id: u32 = try object.context.next_u32();
-            var parent: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var parent: ?Object = object.context.objects.get(try object.context.next_u32());
             if (parent != null) {
                 if (parent.?.dispatch != xdg_surface_dispatch) {
                     return error.ObjectWrongType;
                 }
             }
-            var positioner: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var positioner: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (positioner.dispatch != xdg_positioner_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -3105,6 +3217,8 @@ pub const xdg_surface_error = enum(u32) {
     already_constructed = 2,
     unconfigured_buffer = 3,
 };
+
+//
 // The configure event marks the end of a configure sequence. A configure
 // sequence is a set of one or more events configuring the state of the
 // xdg_surface, including the final xdg_surface.configure event.
@@ -3258,7 +3372,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_parent
         1 => {
-            var parent: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var parent: ?Object = object.context.objects.get(try object.context.next_u32());
             if (parent != null) {
                 if (parent.?.dispatch != xdg_toplevel_dispatch) {
                     return error.ObjectWrongType;
@@ -3284,7 +3398,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // show_window_menu
         4 => {
-            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var seat: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (seat.dispatch != wl_seat_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -3297,7 +3411,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // move
         5 => {
-            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var seat: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (seat.dispatch != wl_seat_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -3308,7 +3422,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // resize
         6 => {
-            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var seat: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (seat.dispatch != wl_seat_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -3354,7 +3468,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // set_fullscreen
         11 => {
-            var output: ?Object = object.context.objects.getValue(try object.context.next_u32());
+            var output: ?Object = object.context.objects.get(try object.context.next_u32());
             if (output != null) {
                 if (output.?.dispatch != wl_output_dispatch) {
                     return error.ObjectWrongType;
@@ -3408,6 +3522,8 @@ pub const xdg_toplevel_state = enum(u32) {
     tiled_top = 7,
     tiled_bottom = 8,
 };
+
+//
 // This configure event asks the client to resize its toplevel surface or
 // to change its state. The configured state should not be applied
 // immediately. See xdg_surface.configure for details.
@@ -3435,6 +3551,8 @@ pub fn xdg_toplevel_send_configure(object: Object, width: i32, height: i32, stat
     object.context.putArray(states);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // The close event is sent by the compositor when the user
 // wants the surface to be closed. This should be equivalent to
 // the user clicking the close button in client-side decorations,
@@ -3495,7 +3613,7 @@ fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!void {
         },
         // grab
         1 => {
-            var seat: Object = object.context.objects.getValue(try object.context.next_u32()).?;
+            var seat: Object = object.context.objects.get(try object.context.next_u32()).?;
             if (seat.dispatch != wl_seat_dispatch) {
                 return error.ObjectWrongType;
             }
@@ -3511,6 +3629,8 @@ fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!void {
 pub const xdg_popup_error = enum(u32) {
     invalid_grab = 0,
 };
+
+//
 // This event asks the popup surface to configure itself given the
 // configuration. The configured state should not be applied immediately.
 // See xdg_surface.configure for details.
@@ -3527,6 +3647,8 @@ pub fn xdg_popup_send_configure(object: Object, x: i32, y: i32, width: i32, heig
     object.context.putI32(height);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 // The popup_done event is sent out when a popup is dismissed by the
 // compositor. The client should destroy the xdg_popup object at this
 // point.
@@ -3590,6 +3712,8 @@ fn zwp_linux_dmabuf_v1_dispatch(object: Object, opcode: u16) anyerror!void {
         else => {},
     }
 }
+
+//
 //         This event advertises one buffer format that the server supports.
 //         All the supported formats are advertised once when the client
 //         binds to this interface. A roundtrip after binding guarantees
@@ -3608,6 +3732,8 @@ pub fn zwp_linux_dmabuf_v1_send_format(object: Object, format: u32) anyerror!voi
     object.context.putU32(format);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 //         This event advertises the formats that the server supports, along with
 //         the modifiers supported for each format. All the supported modifiers
 //         for all the supported formats are advertised once when the client
@@ -3742,6 +3868,8 @@ pub const zwp_linux_buffer_params_v1_flags = enum(u32) {
     interlaced = 2,
     bottom_first = 4,
 };
+
+//
 //         This event indicates that the attempted buffer creation was
 //         successful. It provides the new wl_buffer referencing the dmabuf(s).
 //
@@ -3753,6 +3881,8 @@ pub fn zwp_linux_buffer_params_v1_send_created(object: Object, buffer: u32) anye
     object.context.putU32(buffer);
     object.context.finishWrite(object.id, 0);
 }
+
+//
 //         This event indicates that the attempted buffer creation has
 //         failed. It usually means that one of the dmabuf constraints
 //         has not been fulfilled.
