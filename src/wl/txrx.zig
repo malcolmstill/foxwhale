@@ -1,4 +1,5 @@
 const std = @import("std");
+const os = std.os;
 const linux = std.os.linux;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
@@ -27,7 +28,7 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
 
     var rc: usize = 0;
     while (true) {
-        rc = linux.recvmsg(fd, &msg, linux.MSG_DONTWAIT | linux.MSG_CMSG_CLOEXEC);
+        rc = linux.recvmsg(fd, @ptrCast(*std.x.os.Socket.Message, &msg), linux.MSG_DONTWAIT | linux.MSG_CMSG_CLOEXEC);
         switch (linux.getErrno(rc)) {
             0 => break,
             linux.EINTR => continue,
@@ -97,31 +98,7 @@ pub fn sendMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
         .__pad2 = 0,
     };
 
-    var rc: usize = 0;
-    while (true) {
-        rc = linux.sendmsg(fd, &msg, linux.MSG_NOSIGNAL);
-        switch (linux.getErrno(rc)) {
-            0 => break,
-            linux.EINTR => continue,
-            linux.EINVAL => unreachable,
-            linux.EFAULT => unreachable,
-            linux.EAGAIN => if (std.event.Loop.instance) |loop| {
-                loop.waitUntilFdReadable(fd);
-                continue;
-            } else {
-                return error.WouldBlock;
-            },
-            linux.EBADF => unreachable, // Always a race condition.
-            linux.EIO => return error.InputOutput,
-            linux.EISDIR => return error.IsDir,
-            linux.ENOBUFS => return error.SystemResources,
-            linux.ENOMEM => return error.SystemResources,
-            linux.ECONNRESET => return error.ConnectionResetByPeer,
-            else => |err| return error.Unexpected,
-        }
-    }
-
-    return @intCast(usize, rc);
+    return try os.sendmsg(fd, msg, linux.MSG_NOSIGNAL);
 }
 
 // Probably not portable stuff is below
