@@ -17,7 +17,7 @@ pub const Output = struct {
         while (client_it.next()) |client| {
             var obj_it = client.context.objects.iterator();
             while (obj_it.next()) |wl_object_entry| {
-                var wl_object = wl_object_entry.value;
+                var wl_object = wl_object_entry.value_ptr;
                 if (@ptrToInt(self) == wl_object.container) {
                     // TODO: in release mode do not error
                     const wl_registry_id = client.wl_registry_id orelse return error.ClientHasNoRegistry;

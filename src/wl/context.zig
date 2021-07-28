@@ -157,7 +157,7 @@ pub fn Context(comptime T: type) type {
         }
 
         pub fn unregister(self: *Self, object: Object) !void {
-            if (self.objects.remove(object.id)) |x| {
+            if (self.objects.remove(object.id)) {
                 // std.debug.warn("unregistered: {}\n", .{x.key});
             } else {
                 std.debug.warn("attempted to deregister object ({}) that didn't exist\n", .{object.id});

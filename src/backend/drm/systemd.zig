@@ -54,7 +54,7 @@ pub const Logind = struct {
     pub fn close(self: *Logind, fd: i32) !void {
         var x = try releaseDevice(self.bus, self.session_path, fd);
         var y = linux.close(fd);
-        if (self.devices.remove(fd)) |path| {
+        if (self.devices.fetchRemove(fd)) |path| {
             std.heap.c_allocator.free(path.value);
         }
     }
