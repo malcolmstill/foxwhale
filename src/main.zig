@@ -22,9 +22,8 @@ pub fn main() anyerror!void {
     std.debug.warn("==> backend: {s}\n", .{backend.name()});
 
     var server = try Server.init();
-    defer {
-        server.deinit();
-    }
+    defer server.deinit();
+
     try server.addToEpoll();
 
     try render.init();
