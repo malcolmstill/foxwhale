@@ -2,60 +2,126 @@ const std = @import("std");
 const os = std.os;
 const linux = os.linux;
 
-var epfd: i32 = -1;
-var events: [256]linux.epoll_event = undefined;
+pub fn Epoll(comptime Event: type) type {
+    return struct {
+        fd: i32,
+        events: [256]linux.epoll_event = undefined,
+        timeout: i32,
+        pair: ?Pair = null,
 
-pub fn init() !void {
-    epfd = try os.epoll_create1(linux.EPOLL_CLOEXEC);
-}
+        const Self = @This();
 
-pub fn wait(timeout: i32) usize {
-    return os.epoll_wait(epfd, events[0..events.len], timeout);
-}
+        pub fn init(timeout: i32) !Self {
+            const epfd = try os.epoll_create1(linux.EPOLL_CLOEXEC);
 
-pub fn addFd(fd: i32, dis: *Dispatchable) !void {
-    var ev = linux.epoll_event{
-        .events = linux.EPOLLIN,
-        .data = linux.epoll_data{
-            .ptr = @ptrToInt(dis),
-        },
+            return Self{
+                .fd = epfd,
+                .timeout = timeout,
+            };
+        }
+
+        fn deinit(self: *Self) void {
+            os.close(self.fd);
+        }
+
+        pub fn next(self: *Self) !?Event {
+            if (self.pair) |*pair| {
+                if (pair.i == pair.n) {
+                    self.pair = null;
+                    return null;
+                } else {
+                    defer pair.i += 1;
+                    return try self.dispatch(pair.i);
+                }
+            } else {
+                const n = os.epoll_wait(self.fd, self.events[0..], self.timeout);
+
+                if (n == 0) return null;
+
+                self.pair = Pair{
+                    .i = 1,
+                    .n = n,
+                };
+
+                return try self.dispatch(0);
+            }
+        }
+
+        pub fn addFd(self: *Self, fd: i32, dis: *Dispatchable) !void {
+            var ev = linux.epoll_event{
+                .events = linux.EPOLLIN,
+                .data = linux.epoll_data{
+                    .ptr = @ptrToInt(dis),
+                },
+            };
+
+            try os.epoll_ctl(self.fd, os.EPOLL_CTL_ADD, fd, &ev);
+        }
+
+        pub fn removeFd(self: *Self, fd: i32) !void {
+            var ev = linux.epoll_event{
+                .events = linux.EPOLLIN,
+                .data = linux.epoll_data{
+                    .ptr = undefined,
+                },
+            };
+
+            try os.epoll_ctl(self.fd, os.EPOLL_CTL_DEL, fd, &ev);
+        }
+
+        // For a given event index that has activity
+        // call the Dispatchable function
+        fn dispatch(self: *Self, i: usize) !Event {
+            var ev = @intToPtr(*Dispatchable, self.events[i].data.ptr);
+            return try ev.dispatch(self.events[i].events);
+        }
+
+        // The Dispatchable interface allows for dispatching
+        // on epoll activity. A struct containing a Dispatchable
+        // can define a function that gets set as impl. The impl
+        // will be passed a pointer to container. The container
+        // will typically be (a pointer to) the struct itself.
+        pub const Dispatchable = struct {
+            impl: fn (*DispatchableSelf, usize) anyerror!Event,
+
+            const DispatchableSelf = @This();
+
+            pub fn dispatch(self: *DispatchableSelf, event_type: usize) !Event {
+                return try self.impl(self, event_type);
+            }
+        };
     };
-
-    try os.epoll_ctl(epfd, os.EPOLL_CTL_ADD, fd, &ev);
 }
 
-pub fn removeFd(fd: i32) !void {
-    var ev = os.linux.epoll_event{
-        .events = linux.EPOLLIN,
-        .data = linux.epoll_data{
-            .ptr = undefined,
-        },
-    };
-
-    try os.epoll_ctl(epfd, os.EPOLL_CTL_DEL, fd, &ev);
-}
-
-// For a given event index that has activity
-// call the Dispatchable function
-pub fn dispatch(i: usize) !void {
-    var ev = @intToPtr(*Dispatchable, events[i].data.ptr);
-    try ev.dispatch(events[i].events);
-}
-
-// The Dispatchable interface allows for dispatching
-// on epoll activity. A struct containing a Dispatchable
-// can define a function that gets set as impl. The impl
-// will be passed a pointer to container. The container
-// will typically be (a pointer to) the struct itself.
-pub const Dispatchable = struct {
-    impl: fn (*Self, usize) anyerror!void,
-
-    const Self = @This();
-
-    pub fn dispatch(self: *Self, event_type: usize) !void {
-        // self.impl(self, event_type) catch |err| {
-        //     std.debug.warn("Error dispatching epoll: {}\n", .{ err });
-        // };
-        try self.impl(self, event_type);
-    }
+const Pair = struct {
+    i: usize,
+    n: usize,
 };
+
+test "epoll is generic" {
+    const SubsystemTypes = enum {
+        Input,
+        Client,
+    };
+
+    const ClientEvent = union {
+        commit: usize,
+    };
+
+    const InputEvent = union {
+        mouse_button: usize,
+        keypress: usize,
+    };
+
+    const Event = union(SubsystemTypes) {
+        Input: InputEvent,
+        Client: ClientEvent,
+    };
+
+    var e = try Epoll(Event).init(0);
+    defer e.deinit();
+
+    while (try e.next()) |ev| {
+        //
+    }
+}
