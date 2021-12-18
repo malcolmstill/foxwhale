@@ -1,0 +1,61 @@
+const std = @import("std");
+const os = std.os;
+const linux = os.linux;
+
+var epfd: i32 = -1;
+var events: [256]linux.epoll_event = undefined;
+
+pub fn init() !void {
+    epfd = try os.epoll_create1(linux.EPOLL_CLOEXEC);
+}
+
+pub fn wait(timeout: i32) usize {
+    return os.epoll_wait(epfd, events[0..events.len], timeout);
+}
+
+pub fn addFd(fd: i32, dis: *Dispatchable) !void {
+    var ev = linux.epoll_event{
+        .events = linux.EPOLLIN,
+        .data = linux.epoll_data{
+            .ptr = @ptrToInt(dis),
+        },
+    };
+
+    try os.epoll_ctl(epfd, os.EPOLL_CTL_ADD, fd, &ev);
+}
+
+pub fn removeFd(fd: i32) !void {
+    var ev = os.linux.epoll_event{
+        .events = linux.EPOLLIN,
+        .data = linux.epoll_data{
+            .ptr = undefined,
+        },
+    };
+
+    try os.epoll_ctl(epfd, os.EPOLL_CTL_DEL, fd, &ev);
+}
+
+// For a given event index that has activity
+// call the Dispatchable function
+pub fn dispatch(i: usize) !void {
+    var ev = @intToPtr(*Dispatchable, events[i].data.ptr);
+    try ev.dispatch(events[i].events);
+}
+
+// The Dispatchable interface allows for dispatching
+// on epoll activity. A struct containing a Dispatchable
+// can define a function that gets set as impl. The impl
+// will be passed a pointer to container. The container
+// will typically be (a pointer to) the struct itself.
+pub const Dispatchable = struct {
+    impl: fn (*Self, usize) anyerror!void,
+
+    const Self = @This();
+
+    pub fn dispatch(self: *Self, event_type: usize) !void {
+        // self.impl(self, event_type) catch |err| {
+        //     std.debug.warn("Error dispatching epoll: {}\n", .{ err });
+        // };
+        try self.impl(self, event_type);
+    }
+};
