@@ -117,32 +117,6 @@ const Pair = struct {
     n: usize,
 };
 
-test "epoll is generic" {
-    const SubsystemTypes = enum {
-        Input,
-        Client,
-    };
-
-    const ClientEvent = union {
-        commit: usize,
-    };
-
-    const InputEvent = union {
-        mouse_button: usize,
-        keypress: usize,
-    };
-
-    const Event = union(SubsystemTypes) {
-        Input: InputEvent,
-        Client: ClientEvent,
-    };
-
-    var e = try Epoll(Event).init(0);
-    defer e.deinit();
-
-    // e.addFd(fd, Client, );
-
-    while (try e.next()) |ev| {
-        //
-    }
+test "epoll pull test" {
+    _ = @import("epoll_pull_test.zig");
 }
