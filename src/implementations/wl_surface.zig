@@ -1,7 +1,7 @@
 const std = @import("std");
 const linux = std.os.linux;
 const prot = @import("../protocols.zig");
-const renderer = @import("../renderer.zig");
+const Renderer = @import("../renderer.zig").Renderer;
 const compositor = @import("../compositor.zig");
 const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
@@ -26,7 +26,7 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
 
     if (window.texture) |texture| {
         window.texture = null;
-        try renderer.releaseTexture(texture);
+        try Renderer.releaseTexture(texture);
     }
 
     // We need to set pending here (rather than in ack_configure) because

@@ -1,6 +1,6 @@
 const std = @import("std");
 const prot = @import("protocols.zig");
-const renderer = @import("renderer.zig");
+const Renderer = @import("renderer.zig").Renderer;
 const compositor = @import("compositor.zig");
 const Client = @import("client.zig").Client;
 const Rectangle = @import("rectangle.zig").Rectangle;
@@ -9,6 +9,7 @@ const Positioner = @import("positioner.zig").Positioner;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 const View = @import("view.zig").View;
+const Mat4x4 = @import("math.zig").Mat4x4;
 
 const MAX_WINDOWS = 512;
 pub var WINDOWS: [MAX_WINDOWS]Window = undefined;
@@ -101,26 +102,26 @@ pub const Window = struct {
         return &self.state[self.stateIndex +% 1];
     }
 
-    pub fn render(self: *Self, x: i32, y: i32) anyerror!void {
+    pub fn render(self: *Self, output_width: i32, output_height: i32, renderer: *Renderer, x: i32, y: i32) anyerror!void {
         var it = self.forwardIterator();
         while (it.next()) |window| {
             window.ready_for_callback = true;
             if (window == self) {
-                const texture = window.texture orelse continue;
-                try renderer.scale(1.0, 1.0);
-                try renderer.translate(@intToFloat(f32, x + window.absoluteX()), @intToFloat(f32, y + window.absoluteY()));
-                try renderer.setUniformMatrix(renderer.PROGRAM, "origin", renderer.identity);
-                try renderer.setUniformMatrix(renderer.PROGRAM, "originInverse", renderer.identity);
-                try renderer.setUniformFloat(renderer.PROGRAM, "opacity", 1.0);
-                renderer.setGeometry(window.width, window.height);
-                try renderer.renderSurface(renderer.PROGRAM, texture);
+                const texture = window.texture orelse continue; // TODO: maybe we should not render subwindows if parent window not ready
+                const program = try renderer.useProgram("window");
+                try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ 1.0, 1.0, 1.0, 1.0 }).data);
+                try Renderer.setUniformMatrix(program, "translate", Mat4x4(f32).translate([_]f32{ @intToFloat(f32, x + window.absoluteX()), @intToFloat(f32, y + window.absoluteY()), 0.0, 1.0 }).data);
+                try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).identity().data);
+                try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).identity().data);
+                try Renderer.setUniformFloat(program, "opacity", 1.0);
+                try renderer.renderSurface(output_width, output_height, program, texture, window.width, window.height);
             } else {
-                try window.render(x, y);
+                try window.render(output_width, output_height, renderer, x, y);
             }
         }
 
         if (self.popup) |popup| {
-            try popup.render(x, y);
+            try popup.render(output_width, output_height, renderer, x, y);
         }
     }
 
@@ -622,7 +623,7 @@ pub const Window = struct {
             // Note that while this can fail, we're doing
             // the bits that can fail after deinitialising
             // enough so that this window could be reused
-            try renderer.releaseTexture(texture);
+            try Renderer.releaseTexture(texture);
         }
     }
 };

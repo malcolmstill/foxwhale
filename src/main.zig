@@ -1,4 +1,8 @@
 pub var OUTPUT: *CompositorOutput = undefined;
+const Renderer = @import("renderer.zig").Renderer;
+
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+const allocator = &gpa.allocator;
 
 pub fn main() anyerror!void {
     try epoll.init();
@@ -11,7 +15,7 @@ pub fn main() anyerror!void {
 
     var o1 = try out.newOutput(&backend, 640, 480);
     defer {
-        o1.deinit() catch |err| {};
+        o1.deinit() catch {};
     }
     try o1.addToEpoll();
     OUTPUT = o1;
@@ -26,8 +30,10 @@ pub fn main() anyerror!void {
 
     try server.addToEpoll();
 
-    try render.init();
-    defer render.deinit();
+    var renderer = Renderer.init(allocator);
+    defer renderer.deinit();
+
+    try renderer.initShaders();
 
     var cursor = try Cursor.init();
     defer cursor.deinit();
@@ -48,10 +54,12 @@ pub fn main() anyerror!void {
         var out_it = out.OUTPUTS.iterator();
         while (out_it.next()) |output| {
             if (output.isPageFlipScheduled() == false) {
+                const output_width = output.getWidth();
+                const output_height = output.getHeight();
                 try output.begin();
 
-                try render.clear();
-                try render.render(output);
+                try renderer.clear();
+                try renderer.render(output);
 
                 for (output.data.views) |*view| {
                     if (view.visible() == false) {
@@ -60,12 +68,15 @@ pub fn main() anyerror!void {
 
                     var it = view.back();
                     while (it) |window| : (it = window.toplevel.next) {
-                        try window.render(0, 0);
+                        try window.render(output_width, output_height, &renderer, 0, 0);
                     }
                 }
 
                 if (views.CURRENT_VIEW.output == output) {
                     try cursor.render(
+                        output_width,
+                        output_height,
+                        &renderer,
                         @floatToInt(i32, compositor.COMPOSITOR.pointer_x),
                         @floatToInt(i32, compositor.COMPOSITOR.pointer_y),
                     );
