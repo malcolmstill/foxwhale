@@ -13,5 +13,4 @@ void main()
 {
     Texcoord = texcoord;
     gl_Position = ortho * translate * originInverse * scale * origin * vec4(position, 0.0, 1.0);
-    // gl_Position = ortho * vec4(position, 0.0, 1.0);
 }

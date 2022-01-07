@@ -60,6 +60,7 @@ pub fn main() anyerror!void {
 
                 try renderer.clear();
                 try renderer.render(output);
+                try renderer.renderBackground(output_width, output_height);
 
                 for (output.data.views) |*view| {
                     if (view.visible() == false) {
