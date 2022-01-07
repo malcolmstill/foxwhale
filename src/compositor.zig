@@ -38,7 +38,7 @@ const Compositor = struct {
     }
 
     pub fn keyboard(self: *Self, time: u32, button: u32, action: u32) !void {
-        if (button == 224) {
+        if (button == 224 or button == 25) { // 25 = p
             self.running = false;
         }
 

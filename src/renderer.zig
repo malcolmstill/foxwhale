@@ -2,7 +2,7 @@ const std = @import("std");
 const mem = std.mem;
 const Mat4x4 = @import("math.zig").Mat4x4;
 const StringHashMap = std.hash_map.StringHashMap;
-const vertex_shader_source = @embedFile("shaders/vertex.glsl");
+// const vertex_shader_source = ;
 const fragment_shader_source = @embedFile("shaders/fragment.glsl");
 const windows = @import("window.zig");
 const Window = @import("window.zig").Window;
@@ -25,8 +25,15 @@ pub const Renderer = struct {
     }
 
     pub fn initShaders(self: *Renderer) !void {
-        const window_program = try createProgram(vertex_shader_source, fragment_shader_source);
-        try self.shaders.put("window", window_program);
+        try self.shaders.put("window", try createProgram(
+            @embedFile("shaders/window/vertex.glsl"),
+            @embedFile("shaders/window/fragment.glsl"),
+        ));
+
+        try self.shaders.put("checker", try createProgram(
+            @embedFile("shaders/checker/vertex.glsl"),
+            @embedFile("shaders/checker/fragment.glsl"),
+        ));
     }
 
     pub fn deinit(self: *Renderer) void {
@@ -61,6 +68,63 @@ pub const Renderer = struct {
         try checkGLError();
 
         c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
+        try checkGLError();
+    }
+
+    pub fn renderBackground(self: *Renderer, output_width: i32, output_height: i32) !void {
+        const program = try self.useProgram("checker");
+        try Renderer.setUniformFloat(program, "size", 30.0);
+
+        const rectangle = setGeometry(output_width, output_height);
+
+        const ortho = orthographicProjection(
+            0.0,
+            @intToFloat(f32, output_width),
+            @intToFloat(f32, output_height),
+            0.0,
+            -1.0,
+            1.0,
+        );
+
+        try setUniformMatrix(program, "ortho", ortho.data);
+
+        var vbo: u32 = undefined;
+
+        c.glGenBuffers(1, &vbo);
+        try checkGLError();
+
+        c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
+        try checkGLError();
+
+        c.glBufferData(c.GL_ARRAY_BUFFER, 4 * rectangle.len, &rectangle[0], c.GL_STATIC_DRAW);
+        try checkGLError();
+
+        var vao: u32 = undefined;
+        c.glGenVertexArrays(1, &vao);
+        try checkGLError();
+
+        c.glBindVertexArray(vao);
+        try checkGLError();
+
+        c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
+        try checkGLError();
+
+        try setVertexAttrib(program, "position", 0);
+        try setVertexAttrib(program, "texcoord", 8);
+
+        c.glEnable(c.GL_BLEND);
+        try checkGLError();
+
+        c.glBindVertexArray(vao);
+        try checkGLError();
+
+        c.glDrawArrays(c.GL_TRIANGLES, 0, rectangle.len / 4);
+        try checkGLError();
+
+        c.glDeleteVertexArrays(1, &vao);
+        try checkGLError();
+
+        c.glDeleteBuffers(1, &vbo);
         try checkGLError();
     }
 
@@ -274,7 +338,7 @@ fn compileShader(source: []const u8, shader_type: c_uint) !c_uint {
         c.glGetShaderInfoLog(shader, log_length, null, log[0..]);
         try checkGLError();
 
-        std.debug.warn("log: {any}\n", .{log[0..std.math.min(log.len, @intCast(usize, log_length))]});
+        std.debug.warn("log: {s}\n", .{log[0..std.math.min(log.len, @intCast(usize, log_length))]});
 
         return error.FailedToCompileShader;
     }
@@ -341,27 +405,6 @@ pub fn setGeometry(width: i32, height: i32) [28]f32 {
 
     return rectangle;
 }
-
-// pub fn translate(x: f32, y: f32) !void {
-//     MATRIX = identity;
-//     MATRIX[3] = x;
-//     MATRIX[7] = y;
-//     try setUniformMatrix(PROGRAM, "translate", MATRIX);
-// }
-
-// pub fn scale(x: f32, y: f32) !void {
-//     MATRIX = identity;
-//     MATRIX[0] = x;
-//     MATRIX[5] = y;
-//     try setUniformMatrix(PROGRAM, "scale", MATRIX);
-// }
-
-// var MATRIX: [16]f32 = [_]f32{
-//     1.0, 0.0, 0.0, 0.0,
-//     0.0, 1.0, 0.0, 0.0,
-//     0.0, 0.0, 1.0, 0.0,
-//     0.0, 0.0, 0.0, 1.0,
-// };
 
 fn checkGLError() !void {
     var err = c.glGetError();
