@@ -1,4 +1,7 @@
 const std = @import("std");
+const mem = std.mem;
+const Mat4x4 = @import("math.zig").Mat4x4;
+const StringHashMap = std.hash_map.StringHashMap;
 const vertex_shader_source = @embedFile("shaders/vertex.glsl");
 const fragment_shader_source = @embedFile("shaders/fragment.glsl");
 const windows = @import("window.zig");
@@ -12,91 +15,225 @@ const c = @cImport({
 });
 const egl = @import("backend/drm/egl.zig");
 
-var ortho: [16]f32 = undefined;
-var rectangle: [28]f32 = undefined;
-pub var PROGRAM: c_uint = undefined;
+pub const Renderer = struct {
+    shaders: StringHashMap(c_uint),
 
-pub fn clear() !void {
-    c.glClearColor(0.3, 0.3, 0.36, 0.0);
-    try checkGLError();
+    pub fn init(allocator: *mem.Allocator) Renderer {
+        return Renderer{
+            .shaders = StringHashMap(c_uint).init(allocator),
+        };
+    }
 
-    c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
-    try checkGLError();
-}
+    pub fn initShaders(self: *Renderer) !void {
+        const window_program = try createProgram(vertex_shader_source, fragment_shader_source);
+        try self.shaders.put("window", window_program);
+    }
 
-pub fn render(output: *CompositorOutput) !void {
-    var width = output.getWidth();
-    var height = output.getHeight();
+    pub fn deinit(self: *Renderer) void {
+        var it = self.shaders.iterator();
+        while (it.next()) |kv| {
+            c.glDeleteProgram(kv.value_ptr.*);
+        }
+    }
 
-    c.glUseProgram(PROGRAM);
-    try checkGLError();
+    pub fn useProgram(self: *Renderer, name: []const u8) !c_uint {
+        const program = self.shaders.get(name) orelse return error.NoSuchProgram;
 
-    c.glEnable(c.GL_BLEND);
-    try checkGLError();
+        c.glUseProgram(program);
+        try checkGLError();
 
-    c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
-    try checkGLError();
+        return program;
+    }
 
-    orthographicProjection(&ortho, 0.0, @intToFloat(f32, width), 0.0, @intToFloat(f32, height), -1.0, 1.0);
+    pub fn clear(self: *Renderer) !void {
+        c.glClearColor(0.3, 0.3, 0.36, 0.0);
+        try checkGLError();
 
-    try setUniformMatrix(PROGRAM, "ortho", ortho);
-}
+        c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
+        try checkGLError();
+    }
 
-pub fn renderSurface(program: c_uint, texture: u32) !void {
-    var vbo: u32 = undefined;
+    pub fn render(self: *Renderer, output: *CompositorOutput) !void {
+        var width = output.getWidth();
+        var height = output.getHeight();
 
-    c.glGenBuffers(1, &vbo);
-    try checkGLError();
+        c.glEnable(c.GL_BLEND);
+        try checkGLError();
 
-    c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
-    try checkGLError();
+        c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
+        try checkGLError();
+    }
 
-    c.glBufferData(c.GL_ARRAY_BUFFER, 4 * rectangle.len, &rectangle[0], c.GL_STATIC_DRAW);
-    try checkGLError();
+    pub fn renderSurface(self: *Renderer, output_width: i32, output_height: i32, program: c_uint, texture: u32, width: i32, height: i32) !void {
+        const rectangle = setGeometry(width, height);
 
-    var vao: u32 = undefined;
-    c.glGenVertexArrays(1, &vao);
-    try checkGLError();
+        const ortho = orthographicProjection(
+            0.0,
+            @intToFloat(f32, output_width),
+            @intToFloat(f32, output_height),
+            0.0,
+            -1.0,
+            1.0,
+        );
 
-    c.glBindVertexArray(vao);
-    try checkGLError();
+        try setUniformMatrix(program, "ortho", ortho.data);
 
-    c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
-    try checkGLError();
+        var vbo: u32 = undefined;
 
-    try setVertexAttrib(program, "position", 0);
-    try setVertexAttrib(program, "texcoord", 8);
+        c.glGenBuffers(1, &vbo);
+        try checkGLError();
 
-    c.glEnable(c.GL_BLEND);
-    try checkGLError();
+        c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
+        try checkGLError();
 
-    c.glBindVertexArray(vao);
-    try checkGLError();
+        c.glBufferData(c.GL_ARRAY_BUFFER, 4 * rectangle.len, &rectangle[0], c.GL_STATIC_DRAW);
+        try checkGLError();
 
-    c.glBindTexture(c.GL_TEXTURE_2D, texture);
-    try checkGLError();
+        var vao: u32 = undefined;
+        c.glGenVertexArrays(1, &vao);
+        try checkGLError();
 
-    c.glDrawArrays(c.GL_TRIANGLES, 0, rectangle.len / 4);
-    try checkGLError();
+        c.glBindVertexArray(vao);
+        try checkGLError();
 
-    c.glDeleteVertexArrays(1, &vao);
-    try checkGLError();
+        c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
+        try checkGLError();
 
-    c.glDeleteBuffers(1, &vbo);
-    try checkGLError();
-}
+        try setVertexAttrib(program, "position", 0);
+        try setVertexAttrib(program, "texcoord", 8);
 
-pub fn init() !void {
-    PROGRAM = try initShaders();
-}
+        c.glEnable(c.GL_BLEND);
+        try checkGLError();
 
-pub fn deinit() void {
-    c.glDeleteProgram(PROGRAM);
-}
+        c.glBindVertexArray(vao);
+        try checkGLError();
 
-fn initShaders() !c_uint {
-    var vertex_shader = try compileShader(vertex_shader_source, c.GL_VERTEX_SHADER);
-    var fragment_shader = try compileShader(fragment_shader_source, c.GL_FRAGMENT_SHADER);
+        c.glBindTexture(c.GL_TEXTURE_2D, texture);
+        try checkGLError();
+
+        c.glDrawArrays(c.GL_TRIANGLES, 0, rectangle.len / 4);
+        try checkGLError();
+
+        c.glDeleteVertexArrays(1, &vao);
+        try checkGLError();
+
+        c.glDeleteBuffers(1, &vbo);
+        try checkGLError();
+    }
+
+    pub fn setUniformMatrix(program: c_uint, location_string: []const u8, matrix: [4][4]f32) !void {
+        var location = c.glGetUniformLocation(program, location_string.ptr);
+        try checkGLError();
+        if (location == -1) {
+            return error.UniformNotFound;
+        }
+
+        c.glUniformMatrix4fv(location, 1, c.GL_TRUE, &matrix[0]);
+        try checkGLError();
+    }
+
+    pub fn setUniformFloat(program: c_uint, location_string: []const u8, value: f32) !void {
+        var location = c.glGetUniformLocation(program, location_string.ptr);
+        try checkGLError();
+        if (location == -1) {
+            return error.UniformNotFound;
+        }
+        c.glUniform1f(location, value);
+        try checkGLError();
+    }
+
+    fn setVertexAttrib(program: c_uint, attribute_string: []const u8, offset: c_uint) !void {
+        var attribute = c.glGetAttribLocation(program, attribute_string.ptr);
+        try checkGLError();
+        if (attribute == -1) {
+            return error.AttributeNotFound;
+        }
+        c.glEnableVertexAttribArray(@intCast(c_uint, attribute));
+        try checkGLError();
+        c.glVertexAttribPointer(@intCast(c_uint, attribute), 2, c.GL_FLOAT, c.GL_FALSE, 16, @intToPtr(*allowzero c_uint, offset));
+        try checkGLError();
+    }
+
+    pub fn makeTexture(width: i32, height: i32, stride: i32, format: u32, data: []const u8) !u32 {
+        if (stride * height > data.len) {
+            return error.NotEnoughTextureDataForDimensions;
+        }
+
+        var texture: u32 = undefined;
+        var err: c_uint = undefined;
+
+        c.glGenTextures(1, &texture);
+        try checkGLError();
+
+        c.glBindTexture(c.GL_TEXTURE_2D, texture);
+        try checkGLError();
+
+        c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_LINEAR);
+        try checkGLError();
+
+        c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_LINEAR);
+        try checkGLError();
+
+        c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_CLAMP_TO_EDGE);
+        try checkGLError();
+
+        c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_T, c.GL_CLAMP_TO_EDGE);
+        try checkGLError();
+
+        c.glTexImage2D(c.GL_TEXTURE_2D, 0, c.GL_RGBA, width, height, 0, c.GL_RGBA, c.GL_UNSIGNED_BYTE, data.ptr);
+        try checkGLError();
+
+        return texture;
+    }
+
+    pub fn makeDmaTexture(image: *c_void, width: i32, height: i32, format: u32) !u32 {
+        switch (main.OUTPUT.backend) {
+            .DRM => |drm| {
+                var texture: u32 = undefined;
+                var err: c_uint = undefined;
+
+                c.glGenTextures(1, &texture);
+                try checkGLError();
+
+                c.glBindTexture(c.GL_TEXTURE_2D, texture);
+                try checkGLError();
+
+                c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_LINEAR);
+                try checkGLError();
+
+                c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_LINEAR);
+                try checkGLError();
+
+                c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_CLAMP_TO_EDGE);
+                try checkGLError();
+
+                c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_T, c.GL_CLAMP_TO_EDGE);
+                try checkGLError();
+
+                if (egl.glEGLImageTargetTexture2DOES) |glEGLImageTargetTexture2DOES| {
+                    glEGLImageTargetTexture2DOES(c.GL_TEXTURE_2D, image);
+                } else {
+                    return error.EGLImageTargetTexture2DOESNotAvailable;
+                }
+                try checkGLError();
+
+                return texture;
+            },
+            else => {
+                return error.AttemptedToMakeDmaTextureWithNoEGLContext;
+            },
+        }
+    }
+
+    pub fn releaseTexture(texture: u32) !void {
+        c.glDeleteTextures(1, &texture);
+        try checkGLError();
+    }
+};
+
+fn createProgram(vertex_source: []const u8, fragment_source: []const u8) !c_uint {
+    var vertex_shader = try compileShader(vertex_source, c.GL_VERTEX_SHADER);
+    var fragment_shader = try compileShader(fragment_source, c.GL_FRAGMENT_SHADER);
 
     var program = c.glCreateProgram();
     try checkGLError();
@@ -145,26 +282,33 @@ fn compileShader(source: []const u8, shader_type: c_uint) !c_uint {
     return shader;
 }
 
-fn orthographicProjection(m: *[16]f32, left: f32, right: f32, top: f32, bottom: f32, near: f32, far: f32) void {
-    m[0] = 2.0 / (right - left);
-    m[1] = 0.0;
-    m[2] = 0.0;
-    m[3] = -((right + left) / (right - left));
-    m[4] = 0.0;
-    m[5] = 2.0 / (top - bottom);
-    m[6] = 0.0;
-    m[7] = -((top + bottom) / (top - bottom));
-    m[8] = 0.0;
-    m[9] = 0.0;
-    m[10] = -2.0 / (far - near);
-    m[11] = -((far + near) / (far - near));
-    m[12] = 0.0;
-    m[13] = 0.0;
-    m[14] = 0.0;
-    m[15] = 1.0;
+// TODO: This looks column-major, but transpose is set to true?
+fn orthographicProjection(left: f32, right: f32, bottom: f32, top: f32, near: f32, far: f32) Mat4x4(f32) {
+    var r = Mat4x4(f32).zeroes();
+
+    r.data[0][0] = 2.0 / (right - left);
+    r.data[0][1] = 0.0;
+    r.data[0][2] = 0.0;
+    r.data[0][3] = -((right + left) / (right - left));
+    r.data[1][0] = 0.0;
+    r.data[1][1] = 2.0 / (top - bottom);
+    r.data[1][2] = 0.0;
+    r.data[1][3] = -((top + bottom) / (top - bottom));
+    r.data[2][0] = 0.0;
+    r.data[2][1] = 0.0;
+    r.data[2][2] = -2.0 / (far - near);
+    r.data[2][3] = -((far + near) / (far - near));
+    r.data[3][0] = 0.0;
+    r.data[3][1] = 0.0;
+    r.data[3][2] = 0.0;
+    r.data[3][3] = 1.0;
+
+    return r;
 }
 
-pub fn setGeometry(width: i32, height: i32) void {
+pub fn setGeometry(width: i32, height: i32) [28]f32 {
+    var rectangle: [28]f32 = mem.zeroes([28]f32);
+
     rectangle[0] = 0.0;
     rectangle[1] = 0.0;
     rectangle[2] = 0.0;
@@ -194,143 +338,30 @@ pub fn setGeometry(width: i32, height: i32) void {
     rectangle[21] = @intToFloat(f32, height);
     rectangle[22] = 1.0;
     rectangle[23] = 1.0;
+
+    return rectangle;
 }
 
-pub fn translate(x: f32, y: f32) !void {
-    MATRIX = identity;
-    MATRIX[3] = x;
-    MATRIX[7] = y;
-    try setUniformMatrix(PROGRAM, "translate", MATRIX);
-}
+// pub fn translate(x: f32, y: f32) !void {
+//     MATRIX = identity;
+//     MATRIX[3] = x;
+//     MATRIX[7] = y;
+//     try setUniformMatrix(PROGRAM, "translate", MATRIX);
+// }
 
-pub fn scale(x: f32, y: f32) !void {
-    MATRIX = identity;
-    MATRIX[0] = x;
-    MATRIX[5] = y;
-    try setUniformMatrix(PROGRAM, "scale", MATRIX);
-}
+// pub fn scale(x: f32, y: f32) !void {
+//     MATRIX = identity;
+//     MATRIX[0] = x;
+//     MATRIX[5] = y;
+//     try setUniformMatrix(PROGRAM, "scale", MATRIX);
+// }
 
-var MATRIX: [16]f32 = [_]f32{
-    1.0, 0.0, 0.0, 0.0,
-    0.0, 1.0, 0.0, 0.0,
-    0.0, 0.0, 1.0, 0.0,
-    0.0, 0.0, 0.0, 1.0,
-};
-
-pub const identity: [16]f32 = [_]f32{
-    1.0, 0.0, 0.0, 0.0,
-    0.0, 1.0, 0.0, 0.0,
-    0.0, 0.0, 1.0, 0.0,
-    0.0, 0.0, 0.0, 1.0,
-};
-
-pub fn setUniformMatrix(program: c_uint, location_string: []const u8, matrix: [16]f32) !void {
-    var location = c.glGetUniformLocation(program, location_string.ptr);
-    try checkGLError();
-    if (location == -1) {
-        return error.UniformNotFound;
-    }
-    c.glUniformMatrix4fv(location, 1, c.GL_TRUE, &matrix[0]);
-    try checkGLError();
-}
-
-pub fn setUniformFloat(program: c_uint, location_string: []const u8, value: f32) !void {
-    var location = c.glGetUniformLocation(program, location_string.ptr);
-    try checkGLError();
-    if (location == -1) {
-        return error.UniformNotFound;
-    }
-    c.glUniform1f(location, value);
-    try checkGLError();
-}
-
-fn setVertexAttrib(program: c_uint, attribute_string: []const u8, offset: c_uint) !void {
-    var attribute = c.glGetAttribLocation(program, attribute_string.ptr);
-    try checkGLError();
-    if (attribute == -1) {
-        return error.AttributeNotFound;
-    }
-    c.glEnableVertexAttribArray(@intCast(c_uint, attribute));
-    try checkGLError();
-    c.glVertexAttribPointer(@intCast(c_uint, attribute), 2, c.GL_FLOAT, c.GL_FALSE, 16, @intToPtr(*allowzero c_uint, offset));
-    try checkGLError();
-}
-
-pub fn makeTexture(width: i32, height: i32, stride: i32, format: u32, data: []const u8) !u32 {
-    if (stride * height > data.len) {
-        return error.NotEnoughTextureDataForDimensions;
-    }
-
-    var texture: u32 = undefined;
-    var err: c_uint = undefined;
-
-    c.glGenTextures(1, &texture);
-    try checkGLError();
-
-    c.glBindTexture(c.GL_TEXTURE_2D, texture);
-    try checkGLError();
-
-    c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_LINEAR);
-    try checkGLError();
-
-    c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_LINEAR);
-    try checkGLError();
-
-    c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_CLAMP_TO_EDGE);
-    try checkGLError();
-
-    c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_T, c.GL_CLAMP_TO_EDGE);
-    try checkGLError();
-
-    c.glTexImage2D(c.GL_TEXTURE_2D, 0, c.GL_RGBA, width, height, 0, c.GL_RGBA, c.GL_UNSIGNED_BYTE, data.ptr);
-    try checkGLError();
-
-    return texture;
-}
-
-pub fn makeDmaTexture(image: *c_void, width: i32, height: i32, format: u32) !u32 {
-    switch (main.OUTPUT.backend) {
-        .DRM => |drm| {
-            var texture: u32 = undefined;
-            var err: c_uint = undefined;
-
-            c.glGenTextures(1, &texture);
-            try checkGLError();
-
-            c.glBindTexture(c.GL_TEXTURE_2D, texture);
-            try checkGLError();
-
-            c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_LINEAR);
-            try checkGLError();
-
-            c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_LINEAR);
-            try checkGLError();
-
-            c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_CLAMP_TO_EDGE);
-            try checkGLError();
-
-            c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_T, c.GL_CLAMP_TO_EDGE);
-            try checkGLError();
-
-            if (egl.glEGLImageTargetTexture2DOES) |glEGLImageTargetTexture2DOES| {
-                glEGLImageTargetTexture2DOES(c.GL_TEXTURE_2D, image);
-            } else {
-                return error.EGLImageTargetTexture2DOESNotAvailable;
-            }
-            try checkGLError();
-
-            return texture;
-        },
-        else => {
-            return error.AttemptedToMakeDmaTextureWithNoEGLContext;
-        },
-    }
-}
-
-pub fn releaseTexture(texture: u32) !void {
-    c.glDeleteTextures(1, &texture);
-    try checkGLError();
-}
+// var MATRIX: [16]f32 = [_]f32{
+//     1.0, 0.0, 0.0, 0.0,
+//     0.0, 1.0, 0.0, 0.0,
+//     0.0, 0.0, 1.0, 0.0,
+//     0.0, 0.0, 0.0, 1.0,
+// };
 
 fn checkGLError() !void {
     var err = c.glGetError();

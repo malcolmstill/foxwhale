@@ -1,6 +1,6 @@
 const std = @import("std");
 const linux = std.os.linux;
-const renderer = @import("renderer.zig");
+const Renderer = @import("renderer.zig").Renderer;
 const Object = @import("client.zig").Object;
 const Context = @import("client.zig").Context;
 const Client = @import("client.zig").Client;
@@ -42,6 +42,6 @@ pub const DmaBuffer = struct {
     pub fn endAccess(self: *Self) !void {}
 
     pub fn makeTexture(self: *Self) !u32 {
-        return renderer.makeDmaTexture(self.image, self.width, self.height, self.format);
+        return Renderer.makeDmaTexture(self.image, self.width, self.height, self.format);
     }
 };

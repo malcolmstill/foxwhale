@@ -1,7 +1,7 @@
 const std = @import("std");
 const linux = std.os.linux;
 const os = std.os;
-const renderer = @import("renderer.zig");
+const Renderer = @import("renderer.zig").Renderer;
 const Object = @import("client.zig").Object;
 const Context = @import("client.zig").Context;
 const Client = @import("client.zig").Client;
@@ -60,7 +60,7 @@ pub const ShmBuffer = struct {
 
     pub fn makeTexture(self: *Self) !u32 {
         var offset = @intCast(usize, self.offset);
-        return renderer.makeTexture(self.width, self.height, self.stride, self.format, self.shm_pool.data[offset..]);
+        return Renderer.makeTexture(self.width, self.height, self.stride, self.format, self.shm_pool.data[offset..]);
     }
 };
 
