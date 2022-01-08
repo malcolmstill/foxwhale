@@ -182,7 +182,7 @@ pub const Window = struct {
 
         while (self.callbacks.readItem()) |wl_callback_id| {
             const wl_callback = self.client.context.get(wl_callback_id) orelse return error.CallbackIdNotFound;
-            try prot.wl_callback_send_done(wl_callback, 23);
+            try prot.wl_callback_send_done(wl_callback, @truncate(u32, @intCast(u64, std.time.milliTimestamp())));
             try self.client.context.unregister(wl_callback);
             try prot.wl_display_send_delete_id(self.client.context.client.wl_display, wl_callback_id);
         }
