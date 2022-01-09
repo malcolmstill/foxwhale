@@ -42,6 +42,10 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
     window.height = buffer.height();
     window.texture = try buffer.makeTexture();
 
+    if (window.first_buffer == false) {
+        window.first_buffer = true;
+    }
+
     try buffer.endAccess();
     try prot.wl_buffer_send_release(wl_buffer);
     window.wl_buffer_id = null;
@@ -51,7 +55,10 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
             if (window.toplevel.prev == null and window.toplevel.next == null) {
                 view.remove(window);
                 view.push(window);
-                try window.firstCommit();
+                if (window.first_configure and window.first_buffer and window.mapped == false) {
+                    try window.firstCommit();
+                    window.mapped = true;
+                }
             }
         }
     }

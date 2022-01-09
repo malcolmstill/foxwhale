@@ -99,6 +99,8 @@ fn ack_configure(context: *Context, xdg_surface: Object, serial: u32) anyerror!v
     }
 
     window.xdg_configurations = XdgConfigurations.init();
+
+    if (window.first_configure == false) window.first_configure = true;
 }
 
 pub fn init() void {
