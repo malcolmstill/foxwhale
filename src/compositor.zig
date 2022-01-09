@@ -1,4 +1,5 @@
 const std = @import("std");
+const mem = std.mem;
 const views = @import("view.zig");
 const xkbcommon = @import("xkb.zig");
 const Xkb = @import("xkb.zig").Xkb;
@@ -6,29 +7,42 @@ const Move = @import("move.zig").Move;
 const Resize = @import("resize.zig").Resize;
 const ClientCursor = @import("cursor.zig").ClientCursor;
 const backend = @import("backend/backend.zig");
+const AnimationList = @import("animatable.zig").AnimationList;
 
-pub var COMPOSITOR: Compositor = makeCompositor();
+pub var COMPOSITOR: Compositor = undefined;
 
-const Compositor = struct {
-    pointer_x: f64,
-    pointer_y: f64,
+pub const Compositor = struct {
+    pointer_x: f64 = 0.0,
+    pointer_y: f64 = 0.0,
 
-    client_cursor: ?ClientCursor,
+    client_cursor: ?ClientCursor = null,
 
-    move: ?Move,
-    resize: ?Resize,
+    move: ?Move = null,
+    resize: ?Resize = null,
 
-    xkb: ?Xkb,
-    mods_depressed: u32,
-    mods_latched: u32,
-    mods_locked: u32,
-    mods_group: u32,
+    xkb: ?Xkb = null,
+    mods_depressed: u32 = 0,
+    mods_latched: u32 = 0,
+    mods_locked: u32 = 0,
+    mods_group: u32 = 0,
 
-    running: bool,
+    animations: AnimationList,
+
+    running: bool = true,
 
     const Self = @This();
 
-    pub fn init(self: *Self) !void {
+    pub fn init(alloc: *mem.Allocator) Self {
+        return Self{
+            .animations = AnimationList.init(alloc),
+        };
+    }
+
+    pub fn deinit(self: *Self) void {
+        self.animations.deinit();
+    }
+
+    pub fn initInput(self: *Self) !void {
         self.xkb = try xkbcommon.init();
 
         backend.BACKEND_FNS.keyboard = keyboardHandler;
@@ -127,18 +141,18 @@ fn mouseAxisHandler(time: u32, axis: u32, value: f64) !void {
     try COMPOSITOR.mouseAxis(time, axis, value);
 }
 
-fn makeCompositor() Compositor {
-    return Compositor{
-        .pointer_x = 0.0,
-        .pointer_y = 0.0,
-        .client_cursor = null,
-        .move = null,
-        .resize = null,
-        .xkb = null,
-        .mods_depressed = 0,
-        .mods_latched = 0,
-        .mods_locked = 0,
-        .mods_group = 0,
-        .running = true,
-    };
-}
+// fn makeCompositor() Compositor {
+//     return Compositor{
+//         .pointer_x = 0.0,
+//         .pointer_y = 0.0,
+//         .client_cursor = null,
+//         .move = null,
+//         .resize = null,
+//         .xkb = null,
+//         .mods_depressed = 0,
+//         .mods_latched = 0,
+//         .mods_locked = 0,
+//         .mods_group = 0,
+//         .running = true,
+//     };
+// }

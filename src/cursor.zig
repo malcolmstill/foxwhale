@@ -1,7 +1,6 @@
 const std = @import("std");
 const cursor = @embedFile("../assets/cursor.data");
 const Renderer = @import("renderer.zig").Renderer;
-const compositor = @import("compositor.zig");
 const Window = @import("window.zig").Window;
 const Mat4x4 = @import("math.zig").Mat4x4;
 
@@ -26,9 +25,9 @@ pub const Cursor = struct {
         }
     }
 
-    pub fn render(self: *Cursor, output_width: i32, output_height: i32, renderer: *Renderer, x: i32, y: i32) !void {
-        if (compositor.COMPOSITOR.client_cursor) |client_cursor| {
-            switch (client_cursor) {
+    pub fn render(self: *Cursor, client_cursor: ?ClientCursor, output_width: i32, output_height: i32, renderer: *Renderer, x: i32, y: i32) !void {
+        if (client_cursor) |cc| {
+            switch (cc) {
                 .CursorWindow => |client_cursor_window| {
                     try client_cursor_window.render(output_width, output_height, renderer, x, y);
                     return;

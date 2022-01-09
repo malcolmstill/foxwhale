@@ -1,4 +1,5 @@
 const std = @import("std");
+const math = std.math;
 const prot = @import("protocols.zig");
 const Renderer = @import("renderer.zig").Renderer;
 const compositor = @import("compositor.zig");
@@ -10,6 +11,9 @@ const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 const View = @import("view.zig").View;
 const Mat4x4 = @import("math.zig").Mat4x4;
+const Animatable = @import("animatable.zig").Animatable;
+const AnimatableType = @import("animatable.zig").AnimatableType;
+const ease = @import("ease.zig");
 
 const MAX_WINDOWS = 512;
 pub var WINDOWS: [MAX_WINDOWS]Window = undefined;
@@ -34,6 +38,12 @@ pub const Window = struct {
     texture: ?u32,
     width: i32,
     height: i32,
+
+    // Animatable
+    scaleX: f32 = 1.0,
+    scaleY: f32 = 1.0,
+    originX: f32 = 0.0,
+    originY: f32 = 0.0,
 
     wl_surface_id: u32,
     wl_buffer_id: ?u32,
@@ -109,11 +119,19 @@ pub const Window = struct {
             if (window == self) {
                 const texture = window.texture orelse continue; // TODO: maybe we should not render subwindows if parent window not ready
                 const program = try renderer.useProgram("window");
-                try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ 1.0, 1.0, 1.0, 1.0 }).data);
+
+                // try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ 1.0, 1.0, 1.0, 1.0 }).data);
+                // try Renderer.setUniformMatrix(program, "translate", Mat4x4(f32).translate([_]f32{ @intToFloat(f32, x + window.absoluteX()), @intToFloat(f32, y + window.absoluteY()), 0.0, 1.0 }).data);
+                // try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).identity().data);
+                // try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).identity().data);
+                // try Renderer.setUniformFloat(program, "opacity", 1.0);
+
+                try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ self.scaleX, self.scaleY, 1.0, 1.0 }).data);
                 try Renderer.setUniformMatrix(program, "translate", Mat4x4(f32).translate([_]f32{ @intToFloat(f32, x + window.absoluteX()), @intToFloat(f32, y + window.absoluteY()), 0.0, 1.0 }).data);
-                try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).identity().data);
-                try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).identity().data);
+                try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).translate([_]f32{ -self.originX, -self.originY, 0.0, 1.0 }).data);
+                try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).translate([_]f32{ self.originX, self.originY, 0.0, 1.0 }).data);
                 try Renderer.setUniformFloat(program, "opacity", 1.0);
+
                 try renderer.renderSurface(output_width, output_height, program, texture, window.width, window.height);
             } else {
                 try window.render(output_width, output_height, renderer, x, y);
@@ -123,6 +141,34 @@ pub const Window = struct {
         if (self.popup) |popup| {
             try popup.render(output_width, output_height, renderer, x, y);
         }
+    }
+
+    pub fn firstCommit(self: *Self) !void {
+        self.originX = @intToFloat(f32, self.width) / 2.0;
+        self.originY = @intToFloat(f32, self.height) / 2.0;
+        self.scaleX = 0.0;
+        self.scaleY = 6.0 / @intToFloat(f32, self.height);
+
+        const seq = try compositor.COMPOSITOR.animations.addSequential();
+        try seq.addProperty(Animatable.Property{
+            .initial_value = self.scaleX,
+            .final_value = 1.0,
+            .easing = ease.OutExpo,
+            .duration = 0.25,
+            .property = "scaleX",
+            .target = AnimatableType{ .window = self },
+        });
+
+        try seq.addProperty(Animatable.Property{
+            .initial_value = self.scaleY,
+            .final_value = 1.0,
+            .easing = ease.OutExpo,
+            .duration = 0.25,
+            .property = "scaleY",
+            .target = AnimatableType{ .window = self },
+        });
+
+        seq.start();
     }
 
     pub fn absoluteX(self: *Self) i32 {
@@ -647,6 +693,11 @@ pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
             window.texture = null;
             window.width = 0;
             window.height = 0;
+
+            window.scaleX = 1.0;
+            window.scaleY = 1.0;
+            window.originX = 0.0;
+            window.originY = 0.0;
 
             window.state[0].deinit();
             window.state[1].deinit();

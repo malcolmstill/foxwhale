@@ -51,6 +51,7 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
             if (window.toplevel.prev == null and window.toplevel.next == null) {
                 view.remove(window);
                 view.push(window);
+                try window.firstCommit();
             }
         }
     }
