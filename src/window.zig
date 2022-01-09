@@ -45,6 +45,9 @@ pub const Window = struct {
     originX: f32 = 0.0,
     originY: f32 = 0.0,
 
+    first_configure: bool = false,
+    first_buffer: bool = false,
+
     wl_surface_id: u32,
     wl_buffer_id: ?u32,
     xdg_surface_id: ?u32,
@@ -693,6 +696,9 @@ pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
             window.texture = null;
             window.width = 0;
             window.height = 0;
+
+            window.first_configure = false;
+            window.first_buffer = false;
 
             window.scaleX = 1.0;
             window.scaleY = 1.0;
