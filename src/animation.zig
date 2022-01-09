@@ -2,6 +2,7 @@ const std = @import("std");
 const mem = std.mem;
 const math = std.math;
 const time = std.time;
+const easing = @import("easing.zig");
 const ArrayList = std.ArrayList;
 
 pub fn Animation(comptime Targets: type) type {
@@ -18,7 +19,7 @@ pub fn Animation(comptime Targets: type) type {
 
         const Self = @This();
 
-        fn start(self: *Self) void {
+        pub fn start(self: *Self) void {
             switch (self.*) {
                 .property => |*p| p.start(),
                 .sequential => |*s| s.start(),
@@ -26,7 +27,7 @@ pub fn Animation(comptime Targets: type) type {
             }
         }
 
-        fn update(self: *Self, t: f64) bool {
+        pub fn update(self: *Self, t: f64) bool {
             return switch (self.*) {
                 .property => |*p| p.update(t),
                 .sequential => |*s| s.update(t),
@@ -34,7 +35,7 @@ pub fn Animation(comptime Targets: type) type {
             };
         }
 
-        fn deinit(self: *Self) void {
+        pub fn deinit(self: *Self) void {
             switch (self.*) {
                 .property => {},
                 .sequential => |*s| s.deinit(),
@@ -42,20 +43,20 @@ pub fn Animation(comptime Targets: type) type {
             }
         }
 
-        const Property = struct {
-            initial_value: f64,
-            final_value: f64,
+        pub const Property = struct {
+            initial_value: f32,
+            final_value: f32,
             start_time: f64 = 0.0,
             duration: f64,
             easing: fn (f64) f64,
             property: []const u8,
             target: Targets,
 
-            fn start(self: *Property) void {
+            pub fn start(self: *Property) void {
                 self.start_time = now();
             }
 
-            fn update(self: *Property, t: f64) bool {
+            pub fn update(self: *Property, t: f64) bool {
                 if (t < self.start_time) return false;
 
                 if (self.duration <= 0.0 or t > self.start_time + self.duration) {
@@ -64,35 +65,39 @@ pub fn Animation(comptime Targets: type) type {
                 }
 
                 const progress = self.easing((t - self.start_time) / self.duration);
-                const new_value = self.initial_value + (self.final_value - self.initial_value) * progress;
+                const new_value = self.initial_value + (self.final_value - self.initial_value) * math.lossyCast(f32, progress);
 
+                std.debug.print("{} -> {} = {}\n", .{ self.start_time, t, t - self.start_time });
                 self.set(new_value);
 
                 return false;
             }
 
-            fn set(self: *Property, value: f64) void {
+            fn set(self: *Property, value: f32) void {
                 const info = @typeInfo(@TypeOf(@field(self.target, @tagName(self.target))));
                 inline for (@typeInfo(info.Pointer.child).Struct.fields) |field| {
+                    if (field.field_type != f32) continue;
                     if (mem.eql(u8, self.property, field.name)) {
-                        // std.debug.print("{s} = {}\n", .{ field.name, value });
+                        std.debug.print("{s} = {}\n", .{ field.name, value });
                         @field(@field(self.target, @tagName(self.target)), field.name) = value;
                     }
                 }
             }
         };
 
-        const Sequential = struct {
+        pub const Sequential = struct {
+            alloc: *mem.Allocator,
             animations: ArrayList(Self),
             current: usize = 0,
 
-            fn init(allocator: *mem.Allocator) Sequential {
+            pub fn init(allocator: *mem.Allocator) Sequential {
                 return Sequential{
+                    .alloc = allocator,
                     .animations = ArrayList(Self).init(allocator),
                 };
             }
 
-            fn deinit(self: *Sequential) void {
+            pub fn deinit(self: *Sequential) void {
                 for (self.animations.items) |*a| {
                     a.deinit();
                 }
@@ -100,12 +105,31 @@ pub fn Animation(comptime Targets: type) type {
                 self.animations.deinit();
             }
 
-            fn start(self: *Sequential) void {
+            pub fn start(self: *Sequential) void {
                 if (self.animations.items.len == 0) return;
                 self.animations.items[0].start();
             }
 
-            fn update(self: *Sequential, t: f64) bool {
+            pub fn addParallel(self: *Sequential) !*Parallel {
+                var a = Parallel.init(self.alloc);
+                const a_ptr = try self.animations.addOne();
+                a_ptr.* = AnimationType{ .parallel = a };
+                return &(a_ptr.*.parallel);
+            }
+
+            pub fn addSequential(self: *Sequential) !*Sequential {
+                var a = Sequential.init(self.alloc);
+                const a_ptr = try self.animations.addOne();
+                a_ptr.* = AnimationType{ .sequential = a };
+                return &(a_ptr.*.sequential);
+            }
+
+            pub fn addProperty(self: *Sequential, a: Property) !void {
+                const a_ptr = try self.animations.addOne();
+                a_ptr.* = AnimationType{ .property = a };
+            }
+
+            pub fn update(self: *Sequential, t: f64) bool {
                 const current_finished = self.animations.items[self.current].update(t);
 
                 if (current_finished == false) return false;
@@ -119,16 +143,18 @@ pub fn Animation(comptime Targets: type) type {
             }
         };
 
-        const Parallel = struct {
+        pub const Parallel = struct {
+            alloc: *mem.Allocator,
             animations: ArrayList(Self),
 
-            fn init(allocator: *mem.Allocator) Parallel {
+            pub fn init(allocator: *mem.Allocator) Parallel {
                 return Parallel{
+                    .alloc = allocator,
                     .animations = ArrayList(Self).init(allocator),
                 };
             }
 
-            fn deinit(self: *Parallel) void {
+            pub fn deinit(self: *Parallel) void {
                 for (self.animations.items) |*a| {
                     a.deinit();
                 }
@@ -136,13 +162,32 @@ pub fn Animation(comptime Targets: type) type {
                 self.animations.deinit();
             }
 
-            fn start(self: *Parallel) void {
+            pub fn start(self: *Parallel) void {
                 for (self.animations.items) |*a| {
                     a.start();
                 }
             }
 
-            fn update(self: *Parallel, t: f64) bool {
+            pub fn addParallel(self: *Parallel) !*Parallel {
+                var a = Parallel.init(self.alloc);
+                const a_ptr = try self.animations.addOne();
+                a_ptr.* = AnimationType{ .parallel = a };
+                return &(a_ptr.*.parallel);
+            }
+
+            pub fn addSequential(self: *Parallel) !*Sequential {
+                var a = Sequential.init(self.alloc);
+                const a_ptr = try self.animations.addOne();
+                a_ptr.* = AnimationType{ .sequential = a };
+                return &(a_ptr.*.sequential);
+            }
+
+            pub fn addProperty(self: *Parallel, a: Property) !void {
+                const a_ptr = try self.animations.addOne();
+                a_ptr.* = AnimationType{ .property = a };
+            }
+
+            pub fn update(self: *Parallel, t: f64) bool {
                 var finished = true;
 
                 for (self.animations.items) |*a| {
@@ -162,8 +207,8 @@ test "Sequential Animations" {
     var allocator = testing.allocator;
 
     const Point = struct {
-        x: f64,
-        y: f64,
+        x: f32,
+        y: f32,
     };
 
     const AnimatableType = enum {
@@ -189,7 +234,7 @@ test "Sequential Animations" {
     try seq.animations.append(Anim{ .property = Anim.Property{
         .initial_value = 10.0,
         .final_value = 20.0,
-        .easing = easeInOutSine,
+        .easing = easing.easeInOutSine,
         .duration = 0.125,
         .property = "x",
         .target = x,
@@ -198,7 +243,7 @@ test "Sequential Animations" {
     try seq.animations.append(Anim{ .property = Anim.Property{
         .initial_value = 50.0,
         .final_value = 0.0,
-        .easing = easeInOutSine,
+        .easing = easing.easeInOutSine,
         .duration = 0.125,
         .property = "y",
         .target = x,
@@ -217,8 +262,8 @@ test "Parallel Animations" {
     var allocator = testing.allocator;
 
     const Point = struct {
-        x: f64,
-        y: f64,
+        x: f32,
+        y: f32,
     };
 
     const AnimatableType = enum {
@@ -244,7 +289,7 @@ test "Parallel Animations" {
     try par.animations.append(Anim{ .property = Anim.Property{
         .initial_value = 10.0,
         .final_value = 20.0,
-        .easing = easeInOutSine,
+        .easing = easing.easeInOutSine,
         .duration = 0.125,
         .property = "x",
         .target = x,
@@ -253,7 +298,7 @@ test "Parallel Animations" {
     try par.animations.append(Anim{ .property = Anim.Property{
         .initial_value = 50.0,
         .final_value = 0.0,
-        .easing = easeInOutSine,
+        .easing = easing.easeInOutSine,
         .duration = 0.125,
         .property = "y",
         .target = x,
@@ -269,10 +314,6 @@ test "Parallel Animations" {
 }
 
 // seconds
-fn now() f64 {
+pub fn now() f64 {
     return @intToFloat(f64, time.nanoTimestamp()) / 1_000_000_000.0;
-}
-
-fn easeInOutSine(x: f64) f64 {
-    return -(math.cos(math.pi * x) - 1.0) / 2.0;
 }

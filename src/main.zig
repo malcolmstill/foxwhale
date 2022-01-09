@@ -11,7 +11,9 @@ pub fn main() anyerror!void {
     try backend.init();
     defer backend.deinit();
 
-    try compositor.COMPOSITOR.init();
+    compositor.COMPOSITOR = compositor.Compositor.init(allocator);
+    defer compositor.COMPOSITOR.deinit();
+    try compositor.COMPOSITOR.initInput();
 
     var o1 = try out.newOutput(&backend, 640, 480);
     defer {
@@ -51,6 +53,8 @@ pub fn main() anyerror!void {
             i = i + 1;
         }
 
+        try compositor.COMPOSITOR.animations.update();
+
         var out_it = out.OUTPUTS.iterator();
         while (out_it.next()) |output| {
             if (output.isPageFlipScheduled() == false) {
@@ -75,6 +79,7 @@ pub fn main() anyerror!void {
 
                 if (views.CURRENT_VIEW.output == output) {
                     try cursor.render(
+                        compositor.COMPOSITOR.client_cursor,
                         output_width,
                         output_height,
                         &renderer,
