@@ -9,6 +9,7 @@ const default_config_attributes = [_]i32{
     c.EGL_RED_SIZE,   8,
     c.EGL_GREEN_SIZE, 8,
     c.EGL_BLUE_SIZE,  8,
+    c.EGL_ALPHA_SIZE, 8,
     c.EGL_NONE,
 };
 
@@ -24,6 +25,10 @@ pub const EGL = struct {
     surface: *c_void,
 
     pub fn init(gbm: *GBM) !EGL {
+        errdefer {
+            std.log.err("EGL error = {}\n", .{c.eglGetError()});
+        }
+
         glEGLImageTargetTexture2DOES = @ptrCast(?fn (i32, *c_void) callconv(.C) void, c.eglGetProcAddress("glEGLImageTargetTexture2DOES"));
         var display = c.eglGetDisplay(@ptrCast(c.EGLNativeDisplayType, gbm.device)) orelse return error.EGLGetDisplayError;
 
