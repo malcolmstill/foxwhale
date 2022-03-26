@@ -128,12 +128,24 @@ pub const Window = struct {
                 // try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).identity().data);
                 // try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).identity().data);
                 // try Renderer.setUniformFloat(program, "opacity", 1.0);
+                const win_x = window.current().x;
+                const win_y = window.current().y;
+                const abs_x = @intToFloat(f32, window.absoluteX() + x);
+                const abs_y = @intToFloat(f32, window.absoluteY() + y);
 
-                try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ self.scaleX, self.scaleY, 1.0, 1.0 }).data);
-                try Renderer.setUniformMatrix(program, "translate", Mat4x4(f32).translate([_]f32{ @intToFloat(f32, x + window.absoluteX()), @intToFloat(f32, y + window.absoluteY()), 0.0, 1.0 }).data);
-                try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).translate([_]f32{ -self.originX, -self.originY, 0.0, 1.0 }).data);
-                try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).translate([_]f32{ self.originX, self.originY, 0.0, 1.0 }).data);
-                try Renderer.setUniformFloat(program, "opacity", 1.0);
+                if (window.parent) |parent| {
+                    try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ parent.scaleX, parent.scaleY, 1.0, 1.0 }).data);
+                    try Renderer.setUniformMatrix(program, "translate", Mat4x4(f32).translate([_]f32{ abs_x, abs_y, 0.0, 1.0 }).data);
+                    try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).translate([_]f32{ -parent.originX + @intToFloat(f32, win_x), -parent.originY + @intToFloat(f32, win_y), 0.0, 1.0 }).data);
+                    try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).translate([_]f32{ parent.originX - @intToFloat(f32, win_x), parent.originY - @intToFloat(f32, win_y), 0.0, 1.0 }).data);
+                    try Renderer.setUniformFloat(program, "opacity", 1.0);
+                } else {
+                    try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ self.scaleX, self.scaleY, 1.0, 1.0 }).data);
+                    try Renderer.setUniformMatrix(program, "translate", Mat4x4(f32).translate([_]f32{ abs_x, abs_y, 0.0, 1.0 }).data);
+                    try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).translate([_]f32{ -self.originX, -self.originY, 0.0, 1.0 }).data);
+                    try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).translate([_]f32{ self.originX, self.originY, 0.0, 1.0 }).data);
+                    try Renderer.setUniformFloat(program, "opacity", 1.0);
+                }
 
                 try renderer.renderSurface(output_width, output_height, program, texture, window.width, window.height);
             } else {

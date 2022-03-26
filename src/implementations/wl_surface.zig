@@ -55,11 +55,14 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
             if (window.toplevel.prev == null and window.toplevel.next == null) {
                 view.remove(window);
                 view.push(window);
-                if (window.first_configure and window.first_buffer and window.mapped == false) {
-                    try window.firstCommit();
-                    window.mapped = true;
-                }
             }
+        }
+    }
+
+    if (window.xdg_surface_id != null) {
+        if (window.first_configure and window.first_buffer and window.mapped == false) {
+            try window.firstCommit();
+            window.mapped = true;
         }
     }
 }
