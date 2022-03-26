@@ -123,11 +123,6 @@ pub const Window = struct {
                 const texture = window.texture orelse continue; // TODO: maybe we should not render subwindows if parent window not ready
                 const program = try renderer.useProgram("window");
 
-                // try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ 1.0, 1.0, 1.0, 1.0 }).data);
-                // try Renderer.setUniformMatrix(program, "translate", Mat4x4(f32).translate([_]f32{ @intToFloat(f32, x + window.absoluteX()), @intToFloat(f32, y + window.absoluteY()), 0.0, 1.0 }).data);
-                // try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).identity().data);
-                // try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).identity().data);
-                // try Renderer.setUniformFloat(program, "opacity", 1.0);
                 const win_x = window.current().x;
                 const win_y = window.current().y;
                 const abs_x = @intToFloat(f32, window.absoluteX() + x);
