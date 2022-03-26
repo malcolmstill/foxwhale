@@ -24,8 +24,8 @@ pub const EGL = struct {
     surface: *c_void,
 
     pub fn init(gbm: *GBM) !EGL {
-        glEGLImageTargetTexture2DOES = @ptrCast(?fn(i32, *c_void) callconv(.C) void, c.eglGetProcAddress("glEGLImageTargetTexture2DOES"));
-        var display = c.eglGetDisplay(@ptrCast(*c.struct__XDisplay, gbm.device));
+        glEGLImageTargetTexture2DOES = @ptrCast(?fn (i32, *anyopaque) callconv(.C) void, c.eglGetProcAddress("glEGLImageTargetTexture2DOES"));
+        var display = c.eglGetDisplay(@ptrCast(c.EGLNativeDisplayType, gbm.device));
         if (display == null) {
             return error.EGLGetDisplayError;
         }
