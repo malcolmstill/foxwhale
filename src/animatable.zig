@@ -53,7 +53,6 @@ pub const AnimationList = struct {
     pub fn update(self: *AnimationList) !void {
         var new_list = ArrayList(Animatable).init(self.alloc);
         const now = animation.now();
-        std.debug.print("now = {}\n", .{now});
 
         for (self.animations.items) |*a| {
             const is_finished = a.update(now);

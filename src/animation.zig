@@ -67,7 +67,6 @@ pub fn Animation(comptime Targets: type) type {
                 const progress = self.easing((t - self.start_time) / self.duration);
                 const new_value = self.initial_value + (self.final_value - self.initial_value) * math.lossyCast(f32, progress);
 
-                std.debug.print("{} -> {} = {}\n", .{ self.start_time, t, t - self.start_time });
                 self.set(new_value);
 
                 return false;
@@ -78,7 +77,6 @@ pub fn Animation(comptime Targets: type) type {
                 inline for (@typeInfo(info.Pointer.child).Struct.fields) |field| {
                     if (field.field_type != f32) continue;
                     if (mem.eql(u8, self.property, field.name)) {
-                        std.debug.print("{s} = {}\n", .{ field.name, value });
                         @field(@field(self.target, @tagName(self.target)), field.name) = value;
                     }
                 }
