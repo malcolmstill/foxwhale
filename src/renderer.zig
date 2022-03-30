@@ -73,7 +73,7 @@ pub const Renderer = struct {
 
     pub fn renderBackground(self: *Renderer, output_width: i32, output_height: i32) !void {
         const program = try self.useProgram("checker");
-        try Renderer.setUniformFloat(program, "size", 30.0);
+        try Renderer.setUniformFloat(program, "size", 60.0);
 
         const rectangle = setGeometry(output_width, output_height);
 

@@ -8,6 +8,10 @@ const Resize = @import("resize.zig").Resize;
 const ClientCursor = @import("cursor.zig").ClientCursor;
 const backend = @import("backend/backend.zig");
 const AnimationList = @import("animatable.zig").AnimationList;
+const ArrayList = std.ArrayList;
+const Client = @import("client.zig").Client;
+const Output = @import("output.zig").Output;
+const Server = @import("server.zig").Server;
 
 pub var COMPOSITOR: Compositor = undefined;
 
@@ -26,6 +30,10 @@ pub const Compositor = struct {
     mods_locked: u32 = 0,
     mods_group: u32 = 0,
 
+    alloc: *mem.Allocator,
+    server: Server,
+    clients: ArrayList(*Client),
+    outputs: ArrayList(*Output),
     animations: AnimationList,
 
     running: bool = true,
@@ -34,12 +42,22 @@ pub const Compositor = struct {
 
     pub fn init(alloc: *mem.Allocator) Self {
         return Self{
+            .alloc = alloc,
+            .server = undefined,
+            .clients = ArrayList(*Client).init(alloc),
+            .outputs = ArrayList(*Output).init(alloc),
             .animations = AnimationList.init(alloc),
         };
     }
 
     pub fn deinit(self: *Self) void {
+        self.server.deinit();
         self.animations.deinit();
+    }
+
+    pub fn initServer(self: *Self) !void {
+        self.server = try Server.init();
+        try self.server.addToEpoll();
     }
 
     pub fn initInput(self: *Self) !void {
