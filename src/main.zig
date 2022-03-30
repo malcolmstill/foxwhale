@@ -14,8 +14,9 @@ pub fn main() anyerror!void {
     compositor.COMPOSITOR = compositor.Compositor.init(allocator);
     defer compositor.COMPOSITOR.deinit();
     try compositor.COMPOSITOR.initInput();
+    try compositor.COMPOSITOR.initServer();
 
-    var o1 = try out.newOutput(&backend, 640, 480);
+    var o1 = try out.newOutput(&compositor.COMPOSITOR, &backend, 640, 480);
     defer {
         o1.deinit() catch {};
     }
@@ -26,11 +27,6 @@ pub fn main() anyerror!void {
     views.CURRENT_VIEW = &o1.data.views[0];
 
     std.debug.warn("==> backend: {s}\n", .{backend.name()});
-
-    var server = try Server.init();
-    defer server.deinit();
-
-    try server.addToEpoll();
 
     var renderer = Renderer.init(allocator);
     defer renderer.deinit();

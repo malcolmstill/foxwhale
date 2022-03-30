@@ -3,6 +3,8 @@ const fs = std.fs;
 const clients = @import("client.zig");
 const epoll = @import("epoll.zig");
 const implementations = @import("implementations.zig");
+const Client = @import("client.zig").Client;
+const Compositor = @import("compositor.zig").Compositor;
 
 pub const Server = struct {
     server: std.net.StreamServer,
@@ -41,17 +43,20 @@ pub fn socket() !std.net.StreamServer {
 }
 
 pub fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!void {
-    var server = @fieldParentPtr(Server, "dispatchable", dispatchable);
+    const srv = @fieldParentPtr(Server, "dispatchable", dispatchable);
+    const compositor = @fieldParentPtr(Compositor, "server", srv);
 
-    var conn = try server.server.accept();
+    var conn = try srv.server.accept();
     errdefer {
         std.os.close(conn.stream.handle);
     }
 
-    var client = try clients.newClient(conn);
+    const client = try Client.init(compositor.alloc, conn);
     errdefer {
-        client.deinit();
+        client.deinit() catch |err| {};
     }
 
-    std.debug.warn("\nclient {}: connected.\n", .{client.getIndexOf()});
+    try compositor.clients.append(client);
+
+    std.debug.warn("\nclient {}: connected.\n", .{client.getFd()});
 }

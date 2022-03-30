@@ -11,8 +11,8 @@ const Window = @import("../window.zig").Window;
 
 fn get_clients(context: *Context, fw_control: Object) anyerror!void {
     var it = clients.CLIENTS.iterator();
-    while(it.next()) |client| {
-        try prot.fw_control_send_client(fw_control, @intCast(u32, client.getIndexOf()));
+    while (it.next()) |client| {
+        try prot.fw_control_send_client(fw_control, @intCast(u32, client.getFd()));
     }
     try prot.fw_control_send_done(fw_control);
 }
@@ -54,7 +54,7 @@ fn get_windows(context: *Context, fw_control: Object) anyerror!void {
 
         if (window.current().input_region) |input_region| {
             var slice = input_region.rectangles.readableSlice(0);
-            for(slice) |rect| {
+            for (slice) |rect| {
                 try prot.fw_control_send_region_rect(
                     fw_control,
                     @intCast(u32, regions.REGIONS.getIndexOf(input_region)),
@@ -75,7 +75,7 @@ fn get_window_trees(context: *Context, fw_control: Object) anyerror!void {
     var view = views.CURRENT_VIEW;
 
     var it = view.back();
-    while(it) |window| : (it = window.toplevel.next) {
+    while (it) |window| : (it = window.toplevel.next) {
         var surface_type: u32 = 0;
 
         if (window.wl_subsurface_id) |wl_subsurface_id| {
@@ -110,7 +110,7 @@ fn get_window_trees(context: *Context, fw_control: Object) anyerror!void {
 
 fn window_tree(fw_control: Object, window: *Window) anyerror!void {
     var win_it = window.backwardIterator();
-    while(win_it.prev()) |subwindow| {
+    while (win_it.prev()) |subwindow| {
         if (window == subwindow) {
             var subsurface_type: u32 = 0;
 
@@ -145,7 +145,7 @@ fn window_tree(fw_control: Object, window: *Window) anyerror!void {
         } else {
             try window_tree(fw_control, subwindow);
         }
-    }    
+    }
 }
 
 fn destroy(context: *Context, fw_control: Object) anyerror!void {
