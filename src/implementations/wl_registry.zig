@@ -8,24 +8,25 @@ const dmabuf = @import("../dmabuf_params.zig");
 fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, version: u32, new_id: u32) anyerror!void {
     std.debug.warn("bind for {s} ({}) with id {} at version {}\n", .{ name_string, name, new_id, version });
 
-    if (name >= out.OUTPUT_BASE and name < (out.OUTPUTS.entries.len + out.OUTPUT_BASE)) {
-        if (out.OUTPUTS.getAtIndex(name - out.OUTPUT_BASE)) |output| {
-            if (std.mem.eql(u8, name_string, "wl_output\x00")) {
-                var wl_output = prot.new_wl_output(new_id, context, @ptrToInt(output));
-                wl_output.version = version;
-                context.client.wl_output_id = wl_output.id;
+    if (name >= out.OUTPUT_BASE and name < (context.client.compositor.outputs.items.len + out.OUTPUT_BASE)) {
+        // if (context.client.compositor.outputs.items[name - out.OUTPUT_BASE]) |output| {
+        const output = context.client.compositor.outputs.items[name - out.OUTPUT_BASE];
+        if (std.mem.eql(u8, name_string, "wl_output\x00")) {
+            var wl_output = prot.new_wl_output(new_id, context, @ptrToInt(output));
+            wl_output.version = version;
+            context.client.wl_output_id = wl_output.id;
 
-                try prot.wl_output_send_geometry(wl_output, 0, 0, 267, 200, @enumToInt(prot.wl_output_subpixel.none), "unknown", "unknown", @enumToInt(prot.wl_output_transform.normal));
-                try prot.wl_output_send_mode(wl_output, @enumToInt(prot.wl_output_mode.current), output.getWidth(), output.getHeight(), 60000);
-                try prot.wl_output_send_scale(wl_output, 1);
-                try prot.wl_output_send_done(wl_output);
+            try prot.wl_output_send_geometry(wl_output, 0, 0, 267, 200, @enumToInt(prot.wl_output_subpixel.none), "unknown", "unknown", @enumToInt(prot.wl_output_transform.normal));
+            try prot.wl_output_send_mode(wl_output, @enumToInt(prot.wl_output_mode.current), output.backend.getWidth(), output.backend.getHeight(), 60000);
+            try prot.wl_output_send_scale(wl_output, 1);
+            try prot.wl_output_send_done(wl_output);
 
-                try context.register(wl_output);
-                return;
-            }
-        } else {
-            return error.NoSuchOutputInUseToBind;
+            try context.register(wl_output);
+            return;
         }
+        // } else {
+        //     return error.NoSuchOutputInUseToBind;
+        // }
     }
 
     switch (name) {
@@ -54,8 +55,9 @@ fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, ve
                 var wl_seat = prot.new_wl_seat(new_id, context, 0);
                 wl_seat.version = version;
                 try prot.wl_seat_send_capabilities(wl_seat, @enumToInt(prot.wl_seat_capability.pointer) | @enumToInt(prot.wl_seat_capability.keyboard));
+                const wl_seat_id_unset = context.client.wl_seat_id == null;
 
-                if (context.client.wl_seat_id == null) {
+                if (wl_seat_id_unset) {
                     context.client.wl_seat_id = wl_seat.id;
                 }
 

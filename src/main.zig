@@ -1,4 +1,16 @@
-pub var OUTPUT: *CompositorOutput = undefined;
+const std = @import("std");
+const epoll = @import("epoll.zig");
+const backends = @import("backend/backend.zig");
+const render = @import("renderer.zig");
+const out = @import("output.zig");
+const views = @import("view.zig");
+const windows = @import("window.zig");
+const compositor = @import("compositor.zig");
+const Context = @import("client.zig").Context;
+const Server = @import("server.zig").Server;
+const Cursor = @import("cursor.zig").Cursor;
+const Output = @import("output.zig").Output;
+const Backend = @import("backend/backend.zig").Backend;
 const Renderer = @import("renderer.zig").Renderer;
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -15,16 +27,7 @@ pub fn main() anyerror!void {
     defer compositor.COMPOSITOR.deinit();
     try compositor.COMPOSITOR.initInput();
     try compositor.COMPOSITOR.initServer();
-
-    var o1 = try out.newOutput(&compositor.COMPOSITOR, &backend, 640, 480);
-    defer {
-        o1.deinit() catch {};
-    }
-    try o1.addToEpoll();
-    OUTPUT = o1;
-    // var o2 = try out.newOutput(&backend, 300, 300);
-
-    views.CURRENT_VIEW = &o1.data.views[0];
+    try compositor.COMPOSITOR.initOutputs(&backend);
 
     std.debug.warn("==> backend: {s}\n", .{backend.name()});
 
@@ -51,18 +54,17 @@ pub fn main() anyerror!void {
 
         try compositor.COMPOSITOR.animations.update();
 
-        var out_it = out.OUTPUTS.iterator();
-        while (out_it.next()) |output| {
-            if (output.isPageFlipScheduled() == false) {
-                const output_width = output.getWidth();
-                const output_height = output.getHeight();
-                try output.begin();
+        for (compositor.COMPOSITOR.outputs.items) |output| {
+            if (output.backend.isPageFlipScheduled() == false) {
+                const output_width = output.backend.getWidth();
+                const output_height = output.backend.getHeight();
+                try output.backend.begin();
 
                 try renderer.clear();
                 try renderer.render(output);
                 try renderer.renderBackground(output_width, output_height);
 
-                for (output.data.views) |*view| {
+                for (output.views) |*view| {
                     if (view.visible() == false) {
                         continue;
                     }
@@ -73,21 +75,23 @@ pub fn main() anyerror!void {
                     }
                 }
 
-                if (views.CURRENT_VIEW.output == output) {
-                    try cursor.render(
-                        compositor.COMPOSITOR.client_cursor,
-                        output_width,
-                        output_height,
-                        &renderer,
-                        @floatToInt(i32, compositor.COMPOSITOR.pointer_x),
-                        @floatToInt(i32, compositor.COMPOSITOR.pointer_y),
-                    );
+                if (compositor.COMPOSITOR.current_view) |view| {
+                    if (view.output == output) {
+                        try cursor.render(
+                            compositor.COMPOSITOR.client_cursor,
+                            output_width,
+                            output_height,
+                            &renderer,
+                            @floatToInt(i32, compositor.COMPOSITOR.pointer_x),
+                            @floatToInt(i32, compositor.COMPOSITOR.pointer_y),
+                        );
+                    }
                 }
 
-                try output.swap();
+                try output.backend.swap();
                 frames += 1;
                 now = std.time.milliTimestamp();
-                output.end();
+                output.backend.end();
 
                 if ((now - then) > 5000) {
                     std.debug.warn("fps: {}\n", .{frames / 5});
@@ -101,25 +105,10 @@ pub fn main() anyerror!void {
                     }
                 }
 
-                if (output.shouldClose()) {
-                    try output.deinit();
+                if (output.backend.shouldClose()) {
+                    try output.backend.deinit();
                 }
             }
         }
     }
 }
-
-const std = @import("std");
-const epoll = @import("epoll.zig");
-const backends = @import("backend/backend.zig");
-const render = @import("renderer.zig");
-const out = @import("output.zig");
-const views = @import("view.zig");
-const windows = @import("window.zig");
-const compositor = @import("compositor.zig");
-const Context = @import("client.zig").Context;
-const Server = @import("server.zig").Server;
-const Cursor = @import("cursor.zig").Cursor;
-const Output = @import("output.zig").Output;
-const CompositorOutput = @import("output.zig").CompositorOutput;
-const Backend = backends.Backend(Output);

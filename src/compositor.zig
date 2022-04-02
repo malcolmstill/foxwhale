@@ -6,12 +6,14 @@ const Xkb = @import("xkb.zig").Xkb;
 const Move = @import("move.zig").Move;
 const Resize = @import("resize.zig").Resize;
 const ClientCursor = @import("cursor.zig").ClientCursor;
-const backend = @import("backend/backend.zig");
 const AnimationList = @import("animatable.zig").AnimationList;
 const ArrayList = std.ArrayList;
 const Client = @import("client.zig").Client;
 const Output = @import("output.zig").Output;
+const Backend = @import("backend/backend.zig").Backend;
+const bknd = @import("backend/backend.zig");
 const Server = @import("server.zig").Server;
+const View = @import("view.zig").View;
 
 pub var COMPOSITOR: Compositor = undefined;
 
@@ -35,6 +37,7 @@ pub const Compositor = struct {
     clients: ArrayList(*Client),
     outputs: ArrayList(*Output),
     animations: AnimationList,
+    current_view: ?*View = null,
 
     running: bool = true,
 
@@ -60,13 +63,21 @@ pub const Compositor = struct {
         try self.server.addToEpoll();
     }
 
+    pub fn initOutputs(self: *Self, backend: *Backend) !void {
+        const output = try Output.init(self, backend, self.alloc, 640, 480);
+        try output.backend.addToEpoll();
+
+        try self.outputs.append(output);
+        self.current_view = &output.views[0];
+    }
+
     pub fn initInput(self: *Self) !void {
         self.xkb = try xkbcommon.init();
 
-        backend.BACKEND_FNS.keyboard = keyboardHandler;
-        backend.BACKEND_FNS.mouseClick = mouseClickHandler;
-        backend.BACKEND_FNS.mouseMove = mouseMoveHandler;
-        backend.BACKEND_FNS.mouseAxis = mouseAxisHandler;
+        bknd.BACKEND_FNS.keyboard = keyboardHandler;
+        bknd.BACKEND_FNS.mouseClick = mouseClickHandler;
+        bknd.BACKEND_FNS.mouseMove = mouseMoveHandler;
+        bknd.BACKEND_FNS.mouseAxis = mouseAxisHandler;
     }
 
     pub fn keyboard(self: *Self, time: u32, button: u32, action: u32) !void {
@@ -81,7 +92,9 @@ pub const Compositor = struct {
             self.mods_locked = xkb.serializeLocked();
             self.mods_group = xkb.serializeGroup();
         }
-        try views.CURRENT_VIEW.keyboard(time, button, action);
+
+        const view = self.current_view orelse return;
+        try view.keyboard(time, button, action);
     }
 
     pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
@@ -97,10 +110,15 @@ pub const Compositor = struct {
             }
         }
 
-        try views.CURRENT_VIEW.mouseClick(button, action);
+        const view = self.current_view orelse return;
+        try view.mouseClick(button, action);
     }
 
     pub fn mouseMove(self: *Self, dx: f64, dy: f64) !void {
+        const view = self.current_view orelse return;
+        const width = @intToFloat(f64, view.output.?.backend.getWidth());
+        const height = @intToFloat(f64, view.output.?.backend.getHeight());
+
         self.pointer_x = self.pointer_x + dx;
         self.pointer_y = self.pointer_y + dy;
 
@@ -108,16 +126,16 @@ pub const Compositor = struct {
             self.pointer_x = 0;
         }
 
-        if (self.pointer_x > @intToFloat(f64, views.CURRENT_VIEW.output.?.getWidth())) {
-            self.pointer_x = @intToFloat(f64, views.CURRENT_VIEW.output.?.getWidth());
+        if (self.pointer_x > width) {
+            self.pointer_x = width;
         }
 
         if (self.pointer_y < 0) {
             self.pointer_y = 0;
         }
 
-        if (self.pointer_y > @intToFloat(f64, views.CURRENT_VIEW.output.?.getHeight())) {
-            self.pointer_y = @intToFloat(f64, views.CURRENT_VIEW.output.?.getHeight());
+        if (self.pointer_y > height) {
+            self.pointer_y = height;
         }
 
         if (self.move) |move| {
@@ -135,11 +153,12 @@ pub const Compositor = struct {
             return;
         }
 
-        try views.CURRENT_VIEW.updatePointer(self.pointer_x, self.pointer_y);
+        try view.updatePointer(self.pointer_x, self.pointer_y);
     }
 
     pub fn mouseAxis(self: *Self, time: u32, axis: u32, value: f64) !void {
-        try views.CURRENT_VIEW.mouseAxis(time, axis, -1.0 * value);
+        const view = self.current_view orelse return;
+        try view.mouseAxis(time, axis, -1.0 * value);
     }
 };
 

@@ -24,8 +24,7 @@ fn get_registry(context: *Context, wl_display: Object, new_id: u32) anyerror!voi
     try prot.wl_registry_send_global(wl_registry, 4, "xdg_wm_base\x00", 1);
 
     var output_base: u32 = out.OUTPUT_BASE;
-    var it = out.OUTPUTS.iterator();
-    while(it.next()) |output| {
+    for (context.client.compositor.outputs.items) |output| {
         try prot.wl_registry_send_global(wl_registry, output_base, "wl_output\x00", 2);
         output_base += 1;
     }

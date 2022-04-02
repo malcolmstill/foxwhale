@@ -6,7 +6,7 @@ const StringHashMap = std.hash_map.StringHashMap;
 const fragment_shader_source = @embedFile("shaders/fragment.glsl");
 const windows = @import("window.zig");
 const Window = @import("window.zig").Window;
-const CompositorOutput = @import("output.zig").CompositorOutput;
+const Output = @import("output.zig").Output;
 const main = @import("main.zig");
 const c = @cImport({
     @cInclude("GLES3/gl3.h");
@@ -60,9 +60,9 @@ pub const Renderer = struct {
         try checkGLError();
     }
 
-    pub fn render(self: *Renderer, output: *CompositorOutput) !void {
-        var width = output.getWidth();
-        var height = output.getHeight();
+    pub fn render(self: *Renderer, output: *Output) !void {
+        var width = output.backend.getWidth();
+        var height = output.backend.getHeight();
 
         c.glEnable(c.GL_BLEND);
         try checkGLError();
@@ -251,42 +251,43 @@ pub const Renderer = struct {
     }
 
     pub fn makeDmaTexture(image: *c_void, width: i32, height: i32, format: u32) !u32 {
-        switch (main.OUTPUT.backend) {
-            .DRM => |drm| {
-                var texture: u32 = undefined;
-                var err: c_uint = undefined;
+        // switch (main.OUTPUT.backend) {
+        //     .DRM => |drm| {
+        //         var texture: u32 = undefined;
+        //         var err: c_uint = undefined;
 
-                c.glGenTextures(1, &texture);
-                try checkGLError();
+        //         c.glGenTextures(1, &texture);
+        //         try checkGLError();
 
-                c.glBindTexture(c.GL_TEXTURE_2D, texture);
-                try checkGLError();
+        //         c.glBindTexture(c.GL_TEXTURE_2D, texture);
+        //         try checkGLError();
 
-                c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_LINEAR);
-                try checkGLError();
+        //         c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_LINEAR);
+        //         try checkGLError();
 
-                c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_LINEAR);
-                try checkGLError();
+        //         c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_LINEAR);
+        //         try checkGLError();
 
-                c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_CLAMP_TO_EDGE);
-                try checkGLError();
+        //         c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_CLAMP_TO_EDGE);
+        //         try checkGLError();
 
-                c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_T, c.GL_CLAMP_TO_EDGE);
-                try checkGLError();
+        //         c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_T, c.GL_CLAMP_TO_EDGE);
+        //         try checkGLError();
 
-                if (egl.glEGLImageTargetTexture2DOES) |glEGLImageTargetTexture2DOES| {
-                    glEGLImageTargetTexture2DOES(c.GL_TEXTURE_2D, image);
-                } else {
-                    return error.EGLImageTargetTexture2DOESNotAvailable;
-                }
-                try checkGLError();
+        //         if (egl.glEGLImageTargetTexture2DOES) |glEGLImageTargetTexture2DOES| {
+        //             glEGLImageTargetTexture2DOES(c.GL_TEXTURE_2D, image);
+        //         } else {
+        //             return error.EGLImageTargetTexture2DOESNotAvailable;
+        //         }
+        //         try checkGLError();
 
-                return texture;
-            },
-            else => {
-                return error.AttemptedToMakeDmaTextureWithNoEGLContext;
-            },
-        }
+        //         return texture;
+        //     },
+        //     else => {
+        //         return error.AttemptedToMakeDmaTextureWithNoEGLContext;
+        //     },
+        // }
+        return error.NeedToReimplementThis;
     }
 
     pub fn releaseTexture(texture: u32) !void {
