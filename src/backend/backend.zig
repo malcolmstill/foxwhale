@@ -21,151 +21,145 @@ pub const OutputBackend = union(BackendType) {
     DRM: DRMOutput,
 };
 
-pub fn BackendOutput(comptime T: type) type {
-    return struct {
-        backend: OutputBackend,
-        data: T,
+pub const BackendOutput = struct {
+    backend: OutputBackend,
 
-        const Self = @This();
+    const Self = @This();
 
-        pub fn begin(self: Self) !void {
-            switch (self.backend) {
-                BackendType.Headless => |headless_output| headless_output.begin(),
-                BackendType.GLFW => |glfw_output| glfw_output.begin(),
-                BackendType.DRM => |drm_output| drm_output.begin(),
-            }
+    pub fn begin(self: Self) !void {
+        switch (self.backend) {
+            BackendType.Headless => |headless_output| headless_output.begin(),
+            BackendType.GLFW => |glfw_output| glfw_output.begin(),
+            BackendType.DRM => |drm_output| drm_output.begin(),
         }
+    }
 
-        pub fn end(self: Self) void {
-            return switch (self.backend) {
-                BackendType.Headless => |headless_output| headless_output.end(),
-                BackendType.GLFW => |glfw_output| glfw_output.end(),
-                BackendType.DRM => |drm_output| drm_output.end(),
-            };
-        }
+    pub fn end(self: Self) void {
+        return switch (self.backend) {
+            BackendType.Headless => |headless_output| headless_output.end(),
+            BackendType.GLFW => |glfw_output| glfw_output.end(),
+            BackendType.DRM => |drm_output| drm_output.end(),
+        };
+    }
 
-        pub fn swap(self: *Self) !void {
-            return switch (self.backend) {
-                BackendType.Headless => |headless_output| headless_output.swap(),
-                BackendType.GLFW => |glfw_output| glfw_output.swap(),
-                BackendType.DRM => |*drm_output| try drm_output.swap(),
-            };
-        }
+    pub fn swap(self: *Self) !void {
+        return switch (self.backend) {
+            BackendType.Headless => |headless_output| headless_output.swap(),
+            BackendType.GLFW => |glfw_output| glfw_output.swap(),
+            BackendType.DRM => |*drm_output| try drm_output.swap(),
+        };
+    }
 
-        pub fn isPageFlipScheduled(self: *Self) bool {
-            return switch (self.backend) {
-                BackendType.Headless => |headless_output| false,
-                BackendType.GLFW => |glfw_output| false,
-                BackendType.DRM => |drm_output| drm_output.isPageFlipScheduled(),
-            };
-        }
+    pub fn isPageFlipScheduled(self: *Self) bool {
+        return switch (self.backend) {
+            BackendType.Headless => |headless_output| false,
+            BackendType.GLFW => |glfw_output| false,
+            BackendType.DRM => |drm_output| drm_output.isPageFlipScheduled(),
+        };
+    }
 
-        pub fn getWidth(self: Self) i32 {
-            return switch (self.backend) {
-                BackendType.Headless => |headless_output| headless_output.getWidth(),
-                BackendType.GLFW => |glfw_output| glfw_output.getWidth(),
-                BackendType.DRM => |drm_output| drm_output.getWidth(),
-            };
-        }
+    pub fn getWidth(self: Self) i32 {
+        return switch (self.backend) {
+            BackendType.Headless => |headless_output| headless_output.getWidth(),
+            BackendType.GLFW => |glfw_output| glfw_output.getWidth(),
+            BackendType.DRM => |drm_output| drm_output.getWidth(),
+        };
+    }
 
-        pub fn getHeight(self: Self) i32 {
-            return switch (self.backend) {
-                BackendType.Headless => |headless_output| headless_output.getHeight(),
-                BackendType.GLFW => |glfw_output| glfw_output.getHeight(),
-                BackendType.DRM => |drm_output| drm_output.getHeight(),
-            };
-        }
+    pub fn getHeight(self: Self) i32 {
+        return switch (self.backend) {
+            BackendType.Headless => |headless_output| headless_output.getHeight(),
+            BackendType.GLFW => |glfw_output| glfw_output.getHeight(),
+            BackendType.DRM => |drm_output| drm_output.getHeight(),
+        };
+    }
 
-        pub fn shouldClose(self: Self) bool {
-            return switch (self.backend) {
-                BackendType.Headless => |headless_output| headless_output.shouldClose(),
-                BackendType.GLFW => |glfw_output| glfw_output.shouldClose(),
-                BackendType.DRM => |drm_output| drm_output.shouldClose(),
-            };
-        }
+    pub fn shouldClose(self: Self) bool {
+        return switch (self.backend) {
+            BackendType.Headless => |headless_output| headless_output.shouldClose(),
+            BackendType.GLFW => |glfw_output| glfw_output.shouldClose(),
+            BackendType.DRM => |drm_output| drm_output.shouldClose(),
+        };
+    }
 
-        pub fn addToEpoll(self: *Self) !void {
-            return switch (self.backend) {
-                BackendType.Headless => {},
-                BackendType.GLFW => {},
-                BackendType.DRM => |*drm_output| try drm_output.addToEpoll(),
-            };
-        }
+    pub fn addToEpoll(self: *Self) !void {
+        return switch (self.backend) {
+            BackendType.Headless => {},
+            BackendType.GLFW => {},
+            BackendType.DRM => |*drm_output| try drm_output.addToEpoll(),
+        };
+    }
 
-        pub fn deinit(self: *Self) !void {
-            try self.data.deinit();
+    pub fn deinit(self: *Self) !void {
+        // try self.data.deinit();
 
-            return switch (self.backend) {
-                BackendType.Headless => |*headless_output| headless_output.deinit(),
-                BackendType.GLFW => |*glfw_output| glfw_output.deinit(),
-                BackendType.DRM => |*drm_output| drm_output.deinit(),
-            };
-        }
-    };
-}
+        return switch (self.backend) {
+            BackendType.Headless => |*headless_output| headless_output.deinit(),
+            BackendType.GLFW => |*glfw_output| glfw_output.deinit(),
+            BackendType.DRM => |*drm_output| drm_output.deinit(),
+        };
+    }
+};
 
-pub fn Backend(comptime T: type) type {
-    return union(BackendType) {
-        Headless: HeadlessBackend,
-        GLFW: GLFWBackend,
-        DRM: DRMBackend,
+pub const Backend = union(BackendType) {
+    Headless: HeadlessBackend,
+    GLFW: GLFWBackend,
+    DRM: DRMBackend,
 
-        const Self = @This();
+    const Self = @This();
 
-        pub fn new(backend_type: BackendType) !Self {
-            return switch (backend_type) {
-                BackendType.Headless => Self{ .Headless = try headless.new() },
-                BackendType.GLFW => Self{ .GLFW = try glfw.new() },
-                BackendType.DRM => Self{ .DRM = try drm.new() },
-            };
-        }
+    pub fn new(backend_type: BackendType) !Self {
+        return switch (backend_type) {
+            BackendType.Headless => Self{ .Headless = try headless.new() },
+            BackendType.GLFW => Self{ .GLFW = try glfw.new() },
+            BackendType.DRM => Self{ .DRM = try drm.new() },
+        };
+    }
 
-        pub fn init(self: *Self) !void {
-            return switch (self.*) {
-                BackendType.Headless => |*backend| backend.init(),
-                BackendType.GLFW => |*backend| backend.init(),
-                BackendType.DRM => |*backend| backend.init(),
-            };
-        }
+    pub fn init(self: *Self) !void {
+        return switch (self.*) {
+            BackendType.Headless => |*backend| backend.init(),
+            BackendType.GLFW => |*backend| backend.init(),
+            BackendType.DRM => |*backend| backend.init(),
+        };
+    }
 
-        pub fn wait(self: Self) i32 {
-            return switch (self) {
-                BackendType.Headless => |headless_backend| -1,
-                BackendType.GLFW => |glfw_backend| 10,
-                BackendType.DRM => -1,
-            };
-        }
+    pub fn wait(self: Self) i32 {
+        return switch (self) {
+            BackendType.Headless => |headless_backend| -1,
+            BackendType.GLFW => |glfw_backend| 10,
+            BackendType.DRM => -1,
+        };
+    }
 
-        pub fn name(self: Self) []const u8 {
-            return switch (self) {
-                BackendType.Headless => "Headless",
-                BackendType.GLFW => "GLFW",
-                BackendType.DRM => "DRM",
-            };
-        }
+    pub fn name(self: Self) []const u8 {
+        return switch (self) {
+            BackendType.Headless => "Headless",
+            BackendType.GLFW => "GLFW",
+            BackendType.DRM => "DRM",
+        };
+    }
 
-        pub fn newOutput(self: *Backend(T), w: i32, h: i32) !BackendOutput(T) {
-            var output_backend = switch (self.*) {
-                BackendType.Headless => |*headless_backend| OutputBackend{ .Headless = try headless_backend.newOutput(w, h) },
-                BackendType.GLFW => |*glfw_backend| OutputBackend{ .GLFW = try glfw_backend.newOutput(w, h) },
-                BackendType.DRM => |*drm_backend| OutputBackend{ .DRM = try drm_backend.newOutput() },
-            };
+    pub fn newOutput(self: *Backend, w: i32, h: i32) !BackendOutput {
+        var output_backend = switch (self.*) {
+            BackendType.Headless => |*headless_backend| OutputBackend{ .Headless = try headless_backend.newOutput(w, h) },
+            BackendType.GLFW => |*glfw_backend| OutputBackend{ .GLFW = try glfw_backend.newOutput(w, h) },
+            BackendType.DRM => |*drm_backend| OutputBackend{ .DRM = try drm_backend.newOutput() },
+        };
 
-            return BackendOutput(T){
-                .backend = output_backend,
-                .data = undefined,
-            };
-        }
+        return BackendOutput{
+            .backend = output_backend,
+        };
+    }
 
-        pub fn deinit(self: *Self) void {
-            return switch (self.*) {
-                BackendType.Headless => |*headless_backend| headless_backend.deinit(),
-                BackendType.GLFW => |*glfw_backend| glfw_backend.deinit(),
-                BackendType.DRM => |*drm_backend| drm_backend.deinit(),
-            };
-        }
-    };
-}
+    pub fn deinit(self: *Self) void {
+        return switch (self.*) {
+            BackendType.Headless => |*headless_backend| headless_backend.deinit(),
+            BackendType.GLFW => |*glfw_backend| glfw_backend.deinit(),
+            BackendType.DRM => |*drm_backend| drm_backend.deinit(),
+        };
+    }
+};
 
 pub fn detect() BackendType {
     if (std.os.getenv("DISPLAY")) |display| {

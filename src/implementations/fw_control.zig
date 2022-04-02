@@ -10,8 +10,7 @@ const Region = @import("../region.zig").Region;
 const Window = @import("../window.zig").Window;
 
 fn get_clients(context: *Context, fw_control: Object) anyerror!void {
-    var it = clients.CLIENTS.iterator();
-    while (it.next()) |client| {
+    for (context.client.compositor.clients.items) |client| {
         try prot.fw_control_send_client(fw_control, @intCast(u32, client.getFd()));
     }
     try prot.fw_control_send_done(fw_control);
@@ -72,7 +71,8 @@ fn get_windows(context: *Context, fw_control: Object) anyerror!void {
 }
 
 fn get_window_trees(context: *Context, fw_control: Object) anyerror!void {
-    var view = views.CURRENT_VIEW;
+    // var view = views.CURRENT_VIEW;
+    const view = context.client.compositor.current_view orelse return;
 
     var it = view.back();
     while (it) |window| : (it = window.toplevel.next) {

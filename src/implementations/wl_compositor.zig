@@ -11,7 +11,7 @@ fn create_surface(context: *Context, wl_compositor: Object, new_id: u32) anyerro
     std.debug.warn("create_surface: {}\n", .{new_id});
 
     const window = try win.newWindow(context.client, new_id);
-    window.view = view.CURRENT_VIEW;
+    window.view = context.client.compositor.current_view;
 
     const surface = prot.new_wl_surface(new_id, context, @ptrToInt(window));
     try context.register(surface);

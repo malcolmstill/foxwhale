@@ -138,7 +138,7 @@ fn set_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
             @enumToInt(prot.xdg_toplevel_state.activated),
         };
 
-        try prot.xdg_toplevel_send_configure(xdg_toplevel, window.view.?.output.?.getWidth(), window.view.?.output.?.getHeight(), &states);
+        try prot.xdg_toplevel_send_configure(xdg_toplevel, window.view.?.output.?.backend.getWidth(), window.view.?.output.?.backend.getHeight(), &states);
         try prot.xdg_surface_send_configure(xdg_surface, serial);
     }
 }

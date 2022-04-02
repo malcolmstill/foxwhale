@@ -51,7 +51,7 @@ pub fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!v
         std.os.close(conn.stream.handle);
     }
 
-    const client = try Client.init(compositor.alloc, conn);
+    const client = try Client.init(compositor.alloc, compositor, conn);
     errdefer {
         client.deinit() catch |err| {};
     }

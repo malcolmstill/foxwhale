@@ -11,13 +11,13 @@ const positioner = @import("positioner.zig");
 const buffer = @import("buffer.zig");
 const Dispatchable = epoll.Dispatchable;
 const Stalloc = @import("stalloc.zig").Stalloc;
-
-// pub var CLIENTS: Stalloc(void, Client, 256) = undefined;
+const Compositor = @import("compositor.zig").Compositor;
 
 pub const Context = WlContext(*Client);
 pub const Object = WlContext(*Client).Object;
 
 pub const Client = struct {
+    compositor: *Compositor = null,
     alloc: *mem.Allocator,
     connection: std.net.StreamServer.Connection,
     dispatchable: Dispatchable,
@@ -41,9 +41,10 @@ pub const Client = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: *mem.Allocator, conn: std.net.StreamServer.Connection) !*Self {
+    pub fn init(allocator: *mem.Allocator, compositor: *Compositor, conn: std.net.StreamServer.Connection) !*Self {
         const client = try allocator.create(Client);
 
+        client.compositor = compositor;
         client.alloc = allocator;
         client.dispatchable.impl = dispatch;
         client.connection = conn;
@@ -90,22 +91,6 @@ pub const Client = struct {
         return @bitCast(u32, self.connection.stream.handle);
     }
 };
-
-// pub fn newClient(conn: std.net.StreamServer.Connection) !*Client {
-//     var client: *Client = try CLIENTS.new(undefined);
-
-//     client.dispatchable.impl = dispatch;
-//     client.connection = conn;
-//     client.context.init(conn.stream.handle, client);
-//     client.server_id = 0xff000000 - 1;
-
-//     client.wl_display = prot.new_wl_display(1, &client.context, 0);
-//     try client.context.register(client.wl_display);
-
-//     try epoll.addFd(conn.stream.handle, &client.dispatchable);
-
-//     return client;
-// }
 
 fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
     var client = @fieldParentPtr(Client, "dispatchable", dispatchable);

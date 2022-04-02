@@ -49,21 +49,21 @@ fn create(context: *Context, zwp_linux_buffer_params: Object, width: i32, height
         i += 1;
     }
 
-    switch (main.OUTPUT.backend) {
-        .DRM => |drm| {
-            const optional_image = c.eglCreateImage(drm.egl.display, null, c.EGL_LINUX_DMA_BUF_EXT, null, &attribs[0]);
+    // switch (main.OUTPUT.backend) {
+    //     .DRM => |drm| {
+    //         const optional_image = c.eglCreateImage(drm.egl.display, null, c.EGL_LINUX_DMA_BUF_EXT, null, &attribs[0]);
 
-            if (optional_image) |image| {
-                const buffer = try dmabuf.newDmaBuffer(context.client, zwp_linux_buffer_params.id, next_id, width, height, format, image);
-                const wl_buffer = prot.new_wl_buffer(next_id, context, @ptrToInt(buffer));
-                try prot.zwp_linux_buffer_params_v1_send_created(zwp_linux_buffer_params, next_id);
-                try context.register(wl_buffer);
-            }
-        },
-        else => {
-            try prot.zwp_linux_buffer_params_v1_send_failed(zwp_linux_buffer_params);
-        },
-    }
+    //         if (optional_image) |image| {
+    //             const buffer = try dmabuf.newDmaBuffer(context.client, zwp_linux_buffer_params.id, next_id, width, height, format, image);
+    //             const wl_buffer = prot.new_wl_buffer(next_id, context, @ptrToInt(buffer));
+    //             try prot.zwp_linux_buffer_params_v1_send_created(zwp_linux_buffer_params, next_id);
+    //             try context.register(wl_buffer);
+    //         }
+    //     },
+    //     else => {
+    //         try prot.zwp_linux_buffer_params_v1_send_failed(zwp_linux_buffer_params);
+    //     },
+    // }
 }
 
 fn create_immed(context: *Context, zwp_linux_buffer_params: Object, buffer_id: u32, width: i32, height: i32, format: u32, flags: u32) anyerror!void {
