@@ -15,7 +15,6 @@ const Backend = @import("backend/backend.zig").Backend;
 const Renderer = @import("renderer.zig").Renderer;
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-const allocator = &gpa.allocator;
 
 pub fn main() anyerror!void {
     try epoll.init();
@@ -24,7 +23,7 @@ pub fn main() anyerror!void {
     try backend.init();
     defer backend.deinit();
 
-    Comp.COMPOSITOR = Compositor.init(allocator());
+    Comp.COMPOSITOR = Compositor.init(gpa.allocator());
     var compositor = &Comp.COMPOSITOR; // FIXME: get rid of this global
     defer compositor.deinit();
     try compositor.initInput();
@@ -33,7 +32,7 @@ pub fn main() anyerror!void {
 
     std.debug.warn("==> backend: {s}\n", .{backend.name()});
 
-    var renderer = Renderer.init(allocator);
+    var renderer = Renderer.init(gpa.allocator());
     defer renderer.deinit();
 
     try renderer.initShaders();
