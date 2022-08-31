@@ -80,7 +80,7 @@ fn damage(
     _: i32, // height
     _: i32, // height
 ) anyerror!void {
-    // std.debug.warn("damage does nothing\n", .{});
+    // std.log.warn("damage does nothing\n", .{});
 }
 
 fn attach(

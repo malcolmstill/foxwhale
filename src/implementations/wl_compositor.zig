@@ -12,7 +12,7 @@ fn create_surface(
     _: Object, // wl_compositor
     new_id: u32,
 ) anyerror!void {
-    std.debug.warn("create_surface: {}\n", .{new_id});
+    std.log.warn("create_surface: {}\n", .{new_id});
 
     const window = try win.newWindow(context.client, new_id);
     window.view = context.client.compositor.current_view;

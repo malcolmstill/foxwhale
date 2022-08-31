@@ -35,7 +35,7 @@ pub const EGL = struct {
         var major: i32 = 0;
         var minor: i32 = 0;
         _ = c.eglInitialize(display, &major, &minor);
-        std.debug.warn("EGL version: {}.{}\n", .{ major, minor });
+        std.log.warn("EGL version: {}.{}\n", .{ major, minor });
 
         var config: c.EGLConfig = undefined;
         var num_config: i32 = 0;
@@ -54,7 +54,7 @@ pub const EGL = struct {
         var height: i32 = 0;
         _ = c.eglQuerySurface(display, surface, c.EGL_WIDTH, &width);
         _ = c.eglQuerySurface(display, surface, c.EGL_HEIGHT, &height);
-        std.debug.warn("egl wxh: {}x{}\n", .{ width, height });
+        std.log.warn("egl wxh: {}x{}\n", .{ width, height });
 
         _ = c.eglMakeCurrent(display, surface, surface, context);
 
@@ -69,7 +69,7 @@ pub const EGL = struct {
         const ds = c.eglDestroySurface(self.display, self.surface);
         _ = c.eglDestroyContext(self.display, self.context);
         _ = c.eglTerminate(self.display);
-        std.debug.warn("EGL deinit: {}\n", .{ds});
+        std.log.warn("EGL deinit: {}\n", .{ds});
     }
 
     pub fn swapBuffers(self: EGL) void {

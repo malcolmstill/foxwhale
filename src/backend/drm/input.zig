@@ -68,36 +68,36 @@ pub fn dispatch(
         var input_event_type = c.libinput_event_get_type(event);
 
         switch (input_event_type) {
-            EventType.LIBINPUT_EVENT_DEVICE_ADDED => {
+            c.LIBINPUT_EVENT_DEVICE_ADDED => {
                 var device = c.libinput_event_get_device(event);
                 var name = c.libinput_device_get_name(device);
-                std.debug.warn("Added device: {s}\n", .{std.mem.span(name)});
+                std.log.warn("Added device: {s}\n", .{std.mem.span(name)});
                 _ = c.libinput_device_ref(device);
                 var seat = c.libinput_device_get_seat(device);
                 _ = c.libinput_seat_ref(seat);
             },
-            EventType.LIBINPUT_EVENT_DEVICE_REMOVED => std.debug.warn("device removed\n", .{}),
-            EventType.LIBINPUT_EVENT_KEYBOARD_KEY => {
+            c.LIBINPUT_EVENT_DEVICE_REMOVED => std.log.warn("device removed\n", .{}),
+            c.LIBINPUT_EVENT_KEYBOARD_KEY => {
                 var keyboard_event = c.libinput_event_get_keyboard_event(event);
                 var key = c.libinput_event_keyboard_get_key(keyboard_event);
-                var state = @intCast(u32, @enumToInt(c.libinput_event_keyboard_get_key_state(keyboard_event)));
+                var state = @intCast(u32, c.libinput_event_keyboard_get_key_state(keyboard_event));
                 var time = c.libinput_event_keyboard_get_time(keyboard_event);
 
                 if (backend.BACKEND_FNS.keyboard) |keyboard_fn| {
                     try keyboard_fn(time, key, state);
                 }
             },
-            EventType.LIBINPUT_EVENT_POINTER_BUTTON => {
+            c.LIBINPUT_EVENT_POINTER_BUTTON => {
                 var mouse_button_event = c.libinput_event_get_pointer_event(event);
                 var button = c.libinput_event_pointer_get_button(mouse_button_event);
-                var state = @intCast(u32, @enumToInt(c.libinput_event_pointer_get_button_state(mouse_button_event)));
+                var state = @intCast(u32, c.libinput_event_pointer_get_button_state(mouse_button_event));
                 var time = c.libinput_event_pointer_get_time(mouse_button_event);
 
                 if (backend.BACKEND_FNS.mouseClick) |mouseClick| {
                     try mouseClick(time, button, state);
                 }
             },
-            EventType.LIBINPUT_EVENT_POINTER_MOTION => {
+            c.LIBINPUT_EVENT_POINTER_MOTION => {
                 var pointer_event = c.libinput_event_get_pointer_event(event);
                 var dx = c.libinput_event_pointer_get_dx(pointer_event);
                 var dy = c.libinput_event_pointer_get_dy(pointer_event);
@@ -107,12 +107,12 @@ pub fn dispatch(
                     try mouseMove(time, dx, dy);
                 }
             },
-            EventType.LIBINPUT_EVENT_POINTER_AXIS => {
+            c.LIBINPUT_EVENT_POINTER_AXIS => {
                 var pointer_event = c.libinput_event_get_pointer_event(event);
-                var vertical = @intToEnum(c.enum_libinput_pointer_axis, c.LIBINPUT_POINTER_AXIS_SCROLL_VERTICAL);
-                var has_vertical = c.libinput_event_pointer_has_axis(pointer_event, vertical);
+                var vertical = c.LIBINPUT_POINTER_AXIS_SCROLL_VERTICAL;
+                var has_vertical = c.libinput_event_pointer_has_axis(pointer_event, @intCast(c_uint, vertical));
                 if (has_vertical != 0) {
-                    var value = c.libinput_event_pointer_get_axis_value(pointer_event, vertical);
+                    var value = c.libinput_event_pointer_get_axis_value(pointer_event, @intCast(c_uint, vertical));
                     var time = c.libinput_event_pointer_get_time(pointer_event);
 
                     if (backend.BACKEND_FNS.mouseAxis) |mouseAxis| {
@@ -120,7 +120,7 @@ pub fn dispatch(
                     }
                 }
             },
-            else => std.debug.warn("unhandled event\n", .{}),
+            else => std.log.warn("unhandled event\n", .{}),
         }
 
         c.libinput_event_destroy(event);

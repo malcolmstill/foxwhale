@@ -5,7 +5,7 @@ const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
 
 fn sync(context: *Context, wl_display: Object, new_id: u32) anyerror!void {
-    // std.debug.warn("sync with id {}\n", .{new_id});
+    // std.log.warn("sync with id {}\n", .{new_id});
 
     const wl_callback = prot.new_wl_callback(new_id, context, 0);
     try prot.wl_callback_send_done(wl_callback, context.client.nextSerial());
@@ -17,7 +17,7 @@ fn get_registry(
     _: Object, // wl_display
     new_id: u32,
 ) anyerror!void {
-    std.debug.warn("get_registry with id {}\n", .{new_id});
+    std.log.warn("get_registry with id {}\n", .{new_id});
 
     const wl_registry = prot.new_wl_registry(new_id, context, 0);
     context.client.wl_registry_id = new_id;

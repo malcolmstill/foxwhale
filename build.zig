@@ -31,16 +31,17 @@ pub fn build(b: *Builder) void {
     exe.single_threaded = true;
     exe.install();
 
-    const foxwhalectl_exe = b.addExecutable("foxwhalectl", "src/foxwhalectl/main.zig");
-    foxwhalectl_exe.setTarget(target);
-    foxwhalectl_exe.setBuildMode(mode);
-    if (mode != .Debug) {
-        foxwhalectl_exe.strip = true;
-    }
-    foxwhalectl_exe.single_threaded = true;
-    foxwhalectl_exe.install();
-    foxwhalectl_exe.addPackagePath("epoll", "src/epoll.zig");
-    foxwhalectl_exe.addPackagePath("wl", "src/wl/context.zig");
+    // FIXME: fix client generation of protocols
+    // const foxwhalectl_exe = b.addExecutable("foxwhalectl", "src/foxwhalectl/main.zig");
+    // foxwhalectl_exe.setTarget(target);
+    // foxwhalectl_exe.setBuildMode(mode);
+    // if (mode != .Debug) {
+    //     foxwhalectl_exe.strip = true;
+    // }
+    // foxwhalectl_exe.single_threaded = true;
+    // foxwhalectl_exe.install();
+    // foxwhalectl_exe.addPackagePath("epoll", "src/epoll.zig");
+    // foxwhalectl_exe.addPackagePath("wl", "src/wl/context.zig");
 
     const run_cmd = exe.run();
     run_cmd.step.dependOn(b.getInstallStep());

@@ -16,7 +16,7 @@ fn destroy(context: *Context, xdg_surface: Object) anyerror!void {
 }
 
 fn get_toplevel(context: *Context, xdg_surface: Object, new_id: u32) anyerror!void {
-    std.debug.warn("get_toplevel: {}\n", .{new_id});
+    std.log.warn("get_toplevel: {}\n", .{new_id});
 
     const window = @intToPtr(*Window, xdg_surface.container);
     window.xdg_toplevel_id = new_id;

@@ -11,7 +11,7 @@ fn get_xdg_surface(
     new_id: u32,
     surface: Object,
 ) anyerror!void {
-    std.debug.warn("get_xdg_surface: {}\n", .{new_id});
+    std.log.warn("get_xdg_surface: {}\n", .{new_id});
 
     const window = @intToPtr(*Window, surface.container);
     window.xdg_surface_id = new_id;

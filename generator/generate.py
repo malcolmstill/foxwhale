@@ -270,7 +270,7 @@ def generate_send(interface, sentType):
             for arg in child:
                 if arg.tag == "arg":
                     print(f"\tobject.context.put{put_type(arg.attrib['type'])}({arg.attrib['name']});")
-            print(f"\tobject.context.finishWrite(object.id, {i});")
+            print(f"\ttry object.context.finishWrite(object.id, {i});")
             print(f"}}")
             i = i + 1
 

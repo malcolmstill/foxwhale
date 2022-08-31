@@ -349,7 +349,7 @@ fn compileShader(source: []const u8, shader_type: c_uint) !c_uint {
         c.glGetShaderInfoLog(shader, log_length, null, log[0..]);
         try checkGLError();
 
-        std.debug.warn("log: {s}\n", .{log[0..std.math.min(log.len, @intCast(usize, log_length))]});
+        std.log.warn("log: {s}\n", .{log[0..std.math.min(log.len, @intCast(usize, log_length))]});
 
         return error.FailedToCompileShader;
     }
@@ -420,7 +420,7 @@ pub fn setGeometry(width: i32, height: i32) [28]f32 {
 fn checkGLError() !void {
     var err = c.glGetError();
     if (err != c.GL_NO_ERROR) {
-        std.debug.warn("error: {}\n", .{err});
+        std.log.warn("error: {}\n", .{err});
         return error.GL_ERROR;
     }
 }

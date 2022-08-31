@@ -75,7 +75,7 @@ pub fn wl_display_send_error(object: Object, object_id: u32, code: u32, message:
     object.context.putU32(object_id);
     object.context.putU32(code);
     object.context.putString(message);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -88,7 +88,7 @@ pub fn wl_display_send_error(object: Object, object_id: u32, code: u32, message:
 pub fn wl_display_send_delete_id(object: Object, id: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(id);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 // wl_registry
@@ -144,7 +144,7 @@ pub fn wl_registry_send_global(object: Object, name: u32, interface: []const u8,
     object.context.putU32(name);
     object.context.putString(interface);
     object.context.putU32(version);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -162,7 +162,7 @@ pub fn wl_registry_send_global(object: Object, name: u32, interface: []const u8,
 pub fn wl_registry_send_global_remove(object: Object, name: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(name);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 // wl_callback
@@ -194,7 +194,7 @@ fn wl_callback_dispatch(_: Object, opcode: u16) anyerror!void {
 pub fn wl_callback_send_done(object: Object, callback_data: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(callback_data);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 // wl_compositor
@@ -490,7 +490,7 @@ pub const wl_shm_format = enum(u32) {
 pub fn wl_shm_send_format(object: Object, format: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(format);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 // wl_buffer
@@ -552,7 +552,7 @@ fn wl_buffer_dispatch(object: Object, opcode: u16) anyerror!void {
 //
 pub fn wl_buffer_send_release(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 // wl_data_offer
@@ -676,7 +676,7 @@ pub const wl_data_offer_error = enum(u32) {
 pub fn wl_data_offer_send_offer(object: Object, mime_type: []const u8) anyerror!void {
     object.context.startWrite();
     object.context.putString(mime_type);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -687,7 +687,7 @@ pub fn wl_data_offer_send_offer(object: Object, mime_type: []const u8) anyerror!
 pub fn wl_data_offer_send_source_actions(object: Object, source_actions: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(source_actions);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 //
@@ -730,7 +730,7 @@ pub fn wl_data_offer_send_source_actions(object: Object, source_actions: u32) an
 pub fn wl_data_offer_send_action(object: Object, dnd_action: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(dnd_action);
-    object.context.finishWrite(object.id, 2);
+    try object.context.finishWrite(object.id, 2);
 }
 
 // wl_data_source
@@ -818,7 +818,7 @@ pub const wl_data_source_error = enum(u32) {
 pub fn wl_data_source_send_target(object: Object, mime_type: []const u8) anyerror!void {
     object.context.startWrite();
     object.context.putString(mime_type);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -830,7 +830,7 @@ pub fn wl_data_source_send_send(object: Object, mime_type: []const u8, fd: i32) 
     object.context.startWrite();
     object.context.putString(mime_type);
     object.context.putFd(fd);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 //
@@ -857,7 +857,7 @@ pub fn wl_data_source_send_send(object: Object, mime_type: []const u8, fd: i32) 
 //
 pub fn wl_data_source_send_cancelled(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 2);
+    try object.context.finishWrite(object.id, 2);
 }
 
 //
@@ -873,7 +873,7 @@ pub fn wl_data_source_send_cancelled(object: Object) anyerror!void {
 //
 pub fn wl_data_source_send_dnd_drop_performed(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 3);
+    try object.context.finishWrite(object.id, 3);
 }
 
 //
@@ -886,7 +886,7 @@ pub fn wl_data_source_send_dnd_drop_performed(object: Object) anyerror!void {
 //
 pub fn wl_data_source_send_dnd_finished(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 4);
+    try object.context.finishWrite(object.id, 4);
 }
 
 //
@@ -919,7 +919,7 @@ pub fn wl_data_source_send_dnd_finished(object: Object) anyerror!void {
 pub fn wl_data_source_send_action(object: Object, dnd_action: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(dnd_action);
-    object.context.finishWrite(object.id, 5);
+    try object.context.finishWrite(object.id, 5);
 }
 
 // wl_data_device
@@ -1031,7 +1031,7 @@ pub const wl_data_device_error = enum(u32) {
 pub fn wl_data_device_send_data_offer(object: Object, id: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(id);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -1047,7 +1047,7 @@ pub fn wl_data_device_send_enter(object: Object, serial: u32, surface: u32, x: f
     object.context.putFixed(x);
     object.context.putFixed(y);
     object.context.putU32(id);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 //
@@ -1057,7 +1057,7 @@ pub fn wl_data_device_send_enter(object: Object, serial: u32, surface: u32, x: f
 //
 pub fn wl_data_device_send_leave(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 2);
+    try object.context.finishWrite(object.id, 2);
 }
 
 //
@@ -1071,7 +1071,7 @@ pub fn wl_data_device_send_motion(object: Object, time: u32, x: f32, y: f32) any
     object.context.putU32(time);
     object.context.putFixed(x);
     object.context.putFixed(y);
-    object.context.finishWrite(object.id, 3);
+    try object.context.finishWrite(object.id, 3);
 }
 
 //
@@ -1091,7 +1091,7 @@ pub fn wl_data_device_send_motion(object: Object, time: u32, x: f32, y: f32) any
 //
 pub fn wl_data_device_send_drop(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 4);
+    try object.context.finishWrite(object.id, 4);
 }
 
 //
@@ -1111,7 +1111,7 @@ pub fn wl_data_device_send_drop(object: Object) anyerror!void {
 pub fn wl_data_device_send_selection(object: Object, id: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(id);
-    object.context.finishWrite(object.id, 5);
+    try object.context.finishWrite(object.id, 5);
 }
 
 // wl_data_device_manager
@@ -1460,7 +1460,7 @@ pub const wl_shell_surface_fullscreen_method = enum(u32) {
 pub fn wl_shell_surface_send_ping(object: Object, serial: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -1487,7 +1487,7 @@ pub fn wl_shell_surface_send_configure(object: Object, edges: u32, width: i32, h
     object.context.putU32(edges);
     object.context.putI32(width);
     object.context.putI32(height);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 //
@@ -1497,7 +1497,7 @@ pub fn wl_shell_surface_send_configure(object: Object, edges: u32, width: i32, h
 //
 pub fn wl_shell_surface_send_popup_done(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 2);
+    try object.context.finishWrite(object.id, 2);
 }
 
 // wl_surface
@@ -1729,7 +1729,7 @@ pub const wl_surface_error = enum(u32) {
 pub fn wl_surface_send_enter(object: Object, output: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(output);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -1746,7 +1746,7 @@ pub fn wl_surface_send_enter(object: Object, output: u32) anyerror!void {
 pub fn wl_surface_send_leave(object: Object, output: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(output);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 // wl_seat
@@ -1873,7 +1873,7 @@ pub const wl_seat_error = enum(u32) {
 pub fn wl_seat_send_capabilities(object: Object, capabilities: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(capabilities);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -1897,7 +1897,7 @@ pub fn wl_seat_send_capabilities(object: Object, capabilities: u32) anyerror!voi
 pub fn wl_seat_send_name(object: Object, name: []const u8) anyerror!void {
     object.context.startWrite();
     object.context.putString(name);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 // wl_pointer
@@ -2000,7 +2000,7 @@ pub fn wl_pointer_send_enter(object: Object, serial: u32, surface: u32, surface_
     object.context.putU32(surface);
     object.context.putFixed(surface_x);
     object.context.putFixed(surface_y);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -2014,7 +2014,7 @@ pub fn wl_pointer_send_leave(object: Object, serial: u32, surface: u32) anyerror
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.putU32(surface);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 //
@@ -2027,7 +2027,7 @@ pub fn wl_pointer_send_motion(object: Object, time: u32, surface_x: f32, surface
     object.context.putU32(time);
     object.context.putFixed(surface_x);
     object.context.putFixed(surface_y);
-    object.context.finishWrite(object.id, 2);
+    try object.context.finishWrite(object.id, 2);
 }
 
 //
@@ -2052,7 +2052,7 @@ pub fn wl_pointer_send_button(object: Object, serial: u32, time: u32, button: u3
     object.context.putU32(time);
     object.context.putU32(button);
     object.context.putU32(state);
-    object.context.finishWrite(object.id, 3);
+    try object.context.finishWrite(object.id, 3);
 }
 
 //
@@ -2078,7 +2078,7 @@ pub fn wl_pointer_send_axis(object: Object, time: u32, axis: u32, value: f32) an
     object.context.putU32(time);
     object.context.putU32(axis);
     object.context.putFixed(value);
-    object.context.finishWrite(object.id, 4);
+    try object.context.finishWrite(object.id, 4);
 }
 
 //
@@ -2119,7 +2119,7 @@ pub fn wl_pointer_send_axis(object: Object, time: u32, axis: u32, value: f32) an
 //
 pub fn wl_pointer_send_frame(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 5);
+    try object.context.finishWrite(object.id, 5);
 }
 
 //
@@ -2152,7 +2152,7 @@ pub fn wl_pointer_send_frame(object: Object) anyerror!void {
 pub fn wl_pointer_send_axis_source(object: Object, axis_source: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(axis_source);
-    object.context.finishWrite(object.id, 6);
+    try object.context.finishWrite(object.id, 6);
 }
 
 //
@@ -2175,7 +2175,7 @@ pub fn wl_pointer_send_axis_stop(object: Object, time: u32, axis: u32) anyerror!
     object.context.startWrite();
     object.context.putU32(time);
     object.context.putU32(axis);
-    object.context.finishWrite(object.id, 7);
+    try object.context.finishWrite(object.id, 7);
 }
 
 //
@@ -2210,7 +2210,7 @@ pub fn wl_pointer_send_axis_discrete(object: Object, axis: u32, discrete: i32) a
     object.context.startWrite();
     object.context.putU32(axis);
     object.context.putI32(discrete);
-    object.context.finishWrite(object.id, 8);
+    try object.context.finishWrite(object.id, 8);
 }
 
 // wl_keyboard
@@ -2279,7 +2279,7 @@ pub fn wl_keyboard_send_keymap(object: Object, format: u32, fd: i32, size: u32) 
     object.context.putU32(format);
     object.context.putFd(fd);
     object.context.putU32(size);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -2294,7 +2294,7 @@ pub fn wl_keyboard_send_enter(object: Object, serial: u32, surface: u32, keys: [
     object.context.putU32(serial);
     object.context.putU32(surface);
     object.context.putArray(keys);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 //
@@ -2311,7 +2311,7 @@ pub fn wl_keyboard_send_leave(object: Object, serial: u32, surface: u32) anyerro
     object.context.startWrite();
     object.context.putU32(serial);
     object.context.putU32(surface);
-    object.context.finishWrite(object.id, 2);
+    try object.context.finishWrite(object.id, 2);
 }
 
 //
@@ -2331,7 +2331,7 @@ pub fn wl_keyboard_send_key(object: Object, serial: u32, time: u32, key: u32, st
     object.context.putU32(time);
     object.context.putU32(key);
     object.context.putU32(state);
-    object.context.finishWrite(object.id, 3);
+    try object.context.finishWrite(object.id, 3);
 }
 
 //
@@ -2345,7 +2345,7 @@ pub fn wl_keyboard_send_modifiers(object: Object, serial: u32, mods_depressed: u
     object.context.putU32(mods_latched);
     object.context.putU32(mods_locked);
     object.context.putU32(group);
-    object.context.finishWrite(object.id, 4);
+    try object.context.finishWrite(object.id, 4);
 }
 
 //
@@ -2366,7 +2366,7 @@ pub fn wl_keyboard_send_repeat_info(object: Object, rate: i32, delay: i32) anyer
     object.context.startWrite();
     object.context.putI32(rate);
     object.context.putI32(delay);
-    object.context.finishWrite(object.id, 5);
+    try object.context.finishWrite(object.id, 5);
 }
 
 // wl_touch
@@ -2426,7 +2426,7 @@ pub fn wl_touch_send_down(object: Object, serial: u32, time: u32, surface: u32, 
     object.context.putI32(id);
     object.context.putFixed(x);
     object.context.putFixed(y);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -2439,7 +2439,7 @@ pub fn wl_touch_send_up(object: Object, serial: u32, time: u32, id: i32) anyerro
     object.context.putU32(serial);
     object.context.putU32(time);
     object.context.putI32(id);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 //
@@ -2451,7 +2451,7 @@ pub fn wl_touch_send_motion(object: Object, time: u32, id: i32, x: f32, y: f32) 
     object.context.putI32(id);
     object.context.putFixed(x);
     object.context.putFixed(y);
-    object.context.finishWrite(object.id, 2);
+    try object.context.finishWrite(object.id, 2);
 }
 
 //
@@ -2466,7 +2466,7 @@ pub fn wl_touch_send_motion(object: Object, time: u32, id: i32, x: f32, y: f32) 
 //
 pub fn wl_touch_send_frame(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 3);
+    try object.context.finishWrite(object.id, 3);
 }
 
 //
@@ -2479,7 +2479,7 @@ pub fn wl_touch_send_frame(object: Object) anyerror!void {
 //
 pub fn wl_touch_send_cancel(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 4);
+    try object.context.finishWrite(object.id, 4);
 }
 
 //
@@ -2514,7 +2514,7 @@ pub fn wl_touch_send_shape(object: Object, id: i32, major: f32, minor: f32) anye
     object.context.putI32(id);
     object.context.putFixed(major);
     object.context.putFixed(minor);
-    object.context.finishWrite(object.id, 5);
+    try object.context.finishWrite(object.id, 5);
 }
 
 //
@@ -2546,7 +2546,7 @@ pub fn wl_touch_send_orientation(object: Object, id: i32, orientation: f32) anye
     object.context.startWrite();
     object.context.putI32(id);
     object.context.putFixed(orientation);
-    object.context.finishWrite(object.id, 6);
+    try object.context.finishWrite(object.id, 6);
 }
 
 // wl_output
@@ -2645,7 +2645,7 @@ pub fn wl_output_send_geometry(object: Object, x: i32, y: i32, physical_width: i
     object.context.putString(make);
     object.context.putString(model);
     object.context.putI32(transform);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -2689,7 +2689,7 @@ pub fn wl_output_send_mode(object: Object, flags: u32, width: i32, height: i32, 
     object.context.putI32(width);
     object.context.putI32(height);
     object.context.putI32(refresh);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 //
@@ -2701,7 +2701,7 @@ pub fn wl_output_send_mode(object: Object, flags: u32, width: i32, height: i32, 
 //
 pub fn wl_output_send_done(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 2);
+    try object.context.finishWrite(object.id, 2);
 }
 
 //
@@ -2729,7 +2729,7 @@ pub fn wl_output_send_done(object: Object) anyerror!void {
 pub fn wl_output_send_scale(object: Object, factor: i32) anyerror!void {
     object.context.startWrite();
     object.context.putI32(factor);
-    object.context.finishWrite(object.id, 3);
+    try object.context.finishWrite(object.id, 3);
 }
 
 //
@@ -2765,7 +2765,7 @@ pub fn wl_output_send_scale(object: Object, factor: i32) anyerror!void {
 pub fn wl_output_send_name(object: Object, name: []const u8) anyerror!void {
     object.context.startWrite();
     object.context.putString(name);
-    object.context.finishWrite(object.id, 4);
+    try object.context.finishWrite(object.id, 4);
 }
 
 //
@@ -2787,7 +2787,7 @@ pub fn wl_output_send_name(object: Object, name: []const u8) anyerror!void {
 pub fn wl_output_send_description(object: Object, description: []const u8) anyerror!void {
     object.context.startWrite();
     object.context.putString(description);
-    object.context.finishWrite(object.id, 5);
+    try object.context.finishWrite(object.id, 5);
 }
 
 // wl_region
@@ -3184,7 +3184,7 @@ pub const xdg_wm_base_error = enum(u32) {
 pub fn xdg_wm_base_send_ping(object: Object, serial: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 // xdg_positioner
@@ -3544,7 +3544,7 @@ pub const xdg_surface_error = enum(u32) {
 pub fn xdg_surface_send_configure(object: Object, serial: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 // xdg_toplevel
@@ -3879,7 +3879,7 @@ pub fn xdg_toplevel_send_configure(object: Object, width: i32, height: i32, stat
     object.context.putI32(width);
     object.context.putI32(height);
     object.context.putArray(states);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -3894,7 +3894,7 @@ pub fn xdg_toplevel_send_configure(object: Object, width: i32, height: i32, stat
 //
 pub fn xdg_toplevel_send_close(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 //
@@ -3918,7 +3918,7 @@ pub fn xdg_toplevel_send_configure_bounds(object: Object, width: i32, height: i3
     object.context.startWrite();
     object.context.putI32(width);
     object.context.putI32(height);
-    object.context.finishWrite(object.id, 2);
+    try object.context.finishWrite(object.id, 2);
 }
 
 //
@@ -3946,7 +3946,7 @@ pub fn xdg_toplevel_send_configure_bounds(object: Object, width: i32, height: i3
 pub fn xdg_toplevel_send_wm_capabilities(object: Object, capabilities: []u32) anyerror!void {
     object.context.startWrite();
     object.context.putArray(capabilities);
-    object.context.finishWrite(object.id, 3);
+    try object.context.finishWrite(object.id, 3);
 }
 
 // xdg_popup
@@ -4052,7 +4052,7 @@ pub fn xdg_popup_send_configure(object: Object, x: i32, y: i32, width: i32, heig
     object.context.putI32(y);
     object.context.putI32(width);
     object.context.putI32(height);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -4062,7 +4062,7 @@ pub fn xdg_popup_send_configure(object: Object, x: i32, y: i32, width: i32, heig
 //
 pub fn xdg_popup_send_popup_done(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 //
@@ -4085,7 +4085,7 @@ pub fn xdg_popup_send_popup_done(object: Object) anyerror!void {
 pub fn xdg_popup_send_repositioned(object: Object, token: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(token);
-    object.context.finishWrite(object.id, 2);
+    try object.context.finishWrite(object.id, 2);
 }
 
 // zwp_linux_dmabuf_v1
@@ -4193,7 +4193,7 @@ fn zwp_linux_dmabuf_v1_dispatch(object: Object, opcode: u16) anyerror!void {
 pub fn zwp_linux_dmabuf_v1_send_format(object: Object, format: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(format);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -4226,7 +4226,7 @@ pub fn zwp_linux_dmabuf_v1_send_modifier(object: Object, format: u32, modifier_h
     object.context.putU32(format);
     object.context.putU32(modifier_hi);
     object.context.putU32(modifier_lo);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 // zwp_linux_buffer_params_v1
@@ -4353,7 +4353,7 @@ pub const zwp_linux_buffer_params_v1_flags = enum(u32) {
 pub fn zwp_linux_buffer_params_v1_send_created(object: Object, buffer: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(buffer);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -4366,7 +4366,7 @@ pub fn zwp_linux_buffer_params_v1_send_created(object: Object, buffer: u32) anye
 //
 pub fn zwp_linux_buffer_params_v1_send_failed(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 // zwp_linux_dmabuf_feedback_v1
@@ -4425,7 +4425,7 @@ pub const zwp_linux_dmabuf_feedback_v1_tranche_flags = enum(u32) {
 //
 pub fn zwp_linux_dmabuf_feedback_v1_send_done(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 
 //
@@ -4448,7 +4448,7 @@ pub fn zwp_linux_dmabuf_feedback_v1_send_format_table(object: Object, fd: i32, s
     object.context.startWrite();
     object.context.putFd(fd);
     object.context.putU32(size);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 
 //
@@ -4479,7 +4479,7 @@ pub fn zwp_linux_dmabuf_feedback_v1_send_format_table(object: Object, fd: i32, s
 pub fn zwp_linux_dmabuf_feedback_v1_send_main_device(object: Object, device: []u32) anyerror!void {
     object.context.startWrite();
     object.context.putArray(device);
-    object.context.finishWrite(object.id, 2);
+    try object.context.finishWrite(object.id, 2);
 }
 
 //
@@ -4490,7 +4490,7 @@ pub fn zwp_linux_dmabuf_feedback_v1_send_main_device(object: Object, device: []u
 //
 pub fn zwp_linux_dmabuf_feedback_v1_send_tranche_done(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 3);
+    try object.context.finishWrite(object.id, 3);
 }
 
 //
@@ -4524,7 +4524,7 @@ pub fn zwp_linux_dmabuf_feedback_v1_send_tranche_done(object: Object) anyerror!v
 pub fn zwp_linux_dmabuf_feedback_v1_send_tranche_target_device(object: Object, device: []u32) anyerror!void {
     object.context.startWrite();
     object.context.putArray(device);
-    object.context.finishWrite(object.id, 4);
+    try object.context.finishWrite(object.id, 4);
 }
 
 //
@@ -4556,7 +4556,7 @@ pub fn zwp_linux_dmabuf_feedback_v1_send_tranche_target_device(object: Object, d
 pub fn zwp_linux_dmabuf_feedback_v1_send_tranche_formats(object: Object, indices: []u32) anyerror!void {
     object.context.startWrite();
     object.context.putArray(indices);
-    object.context.finishWrite(object.id, 5);
+    try object.context.finishWrite(object.id, 5);
 }
 
 //
@@ -4572,7 +4572,7 @@ pub fn zwp_linux_dmabuf_feedback_v1_send_tranche_formats(object: Object, indices
 pub fn zwp_linux_dmabuf_feedback_v1_send_tranche_flags(object: Object, flags: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(flags);
-    object.context.finishWrite(object.id, 6);
+    try object.context.finishWrite(object.id, 6);
 }
 
 // fw_control
@@ -4684,7 +4684,7 @@ pub const fw_control_surface_type = enum(u32) {
 pub fn fw_control_send_client(object: Object, index: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(index);
-    object.context.finishWrite(object.id, 0);
+    try object.context.finishWrite(object.id, 0);
 }
 pub fn fw_control_send_window(object: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, sibling_prev: i32, sibling_next: i32, children_prev: i32, children_next: i32, input_region_id: u32) anyerror!void {
     object.context.startWrite();
@@ -4701,7 +4701,7 @@ pub fn fw_control_send_window(object: Object, index: u32, parent: i32, wl_surfac
     object.context.putI32(children_prev);
     object.context.putI32(children_next);
     object.context.putU32(input_region_id);
-    object.context.finishWrite(object.id, 1);
+    try object.context.finishWrite(object.id, 1);
 }
 pub fn fw_control_send_toplevel_window(object: Object, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
     object.context.startWrite();
@@ -4714,7 +4714,7 @@ pub fn fw_control_send_toplevel_window(object: Object, index: u32, parent: i32, 
     object.context.putI32(width);
     object.context.putI32(height);
     object.context.putU32(input_region_id);
-    object.context.finishWrite(object.id, 2);
+    try object.context.finishWrite(object.id, 2);
 }
 pub fn fw_control_send_region_rect(object: Object, index: u32, x: i32, y: i32, width: i32, height: i32, op: i32) anyerror!void {
     object.context.startWrite();
@@ -4724,9 +4724,9 @@ pub fn fw_control_send_region_rect(object: Object, index: u32, x: i32, y: i32, w
     object.context.putI32(width);
     object.context.putI32(height);
     object.context.putI32(op);
-    object.context.finishWrite(object.id, 3);
+    try object.context.finishWrite(object.id, 3);
 }
 pub fn fw_control_send_done(object: Object) anyerror!void {
     object.context.startWrite();
-    object.context.finishWrite(object.id, 4);
+    try object.context.finishWrite(object.id, 4);
 }

@@ -75,7 +75,7 @@ pub const Window = struct {
 
     // flip double-buffered state
     pub fn flip(self: *Self) void {
-        // std.debug.warn("flipping: {}\n", .{self.index});
+        // std.log.warn("flipping: {}\n", .{self.index});
         self.stateIndex +%= 1;
         if (self.current().input_region != self.pending().input_region) {
             if (self.pending().input_region) |input_region| {
@@ -628,7 +628,7 @@ pub const Window = struct {
     }
 
     pub fn deinit(self: *Self) !void {
-        std.debug.warn("release window {}\n", .{self.index});
+        std.log.warn("release window {}\n", .{self.index});
         self.in_use = false;
 
         // Before doing anything else, such as deiniting the parent
@@ -738,9 +738,9 @@ pub fn debug(window: ?*Window) void {
             prev = toplevel_prev.index;
         }
 
-        std.debug.warn("debug: {} <-- window[{}, {}] --> {}\n", .{ prev, self.index, self.wl_surface_id, next });
+        std.log.warn("debug: {} <-- window[{}, {}] --> {}\n", .{ prev, self.index, self.wl_surface_id, next });
     } else {
-        std.debug.warn("debug: null\n", .{});
+        std.log.warn("debug: null\n", .{});
     }
 }
 
@@ -768,10 +768,10 @@ pub fn debug_sibling(window: ?*Window) void {
             prev_child = children_prev.index;
         }
 
-        std.debug.warn("debug sibling: {} <-- window[{}, @{}] --> {}\n", .{ prev, self.index, self.wl_surface_id, next });
-        std.debug.warn("debug children: {} <-- window[{}, @{}] --> {}\n", .{ prev_child, self.index, self.wl_surface_id, next_child });
+        std.log.warn("debug sibling: {} <-- window[{}, @{}] --> {}\n", .{ prev, self.index, self.wl_surface_id, next });
+        std.log.warn("debug children: {} <-- window[{}, @{}] --> {}\n", .{ prev_child, self.index, self.wl_surface_id, next_child });
     } else {
-        std.debug.warn("debug_sibling: null\n", .{});
+        std.log.warn("debug_sibling: null\n", .{});
     }
 }
 
@@ -799,10 +799,10 @@ pub fn debug_sibling_pending(window: ?*Window) void {
             prev_child = children_prev.index;
         }
 
-        std.debug.warn("debug sibling (pending): {} <-- window[{}, @{}] --> {}\n", .{ prev, self.index, self.wl_surface_id, next });
-        std.debug.warn("debug children (pending): {} <-- window[{}, @{}] --> {}\n", .{ prev_child, self.index, self.wl_surface_id, next_child });
+        std.log.warn("debug sibling (pending): {} <-- window[{}, @{}] --> {}\n", .{ prev, self.index, self.wl_surface_id, next });
+        std.log.warn("debug children (pending): {} <-- window[{}, @{}] --> {}\n", .{ prev_child, self.index, self.wl_surface_id, next_child });
     } else {
-        std.debug.warn("debug_sibling (pending): null\n", .{});
+        std.log.warn("debug_sibling (pending): null\n", .{});
     }
 }
 

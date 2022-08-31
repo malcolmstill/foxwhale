@@ -31,7 +31,7 @@ pub fn removeFd(fd: i32) !void {
         },
     };
 
-    try std.os.epoll_ctl(epfd, std.os.EPOLL_CTL_DEL, fd, &ev);
+    try std.os.epoll_ctl(epfd, linux.EPOLL.CTL_DEL, fd, &ev);
 }
 
 // For a given event index that has activity
@@ -53,7 +53,7 @@ pub const Dispatchable = struct {
 
     pub fn dispatch(self: *Self, event_type: usize) !void {
         // self.impl(self, event_type) catch |err| {
-        //     std.debug.warn("Error dispatching epoll: {}\n", .{ err });
+        //     std.log.warn("Error dispatching epoll: {}\n", .{ err });
         // };
         try self.impl(self, event_type);
     }

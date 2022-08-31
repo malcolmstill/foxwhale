@@ -136,14 +136,14 @@ pub const View = struct {
             }
 
             if (new_pointer_window) |window| {
-                std.debug.warn("new pointer_window: {}\n", .{window.index});
+                std.log.warn("new pointer_window: {}\n", .{window.index});
                 try window.pointerEnter(x, y);
                 if (self.focus == Focus.FollowsMouse) {
                     try window.activate();
                     self.active_window = window;
                 }
             } else {
-                std.debug.warn("new pointer_window: null\n", .{});
+                std.log.warn("new pointer_window: null\n", .{});
                 compositor.COMPOSITOR.client_cursor = null;
             }
         }

@@ -28,7 +28,7 @@ pub const Xkb = struct {
         std.mem.copy(u8, filename[xdg_runtime_dir.len..], random);
 
         if (self.keymap) |keymap| {
-            var keymap_as_string = c.xkb_keymap_get_as_string(keymap, c.enum_xkb_keymap_format.XKB_KEYMAP_FORMAT_TEXT_V1);
+            var keymap_as_string = c.xkb_keymap_get_as_string(keymap, c.XKB_KEYMAP_FORMAT_TEXT_V1);
             if (keymap_as_string) |string| {
                 defer c.free(string);
                 var size = std.mem.len(string) + 1;
@@ -38,7 +38,7 @@ pub const Xkb = struct {
 
                 var fd: i32 = c.mkstemp(&filename[0]); // O_CLOEXEC?
                 try std.os.ftruncate(fd, size);
-                var data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT_READ | std.os.linux.PROT_WRITE, std.os.linux.MAP_SHARED, fd, 0);
+                var data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT.READ | std.os.linux.PROT.WRITE, std.os.linux.MAP.SHARED, fd, 0);
 
                 std.mem.copy(u8, data, keymap_string);
 
@@ -56,30 +56,30 @@ pub const Xkb = struct {
     }
 
     pub fn updateKey(self: *Self, keycode: u32, state: u32) void {
-        var direction = if (state == 1) c.enum_xkb_key_direction.XKB_KEY_DOWN else c.enum_xkb_key_direction.XKB_KEY_UP;
-        _ = c.xkb_state_update_key(self.state, keycode + 8, direction);
+        var direction = if (state == 1) c.XKB_KEY_DOWN else c.XKB_KEY_UP;
+        _ = c.xkb_state_update_key(self.state, keycode + 8, @intCast(c_uint, direction));
     }
 
     pub fn serializeDepressed(self: *Self) u32 {
-        return c.xkb_state_serialize_mods(self.state, c.enum_xkb_state_component.XKB_STATE_MODS_DEPRESSED);
+        return c.xkb_state_serialize_mods(self.state, c.XKB_STATE_MODS_DEPRESSED);
     }
 
     pub fn serializeLatched(self: *Self) u32 {
-        return c.xkb_state_serialize_mods(self.state, c.enum_xkb_state_component.XKB_STATE_MODS_LATCHED);
+        return c.xkb_state_serialize_mods(self.state, c.XKB_STATE_MODS_LATCHED);
     }
 
     pub fn serializeLocked(self: *Self) u32 {
-        return c.xkb_state_serialize_mods(self.state, c.enum_xkb_state_component.XKB_STATE_MODS_LOCKED);
+        return c.xkb_state_serialize_mods(self.state, c.XKB_STATE_MODS_LOCKED);
     }
 
     pub fn serializeGroup(self: *Self) u32 {
-        return c.xkb_state_serialize_mods(self.state, c.enum_xkb_state_component.XKB_STATE_LAYOUT_EFFECTIVE);
+        return c.xkb_state_serialize_mods(self.state, c.XKB_STATE_LAYOUT_EFFECTIVE);
     }
 };
 
 pub fn init() !Xkb {
-    var flags = c.enum_xkb_context_flags.XKB_CONTEXT_NO_FLAGS;
-    var context = try newContext(flags);
+    var flags = c.XKB_CONTEXT_NO_FLAGS;
+    var context = try newContext(@intCast(c_uint, flags));
     var keymap = try newKeymapFromNames(context, "evdev\x00", "apple\x00", "gb\x00", "\x00", "\x00");
     var state = try newState(keymap);
 
@@ -103,9 +103,9 @@ fn newKeymapFromNames(context: *c.xkb_context, rules: []const u8, model: []const
         .options = &options[0],
     };
 
-    var flags = c.enum_xkb_keymap_compile_flags.XKB_KEYMAP_COMPILE_NO_FLAGS;
+    var flags = c.XKB_KEYMAP_COMPILE_NO_FLAGS;
 
-    return c.xkb_keymap_new_from_names(context, &names, flags) orelse error.XkbKeymapCreationFailed;
+    return c.xkb_keymap_new_from_names(context, &names, @intCast(c_uint, flags)) orelse error.XkbKeymapCreationFailed;
 }
 
 fn newState(keymap: *c.xkb_keymap) !*c.xkb_state {

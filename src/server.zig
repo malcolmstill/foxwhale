@@ -33,7 +33,7 @@ pub const Server = struct {
 };
 
 pub fn socket() !std.net.StreamServer {
-    _ = std.os.unlink("/run/user/1000/wayland-0");
+    _ = try std.os.unlink("/run/user/1000/wayland-0");
     var addr = try std.net.Address.initUnix("/run/user/1000/wayland-0");
 
     var server = std.net.StreamServer.init(.{});
@@ -61,5 +61,5 @@ pub fn dispatch(
 
     try compositor.clients.append(client);
 
-    std.debug.warn("\nclient {}: connected.\n", .{client.getFd()});
+    std.log.warn("\nclient {}: connected.\n", .{client.getFd()});
 }

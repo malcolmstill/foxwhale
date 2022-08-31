@@ -19,7 +19,7 @@ pub const Output = struct {
 
     const Self = @This();
 
-    pub fn init(compositor: *Compositor, backend: *Backend, alloc: *mem.Allocator, width: i32, height: i32) !*Self {
+    pub fn init(compositor: *Compositor, backend: *Backend, alloc: mem.Allocator, width: i32, height: i32) !*Self {
         const output = try alloc.create(Self);
         output.compositor = compositor;
 
