@@ -8,25 +8,25 @@ const XdgConfiguration = @import("../window.zig").XdgConfiguration;
 const Move = @import("../move.zig").Move;
 const Resize = @import("../resize.zig").Resize;
 
-fn set_parent(context: *Context, xdg_toplevel: Object, parent: ?Object) anyerror!void {
+fn set_parent(_: *Context, xdg_toplevel: Object, parent: ?Object) anyerror!void {
     const window = @intToPtr(*Window, xdg_toplevel.container);
     window.parent = if (parent) |p| @intToPtr(*Window, p.container) else null;
 }
 
-fn set_title(context: *Context, xdg_toplevel: Object, title: []u8) anyerror!void {
+fn set_title(_: *Context, xdg_toplevel: Object, title: []u8) anyerror!void {
     const window = @intToPtr(*Window, xdg_toplevel.container);
     const len = std.math.min(window.title.len, title.len);
     std.mem.copy(u8, window.title[0..len], title[0..len]);
     // std.debug.warn("window: {}\n", .{window.title});
 }
 
-fn set_app_id(context: *Context, xdg_toplevel: Object, app_id: []u8) anyerror!void {
+fn set_app_id(_: *Context, xdg_toplevel: Object, app_id: []u8) anyerror!void {
     const window = @intToPtr(*Window, xdg_toplevel.container);
     const len = std.math.min(window.app_id.len, app_id.len);
     std.mem.copy(u8, window.app_id[0..len], app_id[0..len]);
 }
 
-fn set_max_size(context: *Context, xdg_toplevel: Object, width: i32, height: i32) anyerror!void {
+fn set_max_size(_: *Context, xdg_toplevel: Object, width: i32, height: i32) anyerror!void {
     const pending = @intToPtr(*Window, xdg_toplevel.container).pending();
 
     if (width <= 0) {
@@ -42,7 +42,7 @@ fn set_max_size(context: *Context, xdg_toplevel: Object, width: i32, height: i32
     }
 }
 
-fn set_min_size(context: *Context, xdg_toplevel: Object, width: i32, height: i32) anyerror!void {
+fn set_min_size(_: *Context, xdg_toplevel: Object, width: i32, height: i32) anyerror!void {
     const pending = @intToPtr(*Window, xdg_toplevel.container).pending();
 
     if (width <= 0) {
@@ -85,12 +85,24 @@ pub fn init() void {
     };
 }
 
-fn show_window_menu(context: *Context, object: Object, seat: Object, serial: u32, x: i32, y: i32) anyerror!void {
+fn show_window_menu(
+    _: *Context,
+    _: Object, // object
+    _: Object, // seat
+    _: u32, // serial
+    _: i32, // x
+    _: i32, // y
+) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
 // TODO: Moving should be delegated to the current view's mode
-fn move(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32) anyerror!void {
+fn move(
+    _: *Context,
+    xdg_toplevel: Object,
+    _: Object, // seat
+    _: u32, // serial
+) anyerror!void {
     const window = @intToPtr(*Window, xdg_toplevel.container);
 
     if (window.maximized == null) {
@@ -104,7 +116,13 @@ fn move(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32) anye
     }
 }
 
-fn resize(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32, edges: u32) anyerror!void {
+fn resize(
+    _: *Context,
+    xdg_toplevel: Object,
+    _: Object, // seat
+    _: u32, // serial
+    edges: u32,
+) anyerror!void {
     const window = @intToPtr(*Window, xdg_toplevel.container);
 
     compositor.COMPOSITOR.resize = Resize{
@@ -119,7 +137,7 @@ fn resize(context: *Context, xdg_toplevel: Object, seat: Object, serial: u32, ed
     };
 }
 
-fn set_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
+fn set_maximized(_: *Context, xdg_toplevel: Object) anyerror!void {
     const window = @intToPtr(*Window, xdg_toplevel.container);
 
     if (window.view == null or window.view.?.output == null or window.xdg_surface_id == null) {
@@ -143,7 +161,7 @@ fn set_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
     }
 }
 
-fn unset_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
+fn unset_maximized(_: *Context, xdg_toplevel: Object) anyerror!void {
     const window = @intToPtr(*Window, xdg_toplevel.container);
 
     if (window.view == null or window.view.?.output == null or window.xdg_surface_id == null) {
@@ -170,14 +188,14 @@ fn unset_maximized(context: *Context, xdg_toplevel: Object) anyerror!void {
     }
 }
 
-fn set_fullscreen(context: *Context, object: Object, output: ?Object) anyerror!void {
+fn set_fullscreen(_: *Context, _: Object, _: ?Object) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
-fn unset_fullscreen(context: *Context, object: Object) anyerror!void {
+fn unset_fullscreen(_: *Context, _: Object) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }
 
-fn set_minimized(context: *Context, object: Object) anyerror!void {
+fn set_minimized(_: *Context, _: Object) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }

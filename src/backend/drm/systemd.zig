@@ -30,7 +30,7 @@ pub const Logind = struct {
     }
 
     pub fn deinit(self: *Logind) void {
-        releaseControl(self.bus, self.session_path) catch |e| {};
+        releaseControl(self.bus, self.session_path) catch {};
         c.free(self.session_id);
 
         // var it = self.devices.iterator();
@@ -52,8 +52,8 @@ pub const Logind = struct {
     }
 
     pub fn close(self: *Logind, fd: i32) !void {
-        var x = try releaseDevice(self.bus, self.session_path, fd);
-        var y = linux.close(fd);
+        _ = try releaseDevice(self.bus, self.session_path, fd);
+        _ = linux.close(fd);
         if (self.devices.fetchRemove(fd)) |path| {
             std.heap.c_allocator.free(path.value);
         }
@@ -115,7 +115,7 @@ fn getSessionPath(bus: *c.struct_sd_bus, session_id: [*c]u8) ![*c]u8 {
     var res = c.sd_bus_call_method(bus, "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "GetSession", &err, @ptrCast([*c]?*c.struct_sd_bus_message, &msg), "s", &session_id[0]);
     defer {
         c.sd_bus_error_free(&err);
-        var x = c.sd_bus_message_unref(msg);
+        _ = c.sd_bus_message_unref(msg);
     }
 
     if (res < 0) {

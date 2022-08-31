@@ -10,7 +10,13 @@ fn destroy(context: *Context, wl_subcompositor: Object) anyerror!void {
     try context.unregister(wl_subcompositor);
 }
 
-fn get_subsurface(context: *Context, wl_subcompositor: Object, new_id: u32, wl_surface_child: Object, wl_surface_parent: Object) anyerror!void {
+fn get_subsurface(
+    context: *Context,
+    _: Object, // wl_subcompositor
+    new_id: u32,
+    wl_surface_child: Object,
+    wl_surface_parent: Object,
+) anyerror!void {
     const child = @intToPtr(*Window, wl_surface_child.container);
     const parent = @intToPtr(*Window, wl_surface_parent.container);
 

@@ -178,7 +178,7 @@ pub fn Context(comptime T: type) type {
             };
             var h_ptr = @ptrCast(*Header, &self.tx_buf[0]);
             h_ptr.* = h;
-            var x = txrx.sendMsg(self.fd, self.tx_buf[0..self.tx_write_offset], &self.tx_fds);
+            _ = txrx.sendMsg(self.fd, self.tx_buf[0..self.tx_write_offset], &self.tx_fds);
         }
 
         pub fn putU32(self: *Self, value: u32) void {

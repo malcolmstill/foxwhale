@@ -37,7 +37,7 @@ pub const Region = struct {
 
     pub fn deinit(self: *Self) !void {
         self.rectangles = RectangleBuffer.init();
-        var freed_index = REGIONS.deinit(self);
+        _ = REGIONS.deinit(self);
         self.window = null;
         // std.debug.warn("released region {}\n", .{freed_index});
     }

@@ -33,7 +33,7 @@ pub const Server = struct {
 };
 
 pub fn socket() !std.net.StreamServer {
-    var x = std.os.unlink("/run/user/1000/wayland-0");
+    _ = std.os.unlink("/run/user/1000/wayland-0");
     var addr = try std.net.Address.initUnix("/run/user/1000/wayland-0");
 
     var server = std.net.StreamServer.init(.{});
@@ -42,7 +42,10 @@ pub fn socket() !std.net.StreamServer {
     return server;
 }
 
-pub fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!void {
+pub fn dispatch(
+    dispatchable: *epoll.Dispatchable,
+    _: usize, // event_type
+) anyerror!void {
     const srv = @fieldParentPtr(Server, "dispatchable", dispatchable);
     const compositor = @fieldParentPtr(Compositor, "server", srv);
 
@@ -53,7 +56,7 @@ pub fn dispatch(dispatchable: *epoll.Dispatchable, event_type: usize) anyerror!v
 
     const client = try Client.init(compositor.alloc, compositor, conn);
     errdefer {
-        client.deinit() catch |err| {};
+        client.deinit() catch {};
     }
 
     try compositor.clients.append(client);

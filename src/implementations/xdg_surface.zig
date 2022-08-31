@@ -57,7 +57,7 @@ fn get_popup(context: *Context, xdg_surface: Object, new_id: u32, parent_wl_surf
     try context.register(xdg_popup);
 }
 
-fn set_window_geometry(context: *Context, xdg_surface: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
+fn set_window_geometry(_: *Context, xdg_surface: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     const window = @intToPtr(*Window, xdg_surface.container);
 
     window.window_geometry = Rectangle{
@@ -68,7 +68,7 @@ fn set_window_geometry(context: *Context, xdg_surface: Object, x: i32, y: i32, w
     };
 }
 
-fn ack_configure(context: *Context, xdg_surface: Object, serial: u32) anyerror!void {
+fn ack_configure(_: *Context, xdg_surface: Object, serial: u32) anyerror!void {
     const window = @intToPtr(*Window, xdg_surface.container);
 
     while (window.xdg_configurations.readItem()) |xdg_configuration| {

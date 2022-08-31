@@ -10,33 +10,33 @@ fn destroy(context: *Context, wl_subsurface: Object) anyerror!void {
     try context.unregister(wl_subsurface);
 }
 
-fn set_position(context: *Context, wl_subsurface: Object, x: i32, y: i32) anyerror!void {
+fn set_position(_: *Context, wl_subsurface: Object, x: i32, y: i32) anyerror!void {
     const window = @intToPtr(*Window, wl_subsurface.container);
 
     window.pending().x = x;
     window.pending().y = y;
 }
 
-fn place_above(context: *Context, wl_subsurface: Object, wl_surface_sibling: Object) anyerror!void {
+fn place_above(_: *Context, wl_subsurface: Object, wl_surface_sibling: Object) anyerror!void {
     const window = @intToPtr(*Window, wl_subsurface.container);
     const sibling = @intToPtr(*Window, wl_surface_sibling.container);
 
     window.placeAbove(sibling);
 }
 
-fn place_below(context: *Context, wl_subsurface: Object, wl_surface_sibling: Object) anyerror!void {
+fn place_below(_: *Context, wl_subsurface: Object, wl_surface_sibling: Object) anyerror!void {
     const window = @intToPtr(*Window, wl_subsurface.container);
     const sibling = @intToPtr(*Window, wl_surface_sibling.container);
 
     window.placeBelow(sibling);
 }
 
-fn set_sync(context: *Context, wl_subsurface: Object) anyerror!void { 
+fn set_sync(_: *Context, wl_subsurface: Object) anyerror!void {
     const window = @intToPtr(*Window, wl_subsurface.container);
     window.synchronized = true;
 }
 
-fn set_desync(context: *Context, wl_subsurface: Object) anyerror!void {
+fn set_desync(_: *Context, wl_subsurface: Object) anyerror!void {
     const window = @intToPtr(*Window, wl_subsurface.container);
     window.synchronized = false;
     if (window.parent) |parent| {

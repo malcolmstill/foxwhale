@@ -20,21 +20,21 @@ const default_context_attributes = [_]i32{
 };
 
 pub const EGL = struct {
-    display: *c_void,
-    context: *c_void,
-    surface: *c_void,
+    display: *anyopaque,
+    context: *anyopaque,
+    surface: *anyopaque,
 
     pub fn init(gbm: *GBM) !EGL {
         errdefer {
             std.log.err("EGL error = {}\n", .{c.eglGetError()});
         }
 
-        glEGLImageTargetTexture2DOES = @ptrCast(?fn (i32, *c_void) callconv(.C) void, c.eglGetProcAddress("glEGLImageTargetTexture2DOES"));
+        glEGLImageTargetTexture2DOES = @ptrCast(?fn (i32, *anyopaque) callconv(.C) void, c.eglGetProcAddress("glEGLImageTargetTexture2DOES"));
         var display = c.eglGetDisplay(@ptrCast(c.EGLNativeDisplayType, gbm.device)) orelse return error.EGLGetDisplayError;
 
         var major: i32 = 0;
         var minor: i32 = 0;
-        var x = c.eglInitialize(display, &major, &minor);
+        _ = c.eglInitialize(display, &major, &minor);
         std.debug.warn("EGL version: {}.{}\n", .{ major, minor });
 
         var config: c.EGLConfig = undefined;
@@ -77,4 +77,4 @@ pub const EGL = struct {
     }
 };
 
-pub var glEGLImageTargetTexture2DOES: ?fn (i32, *c_void) callconv(.C) void = undefined;
+pub var glEGLImageTargetTexture2DOES: ?fn (i32, *anyopaque) callconv(.C) void = undefined;

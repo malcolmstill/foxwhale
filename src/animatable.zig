@@ -16,10 +16,10 @@ pub const AnimatableType = union(AnimatableTypeTag) {
 pub const Animatable = Animation(AnimatableType);
 
 pub const AnimationList = struct {
-    alloc: *mem.Allocator,
+    alloc: mem.Allocator,
     animations: ArrayList(Animatable),
 
-    pub fn init(alloc: *mem.Allocator) AnimationList {
+    pub fn init(alloc: mem.Allocator) AnimationList {
         return AnimationList{
             .alloc = alloc,
             .animations = ArrayList(Animatable).init(alloc),

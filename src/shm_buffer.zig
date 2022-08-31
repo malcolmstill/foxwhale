@@ -40,7 +40,7 @@ pub const ShmBuffer = struct {
 
     const Self = @This();
 
-    pub fn deinit(self: *Self) void {}
+    pub fn deinit(_: *Self) void {}
 
     pub fn beginAccess(self: *Self) void {
         CURRENT_POOL_ADDRESS = self.shm_pool.data.ptr;
@@ -48,7 +48,7 @@ pub const ShmBuffer = struct {
         _ = linux.sigaction(linux.SIGBUS, &sigbus_handler_action, null);
     }
 
-    pub fn endAccess(self: *Self) !void {
+    pub fn endAccess(_: *Self) !void {
         defer {
             SIGBUS_ERROR = false;
             _ = linux.sigaction(linux.SIGBUS, &sigbus_handler_reset, null);
@@ -85,7 +85,11 @@ const sigbus_handler_reset = os.Sigaction{
 // memory and guaranteeing that when the code is retried that SIGBUS will not be
 // raised.
 // See: https://github.com/wayland-project/wayland/blob/11623e8fddb924c7ae317f2eabac23785ae5e8d5/src/wayland-shm.c#L514
-fn sigbusHandler(sig: i32, info: *const os.siginfo_t, data: ?*const c_void) callconv(.C) void {
+fn sigbusHandler(
+    _: i32, // sig
+    _: *const os.siginfo_t, // info
+    _: ?*const anyopaque, // data
+) callconv(.C) void {
     SIGBUS_ERROR = true;
     _ = linux.mmap(CURRENT_POOL_ADDRESS, CURRENT_POOL_SIZE, linux.PROT_READ | linux.PROT_WRITE, linux.MAP_FIXED | linux.MAP_PRIVATE | linux.MAP_ANONYMOUS, -1, 0);
 }

@@ -53,7 +53,7 @@ pub fn Stalloc(comptime B: type, comptime T: type, comptime S: usize) type {
             return error.StallocExhausted;
         }
 
-        pub fn deinit(self: *Self, t: *T) usize {
+        pub fn deinit(_: *Self, t: *T) usize {
             var entry: *Entry = @fieldParentPtr(Entry, "value", t);
             entry.in_use = false;
             return entry.index;
@@ -91,7 +91,7 @@ pub fn Stalloc(comptime B: type, comptime T: type, comptime S: usize) type {
         }
 
         // TODO: is this safe?
-        pub fn getIndexOf(self: *Self, t: *T) usize {
+        pub fn getIndexOf(_: *Self, t: *T) usize {
             var entry: *Entry = @fieldParentPtr(Entry, "value", t);
             return entry.index;
         }
@@ -147,13 +147,13 @@ test "stalloc test" {
     var x1 = try memory.new(&test_client_1);
     std.debug.assert(memory.freeCount() == 3);
 
-    var x2 = try memory.new(&test_client_1);
+    _ = try memory.new(&test_client_1);
     std.debug.assert(memory.freeCount() == 2);
 
-    var x3 = try memory.new(&test_client_2);
+    _ = try memory.new(&test_client_2);
     std.debug.assert(memory.freeCount() == 1);
 
-    var x4 = try memory.new(&test_client_2);
+    _ = try memory.new(&test_client_2);
     std.debug.assert(memory.freeCount() == 0);
 
     memory.deinit(x1);

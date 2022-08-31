@@ -32,7 +32,7 @@ pub const Compositor = struct {
     mods_locked: u32 = 0,
     mods_group: u32 = 0,
 
-    alloc: *mem.Allocator,
+    alloc: mem.Allocator,
     server: Server,
     clients: ArrayList(*Client),
     outputs: ArrayList(*Output),
@@ -43,7 +43,7 @@ pub const Compositor = struct {
 
     const Self = @This();
 
-    pub fn init(alloc: *mem.Allocator) Self {
+    pub fn init(alloc: mem.Allocator) Self {
         return Self{
             .alloc = alloc,
             .server = undefined,
@@ -98,13 +98,13 @@ pub const Compositor = struct {
     }
 
     pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
-        if (self.move) |move| {
+        if (self.move) |_| {
             if (action == 0) {
                 self.move = null;
             }
         }
 
-        if (self.resize) |resize| {
+        if (self.resize) |_| {
             if (action == 0) {
                 self.resize = null;
             }
@@ -166,11 +166,11 @@ fn keyboardHandler(time: u32, button: u32, state: u32) !void {
     try COMPOSITOR.keyboard(time, button, state);
 }
 
-fn mouseClickHandler(time: u32, button: u32, state: u32) !void {
+fn mouseClickHandler(_: u32, button: u32, state: u32) !void {
     try COMPOSITOR.mouseClick(button, state);
 }
 
-fn mouseMoveHandler(time: u32, x: f64, y: f64) !void {
+fn mouseMoveHandler(_: u32, x: f64, y: f64) !void {
     try COMPOSITOR.mouseMove(x, y);
 }
 
