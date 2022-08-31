@@ -5,7 +5,8 @@ const render = @import("renderer.zig");
 const out = @import("output.zig");
 const views = @import("view.zig");
 const windows = @import("window.zig");
-const compositor = @import("compositor.zig");
+const Compositor = @import("compositor.zig").Compositor;
+const Comp = @import("compositor.zig");
 const Context = @import("client.zig").Context;
 const Server = @import("server.zig").Server;
 const Cursor = @import("cursor.zig").Cursor;
@@ -23,11 +24,12 @@ pub fn main() anyerror!void {
     try backend.init();
     defer backend.deinit();
 
-    compositor.COMPOSITOR = compositor.Compositor.init(allocator);
-    defer compositor.COMPOSITOR.deinit();
-    try compositor.COMPOSITOR.initInput();
-    try compositor.COMPOSITOR.initServer();
-    try compositor.COMPOSITOR.initOutputs(&backend);
+    Comp.COMPOSITOR = Compositor.init(allocator);
+    var compositor = &Comp.COMPOSITOR; // FIXME: get rid of this global
+    defer compositor.deinit();
+    try compositor.initInput();
+    try compositor.initServer();
+    try compositor.initOutputs(&backend);
 
     std.debug.warn("==> backend: {s}\n", .{backend.name()});
 
@@ -43,7 +45,7 @@ pub fn main() anyerror!void {
     var now = std.time.milliTimestamp();
     var then = now;
 
-    while (compositor.COMPOSITOR.running) {
+    while (compositor.running) {
         var i: usize = 0;
         var n = epoll.wait(backend.wait());
 
@@ -52,62 +54,60 @@ pub fn main() anyerror!void {
             i = i + 1;
         }
 
-        try compositor.COMPOSITOR.animations.update();
+        try compositor.animations.update();
 
-        for (compositor.COMPOSITOR.outputs.items) |output| {
-            if (output.backend.isPageFlipScheduled() == false) {
-                const output_width = output.backend.getWidth();
-                const output_height = output.backend.getHeight();
-                try output.backend.begin();
+        for (compositor.outputs.items) |output| {
+            if (output.backend.isPageFlipScheduled()) continue;
 
-                try renderer.clear();
-                try renderer.render(output);
-                try renderer.renderBackground(output_width, output_height);
+            const output_width = output.backend.getWidth();
+            const output_height = output.backend.getHeight();
+            try output.backend.begin();
 
-                for (output.views) |*view| {
-                    if (view.visible() == false) {
-                        continue;
-                    }
+            try renderer.clear();
+            try renderer.render(output);
+            try renderer.renderBackground(output_width, output_height);
 
-                    var it = view.back();
-                    while (it) |window| : (it = window.toplevel.next) {
-                        try window.render(output_width, output_height, &renderer, 0, 0);
-                    }
+            for (output.views) |*view| {
+                if (view.visible() == false) continue;
+
+                var it = view.back();
+                while (it) |window| : (it = window.toplevel.next) {
+                    try window.render(output_width, output_height, &renderer, 0, 0);
                 }
+            }
 
-                if (compositor.COMPOSITOR.current_view) |view| {
-                    if (view.output == output) {
-                        try cursor.render(
-                            compositor.COMPOSITOR.client_cursor,
-                            output_width,
-                            output_height,
-                            &renderer,
-                            @floatToInt(i32, compositor.COMPOSITOR.pointer_x),
-                            @floatToInt(i32, compositor.COMPOSITOR.pointer_y),
-                        );
-                    }
+            if (compositor.current_view) |view| {
+                if (view.output == output) {
+                    try cursor.render(
+                        compositor.client_cursor,
+                        output_width,
+                        output_height,
+                        &renderer,
+                        @floatToInt(i32, compositor.pointer_x),
+                        @floatToInt(i32, compositor.pointer_y),
+                    );
                 }
+            }
 
-                try output.backend.swap();
-                frames += 1;
-                now = std.time.milliTimestamp();
-                output.backend.end();
+            try output.backend.swap();
+            frames += 1;
+            now = std.time.milliTimestamp();
+            output.backend.end();
 
-                if ((now - then) > 5000) {
-                    std.debug.warn("fps: {}\n", .{frames / 5});
-                    then = now;
-                    frames = 0;
+            if ((now - then) > 5000) {
+                std.debug.warn("fps: {}\n", .{frames / 5});
+                then = now;
+                frames = 0;
+            }
+
+            for (windows.WINDOWS) |*window| {
+                if (window.in_use) {
+                    try window.frameCallback();
                 }
+            }
 
-                for (windows.WINDOWS) |*window| {
-                    if (window.in_use) {
-                        try window.frameCallback();
-                    }
-                }
-
-                if (output.backend.shouldClose()) {
-                    try output.backend.deinit();
-                }
+            if (output.backend.shouldClose()) {
+                try output.backend.deinit();
             }
         }
     }
