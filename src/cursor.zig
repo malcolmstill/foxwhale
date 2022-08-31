@@ -21,7 +21,7 @@ pub const Cursor = struct {
 
     pub fn deinit(self: *Cursor) void {
         if (self.texture) |texture| {
-            Renderer.releaseTexture(texture) catch |err| {};
+            Renderer.releaseTexture(texture) catch {};
         }
     }
 

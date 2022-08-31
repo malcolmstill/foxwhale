@@ -5,7 +5,12 @@ const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
 const Window = @import("../window.zig").Window;
 
-fn get_xdg_surface(context: *Context, xdg_wm_base: Object, new_id: u32, surface: Object) anyerror!void {
+fn get_xdg_surface(
+    context: *Context,
+    _: Object, // xdg_wm_base
+    new_id: u32,
+    surface: Object,
+) anyerror!void {
     std.debug.warn("get_xdg_surface: {}\n", .{new_id});
 
     const window = @intToPtr(*Window, surface.container);
@@ -30,12 +35,20 @@ pub fn init() void {
     };
 }
 
-fn create_positioner(context: *Context, xdg_wm_base: Object, new_id: u32) anyerror!void {
+fn create_positioner(
+    context: *Context,
+    _: Object, // xdg_wm_base
+    new_id: u32,
+) anyerror!void {
     const positioner = try positioners.newPositioner(context.client, new_id);
     const xdg_positioner = prot.new_xdg_positioner(new_id, context, @ptrToInt(positioner));
     try context.register(xdg_positioner);
 }
 
-fn pong(context: *Context, object: Object, serial: u32) anyerror!void {
+fn pong(
+    _: *Context,
+    _: Object,
+    _: u32, // serial
+) anyerror!void {
     return error.DebugFunctionNotImplemented;
 }

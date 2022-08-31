@@ -12,7 +12,11 @@ fn sync(context: *Context, wl_display: Object, new_id: u32) anyerror!void {
     try prot.wl_display_send_delete_id(wl_display, new_id);
 }
 
-fn get_registry(context: *Context, wl_display: Object, new_id: u32) anyerror!void {
+fn get_registry(
+    context: *Context,
+    _: Object, // wl_display
+    new_id: u32,
+) anyerror!void {
     std.debug.warn("get_registry with id {}\n", .{new_id});
 
     const wl_registry = prot.new_wl_registry(new_id, context, 0);
@@ -24,7 +28,7 @@ fn get_registry(context: *Context, wl_display: Object, new_id: u32) anyerror!voi
     try prot.wl_registry_send_global(wl_registry, 4, "xdg_wm_base\x00", 1);
 
     var output_base: u32 = out.OUTPUT_BASE;
-    for (context.client.compositor.outputs.items) |output| {
+    for (context.client.compositor.outputs.items) |_| {
         try prot.wl_registry_send_global(wl_registry, output_base, "wl_output\x00", 2);
         output_base += 1;
     }

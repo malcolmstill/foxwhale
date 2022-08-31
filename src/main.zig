@@ -24,7 +24,7 @@ pub fn main() anyerror!void {
     try backend.init();
     defer backend.deinit();
 
-    Comp.COMPOSITOR = Compositor.init(allocator);
+    Comp.COMPOSITOR = Compositor.init(allocator());
     var compositor = &Comp.COMPOSITOR; // FIXME: get rid of this global
     defer compositor.deinit();
     try compositor.initInput();

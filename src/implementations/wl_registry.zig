@@ -5,7 +5,14 @@ const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
 const dmabuf = @import("../dmabuf_params.zig");
 
-fn bind(context: *Context, wl_registry: Object, name: u32, name_string: []u8, version: u32, new_id: u32) anyerror!void {
+fn bind(
+    context: *Context,
+    _: Object, // wl_registry
+    name: u32,
+    name_string: []u8,
+    version: u32,
+    new_id: u32,
+) anyerror!void {
     std.debug.warn("bind for {s} ({}) with id {} at version {}\n", .{ name_string, name, new_id, version });
 
     if (name >= out.OUTPUT_BASE and name < (context.client.compositor.outputs.items.len + out.OUTPUT_BASE)) {

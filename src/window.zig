@@ -274,7 +274,7 @@ pub const Window = struct {
                     return self;
                 }
             } else {
-                if (window.windowUnderPointer(pointer_x, pointer_y)) |child| {
+                if (window.windowUnderPointer(pointer_x, pointer_y)) |_| {
                     return self;
                 }
             }
@@ -600,7 +600,7 @@ pub const Window = struct {
         const wl_pointer_id = client.wl_pointer_id orelse return;
         const wl_pointer = client.context.get(wl_pointer_id) orelse return;
 
-        const now = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
+        // const now = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
         try prot.wl_pointer_send_axis(wl_pointer, time, axis, @floatCast(f32, value));
     }
 

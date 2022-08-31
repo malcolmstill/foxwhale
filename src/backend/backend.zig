@@ -52,8 +52,8 @@ pub const BackendOutput = struct {
 
     pub fn isPageFlipScheduled(self: *Self) bool {
         return switch (self.backend) {
-            BackendType.Headless => |headless_output| false,
-            BackendType.GLFW => |glfw_output| false,
+            BackendType.Headless => |_| false,
+            BackendType.GLFW => |_| false,
             BackendType.DRM => |drm_output| drm_output.isPageFlipScheduled(),
         };
     }
@@ -126,8 +126,8 @@ pub const Backend = union(BackendType) {
 
     pub fn wait(self: Self) i32 {
         return switch (self) {
-            BackendType.Headless => |headless_backend| -1,
-            BackendType.GLFW => |glfw_backend| 10,
+            BackendType.Headless => |_| -1,
+            BackendType.GLFW => |_| 10,
             BackendType.DRM => -1,
         };
     }
@@ -162,7 +162,7 @@ pub const Backend = union(BackendType) {
 };
 
 pub fn detect() BackendType {
-    if (std.os.getenv("DISPLAY")) |display| {
+    if (std.os.getenv("DISPLAY")) |_| {
         return BackendType.GLFW;
     }
 

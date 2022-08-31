@@ -212,14 +212,25 @@ def generate_receive_arg(arg, first):
 def generate_interface_global_debug(interface, receiveType):
     for child in interface:
         if child.tag == receiveType:
-            print(f"fn {interface.attrib['name']}_{child.attrib['name']}_default(context: *Context, object: Object", end ='')
+            print(f"fn {interface.attrib['name']}_{child.attrib['name']}_default(context: *Context, object: Object ", end ='')
             for arg in child:
                 if arg.tag == "arg":
                     arg_type = lookup_type(arg.attrib["type"], arg)
                     arg_name = arg.attrib["name"]
                     print(f", {arg_name}: {arg_type}", end = "")
             print(f") anyerror!void")
-            print(f"{{ return error.DebugFunctionNotImplemented;}}\n\n", end='')
+            print(f"{{ ", end="")
+            print(f"std.log.info(\"{{any}} {{any}}", end="")
+            for arg in child:
+                if arg.tag == "arg":
+                    print(f" {{any}}", end="")
+            print(f"\", .{{ context, object", end="")
+            for arg in child:
+                if arg.tag == "arg":
+                    arg_type = lookup_type(arg.attrib["type"], arg)
+                    arg_name = arg.attrib["name"]
+                    print(f", {arg_name}", end = "")            
+            print(f"}}); return error.DebugFunctionNotImplemented;}}\n\n", end='')
 
     print(f"pub var {interface.attrib['name'].upper()} = {interface.attrib['name']}_interface {{")
     for child in interface:

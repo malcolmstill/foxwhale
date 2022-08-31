@@ -1,50 +1,39 @@
-
 pub const HeadlessBackend = struct {
     const Self = @This();
 
-    pub fn init(self: *Self) !void {
+    pub fn init(_: *Self) !void {}
+
+    pub fn newOutput(_: *Self, _: i32, _: i32) !HeadlessOutput {
+        return HeadlessOutput{};
     }
 
-
-    pub fn newOutput(self: *Self, w: i32, h: i32) !HeadlessOutput {
-        return HeadlessOutput {
-
-        };
-    }
-
-    pub fn deinit(self: Self) void {
-    }
+    pub fn deinit(_: Self) void {}
 };
 
 pub fn new() !HeadlessBackend {
-    return HeadlessBackend {
-    };
+    return HeadlessBackend{};
 }
 
 pub const HeadlessOutput = struct {
     const Self = @This();
 
-    pub fn begin(self: Self) void {
-    }
+    pub fn begin(_: Self) void {}
 
-    pub fn end(self: Self) void {
-    }
+    pub fn end(_: Self) void {}
 
-    pub fn swap(self: Self) void {
-    }
+    pub fn swap(_: Self) void {}
 
-    pub fn getWidth(self: Self) i32 {
+    pub fn getWidth(_: Self) i32 {
         return 0;
     }
 
-    pub fn getHeight(self: Self) i32 {
+    pub fn getHeight(_: Self) i32 {
         return 0;
     }
 
-    pub fn shouldClose(self: Self) bool {
+    pub fn shouldClose(_: Self) bool {
         return false;
     }
 
-    pub fn deinit(self: *Self) void {
-    }
+    pub fn deinit(_: *Self) void {}
 };

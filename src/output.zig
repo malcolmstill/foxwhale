@@ -56,8 +56,4 @@ pub const Output = struct {
             }
         }
     }
-
-    pub fn getIndexOf(self: *Self) usize {
-        return OUTPUTS.getIndexOf(self);
-    }
 };

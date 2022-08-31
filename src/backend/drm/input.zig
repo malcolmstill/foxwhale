@@ -56,7 +56,10 @@ pub const Input = struct {
 
 const EventType = c.enum_libinput_event_type;
 
-pub fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
+pub fn dispatch(
+    dispatchable: *Dispatchable,
+    _: usize, // event_type
+) anyerror!void {
     var input = @fieldParentPtr(Input, "dispatchable", dispatchable);
 
     _ = c.libinput_dispatch(input.context);
@@ -125,17 +128,22 @@ pub fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
     }
 }
 
-pub fn open(path: [*c]const u8, flags: c_int, user_data: ?*c_void) callconv(.C) c_int {
-    var fd = global_logind.open(path) catch |e|
-        {
+pub fn open(
+    path: [*c]const u8,
+    _: c_int, // flags
+    _: ?*anyopaque, // user_data
+) callconv(.C) c_int {
+    var fd = global_logind.open(path) catch {
         return -1;
     };
     return fd;
 }
 
-pub fn close(fd: c_int, user_data: ?*c_void) callconv(.C) void {
-    var x = global_logind.close(fd) catch |e|
-        {
+pub fn close(
+    fd: c_int,
+    _: ?*anyopaque, // user_data
+) callconv(.C) void {
+    _ = global_logind.close(fd) catch {
         return;
     };
     return;

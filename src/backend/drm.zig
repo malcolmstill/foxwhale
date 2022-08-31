@@ -23,7 +23,7 @@ pub const DRMBackend = struct {
         var gbm = try GBM.init(&drm);
         var egl = try EGL.init(&gbm);
 
-        return DRMOutput {
+        return DRMOutput{
             .backend = self,
             .drm = drm,
             .gbm = gbm,
@@ -44,7 +44,7 @@ pub fn new() !DRMBackend {
     var input = try Input.create(&sysd);
     // try input.addToEpoll();
 
-    return DRMBackend {
+    return DRMBackend{
         .systemd = sysd,
         .input = input,
     };
@@ -62,13 +62,11 @@ pub const DRMOutput = struct {
         try self.drm.addToEpoll();
     }
 
-    pub fn begin(self: Self) void {
-    }
+    pub fn begin(_: Self) void {}
 
-    pub fn end(self: Self) void {
-    }
+    pub fn end(_: Self) void {}
 
-    pub fn isPageFlipScheduled(self: Self) bool {
+    pub fn isPageFlipScheduled(_: Self) bool {
         return DRM.isPageFlipScheduled();
     }
 
@@ -94,13 +92,13 @@ pub const DRMOutput = struct {
 
         DRM.schedulePageFlip();
 
-        if (self.gbm.bo) |bo| {
+        if (self.gbm.bo) |_| {
             _ = try self.drm.modeRmFb();
             self.gbm.surfaceReleaseBuffer();
-        } 
+        }
 
         self.gbm.bo = new_bo.?;
-        self.drm.fb = fb;        
+        self.drm.fb = fb;
     }
 
     pub fn getWidth(self: Self) i32 {
@@ -111,7 +109,7 @@ pub const DRMOutput = struct {
         return self.drm.modeHeight();
     }
 
-    pub fn shouldClose(self: Self) bool {
+    pub fn shouldClose(_: Self) bool {
         return false;
     }
 

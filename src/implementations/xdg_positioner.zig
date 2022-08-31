@@ -10,15 +10,15 @@ fn destroy(context: *Context, xdg_positioner: Object) anyerror!void {
     try context.unregister(xdg_positioner);
 }
 
-fn set_size(context: *Context, xdg_positioner: Object, width: i32, height: i32) anyerror!void {
+fn set_size(_: *Context, xdg_positioner: Object, width: i32, height: i32) anyerror!void {
     const positioner = @intToPtr(*Positioner, xdg_positioner.container);
     positioner.width = width;
     positioner.height = height;
 }
 
-fn set_anchor_rect(context: *Context, xdg_positioner: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
+fn set_anchor_rect(_: *Context, xdg_positioner: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     const positioner = @intToPtr(*Positioner, xdg_positioner.container);
-    positioner.anchor_rect = Rectangle {
+    positioner.anchor_rect = Rectangle{
         .x = x,
         .y = y,
         .width = width,
@@ -26,26 +26,54 @@ fn set_anchor_rect(context: *Context, xdg_positioner: Object, x: i32, y: i32, wi
     };
 }
 
-fn set_anchor(context: *Context, xdg_positioner: Object, anchor: u32) anyerror!void {
+fn set_anchor(_: *Context, xdg_positioner: Object, anchor: u32) anyerror!void {
     const positioner = @intToPtr(*Positioner, xdg_positioner.container);
     positioner.anchor = @intToEnum(prot.xdg_positioner_anchor, anchor);
 }
 
-fn set_gravity(context: *Context, xdg_positioner: Object, gravity: u32) anyerror!void {
+fn set_gravity(_: *Context, xdg_positioner: Object, gravity: u32) anyerror!void {
     const positioner = @intToPtr(*Positioner, xdg_positioner.container);
     positioner.gravity = @intToEnum(prot.xdg_positioner_gravity, gravity);
 }
 
-fn set_constraint_adjustment(context: *Context, xdg_positioner: Object, constraint_adjustment: u32) anyerror!void {
-    const positioner = @intToPtr(*Positioner, xdg_positioner.container);
+fn set_constraint_adjustment(
+    _: *Context,
+    _: Object, // xdg_positioner
+    _: u32, // constraint_adjustment
+) anyerror!void {
+    // const positioner = @intToPtr(*Positioner, xdg_positioner.container);
     // std.debug.warn("constraint_adjustment: {}\n", .{constraint_adjustment});
     // positioner.constraint_adjustment = @intToEnum(prot.xdg_positioner_constraint_adjustment, constraint_adjustment);
 }
 
-fn set_offset(context: *Context, xdg_positioner: Object, x: i32, y: i32) anyerror!void {
+fn set_offset(_: *Context, xdg_positioner: Object, x: i32, y: i32) anyerror!void {
     const positioner = @intToPtr(*Positioner, xdg_positioner.container);
     positioner.x = x;
     positioner.y = y;
+}
+
+fn set_reactive(
+    _: *Context,
+    _: Object,
+) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn set_parent_size(
+    _: *Context,
+    _: Object,
+    _: i32, // parent_width
+    _: i32, // parent_height
+) anyerror!void {
+    return error.DebugFunctionNotImplemented;
+}
+
+fn set_parent_configure(
+    _: *Context,
+    _: Object,
+    _: u32, // serial
+) anyerror!void {
+    return error.DebugFunctionNotImplemented;
 }
 
 pub fn init() void {
@@ -57,5 +85,8 @@ pub fn init() void {
         .set_gravity = set_gravity,
         .set_constraint_adjustment = set_constraint_adjustment,
         .set_offset = set_offset,
+        .set_reactive = set_reactive,
+        .set_parent_size = set_parent_size,
+        .set_parent_configure = set_parent_configure,
     };
 }

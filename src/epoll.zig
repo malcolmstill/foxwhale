@@ -5,7 +5,7 @@ var epfd: i32 = -1;
 var events: [256]std.os.linux.epoll_event = undefined;
 
 pub fn init() !void {
-    epfd = try std.os.epoll_create1(linux.EPOLL_CLOEXEC);
+    epfd = try std.os.epoll_create1(linux.EPOLL.CLOEXEC);
 }
 
 pub fn wait(timeout: i32) usize {
@@ -14,18 +14,18 @@ pub fn wait(timeout: i32) usize {
 
 pub fn addFd(fd: i32, dis: *Dispatchable) !void {
     var ev = linux.epoll_event{
-        .events = linux.EPOLLIN,
+        .events = linux.EPOLL.IN,
         .data = linux.epoll_data{
             .ptr = @ptrToInt(dis),
         },
     };
 
-    try std.os.epoll_ctl(epfd, std.os.EPOLL_CTL_ADD, fd, &ev);
+    try std.os.epoll_ctl(epfd, linux.EPOLL.CTL_ADD, fd, &ev);
 }
 
 pub fn removeFd(fd: i32) !void {
     var ev = std.os.linux.epoll_event{
-        .events = std.os.linux.EPOLLIN,
+        .events = std.os.linux.EPOLL.IN,
         .data = std.os.linux.epoll_data{
             .ptr = undefined,
         },

@@ -5,7 +5,14 @@ const Window = @import("../window.zig").Window;
 const ClientCursor = @import("../cursor.zig").ClientCursor;
 const views = @import("../view.zig");
 
-fn set_cursor(context: *Context, wl_pointer: Object, serial: u32, optional_wl_surface: ?Object, hotspot_x: i32, hotspot_y: i32) anyerror!void {
+fn set_cursor(
+    context: *Context,
+    _: Object, // wl_pointer
+    _: u32, // serial
+    optional_wl_surface: ?Object,
+    hotspot_x: i32,
+    hotspot_y: i32,
+) anyerror!void {
     const current_view = context.client.compositor.current_view orelse return;
     const pointer_window = current_view.pointer_window orelse return;
     if (&pointer_window.client.context != context) return;
@@ -24,7 +31,10 @@ fn set_cursor(context: *Context, wl_pointer: Object, serial: u32, optional_wl_su
     }
 }
 
-fn release(context: *Context, wl_pointer: Object) anyerror!void {}
+fn release(
+    _: *Context,
+    _: Object, // wl_pointer
+) anyerror!void {}
 
 pub fn init() void {
     prot.WL_POINTER = prot.wl_pointer_interface{

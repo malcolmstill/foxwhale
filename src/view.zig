@@ -16,7 +16,7 @@ pub const View = struct {
 
     const Self = @This();
 
-    pub fn visible(self: *Self) bool {
+    pub fn visible(_: *Self) bool {
         return true;
     }
 
@@ -167,7 +167,7 @@ pub const View = struct {
         }
     }
 
-    pub fn deinit(self: *Self) void {
+    pub fn deinit(_: *Self) void {
         // self.* = makeView(self.output);
     }
 };

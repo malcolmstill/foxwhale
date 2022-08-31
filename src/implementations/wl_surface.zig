@@ -67,16 +67,29 @@ fn commit(context: *Context, wl_surface: Object) anyerror!void {
     }
 }
 
-fn set_buffer_scale(context: *Context, wl_surface: Object, scale: i32) anyerror!void {
+fn set_buffer_scale(_: *Context, wl_surface: Object, scale: i32) anyerror!void {
     var pending = @intToPtr(*Window, wl_surface.container).pending();
     pending.scale = scale;
 }
 
-fn damage(context: *Context, wl_surface: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
+fn damage(
+    _: *Context,
+    _: Object, // wl_surface
+    _: i32, // x
+    _: i32, // y
+    _: i32, // height
+    _: i32, // height
+) anyerror!void {
     // std.debug.warn("damage does nothing\n", .{});
 }
 
-fn attach(context: *Context, wl_surface: Object, optional_wl_buffer: ?Object, x: i32, y: i32) anyerror!void {
+fn attach(
+    _: *Context,
+    wl_surface: Object,
+    optional_wl_buffer: ?Object,
+    _: i32, // x
+    _: i32, // y
+) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     // window.pending = true;
     if (optional_wl_buffer) |wl_buffer| {
@@ -84,6 +97,16 @@ fn attach(context: *Context, wl_surface: Object, optional_wl_buffer: ?Object, x:
     } else {
         window.wl_buffer_id = null;
     }
+}
+
+fn offset(
+    _: *Context,
+    wl_surface: Object,
+    x: i32, // x
+    y: i32, // y
+) anyerror!void {
+    _ = @intToPtr(*Window, wl_surface.container);
+    std.log.info("Offset x = {} y = {}", .{ x, y });
 }
 
 fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {
@@ -95,7 +118,11 @@ fn frame(context: *Context, wl_surface: Object, new_id: u32) anyerror!void {
 }
 
 // TODO: Should we store a *Region instead of a wl_region id?
-fn set_opaque_region(context: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
+fn set_opaque_region(
+    _: *Context,
+    wl_surface: Object,
+    optional_wl_region: ?Object,
+) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     if (optional_wl_region) |wl_region| {
         var region = @intToPtr(*Region, wl_region.container);
@@ -121,7 +148,7 @@ fn set_opaque_region(context: *Context, wl_surface: Object, optional_wl_region: 
 }
 
 // TODO: Should we store a *Region instead of a wl_region id?
-fn set_input_region(context: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
+fn set_input_region(_: *Context, wl_surface: Object, optional_wl_region: ?Object) anyerror!void {
     var window = @intToPtr(*Window, wl_surface.container);
     if (optional_wl_region) |wl_region| {
         var region = @intToPtr(*Region, wl_region.container);
@@ -160,6 +187,7 @@ pub fn init() void {
     prot.WL_SURFACE = prot.wl_surface_interface{
         .destroy = destroy,
         .attach = attach,
+        .offset = offset,
         .damage = damage,
         .frame = frame,
         .set_opaque_region = set_opaque_region,
@@ -171,6 +199,17 @@ pub fn init() void {
     };
 }
 
-fn set_buffer_transform(context: *Context, object: Object, transform: i32) anyerror!void {}
+fn set_buffer_transform(
+    _: *Context,
+    _: Object,
+    _: i32, // transform
+) anyerror!void {}
 
-fn damage_buffer(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {}
+fn damage_buffer(
+    _: *Context,
+    _: Object,
+    _: i32, // x
+    _: i32, // y
+    _: i32, // width
+    _: i32, // height
+) anyerror!void {}

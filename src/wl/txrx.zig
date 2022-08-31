@@ -12,7 +12,7 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
     iov.iov_base = @ptrCast([*]u8, &buffer[0]);
     iov.iov_len = buffer.len;
 
-    var control: [cmsg_space(MAX_FDS*@sizeOf(i32))]u8 = undefined;
+    var control: [cmsg_space(MAX_FDS * @sizeOf(i32))]u8 = undefined;
 
     var msg = linux.msghdr{
         .msg_name = null,
@@ -46,7 +46,7 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
             linux.ENOBUFS => return error.SystemResources,
             linux.ENOMEM => return error.SystemResources,
             linux.ECONNRESET => return error.ConnectionResetByPeer,
-            else => |err| return error.Unexpected,
+            else => |_| return error.Unexpected,
         }
     }
 
@@ -56,7 +56,7 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
         if (cmsg.cmsg_type == SCM_RIGHTS and cmsg.cmsg_level == linux.SOL_SOCKET) {
             var data: []i32 = undefined;
             data.ptr = @ptrCast([*]i32, @alignCast(@alignOf(i32), cmsg_data(cmsg)));
-            data.len = (cmsg.cmsg_len - cmsg_len(0))/@sizeOf(i32);
+            data.len = (cmsg.cmsg_len - cmsg_len(0)) / @sizeOf(i32);
 
             var writable = try fds.writableWithSize(data.len);
             std.mem.copy(i32, writable, data);
@@ -72,7 +72,7 @@ pub fn sendMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
     iov.iov_base = @ptrCast([*]u8, &buffer[0]);
     iov.iov_len = buffer.len;
 
-    var control: [cmsg_space(MAX_FDS*@sizeOf(i32))]u8 = undefined;
+    var control: [cmsg_space(MAX_FDS * @sizeOf(i32))]u8 = undefined;
     var msg_hdr: *cmsghdr = @ptrCast(*cmsghdr, @alignCast(@alignOf(cmsghdr), &control[0]));
 
     // Copy fds from `fds` to control
@@ -107,7 +107,7 @@ const SCM_RIGHTS = 0x01;
 pub const cmsghdr = extern struct {
     // cmsg_len: linux.socklen_t does not work as this struct has align 4 (msghdr align 8 which upsets firsthdr)
     // go has this value a u64 for amd64 linux
-    cmsg_len: u64, 
+    cmsg_len: u64,
     cmsg_level: c_int,
     cmsg_type: c_int,
 };
@@ -115,7 +115,7 @@ pub const cmsghdr = extern struct {
 // New implementation
 
 fn cmsg_align(size: usize) usize {
-    return (size + @sizeOf(usize) - 1) & ~(@intCast(usize, @sizeOf(usize) -1));
+    return (size + @sizeOf(usize) - 1) & ~(@intCast(usize, @sizeOf(usize) - 1));
 }
 
 fn cmsg_len(size: usize) usize {

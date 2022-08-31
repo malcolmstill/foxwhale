@@ -6,7 +6,13 @@ const shm_pool = @import("../shm_pool.zig");
 const shm_buffer = @import("../shm_buffer.zig");
 const ShmPool = @import("../shm_pool.zig").ShmPool;
 
-fn create_pool(context: *Context, wl_shm: Object, new_id: u32, fd: i32, size: i32) anyerror!void {
+fn create_pool(
+    context: *Context,
+    _: Object, // wl_shm
+    new_id: u32,
+    fd: i32,
+    size: i32,
+) anyerror!void {
     // std.debug.warn("create_pool: fd {}\n", .{fd});
     const pool = try shm_pool.newShmPool(context.client, fd, new_id, size);
 
@@ -21,7 +27,7 @@ fn create_buffer(context: *Context, wl_shm_pool: Object, new_id: u32, offset: i3
     try context.register(wl_buffer);
 }
 
-fn resize(context: *Context, wl_shm_pool: Object, size: i32) anyerror!void {
+fn resize(_: *Context, wl_shm_pool: Object, size: i32) anyerror!void {
     const pool = @intToPtr(*ShmPool, wl_shm_pool.container);
     try pool.resize(size);
 }

@@ -16,21 +16,21 @@ fn get_clients(context: *Context, fw_control: Object) anyerror!void {
     try prot.fw_control_send_done(fw_control);
 }
 
-fn get_windows(context: *Context, fw_control: Object) anyerror!void {
+fn get_windows(_: *Context, fw_control: Object) anyerror!void {
     for (windows.WINDOWS) |*window| {
         if (!window.in_use) continue;
 
         var surface_type: u32 = 0;
 
-        if (window.wl_subsurface_id) |wl_subsurface_id| {
+        if (window.wl_subsurface_id) |_| {
             surface_type = @enumToInt(prot.fw_control_surface_type.wl_subsurface);
         }
 
-        if (window.xdg_toplevel_id) |xdg_toplevel_id| {
+        if (window.xdg_toplevel_id) |_| {
             surface_type = @enumToInt(prot.fw_control_surface_type.xdg_toplevel);
         }
 
-        if (window.xdg_popup_id) |xdg_popup_id| {
+        if (window.xdg_popup_id) |_| {
             surface_type = @enumToInt(prot.fw_control_surface_type.xdg_popup);
         }
 
@@ -78,15 +78,15 @@ fn get_window_trees(context: *Context, fw_control: Object) anyerror!void {
     while (it) |window| : (it = window.toplevel.next) {
         var surface_type: u32 = 0;
 
-        if (window.wl_subsurface_id) |wl_subsurface_id| {
+        if (window.wl_subsurface_id) |_| {
             surface_type = @enumToInt(prot.fw_control_surface_type.wl_subsurface);
         }
 
-        if (window.xdg_toplevel_id) |xdg_toplevel_id| {
+        if (window.xdg_toplevel_id) |_| {
             surface_type = @enumToInt(prot.fw_control_surface_type.xdg_toplevel);
         }
 
-        if (window.xdg_popup_id) |xdg_popup_id| {
+        if (window.xdg_popup_id) |_| {
             surface_type = @enumToInt(prot.fw_control_surface_type.xdg_popup);
         }
 
@@ -114,15 +114,15 @@ fn window_tree(fw_control: Object, window: *Window) anyerror!void {
         if (window == subwindow) {
             var subsurface_type: u32 = 0;
 
-            if (subwindow.wl_subsurface_id) |wl_subsurface_id| {
+            if (subwindow.wl_subsurface_id) |_| { // FIXME: replace with != null?
                 subsurface_type = @enumToInt(prot.fw_control_surface_type.wl_subsurface);
             }
 
-            if (subwindow.xdg_toplevel_id) |xdg_toplevel_id| {
+            if (subwindow.xdg_toplevel_id) |_| {
                 subsurface_type = @enumToInt(prot.fw_control_surface_type.xdg_toplevel);
             }
 
-            if (subwindow.xdg_popup_id) |xdg_popup_id| {
+            if (subwindow.xdg_popup_id) |_| {
                 subsurface_type = @enumToInt(prot.fw_control_surface_type.xdg_popup);
             }
 

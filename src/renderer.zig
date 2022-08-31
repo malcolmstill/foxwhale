@@ -52,7 +52,7 @@ pub const Renderer = struct {
         return program;
     }
 
-    pub fn clear(self: *Renderer) !void {
+    pub fn clear(_: *Renderer) !void {
         c.glClearColor(0.3, 0.3, 0.36, 0.0);
         try checkGLError();
 
@@ -60,9 +60,9 @@ pub const Renderer = struct {
         try checkGLError();
     }
 
-    pub fn render(self: *Renderer, output: *Output) !void {
-        var width = output.backend.getWidth();
-        var height = output.backend.getHeight();
+    pub fn render(_: *Renderer, _: *Output) !void {
+        // var width = output.backend.getWidth();
+        // var height = output.backend.getHeight();
 
         c.glEnable(c.GL_BLEND);
         try checkGLError();
@@ -128,7 +128,7 @@ pub const Renderer = struct {
         try checkGLError();
     }
 
-    pub fn renderSurface(self: *Renderer, output_width: i32, output_height: i32, program: c_uint, texture: u32, width: i32, height: i32) !void {
+    pub fn renderSurface(_: *Renderer, output_width: i32, output_height: i32, program: c_uint, texture: u32, width: i32, height: i32) !void {
         const rectangle = setGeometry(width, height);
 
         const ortho = orthographicProjection(
@@ -218,13 +218,18 @@ pub const Renderer = struct {
         try checkGLError();
     }
 
-    pub fn makeTexture(width: i32, height: i32, stride: i32, format: u32, data: []const u8) !u32 {
+    pub fn makeTexture(
+        width: i32,
+        height: i32,
+        stride: i32,
+        _: u32, // format
+        data: []const u8,
+    ) !u32 {
         if (stride * height > data.len) {
             return error.NotEnoughTextureDataForDimensions;
         }
 
         var texture: u32 = undefined;
-        var err: c_uint = undefined;
 
         c.glGenTextures(1, &texture);
         try checkGLError();
@@ -250,7 +255,12 @@ pub const Renderer = struct {
         return texture;
     }
 
-    pub fn makeDmaTexture(image: *c_void, width: i32, height: i32, format: u32) !u32 {
+    pub fn makeDmaTexture(
+        _: *anyopaque, // image
+        _: i32, // width
+        _: i32, // height
+        _: u32, // format
+    ) !u32 {
         // switch (main.OUTPUT.backend) {
         //     .DRM => |drm| {
         //         var texture: u32 = undefined;

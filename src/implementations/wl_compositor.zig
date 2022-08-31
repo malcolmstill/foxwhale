@@ -7,7 +7,11 @@ const win = @import("../window.zig");
 const reg = @import("../region.zig");
 const view = @import("../view.zig");
 
-fn create_surface(context: *Context, wl_compositor: Object, new_id: u32) anyerror!void {
+fn create_surface(
+    context: *Context,
+    _: Object, // wl_compositor
+    new_id: u32,
+) anyerror!void {
     std.debug.warn("create_surface: {}\n", .{new_id});
 
     const window = try win.newWindow(context.client, new_id);
@@ -17,7 +21,11 @@ fn create_surface(context: *Context, wl_compositor: Object, new_id: u32) anyerro
     try context.register(surface);
 }
 
-fn create_region(context: *Context, wl_compositor: Object, new_id: u32) anyerror!void {
+fn create_region(
+    context: *Context,
+    _: Object, // wl_compositor
+    new_id: u32,
+) anyerror!void {
     const region = try reg.newRegion(context.client, new_id);
 
     const wl_region = prot.new_wl_region(new_id, context, @ptrToInt(region));

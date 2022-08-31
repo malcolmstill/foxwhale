@@ -13,7 +13,7 @@ pub const GLFWBackend = struct {
 
     const Self = @This();
 
-    pub fn init(self: *Self) !void {}
+    pub fn init(_: *Self) !void {}
 
     pub fn newOutput(self: *Self, width: i32, height: i32) !GLFWOutput {
         var window = c.glfwCreateWindow(width, height, "foxwhale", null, self.hidden) orelse return error.GLFWWindowCreationFailed;
@@ -32,7 +32,7 @@ pub const GLFWBackend = struct {
         };
     }
 
-    pub fn deinit(self: Self) void {
+    pub fn deinit(_: Self) void {
         c.glfwTerminate();
     }
 };
@@ -54,7 +54,13 @@ pub fn new() !GLFWBackend {
     };
 }
 
-fn keyCallback(window: ?*c.GLFWwindow, key: c_int, scancode: c_int, action: c_int, mods: c_int) callconv(.C) void {
+fn keyCallback(
+    window: ?*c.GLFWwindow,
+    key: c_int,
+    scancode: c_int,
+    action: c_int,
+    _: c_int, // mods
+) callconv(.C) void {
     if (key == c.GLFW_KEY_ESCAPE and action == c.GLFW_PRESS) {
         if (c.glfwGetInputMode(window, c.GLFW_CURSOR) == c.GLFW_CURSOR_DISABLED) {
             c.glfwSetInputMode(window, c.GLFW_CURSOR, c.GLFW_CURSOR_NORMAL);
@@ -69,7 +75,12 @@ fn keyCallback(window: ?*c.GLFWwindow, key: c_int, scancode: c_int, action: c_in
     }
 }
 
-fn mouseButtonCallback(window: ?*c.GLFWwindow, button: c_int, action: c_int, mods: c_int) callconv(.C) void {
+fn mouseButtonCallback(
+    window: ?*c.GLFWwindow,
+    button: c_int,
+    action: c_int,
+    _: c_int, // mods
+) callconv(.C) void {
     if (action == c.GLFW_PRESS) {
         c.glfwSetInputMode(window, c.GLFW_CURSOR, c.GLFW_CURSOR_DISABLED);
     }
@@ -90,7 +101,7 @@ fn resizeCallback(window: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(
     c.glViewport(0, 0, width, height);
 }
 
-fn cursorPositionCallback(window: ?*c.GLFWwindow, x: f64, y: f64) callconv(.C) void {
+fn cursorPositionCallback(_: ?*c.GLFWwindow, x: f64, y: f64) callconv(.C) void {
     var dx = x - previous_x;
     var dy = y - previous_y;
     previous_x = previous_x + dx;

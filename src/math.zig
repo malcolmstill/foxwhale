@@ -118,7 +118,7 @@ test "Comptime matrix" {
     // const y = Mat(4, 4, f32).identity();
     const y = Mat2x2(f32).identity();
 
-    const z = x.mul(y);
+    _ = x.mul(y);
 
     try testing.expectEqual(x.data[0][0], 1.0);
     try testing.expectEqual(x.data[0][1], 0.0);

@@ -67,7 +67,7 @@ pub const Client = struct {
         try region.releaseRegions(self);
         try positioner.releasePositioners(self);
 
-        epoll.removeFd(self.connection.stream.handle) catch |err| {
+        epoll.removeFd(self.connection.stream.handle) catch {
             std.debug.warn("Client not removed from epoll: {}\n", .{self.getFd()});
         };
 

@@ -5,7 +5,11 @@ const Context = @import("../client.zig").Context;
 const Object = @import("../client.zig").Object;
 const compositor = @import("../compositor.zig");
 
-fn get_pointer(context: *Context, wl_seat: Object, new_id: u32) anyerror!void {
+fn get_pointer(
+    context: *Context,
+    _: Object, // wl_seat
+    new_id: u32,
+) anyerror!void {
     context.client.wl_pointer_id = new_id;
     var wl_pointer = prot.new_wl_pointer(new_id, context, 0);
     try context.register(wl_pointer);

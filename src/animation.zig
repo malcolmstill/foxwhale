@@ -2,7 +2,7 @@ const std = @import("std");
 const mem = std.mem;
 const math = std.math;
 const time = std.time;
-const easing = @import("easing.zig");
+const easing = @import("ease.zig");
 const ArrayList = std.ArrayList;
 
 pub fn Animation(comptime Targets: type) type {

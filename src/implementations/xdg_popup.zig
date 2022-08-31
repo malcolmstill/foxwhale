@@ -13,7 +13,21 @@ fn destroy(context: *Context, xdg_popup: Object) anyerror!void {
     try context.unregister(xdg_popup);
 }
 
-fn grab(context: *Context, xdg_popup: Object, seat: Object, serial: u32) anyerror!void {
+fn grab(
+    _: *Context,
+    _: Object, // xdg_popup
+    _: Object, // seat
+    _: u32, // serial
+) anyerror!void {
+    // return error.DebugFunctionNotImplemented;
+}
+
+fn reposition(
+    _: *Context,
+    _: Object,
+    _: Object, // positioner
+    _: u32, // token
+) anyerror!void {
     // return error.DebugFunctionNotImplemented;
 }
 
@@ -21,5 +35,6 @@ pub fn init() void {
     prot.XDG_POPUP = prot.xdg_popup_interface{
         .destroy = destroy,
         .grab = grab,
+        .reposition = reposition,
     };
 }

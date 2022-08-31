@@ -102,7 +102,10 @@ pub const DRM = struct {
     }
 };
 
-pub fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
+pub fn dispatch(
+    dispatchable: *Dispatchable,
+    _: usize, // event_type
+) anyerror!void {
     var drm = @fieldParentPtr(DRM, "dispatchable", dispatchable);
 
     _ = c.drmHandleEvent(drm.fd, &event_handler);
@@ -117,6 +120,13 @@ var event_handler = c.drmEventContext{
 };
 
 var PAGE_FLIP_SCHEDULED: bool = false;
-fn handlePageFlip(fd: i32, sequence: u32, tv_sec: u32, tv_usec: u32, crtc_id: u32, user_data: ?*c_void) callconv(.C) void {
+fn handlePageFlip(
+    _: i32, // fd
+    _: u32, // sequence
+    _: u32, // tv_sec
+    _: u32, // tv_usec
+    _: u32, // crtc_id
+    _: ?*anyopaque, // user_data
+) callconv(.C) void {
     PAGE_FLIP_SCHEDULED = false;
 }
