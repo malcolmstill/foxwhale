@@ -18,7 +18,7 @@ const egl = @import("backend/drm/egl.zig");
 pub const Renderer = struct {
     shaders: StringHashMap(c_uint),
 
-    pub fn init(allocator: *mem.Allocator) Renderer {
+    pub fn init(allocator: mem.Allocator) Renderer {
         return Renderer{
             .shaders = StringHashMap(c_uint).init(allocator),
         };
