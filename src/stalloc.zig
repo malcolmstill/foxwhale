@@ -69,7 +69,7 @@ pub fn Stalloc(comptime B: type, comptime T: type, comptime S: usize) type {
                         if (std.builtin.mode == std.builtin.Mode.Debug) {
                             return err;
                         } else {
-                            std.debug.warn("warning: error in releaseBelongingTo\n", .{});
+                            std.log.warn("warning: error in releaseBelongingTo\n", .{});
                         }
                     };
                 }

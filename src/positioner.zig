@@ -34,7 +34,7 @@ pub const Positioner = struct {
         self.anchor_rect.height = 0;
         self.anchor = .none;
         self.gravity = .none;
-        std.debug.warn("Freed positioner: {}\n", .{freed_index});
+        std.log.warn("Freed positioner: {}\n", .{freed_index});
     }
 };
 

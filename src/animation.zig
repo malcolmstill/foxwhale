@@ -84,11 +84,11 @@ pub fn Animation(comptime Targets: type) type {
         };
 
         pub const Sequential = struct {
-            alloc: *mem.Allocator,
+            alloc: mem.Allocator,
             animations: ArrayList(Self),
             current: usize = 0,
 
-            pub fn init(allocator: *mem.Allocator) Sequential {
+            pub fn init(allocator: mem.Allocator) Sequential {
                 return Sequential{
                     .alloc = allocator,
                     .animations = ArrayList(Self).init(allocator),

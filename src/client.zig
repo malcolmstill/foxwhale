@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const mem = std.mem;
 const epoll = @import("epoll.zig");
 const WlContext = @import("wl/context.zig").Context;
@@ -17,8 +18,8 @@ pub const Context = WlContext(*Client);
 pub const Object = WlContext(*Client).Object;
 
 pub const Client = struct {
-    compositor: *Compositor = null,
-    alloc: *mem.Allocator,
+    compositor: *Compositor,
+    alloc: mem.Allocator,
     connection: std.net.StreamServer.Connection,
     dispatchable: Dispatchable,
     context: WlContext(*Self),
@@ -41,7 +42,7 @@ pub const Client = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: *mem.Allocator, compositor: *Compositor, conn: std.net.StreamServer.Connection) !*Self {
+    pub fn init(allocator: mem.Allocator, compositor: *Compositor, conn: std.net.StreamServer.Connection) !*Self {
         const client = try allocator.create(Client);
 
         client.compositor = compositor;
@@ -68,7 +69,7 @@ pub const Client = struct {
         try positioner.releasePositioners(self);
 
         epoll.removeFd(self.connection.stream.handle) catch {
-            std.debug.warn("Client not removed from epoll: {}\n", .{self.getFd()});
+            std.log.warn("Client not removed from epoll: {}\n", .{self.getFd()});
         };
 
         std.os.close(self.connection.stream.handle);
@@ -95,23 +96,23 @@ pub const Client = struct {
 fn dispatch(dispatchable: *Dispatchable, event_type: usize) anyerror!void {
     var client = @fieldParentPtr(Client, "dispatchable", dispatchable);
 
-    if (event_type & std.os.linux.EPOLLHUP > 0) {
-        std.debug.warn("client {}: hung up.\n", .{client.getFd()});
+    if (event_type & std.os.linux.EPOLL.HUP > 0) {
+        std.log.warn("client {}: hung up.\n", .{client.getFd()});
         try client.deinit();
-        // std.debug.warn("client {}: freed.\n", .{client.getFd()});
+        // std.log.warn("client {}: freed.\n", .{client.getFd()});
         return;
     }
 
     client.context.dispatch() catch |err| {
         if (err == error.ClientSigbusd) {
-            std.debug.warn("client {} sigbus'd\n", .{client.getFd()});
+            std.log.warn("client {} sigbus'd\n", .{client.getFd()});
             try client.deinit();
         } else {
-            if (std.builtin.mode == std.builtin.Mode.Debug) {
-                std.debug.warn("DEBUG: client[{}] error: {}\n", .{ client.getFd(), err });
+            if (builtin.mode == .Debug) {
+                std.log.warn("DEBUG: client[{}] error: {}\n", .{ client.getFd(), err });
                 return err;
             } else {
-                std.debug.warn("RELEASE: client[{}] error: {}\n", .{ client.getFd(), err });
+                std.log.warn("RELEASE: client[{}] error: {}\n", .{ client.getFd(), err });
                 try client.deinit();
             }
         }

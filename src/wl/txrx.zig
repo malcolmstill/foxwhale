@@ -8,44 +8,44 @@ const FdBuffer = LinearFifo(i32, LinearFifoBufferType{ .Static = MAX_FDS });
 pub const MAX_FDS = 28;
 
 pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
-    var iov: linux.iovec = undefined;
+    var iov: os.iovec = undefined;
     iov.iov_base = @ptrCast([*]u8, &buffer[0]);
     iov.iov_len = buffer.len;
 
     var control: [cmsg_space(MAX_FDS * @sizeOf(i32))]u8 = undefined;
 
     var msg = linux.msghdr{
-        .msg_name = null,
-        .msg_namelen = 0,
-        .msg_iov = @ptrCast([*]std.os.iovec, &iov),
-        .msg_iovlen = 1,
-        .msg_control = &control[0],
-        .msg_controllen = control.len,
-        .msg_flags = 0,
+        .name = null,
+        .namelen = 0,
+        .iov = @ptrCast([*]std.os.iovec, &iov),
+        .iovlen = 1,
+        .control = &control[0],
+        .controllen = control.len,
+        .flags = 0,
         .__pad1 = 0,
         .__pad2 = 0,
     };
 
     var rc: usize = 0;
     while (true) {
-        rc = linux.recvmsg(fd, @ptrCast(*std.x.os.Socket.Message, &msg), linux.MSG_DONTWAIT | linux.MSG_CMSG_CLOEXEC);
+        rc = linux.recvmsg(fd, @ptrCast(*std.x.os.Socket.Message, &msg), linux.MSG.DONTWAIT | linux.MSG.CMSG_CLOEXEC);
         switch (linux.getErrno(rc)) {
-            0 => break,
-            linux.EINTR => continue,
-            linux.EINVAL => unreachable,
-            linux.EFAULT => unreachable,
-            linux.EAGAIN => if (std.event.Loop.instance) |loop| {
+            .SUCCESS => break,
+            linux.E.INTR => continue,
+            linux.E.INVAL => unreachable,
+            linux.E.FAULT => unreachable,
+            linux.E.AGAIN => if (std.event.Loop.instance) |loop| {
                 loop.waitUntilFdReadable(fd);
                 continue;
             } else {
                 return error.WouldBlock;
             },
-            linux.EBADF => unreachable, // Always a race condition.
-            linux.EIO => return error.InputOutput,
-            linux.EISDIR => return error.IsDir,
-            linux.ENOBUFS => return error.SystemResources,
-            linux.ENOMEM => return error.SystemResources,
-            linux.ECONNRESET => return error.ConnectionResetByPeer,
+            linux.E.BADF => unreachable, // Always a race condition.
+            linux.E.IO => return error.InputOutput,
+            linux.E.ISDIR => return error.IsDir,
+            linux.E.NOBUFS => return error.SystemResources,
+            linux.E.NOMEM => return error.SystemResources,
+            linux.E.CONNRESET => return error.ConnectionResetByPeer,
             else => |_| return error.Unexpected,
         }
     }
@@ -53,7 +53,7 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
     // TOOD: we should not assume a single CMSG
     var maybe_cmsg = cmsg_firsthdr(&msg);
     if (maybe_cmsg) |cmsg| {
-        if (cmsg.cmsg_type == SCM_RIGHTS and cmsg.cmsg_level == linux.SOL_SOCKET) {
+        if (cmsg.cmsg_type == SCM_RIGHTS and cmsg.cmsg_level == linux.SOL.SOCKET) {
             var data: []i32 = undefined;
             data.ptr = @ptrCast([*]i32, @alignCast(@alignOf(i32), cmsg_data(cmsg)));
             data.len = (cmsg.cmsg_len - cmsg_len(0)) / @sizeOf(i32);
@@ -68,7 +68,7 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
 }
 
 pub fn sendMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
-    var iov: linux.iovec_const = undefined;
+    var iov: os.iovec_const = undefined;
     iov.iov_base = @ptrCast([*]u8, &buffer[0]);
     iov.iov_len = buffer.len;
 
@@ -79,7 +79,7 @@ pub fn sendMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
     var incoming_slice = fds.readableSlice(0);
     msg_hdr.cmsg_len = cmsg_len(@sizeOf(i32) * incoming_slice.len);
     msg_hdr.cmsg_type = SCM_RIGHTS;
-    msg_hdr.cmsg_level = linux.SOL_SOCKET;
+    msg_hdr.cmsg_level = linux.SOL.SOCKET;
     var fds_ptr: []i32 = undefined;
     fds_ptr.len = MAX_FDS;
     fds_ptr.ptr = @ptrCast([*]i32, @alignCast(@alignOf(i32), cmsg_data(msg_hdr)));
@@ -87,18 +87,18 @@ pub fn sendMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
     fds.discard(incoming_slice.len);
 
     var msg = linux.msghdr_const{
-        .msg_name = null,
-        .msg_namelen = 0,
-        .msg_iov = @ptrCast([*]std.os.iovec_const, &iov),
-        .msg_iovlen = 1,
-        .msg_control = if (incoming_slice.len == 0) null else msg_hdr, // we'll need to change this when send file descriptor
-        .msg_controllen = if (incoming_slice.len == 0) 0 else @truncate(u32, msg_hdr.cmsg_len), // we'll need to change this when we send file desricptor
-        .msg_flags = 0,
+        .name = null,
+        .namelen = 0,
+        .iov = @ptrCast([*]std.os.iovec_const, &iov),
+        .iovlen = 1,
+        .control = if (incoming_slice.len == 0) null else msg_hdr, // we'll need to change this when send file descriptor
+        .controllen = if (incoming_slice.len == 0) 0 else @truncate(u32, msg_hdr.cmsg_len), // we'll need to change this when we send file desricptor
+        .flags = 0,
         .__pad1 = 0,
         .__pad2 = 0,
     };
 
-    return try os.sendmsg(fd, msg, linux.MSG_NOSIGNAL);
+    return try os.sendmsg(fd, msg, linux.MSG.NOSIGNAL);
 }
 
 // Probably not portable stuff is below
@@ -134,8 +134,8 @@ fn cmsg_data(cmsg: *cmsghdr) *u8 {
 }
 
 fn cmsg_firsthdr(msg: *linux.msghdr) ?*cmsghdr {
-    if (msg.msg_controllen < @sizeOf(cmsghdr)) {
+    if (msg.controllen < @sizeOf(cmsghdr)) {
         return null;
     }
-    return @ptrCast(*cmsghdr, @alignCast(@alignOf(cmsghdr), @alignCast(@alignOf(linux.msghdr), msg).msg_control));
+    return @ptrCast(*cmsghdr, @alignCast(@alignOf(cmsghdr), @alignCast(@alignOf(linux.msghdr), msg).control));
 }

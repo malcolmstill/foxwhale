@@ -20,20 +20,20 @@ pub const DRM = struct {
     dispatchable: Dispatchable,
 
     pub fn init() !DRM {
-        std.debug.warn("Loading DRM\n", .{});
-        var fd = @intCast(i32, linux.open("/dev/dri/card0", linux.O_RDWR, 0));
+        std.log.warn("Loading DRM\n", .{});
+        var fd = @intCast(i32, linux.open("/dev/dri/card0", linux.O.RDWR, 0));
         const r = c.drmModeGetResources(fd);
         defer c.drmModeFreeResources(r);
         const n = @intCast(usize, r.*.count_connectors);
-        std.debug.warn("drm: resources: {any}, {any}\n", .{ r, n });
+        std.log.warn("drm: resources: {any}, {any}\n", .{ r, n });
 
         var i: usize = 0;
         while (i < n) {
             var id = r.*.connectors[i];
             var conn = c.drmModeGetConnector(fd, id);
-            std.debug.warn("connector id: {}\n", .{id});
+            std.log.warn("connector id: {}\n", .{id});
 
-            if (conn.*.connection == c.drmModeConnection.DRM_MODE_CONNECTED and conn.*.encoder_id != 0) {
+            if (conn.*.connection == c.DRM_MODE_CONNECTED and conn.*.encoder_id != 0) {
                 var enc = c.drmModeGetEncoder(fd, conn.*.encoder_id);
                 defer c.drmModeFreeEncoder(enc);
 

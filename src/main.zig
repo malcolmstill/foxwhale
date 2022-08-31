@@ -30,7 +30,7 @@ pub fn main() anyerror!void {
     try compositor.initServer();
     try compositor.initOutputs(&backend);
 
-    std.debug.warn("==> backend: {s}\n", .{backend.name()});
+    std.log.warn("==> backend: {s}\n", .{backend.name()});
 
     var renderer = Renderer.init(gpa.allocator());
     defer renderer.deinit();
@@ -94,7 +94,7 @@ pub fn main() anyerror!void {
             output.backend.end();
 
             if ((now - then) > 5000) {
-                std.debug.warn("fps: {}\n", .{frames / 5});
+                std.log.warn("fps: {}\n", .{frames / 5});
                 then = now;
                 frames = 0;
             }

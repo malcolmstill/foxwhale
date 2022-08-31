@@ -13,7 +13,7 @@ fn bind(
     version: u32,
     new_id: u32,
 ) anyerror!void {
-    std.debug.warn("bind for {s} ({}) with id {} at version {}\n", .{ name_string, name, new_id, version });
+    std.log.warn("bind for {s} ({}) with id {} at version {}\n", .{ name_string, name, new_id, version });
 
     if (name >= out.OUTPUT_BASE and name < (context.client.compositor.outputs.items.len + out.OUTPUT_BASE)) {
         // if (context.client.compositor.outputs.items[name - out.OUTPUT_BASE]) |output| {
@@ -120,7 +120,7 @@ fn bind(
             return;
         },
         11 => {
-            std.debug.warn("name: {s}\n", .{name_string});
+            std.log.warn("name: {s}\n", .{name_string});
             if (std.mem.eql(u8, name_string, "fw_control\x00\x00")) {
                 var fw_control = prot.new_fw_control(new_id, context, 0);
                 fw_control.version = version;

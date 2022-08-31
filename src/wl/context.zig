@@ -158,9 +158,9 @@ pub fn Context(comptime T: type) type {
 
         pub fn unregister(self: *Self, object: Object) !void {
             if (self.objects.remove(object.id)) {
-                // std.debug.warn("unregistered: {}\n", .{x.key});
+                // std.log.warn("unregistered: {}\n", .{x.key});
             } else {
-                std.debug.warn("attempted to deregister object ({}) that didn't exist\n", .{object.id});
+                std.log.warn("attempted to deregister object ({}) that didn't exist\n", .{object.id});
             }
             return;
         }
@@ -170,7 +170,7 @@ pub fn Context(comptime T: type) type {
             self.tx_write_offset += @sizeOf(Header);
         }
 
-        pub fn finishWrite(self: *Self, id: u32, opcode: u16) void {
+        pub fn finishWrite(self: *Self, id: u32, opcode: u16) !void {
             var h = Header{
                 .id = id,
                 .opcode = opcode,
@@ -178,7 +178,7 @@ pub fn Context(comptime T: type) type {
             };
             var h_ptr = @ptrCast(*Header, &self.tx_buf[0]);
             h_ptr.* = h;
-            _ = txrx.sendMsg(self.fd, self.tx_buf[0..self.tx_write_offset], &self.tx_fds);
+            _ = try txrx.sendMsg(self.fd, self.tx_buf[0..self.tx_write_offset], &self.tx_fds);
         }
 
         pub fn putU32(self: *Self, value: u32) void {

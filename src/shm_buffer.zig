@@ -45,13 +45,13 @@ pub const ShmBuffer = struct {
     pub fn beginAccess(self: *Self) void {
         CURRENT_POOL_ADDRESS = self.shm_pool.data.ptr;
         CURRENT_POOL_SIZE = self.shm_pool.data.len;
-        _ = linux.sigaction(linux.SIGBUS, &sigbus_handler_action, null);
+        _ = linux.sigaction(os.SIG.BUS, &sigbus_handler_action, null);
     }
 
     pub fn endAccess(_: *Self) !void {
         defer {
             SIGBUS_ERROR = false;
-            _ = linux.sigaction(linux.SIGBUS, &sigbus_handler_reset, null);
+            _ = linux.sigaction(os.SIG.BUS, &sigbus_handler_reset, null);
         }
         if (SIGBUS_ERROR) {
             return error.ClientSigbusd;
@@ -71,13 +71,13 @@ var CURRENT_POOL_SIZE: usize = 0;
 const sigbus_handler_action = os.Sigaction{
     .handler = .{ .sigaction = sigbusHandler },
     .mask = linux.empty_sigset,
-    .flags = linux.SA_RESETHAND,
+    .flags = linux.SA.RESETHAND,
 };
 
 const sigbus_handler_reset = os.Sigaction{
     .handler = .{ .sigaction = null },
     .mask = linux.empty_sigset,
-    .flags = linux.SA_RESETHAND,
+    .flags = linux.SA.RESETHAND,
 };
 
 // libwayland uses a cool trick of mmap'ing some new data underneath (i.e. at the
@@ -91,5 +91,5 @@ fn sigbusHandler(
     _: ?*const anyopaque, // data
 ) callconv(.C) void {
     SIGBUS_ERROR = true;
-    _ = linux.mmap(CURRENT_POOL_ADDRESS, CURRENT_POOL_SIZE, linux.PROT_READ | linux.PROT_WRITE, linux.MAP_FIXED | linux.MAP_PRIVATE | linux.MAP_ANONYMOUS, -1, 0);
+    _ = linux.mmap(CURRENT_POOL_ADDRESS, CURRENT_POOL_SIZE, linux.PROT.READ | linux.PROT.WRITE, linux.MAP.FIXED | linux.MAP.PRIVATE | linux.MAP.ANONYMOUS, -1, 0);
 }

@@ -39,7 +39,7 @@ pub const Region = struct {
         self.rectangles = RectangleBuffer.init();
         _ = REGIONS.deinit(self);
         self.window = null;
-        // std.debug.warn("released region {}\n", .{freed_index});
+        // std.log.warn("released region {}\n", .{freed_index});
     }
 };
 
