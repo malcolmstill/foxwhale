@@ -20,7 +20,7 @@ pub fn Epoll(comptime Event: type) type {
             };
         }
 
-        fn deinit(self: *Self) void {
+        pub fn deinit(self: *Self) void {
             os.close(self.fd);
         }
 
@@ -37,6 +37,7 @@ pub fn Epoll(comptime Event: type) type {
                     self.pair = null;
                     return null;
                 } else {
+                    // Dispatch the current file descriptor
                     const event_i = try self.dispatch(pair.i);
 
                     if (event_i) |ev_i| {
@@ -49,6 +50,7 @@ pub fn Epoll(comptime Event: type) type {
                             return null;
                         }
 
+                        // Dispatch the next file descriptor
                         return try self.dispatch(pair.i);
                     }
                 }
@@ -62,6 +64,7 @@ pub fn Epoll(comptime Event: type) type {
                     .n = n,
                 };
 
+                // Dispatch the first file descriptor
                 return try self.dispatch(0);
             }
         }
@@ -73,6 +76,9 @@ pub fn Epoll(comptime Event: type) type {
                     .ptr = @ptrToInt(dis),
                 },
             };
+
+            // Not sure we want to resort to O_NONBLOCK to get our type-safe epoll event iterator
+            _ = try os.fcntl(fd, os.F_SETFL, os.O_NONBLOCK);
 
             try os.epoll_ctl(self.fd, os.EPOLL_CTL_ADD, fd, &ev);
         }
@@ -103,7 +109,7 @@ pub fn Epoll(comptime Event: type) type {
         pub const Dispatchable = struct {
             impl: fn (*DispatchableSelf, usize) anyerror!?Event,
 
-            const DispatchableSelf = @This();
+            pub const DispatchableSelf = @This();
 
             pub fn dispatch(self: *DispatchableSelf, event_type: usize) !?Event {
                 return try self.impl(self, event_type);
