@@ -131,7 +131,12 @@ test "epoll is generic" {
     _ = try os.write(client_1_fds[1], client_1_data[0..]);
 
     while (try e.next()) |ev| {
-        std.debug.print("{}\n", .{ev});
+        switch (ev) {
+            .Client => |c| {
+                std.debug.print("client id = {}, payload = {}\n", .{ c.client_id, c.payload });
+            },
+            .Input => std.debug.print("input not implemented\n", .{}),
+        }
     }
 
     std.debug.print("Done\n", .{});
