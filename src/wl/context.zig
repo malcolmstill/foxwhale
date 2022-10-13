@@ -17,15 +17,15 @@ pub fn Context(comptime T: type) type {
         write_offset: usize = 0,
         rx_fds: FdBuffer,
         rx_buf: [BUFFER_SIZE]u8,
-        objects: AutoHashMap(u32, Object),
+        objects: AutoHashMap(u32, Object) align(@sizeOf(Header)),
         tx_fds: FdBuffer,
-        tx_buf: [BUFFER_SIZE]u8,
+        tx_buf: [BUFFER_SIZE]u8 align(@sizeOf(Header)),
         tx_write_offset: usize = 0,
 
         const Self = @This();
 
         pub const Object = struct {
-            dispatch: fn (Object, u16) anyerror!void,
+            dispatch: *const fn (Object, u16) anyerror!void,
             context: *Self,
             container: usize,
             id: u32,

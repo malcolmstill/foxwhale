@@ -5,8 +5,8 @@ const Object = @import("connection.zig").Object;
 // wl_display
 pub const wl_display_interface = struct {
     // core global object
-    @"error": ?fn (*Context, Object, Object, u32, []u8) anyerror!void,
-    delete_id: ?fn (*Context, Object, u32) anyerror!void,
+    @"error": ?*const fn (*Context, Object, Object, u32, []u8) anyerror!void,
+    delete_id: ?*const fn (*Context, Object, u32) anyerror!void,
 };
 
 fn wl_display_error_default(context: *Context, object: Object, object_id: Object, code: u32, message: []u8) anyerror!void {
@@ -100,8 +100,8 @@ pub fn wl_display_send_get_registry(object: Object, registry: u32) anyerror!void
 // wl_registry
 pub const wl_registry_interface = struct {
     // global registry object
-    global: ?fn (*Context, Object, u32, []u8, u32) anyerror!void,
-    global_remove: ?fn (*Context, Object, u32) anyerror!void,
+    global: ?*const fn (*Context, Object, u32, []u8, u32) anyerror!void,
+    global_remove: ?*const fn (*Context, Object, u32) anyerror!void,
 };
 
 fn wl_registry_global_default(context: *Context, object: Object, name: u32, interface: []u8, version: u32) anyerror!void {
@@ -165,7 +165,7 @@ pub fn wl_registry_send_bind(object: Object, name: u32, name_string: []const u8,
 // wl_callback
 pub const wl_callback_interface = struct {
     // callback object
-    done: ?fn (*Context, Object, u32) anyerror!void,
+    done: ?*const fn (*Context, Object, u32) anyerror!void,
 };
 
 fn wl_callback_done_default(context: *Context, object: Object, callback_data: u32) anyerror!void {
@@ -314,7 +314,7 @@ pub fn wl_shm_pool_send_resize(object: Object, size: i32) anyerror!void {
 // wl_shm
 pub const wl_shm_interface = struct {
     // shared memory support
-    format: ?fn (*Context, Object, u32) anyerror!void,
+    format: ?*const fn (*Context, Object, u32) anyerror!void,
 };
 
 fn wl_shm_format_default(context: *Context, object: Object, format: u32) anyerror!void {
@@ -433,7 +433,7 @@ pub fn wl_shm_send_create_pool(object: Object, id: u32, fd: i32, size: i32) anye
 // wl_buffer
 pub const wl_buffer_interface = struct {
     // content for a wl_surface
-    release: ?fn (
+    release: ?*const fn (
         *Context,
         Object,
     ) anyerror!void,
@@ -486,9 +486,9 @@ pub fn wl_buffer_send_destroy(object: Object) anyerror!void {
 // wl_data_offer
 pub const wl_data_offer_interface = struct {
     // offer to transfer data
-    offer: ?fn (*Context, Object, []u8) anyerror!void,
-    source_actions: ?fn (*Context, Object, u32) anyerror!void,
-    action: ?fn (*Context, Object, u32) anyerror!void,
+    offer: ?*const fn (*Context, Object, []u8) anyerror!void,
+    source_actions: ?*const fn (*Context, Object, u32) anyerror!void,
+    action: ?*const fn (*Context, Object, u32) anyerror!void,
 };
 
 fn wl_data_offer_offer_default(context: *Context, object: Object, mime_type: []u8) anyerror!void {
@@ -669,21 +669,21 @@ pub fn wl_data_offer_send_set_actions(object: Object, dnd_actions: u32, preferre
 // wl_data_source
 pub const wl_data_source_interface = struct {
     // offer to transfer data
-    target: ?fn (*Context, Object, []u8) anyerror!void,
-    send: ?fn (*Context, Object, []u8, i32) anyerror!void,
-    cancelled: ?fn (
+    target: ?*const fn (*Context, Object, []u8) anyerror!void,
+    send: ?*const fn (*Context, Object, []u8, i32) anyerror!void,
+    cancelled: ?*const fn (
         *Context,
         Object,
     ) anyerror!void,
-    dnd_drop_performed: ?fn (
+    dnd_drop_performed: ?*const fn (
         *Context,
         Object,
     ) anyerror!void,
-    dnd_finished: ?fn (
+    dnd_finished: ?*const fn (
         *Context,
         Object,
     ) anyerror!void,
-    action: ?fn (*Context, Object, u32) anyerror!void,
+    action: ?*const fn (*Context, Object, u32) anyerror!void,
 };
 
 fn wl_data_source_target_default(context: *Context, object: Object, mime_type: []u8) anyerror!void {
@@ -832,18 +832,18 @@ pub fn wl_data_source_send_set_actions(object: Object, dnd_actions: u32) anyerro
 // wl_data_device
 pub const wl_data_device_interface = struct {
     // data transfer device
-    data_offer: ?fn (*Context, Object, u32) anyerror!void,
-    enter: ?fn (*Context, Object, u32, Object, f32, f32, ?Object) anyerror!void,
-    leave: ?fn (
+    data_offer: ?*const fn (*Context, Object, u32) anyerror!void,
+    enter: ?*const fn (*Context, Object, u32, Object, f32, f32, ?Object) anyerror!void,
+    leave: ?*const fn (
         *Context,
         Object,
     ) anyerror!void,
-    motion: ?fn (*Context, Object, u32, f32, f32) anyerror!void,
-    drop: ?fn (
+    motion: ?*const fn (*Context, Object, u32, f32, f32) anyerror!void,
+    drop: ?*const fn (
         *Context,
         Object,
     ) anyerror!void,
-    selection: ?fn (*Context, Object, ?Object) anyerror!void,
+    selection: ?*const fn (*Context, Object, ?Object) anyerror!void,
 };
 
 fn wl_data_device_data_offer_default(context: *Context, object: Object, id: u32) anyerror!void {
@@ -1116,9 +1116,9 @@ pub fn wl_shell_send_get_shell_surface(object: Object, id: u32, surface: u32) an
 // wl_shell_surface
 pub const wl_shell_surface_interface = struct {
     // desktop-style metadata interface
-    ping: ?fn (*Context, Object, u32) anyerror!void,
-    configure: ?fn (*Context, Object, u32, i32, i32) anyerror!void,
-    popup_done: ?fn (
+    ping: ?*const fn (*Context, Object, u32) anyerror!void,
+    configure: ?*const fn (*Context, Object, u32, i32, i32) anyerror!void,
+    popup_done: ?*const fn (
         *Context,
         Object,
     ) anyerror!void,
@@ -1406,8 +1406,8 @@ pub fn wl_shell_surface_send_set_class(object: Object, class_: []const u8) anyer
 // wl_surface
 pub const wl_surface_interface = struct {
     // an onscreen surface
-    enter: ?fn (*Context, Object, Object) anyerror!void,
-    leave: ?fn (*Context, Object, Object) anyerror!void,
+    enter: ?*const fn (*Context, Object, Object) anyerror!void,
+    leave: ?*const fn (*Context, Object, Object) anyerror!void,
 };
 
 fn wl_surface_enter_default(context: *Context, object: Object, output: Object) anyerror!void {
@@ -1793,8 +1793,8 @@ pub fn wl_surface_send_damage_buffer(object: Object, x: i32, y: i32, width: i32,
 // wl_seat
 pub const wl_seat_interface = struct {
     // group of input devices
-    capabilities: ?fn (*Context, Object, u32) anyerror!void,
-    name: ?fn (*Context, Object, []u8) anyerror!void,
+    capabilities: ?*const fn (*Context, Object, u32) anyerror!void,
+    name: ?*const fn (*Context, Object, []u8) anyerror!void,
 };
 
 fn wl_seat_capabilities_default(context: *Context, object: Object, capabilities: u32) anyerror!void {
@@ -1903,18 +1903,18 @@ pub fn wl_seat_send_release(object: Object) anyerror!void {
 // wl_pointer
 pub const wl_pointer_interface = struct {
     // pointer input device
-    enter: ?fn (*Context, Object, u32, Object, f32, f32) anyerror!void,
-    leave: ?fn (*Context, Object, u32, Object) anyerror!void,
-    motion: ?fn (*Context, Object, u32, f32, f32) anyerror!void,
-    button: ?fn (*Context, Object, u32, u32, u32, u32) anyerror!void,
-    axis: ?fn (*Context, Object, u32, u32, f32) anyerror!void,
-    frame: ?fn (
+    enter: ?*const fn (*Context, Object, u32, Object, f32, f32) anyerror!void,
+    leave: ?*const fn (*Context, Object, u32, Object) anyerror!void,
+    motion: ?*const fn (*Context, Object, u32, f32, f32) anyerror!void,
+    button: ?*const fn (*Context, Object, u32, u32, u32, u32) anyerror!void,
+    axis: ?*const fn (*Context, Object, u32, u32, f32) anyerror!void,
+    frame: ?*const fn (
         *Context,
         Object,
     ) anyerror!void,
-    axis_source: ?fn (*Context, Object, u32) anyerror!void,
-    axis_stop: ?fn (*Context, Object, u32, u32) anyerror!void,
-    axis_discrete: ?fn (*Context, Object, u32, i32) anyerror!void,
+    axis_source: ?*const fn (*Context, Object, u32) anyerror!void,
+    axis_stop: ?*const fn (*Context, Object, u32, u32) anyerror!void,
+    axis_discrete: ?*const fn (*Context, Object, u32, i32) anyerror!void,
 };
 
 fn wl_pointer_enter_default(context: *Context, object: Object, serial: u32, surface: Object, surface_x: f32, surface_y: f32) anyerror!void {
@@ -2143,12 +2143,12 @@ pub fn wl_pointer_send_release(object: Object) anyerror!void {
 // wl_keyboard
 pub const wl_keyboard_interface = struct {
     // keyboard input device
-    keymap: ?fn (*Context, Object, u32, i32, u32) anyerror!void,
-    enter: ?fn (*Context, Object, u32, Object, []u32) anyerror!void,
-    leave: ?fn (*Context, Object, u32, Object) anyerror!void,
-    key: ?fn (*Context, Object, u32, u32, u32, u32) anyerror!void,
-    modifiers: ?fn (*Context, Object, u32, u32, u32, u32, u32) anyerror!void,
-    repeat_info: ?fn (*Context, Object, i32, i32) anyerror!void,
+    keymap: ?*const fn (*Context, Object, u32, i32, u32) anyerror!void,
+    enter: ?*const fn (*Context, Object, u32, Object, []u32) anyerror!void,
+    leave: ?*const fn (*Context, Object, u32, Object) anyerror!void,
+    key: ?*const fn (*Context, Object, u32, u32, u32, u32) anyerror!void,
+    modifiers: ?*const fn (*Context, Object, u32, u32, u32, u32, u32) anyerror!void,
+    repeat_info: ?*const fn (*Context, Object, i32, i32) anyerror!void,
 };
 
 fn wl_keyboard_keymap_default(context: *Context, object: Object, format: u32, fd: i32, size: u32) anyerror!void {
@@ -2279,19 +2279,19 @@ pub fn wl_keyboard_send_release(object: Object) anyerror!void {
 // wl_touch
 pub const wl_touch_interface = struct {
     // touchscreen input device
-    down: ?fn (*Context, Object, u32, u32, Object, i32, f32, f32) anyerror!void,
-    up: ?fn (*Context, Object, u32, u32, i32) anyerror!void,
-    motion: ?fn (*Context, Object, u32, i32, f32, f32) anyerror!void,
-    frame: ?fn (
+    down: ?*const fn (*Context, Object, u32, u32, Object, i32, f32, f32) anyerror!void,
+    up: ?*const fn (*Context, Object, u32, u32, i32) anyerror!void,
+    motion: ?*const fn (*Context, Object, u32, i32, f32, f32) anyerror!void,
+    frame: ?*const fn (
         *Context,
         Object,
     ) anyerror!void,
-    cancel: ?fn (
+    cancel: ?*const fn (
         *Context,
         Object,
     ) anyerror!void,
-    shape: ?fn (*Context, Object, i32, f32, f32) anyerror!void,
-    orientation: ?fn (*Context, Object, i32, f32) anyerror!void,
+    shape: ?*const fn (*Context, Object, i32, f32, f32) anyerror!void,
+    orientation: ?*const fn (*Context, Object, i32, f32) anyerror!void,
 };
 
 fn wl_touch_down_default(context: *Context, object: Object, serial: u32, time: u32, surface: Object, id: i32, x: f32, y: f32) anyerror!void {
@@ -2425,13 +2425,13 @@ pub fn wl_touch_send_release(object: Object) anyerror!void {
 // wl_output
 pub const wl_output_interface = struct {
     // compositor output region
-    geometry: ?fn (*Context, Object, i32, i32, i32, i32, i32, []u8, []u8, i32) anyerror!void,
-    mode: ?fn (*Context, Object, u32, i32, i32, i32) anyerror!void,
-    done: ?fn (
+    geometry: ?*const fn (*Context, Object, i32, i32, i32, i32, i32, []u8, []u8, i32) anyerror!void,
+    mode: ?*const fn (*Context, Object, u32, i32, i32, i32) anyerror!void,
+    done: ?*const fn (
         *Context,
         Object,
     ) anyerror!void,
-    scale: ?fn (*Context, Object, i32) anyerror!void,
+    scale: ?*const fn (*Context, Object, i32) anyerror!void,
 };
 
 fn wl_output_geometry_default(context: *Context, object: Object, x: i32, y: i32, physical_width: i32, physical_height: i32, subpixel: i32, make: []u8, model: []u8, transform: i32) anyerror!void {
@@ -2810,11 +2810,11 @@ pub fn wl_subsurface_send_set_desync(object: Object) anyerror!void {
 // fw_control
 pub const fw_control_interface = struct {
     // protocol for querying and controlling foxwhale
-    client: ?fn (*Context, Object, u32) anyerror!void,
-    window: ?fn (*Context, Object, u32, i32, u32, u32, i32, i32, i32, i32, i32, i32, i32, i32, u32) anyerror!void,
-    toplevel_window: ?fn (*Context, Object, u32, i32, u32, u32, i32, i32, i32, i32, u32) anyerror!void,
-    region_rect: ?fn (*Context, Object, u32, i32, i32, i32, i32, i32) anyerror!void,
-    done: ?fn (
+    client: ?*const fn (*Context, Object, u32) anyerror!void,
+    window: ?*const fn (*Context, Object, u32, i32, u32, u32, i32, i32, i32, i32, i32, i32, i32, i32, u32) anyerror!void,
+    toplevel_window: ?*const fn (*Context, Object, u32, i32, u32, u32, i32, i32, i32, i32, u32) anyerror!void,
+    region_rect: ?*const fn (*Context, Object, u32, i32, i32, i32, i32, i32) anyerror!void,
+    done: ?*const fn (
         *Context,
         Object,
     ) anyerror!void,

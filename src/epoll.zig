@@ -47,7 +47,7 @@ pub fn dispatch(i: usize) !void {
 // will be passed a pointer to container. The container
 // will typically be (a pointer to) the struct itself.
 pub const Dispatchable = struct {
-    impl: fn (*Self, usize) anyerror!void,
+    impl: *const fn (*Self, usize) anyerror!void,
 
     const Self = @This();
 

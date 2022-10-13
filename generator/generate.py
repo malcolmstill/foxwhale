@@ -117,12 +117,12 @@ def generate_next(arg):
             print(f"\t\t\tvar {name}: ?Object = object.context.objects.get(try object.context.next_u32());")
             if "interface" in arg.attrib:
                 object_interface = arg.attrib["interface"]
-                print(f"\t\t\tif ({name} != null) {{if ({name}.?.dispatch != {object_interface}_dispatch) {{ return error.ObjectWrongType; }} }}")
+                print(f"\t\t\tif ({name} != null) {{if ({name}.?.dispatch != &{object_interface}_dispatch) {{ return error.ObjectWrongType; }} }}")
         else:
             print(f"\t\t\tvar {name}: Object = object.context.objects.get(try object.context.next_u32()).?;")
             if "interface" in arg.attrib:
                 object_interface = arg.attrib["interface"]
-                print(f"\t\t\tif ({name}.dispatch != {object_interface}_dispatch) {{ return error.ObjectWrongType; }}")
+                print(f"\t\t\tif ({name}.dispatch != &{object_interface}_dispatch) {{ return error.ObjectWrongType; }}")
     else:    
         print(f"\t\t\t\tvar {name}: {atype} = try object.context.next_{next_type(arg.attrib['type'])}();")
 
@@ -186,7 +186,7 @@ def generate_interface(interface, sendType, receiveType):
 def generate_receive(interface, receive):
     fix_wl_registry(interface, receive)
     name = escapename(receive.attrib["name"])
-    print(f"\t{name}: ?fn(*Context, Object, ", end = '')
+    print(f"\t{name}: ?*const fn(*Context, Object, ", end = '')
     first = True
     for arg in receive:
         if arg.tag == "arg":

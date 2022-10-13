@@ -170,11 +170,11 @@ pub fn detect() BackendType {
 }
 
 pub const BackendFns = struct {
-    keyboard: ?fn (u32, u32, u32) anyerror!void,
-    mouseClick: ?fn (u32, u32, u32) anyerror!void,
-    mouseMove: ?fn (u32, f64, f64) anyerror!void,
-    mouseAxis: ?fn (u32, u32, f64) anyerror!void,
-    pageFlip: ?fn () anyerror!void,
+    keyboard: ?*const fn (u32, u32, u32) anyerror!void,
+    mouseClick: ?*const fn (u32, u32, u32) anyerror!void,
+    mouseMove: ?*const fn (u32, f64, f64) anyerror!void,
+    mouseAxis: ?*const fn (u32, u32, f64) anyerror!void,
+    pageFlip: ?*const fn () anyerror!void,
 };
 
 pub var BACKEND_FNS: BackendFns = makeBackendFns();

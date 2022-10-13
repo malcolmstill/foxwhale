@@ -29,7 +29,7 @@ pub const EGL = struct {
             std.log.err("EGL error = {}\n", .{c.eglGetError()});
         }
 
-        glEGLImageTargetTexture2DOES = @ptrCast(?fn (i32, *anyopaque) callconv(.C) void, c.eglGetProcAddress("glEGLImageTargetTexture2DOES"));
+        glEGLImageTargetTexture2DOES = @ptrCast(?*const fn (i32, *anyopaque) callconv(.C) void, c.eglGetProcAddress("glEGLImageTargetTexture2DOES"));
         var display = c.eglGetDisplay(@ptrCast(c.EGLNativeDisplayType, gbm.device)) orelse return error.EGLGetDisplayError;
 
         var major: i32 = 0;
@@ -77,4 +77,4 @@ pub const EGL = struct {
     }
 };
 
-pub var glEGLImageTargetTexture2DOES: ?fn (i32, *anyopaque) callconv(.C) void = undefined;
+pub var glEGLImageTargetTexture2DOES: ?*const fn (i32, *anyopaque) callconv(.C) void = undefined;

@@ -1,5 +1,5 @@
 const std = @import("std");
-const cursor = @embedFile("../assets/cursor.data");
+const cursor = @embedFile("assets/cursor.data");
 const Renderer = @import("renderer.zig").Renderer;
 const Window = @import("window.zig").Window;
 const Mat4x4 = @import("math.zig").Mat4x4;
