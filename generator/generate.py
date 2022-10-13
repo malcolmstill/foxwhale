@@ -29,8 +29,6 @@ def generate_protocol(protocol, sendType, receiveType):
     for child in protocol:
         if child.tag == "interface":
             print(f"\n// {child.attrib['name']}")
-            generate_interface(child, sendType, receiveType)
-            generate_interface_global_debug(child, receiveType)
             generate_new_object(child)
             generate_dispatch_function(child, receiveType)
             generate_enum(child)
@@ -63,7 +61,7 @@ def generate_new_object(interface):
 
 # Generate Dispatch function
 def generate_dispatch_function(interface, receiveType):
-    print(f"fn {interface.attrib['name']}_dispatch(object: Object, opcode: u16) anyerror!void {{")
+    print(f"fn {interface.attrib['name']}_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {{")
     print(f"\tswitch(opcode) {{")
     i = 0
     for child in interface:
@@ -71,7 +69,7 @@ def generate_dispatch_function(interface, receiveType):
             fix_wl_registry(interface, child)
             generate_receive_dispatch(i, child, interface)
             i = i + 1
-    print(f"\t\telse => {{}},")
+    print(f"\t\telse => {{return error.UnknownOpcode;}},")
     print(f"\t}}")
     print(f"}}")
 
@@ -90,23 +88,18 @@ def fix_wl_registry(interface, request):
 
 def generate_receive_dispatch(index, receive, interface):
     name = escapename(receive.attrib['name'])
-    print(f"\t\t\t// {receive.attrib['name']}")
-    print(f"\t\t\t{index} => {{")
+    print(f"// {receive.attrib['name']}")
+    print(f"{index} => {{")
     for arg in receive:
         if arg.tag == "arg":
             generate_next(arg)
-    print(f"\t\t\t\tif ({interface.attrib['name'].upper()}.{name}) |{name}| {{", end = '')
-    print(f"try {name}(object.context, object, ", end = '')
-    first = True
+
+    print(f"return {camelCase(interface.attrib['name'])}{camelCase(receive.attrib['name'])}Msg {{")
     for arg in receive:
         if arg.tag == "arg":
-            if first:
-                print(f"{arg.attrib['name']}", end = '')
-                first = False
-            else:
-                print(f", {arg.attrib['name']}", end = '')
-    print(f");")
-    print(f"\t\t\t}}")
+            arg_name = arg.attrib["name"]
+            print(f".{arg_name} = {arg_name},")
+    print(f"}};")
     print(f"\t\t\t}},")
 
 def generate_next(arg):
@@ -172,16 +165,16 @@ def generate_description(description):
     print(f"\t// {desc}")
 
 # Generate Interface
-def generate_interface(interface, sendType, receiveType):
-    print(f"pub const {interface.attrib['name']}_interface = struct {{")
-    for child in interface:
-        if child.tag == "description":
-            generate_description(child)
-        if child.tag == receiveType:
-            generate_receive(interface, child)
-        # if child.tag == sendType:
-        #     generate_event(child)
-    print(f"}};\n")
+# def generate_interface(interface, sendType, receiveType):
+#     print(f"pub const {interface.attrib['name']}_interface = struct {{")
+#     for child in interface:
+#         if child.tag == "description":
+#             generate_description(child)
+#         if child.tag == receiveType:
+#             generate_receive(interface, child)
+#         # if child.tag == sendType:
+#         #     generate_event(child)
+#     print(f"}};\n")
 
 def generate_receive(interface, receive):
     fix_wl_registry(interface, receive)
@@ -208,44 +201,6 @@ def generate_receive_arg(arg, first):
     else:
         print(f", {arg_type}", end = "")
 
-# Generate Interface global
-def generate_interface_global_debug(interface, receiveType):
-    for child in interface:
-        if child.tag == receiveType:
-            print(f"fn {interface.attrib['name']}_{child.attrib['name']}_default(context: *Context, object: Object ", end ='')
-            for arg in child:
-                if arg.tag == "arg":
-                    arg_type = lookup_type(arg.attrib["type"], arg)
-                    arg_name = arg.attrib["name"]
-                    print(f", {arg_name}: {arg_type}", end = "")
-            print(f") anyerror!void")
-            print(f"{{ ", end="")
-            print(f"std.log.info(\"{{any}} {{any}}", end="")
-            for arg in child:
-                if arg.tag == "arg":
-                    print(f" {{any}}", end="")
-            print(f"\", .{{ context, object", end="")
-            for arg in child:
-                if arg.tag == "arg":
-                    arg_type = lookup_type(arg.attrib["type"], arg)
-                    arg_name = arg.attrib["name"]
-                    print(f", {arg_name}", end = "")            
-            print(f"}}); return error.DebugFunctionNotImplemented;}}\n\n", end='')
-
-    print(f"pub var {interface.attrib['name'].upper()} = {interface.attrib['name']}_interface {{")
-    for child in interface:
-        if child.tag == receiveType:
-            name = escapename(child.attrib['name'])
-            print(f"\t.{name} = {interface.attrib['name']}_{child.attrib['name']}_default,")
-    print(f"}};\n")
-
-def generate_interface_global(interface, receiveType):
-    print(f"pub var {interface.attrib['name'].upper()} = {interface.attrib['name']}_interface {{")
-    for child in interface:
-        if child.tag == receiveType:
-            name = escapename(child.attrib['name'])
-            print(f"\t.{name} = null,")
-    print(f"}};\n")
 
 # Generate send
 def generate_send(interface, sentType):
@@ -292,5 +247,9 @@ def lookup_type(type, arg):
             "fixed": "f32"
         }
         return types[type]
+
+def camelCase(string):
+    words = string.split('_')
+    return ''.join([*map(str.title, words)])
 
 generate(sys.argv[1], sys.argv[2], sys.argv[3:])

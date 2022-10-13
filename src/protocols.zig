@@ -3,27 +3,6 @@ const Context = @import("client.zig").Context;
 const Object = @import("client.zig").Object;
 
 // wl_display
-pub const wl_display_interface = struct {
-    // core global object
-    sync: ?fn (*Context, Object, u32) anyerror!void,
-    get_registry: ?fn (*Context, Object, u32) anyerror!void,
-};
-
-fn wl_display_sync_default(context: *Context, object: Object, callback: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, callback });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_display_get_registry_default(context: *Context, object: Object, registry: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, registry });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_DISPLAY = wl_display_interface{
-    .sync = wl_display_sync_default,
-    .get_registry = wl_display_get_registry_default,
-};
-
 pub fn new_wl_display(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -34,23 +13,25 @@ pub fn new_wl_display(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_display_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_display_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // sync
         0 => {
             var callback: u32 = try object.context.next_u32();
-            if (WL_DISPLAY.sync) |sync| {
-                try sync(object.context, object, callback);
-            }
+            return WlDisplaySyncMsg{
+                .callback = callback,
+            };
         },
         // get_registry
         1 => {
             var registry: u32 = try object.context.next_u32();
-            if (WL_DISPLAY.get_registry) |get_registry| {
-                try get_registry(object.context, object, registry);
-            }
+            return WlDisplayGetRegistryMsg{
+                .registry = registry,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -80,10 +61,10 @@ pub fn wl_display_send_error(object: Object, object_id: u32, code: u32, message:
 
 //
 // This event is used internally by the object ID management
-// logic. When a client deletes an object that it had created,
-// the server will send this event to acknowledge that it has
-// seen the delete request. When the client receives this event,
-// it will know that it can safely reuse the object ID.
+// logic.  When a client deletes an object, the server will send
+// this event to acknowledge that it has seen the delete request.
+// When the client receives this event, it will know that it can
+// safely reuse the object ID.
 //
 pub fn wl_display_send_delete_id(object: Object, id: u32) anyerror!void {
     object.context.startWrite();
@@ -92,20 +73,6 @@ pub fn wl_display_send_delete_id(object: Object, id: u32) anyerror!void {
 }
 
 // wl_registry
-pub const wl_registry_interface = struct {
-    // global registry object
-    bind: ?fn (*Context, Object, u32, []u8, u32, u32) anyerror!void,
-};
-
-fn wl_registry_bind_default(context: *Context, object: Object, name: u32, name_string: []u8, version: u32, id: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any}", .{ context, object, name, name_string, version, id });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_REGISTRY = wl_registry_interface{
-    .bind = wl_registry_bind_default,
-};
-
 pub fn new_wl_registry(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -116,7 +83,7 @@ pub fn new_wl_registry(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // bind
         0 => {
@@ -124,11 +91,16 @@ fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!void {
             var name_string: []u8 = try object.context.next_string();
             var version: u32 = try object.context.next_u32();
             var id: u32 = try object.context.next_u32();
-            if (WL_REGISTRY.bind) |bind| {
-                try bind(object.context, object, name, name_string, version, id);
-            }
+            return WlRegistryBindMsg{
+                .name = name,
+                .name_string = name_string,
+                .version = version,
+                .id = id,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -166,12 +138,6 @@ pub fn wl_registry_send_global_remove(object: Object, name: u32) anyerror!void {
 }
 
 // wl_callback
-pub const wl_callback_interface = struct {
-    // callback object
-};
-
-pub var WL_CALLBACK = wl_callback_interface{};
-
 pub fn new_wl_callback(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -182,9 +148,11 @@ pub fn new_wl_callback(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_callback_dispatch(_: Object, opcode: u16) anyerror!void {
+fn wl_callback_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -198,27 +166,6 @@ pub fn wl_callback_send_done(object: Object, callback_data: u32) anyerror!void {
 }
 
 // wl_compositor
-pub const wl_compositor_interface = struct {
-    // the compositor singleton
-    create_surface: ?fn (*Context, Object, u32) anyerror!void,
-    create_region: ?fn (*Context, Object, u32) anyerror!void,
-};
-
-fn wl_compositor_create_surface_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, id });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_compositor_create_region_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, id });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_COMPOSITOR = wl_compositor_interface{
-    .create_surface = wl_compositor_create_surface_default,
-    .create_region = wl_compositor_create_region_default,
-};
-
 pub fn new_wl_compositor(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -229,58 +176,29 @@ pub fn new_wl_compositor(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_compositor_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_compositor_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // create_surface
         0 => {
             var id: u32 = try object.context.next_u32();
-            if (WL_COMPOSITOR.create_surface) |create_surface| {
-                try create_surface(object.context, object, id);
-            }
+            return WlCompositorCreateSurfaceMsg{
+                .id = id,
+            };
         },
         // create_region
         1 => {
             var id: u32 = try object.context.next_u32();
-            if (WL_COMPOSITOR.create_region) |create_region| {
-                try create_region(object.context, object, id);
-            }
+            return WlCompositorCreateRegionMsg{
+                .id = id,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
 // wl_shm_pool
-pub const wl_shm_pool_interface = struct {
-    // a shared memory pool
-    create_buffer: ?fn (*Context, Object, u32, i32, i32, i32, i32, u32) anyerror!void,
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    resize: ?fn (*Context, Object, i32) anyerror!void,
-};
-
-fn wl_shm_pool_create_buffer_default(context: *Context, object: Object, id: u32, offset: i32, width: i32, height: i32, stride: i32, format: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any} {any} {any}", .{ context, object, id, offset, width, height, stride, format });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_shm_pool_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_shm_pool_resize_default(context: *Context, object: Object, size: i32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, size });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_SHM_POOL = wl_shm_pool_interface{
-    .create_buffer = wl_shm_pool_create_buffer_default,
-    .destroy = wl_shm_pool_destroy_default,
-    .resize = wl_shm_pool_resize_default,
-};
-
 pub fn new_wl_shm_pool(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -291,7 +209,7 @@ pub fn new_wl_shm_pool(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_shm_pool_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_shm_pool_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // create_buffer
         0 => {
@@ -301,45 +219,33 @@ fn wl_shm_pool_dispatch(object: Object, opcode: u16) anyerror!void {
             var height: i32 = try object.context.next_i32();
             var stride: i32 = try object.context.next_i32();
             var format: u32 = try object.context.next_u32();
-            if (WL_SHM_POOL.create_buffer) |create_buffer| {
-                try create_buffer(object.context, object, id, offset, width, height, stride, format);
-            }
+            return WlShmPoolCreateBufferMsg{
+                .id = id,
+                .offset = offset,
+                .width = width,
+                .height = height,
+                .stride = stride,
+                .format = format,
+            };
         },
         // destroy
         1 => {
-            if (WL_SHM_POOL.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return WlShmPoolDestroyMsg{};
         },
         // resize
         2 => {
             var size: i32 = try object.context.next_i32();
-            if (WL_SHM_POOL.resize) |resize| {
-                try resize(object.context, object, size);
-            }
+            return WlShmPoolResizeMsg{
+                .size = size,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
 // wl_shm
-pub const wl_shm_interface = struct {
-    // shared memory support
-    create_pool: ?fn (*Context, Object, u32, i32, i32) anyerror!void,
-};
-
-fn wl_shm_create_pool_default(context: *Context, object: Object, id: u32, fd: i32, size: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any}", .{ context, object, id, fd, size });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_SHM = wl_shm_interface{
-    .create_pool = wl_shm_create_pool_default,
-};
-
 pub fn new_wl_shm(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -350,18 +256,22 @@ pub fn new_wl_shm(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_shm_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_shm_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // create_pool
         0 => {
             var id: u32 = try object.context.next_u32();
             var fd: i32 = try object.context.next_fd();
             var size: i32 = try object.context.next_i32();
-            if (WL_SHM.create_pool) |create_pool| {
-                try create_pool(object.context, object, id, fd, size);
-            }
+            return WlShmCreatePoolMsg{
+                .id = id,
+                .fd = fd,
+                .size = size,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -430,56 +340,6 @@ pub const wl_shm_format = enum(u32) {
     yvu422 = 0x36315659,
     yuv444 = 0x34325559,
     yvu444 = 0x34325659,
-    r8 = 0x20203852,
-    r16 = 0x20363152,
-    rg88 = 0x38384752,
-    gr88 = 0x38385247,
-    rg1616 = 0x32334752,
-    gr1616 = 0x32335247,
-    xrgb16161616f = 0x48345258,
-    xbgr16161616f = 0x48344258,
-    argb16161616f = 0x48345241,
-    abgr16161616f = 0x48344241,
-    xyuv8888 = 0x56555958,
-    vuy888 = 0x34325556,
-    vuy101010 = 0x30335556,
-    y210 = 0x30313259,
-    y212 = 0x32313259,
-    y216 = 0x36313259,
-    y410 = 0x30313459,
-    y412 = 0x32313459,
-    y416 = 0x36313459,
-    xvyu2101010 = 0x30335658,
-    xvyu12_16161616 = 0x36335658,
-    xvyu16161616 = 0x38345658,
-    y0l0 = 0x304c3059,
-    x0l0 = 0x304c3058,
-    y0l2 = 0x324c3059,
-    x0l2 = 0x324c3058,
-    yuv420_8bit = 0x38305559,
-    yuv420_10bit = 0x30315559,
-    xrgb8888_a8 = 0x38415258,
-    xbgr8888_a8 = 0x38414258,
-    rgbx8888_a8 = 0x38415852,
-    bgrx8888_a8 = 0x38415842,
-    rgb888_a8 = 0x38413852,
-    bgr888_a8 = 0x38413842,
-    rgb565_a8 = 0x38413552,
-    bgr565_a8 = 0x38413542,
-    nv24 = 0x3432564e,
-    nv42 = 0x3234564e,
-    p210 = 0x30313250,
-    p010 = 0x30313050,
-    p012 = 0x32313050,
-    p016 = 0x36313050,
-    axbxgxrx106106106106 = 0x30314241,
-    nv15 = 0x3531564e,
-    q410 = 0x30313451,
-    q401 = 0x31303451,
-    xrgb16161616 = 0x38345258,
-    xbgr16161616 = 0x38344258,
-    argb16161616 = 0x38345241,
-    abgr16161616 = 0x38344241,
 };
 
 //
@@ -494,23 +354,6 @@ pub fn wl_shm_send_format(object: Object, format: u32) anyerror!void {
 }
 
 // wl_buffer
-pub const wl_buffer_interface = struct {
-    // content for a wl_surface
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-};
-
-fn wl_buffer_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_BUFFER = wl_buffer_interface{
-    .destroy = wl_buffer_destroy_default,
-};
-
 pub fn new_wl_buffer(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -521,18 +364,15 @@ pub fn new_wl_buffer(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_buffer_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_buffer_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // destroy
         0 => {
-            if (WL_BUFFER.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return WlBufferDestroyMsg{};
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -556,54 +396,6 @@ pub fn wl_buffer_send_release(object: Object) anyerror!void {
 }
 
 // wl_data_offer
-pub const wl_data_offer_interface = struct {
-    // offer to transfer data
-    accept: ?fn (*Context, Object, u32, []u8) anyerror!void,
-    receive: ?fn (*Context, Object, []u8, i32) anyerror!void,
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    finish: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    set_actions: ?fn (*Context, Object, u32, u32) anyerror!void,
-};
-
-fn wl_data_offer_accept_default(context: *Context, object: Object, serial: u32, mime_type: []u8) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, serial, mime_type });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_data_offer_receive_default(context: *Context, object: Object, mime_type: []u8, fd: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, mime_type, fd });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_data_offer_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_data_offer_finish_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_data_offer_set_actions_default(context: *Context, object: Object, dnd_actions: u32, preferred_action: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, dnd_actions, preferred_action });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_DATA_OFFER = wl_data_offer_interface{
-    .accept = wl_data_offer_accept_default,
-    .receive = wl_data_offer_receive_default,
-    .destroy = wl_data_offer_destroy_default,
-    .finish = wl_data_offer_finish_default,
-    .set_actions = wl_data_offer_set_actions_default,
-};
-
 pub fn new_wl_data_offer(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -614,51 +406,46 @@ pub fn new_wl_data_offer(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_data_offer_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_data_offer_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // accept
         0 => {
             var serial: u32 = try object.context.next_u32();
             var mime_type: []u8 = try object.context.next_string();
-            if (WL_DATA_OFFER.accept) |accept| {
-                try accept(object.context, object, serial, mime_type);
-            }
+            return WlDataOfferAcceptMsg{
+                .serial = serial,
+                .mime_type = mime_type,
+            };
         },
         // receive
         1 => {
             var mime_type: []u8 = try object.context.next_string();
             var fd: i32 = try object.context.next_fd();
-            if (WL_DATA_OFFER.receive) |receive| {
-                try receive(object.context, object, mime_type, fd);
-            }
+            return WlDataOfferReceiveMsg{
+                .mime_type = mime_type,
+                .fd = fd,
+            };
         },
         // destroy
         2 => {
-            if (WL_DATA_OFFER.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return WlDataOfferDestroyMsg{};
         },
         // finish
         3 => {
-            if (WL_DATA_OFFER.finish) |finish| {
-                try finish(
-                    object.context,
-                    object,
-                );
-            }
+            return WlDataOfferFinishMsg{};
         },
         // set_actions
         4 => {
             var dnd_actions: u32 = try object.context.next_u32();
             var preferred_action: u32 = try object.context.next_u32();
-            if (WL_DATA_OFFER.set_actions) |set_actions| {
-                try set_actions(object.context, object, dnd_actions, preferred_action);
-            }
+            return WlDataOfferSetActionsMsg{
+                .dnd_actions = dnd_actions,
+                .preferred_action = preferred_action,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -734,37 +521,6 @@ pub fn wl_data_offer_send_action(object: Object, dnd_action: u32) anyerror!void 
 }
 
 // wl_data_source
-pub const wl_data_source_interface = struct {
-    // offer to transfer data
-    offer: ?fn (*Context, Object, []u8) anyerror!void,
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    set_actions: ?fn (*Context, Object, u32) anyerror!void,
-};
-
-fn wl_data_source_offer_default(context: *Context, object: Object, mime_type: []u8) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, mime_type });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_data_source_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_data_source_set_actions_default(context: *Context, object: Object, dnd_actions: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, dnd_actions });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_DATA_SOURCE = wl_data_source_interface{
-    .offer = wl_data_source_offer_default,
-    .destroy = wl_data_source_destroy_default,
-    .set_actions = wl_data_source_set_actions_default,
-};
-
 pub fn new_wl_data_source(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -775,32 +531,29 @@ pub fn new_wl_data_source(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_data_source_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_data_source_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // offer
         0 => {
             var mime_type: []u8 = try object.context.next_string();
-            if (WL_DATA_SOURCE.offer) |offer| {
-                try offer(object.context, object, mime_type);
-            }
+            return WlDataSourceOfferMsg{
+                .mime_type = mime_type,
+            };
         },
         // destroy
         1 => {
-            if (WL_DATA_SOURCE.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return WlDataSourceDestroyMsg{};
         },
         // set_actions
         2 => {
             var dnd_actions: u32 = try object.context.next_u32();
-            if (WL_DATA_SOURCE.set_actions) |set_actions| {
-                try set_actions(object.context, object, dnd_actions);
-            }
+            return WlDataSourceSetActionsMsg{
+                .dnd_actions = dnd_actions,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -923,37 +676,6 @@ pub fn wl_data_source_send_action(object: Object, dnd_action: u32) anyerror!void
 }
 
 // wl_data_device
-pub const wl_data_device_interface = struct {
-    // data transfer device
-    start_drag: ?fn (*Context, Object, ?Object, Object, ?Object, u32) anyerror!void,
-    set_selection: ?fn (*Context, Object, ?Object, u32) anyerror!void,
-    release: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-};
-
-fn wl_data_device_start_drag_default(context: *Context, object: Object, source: ?Object, origin: Object, icon: ?Object, serial: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any}", .{ context, object, source, origin, icon, serial });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_data_device_set_selection_default(context: *Context, object: Object, source: ?Object, serial: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, source, serial });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_data_device_release_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_DATA_DEVICE = wl_data_device_interface{
-    .start_drag = wl_data_device_start_drag_default,
-    .set_selection = wl_data_device_set_selection_default,
-    .release = wl_data_device_release_default,
-};
-
 pub fn new_wl_data_device(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -964,7 +686,7 @@ pub fn new_wl_data_device(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // start_drag
         0 => {
@@ -985,9 +707,12 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
                 }
             }
             var serial: u32 = try object.context.next_u32();
-            if (WL_DATA_DEVICE.start_drag) |start_drag| {
-                try start_drag(object.context, object, source, origin, icon, serial);
-            }
+            return WlDataDeviceStartDragMsg{
+                .source = source,
+                .origin = origin,
+                .icon = icon,
+                .serial = serial,
+            };
         },
         // set_selection
         1 => {
@@ -998,20 +723,18 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!void {
                 }
             }
             var serial: u32 = try object.context.next_u32();
-            if (WL_DATA_DEVICE.set_selection) |set_selection| {
-                try set_selection(object.context, object, source, serial);
-            }
+            return WlDataDeviceSetSelectionMsg{
+                .source = source,
+                .serial = serial,
+            };
         },
         // release
         2 => {
-            if (WL_DATA_DEVICE.release) |release| {
-                try release(
-                    object.context,
-                    object,
-                );
-            }
+            return WlDataDeviceReleaseMsg{};
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -1103,10 +826,9 @@ pub fn wl_data_device_send_drop(object: Object) anyerror!void {
 // immediately before receiving keyboard focus and when a new
 // selection is set while the client has keyboard focus.  The
 // data_offer is valid until a new data_offer or NULL is received
-// or until the client loses keyboard focus.  Switching surface with
-// keyboard focus within the same client doesn't mean a new selection
-// will be sent.  The client must destroy the previous selection
-// data_offer, if any, upon receiving this event.
+// or until the client loses keyboard focus.  The client must
+// destroy the previous selection data_offer, if any, upon receiving
+// this event.
 //
 pub fn wl_data_device_send_selection(object: Object, id: u32) anyerror!void {
     object.context.startWrite();
@@ -1115,27 +837,6 @@ pub fn wl_data_device_send_selection(object: Object, id: u32) anyerror!void {
 }
 
 // wl_data_device_manager
-pub const wl_data_device_manager_interface = struct {
-    // data transfer interface
-    create_data_source: ?fn (*Context, Object, u32) anyerror!void,
-    get_data_device: ?fn (*Context, Object, u32, Object) anyerror!void,
-};
-
-fn wl_data_device_manager_create_data_source_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, id });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_data_device_manager_get_data_device_default(context: *Context, object: Object, id: u32, seat: Object) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, id, seat });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_DATA_DEVICE_MANAGER = wl_data_device_manager_interface{
-    .create_data_source = wl_data_device_manager_create_data_source_default,
-    .get_data_device = wl_data_device_manager_get_data_device_default,
-};
-
 pub fn new_wl_data_device_manager(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -1146,14 +847,14 @@ pub fn new_wl_data_device_manager(id: u32, context: *Context, container: usize) 
     };
 }
 
-fn wl_data_device_manager_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_data_device_manager_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // create_data_source
         0 => {
             var id: u32 = try object.context.next_u32();
-            if (WL_DATA_DEVICE_MANAGER.create_data_source) |create_data_source| {
-                try create_data_source(object.context, object, id);
-            }
+            return WlDataDeviceManagerCreateDataSourceMsg{
+                .id = id,
+            };
         },
         // get_data_device
         1 => {
@@ -1162,11 +863,14 @@ fn wl_data_device_manager_dispatch(object: Object, opcode: u16) anyerror!void {
             if (seat.dispatch != wl_seat_dispatch) {
                 return error.ObjectWrongType;
             }
-            if (WL_DATA_DEVICE_MANAGER.get_data_device) |get_data_device| {
-                try get_data_device(object.context, object, id, seat);
-            }
+            return WlDataDeviceManagerGetDataDeviceMsg{
+                .id = id,
+                .seat = seat,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -1178,20 +882,6 @@ pub const wl_data_device_manager_dnd_action = enum(u32) {
 };
 
 // wl_shell
-pub const wl_shell_interface = struct {
-    // create desktop-style surfaces
-    get_shell_surface: ?fn (*Context, Object, u32, Object) anyerror!void,
-};
-
-fn wl_shell_get_shell_surface_default(context: *Context, object: Object, id: u32, surface: Object) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, id, surface });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_SHELL = wl_shell_interface{
-    .get_shell_surface = wl_shell_get_shell_surface_default,
-};
-
 pub fn new_wl_shell(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -1202,7 +892,7 @@ pub fn new_wl_shell(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_shell_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_shell_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // get_shell_surface
         0 => {
@@ -1211,11 +901,14 @@ fn wl_shell_dispatch(object: Object, opcode: u16) anyerror!void {
             if (surface.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
-            if (WL_SHELL.get_shell_surface) |get_shell_surface| {
-                try get_shell_surface(object.context, object, id, surface);
-            }
+            return WlShellGetShellSurfaceMsg{
+                .id = id,
+                .surface = surface,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -1224,86 +917,6 @@ pub const wl_shell_error = enum(u32) {
 };
 
 // wl_shell_surface
-pub const wl_shell_surface_interface = struct {
-    // desktop-style metadata interface
-    pong: ?fn (*Context, Object, u32) anyerror!void,
-    move: ?fn (*Context, Object, Object, u32) anyerror!void,
-    resize: ?fn (*Context, Object, Object, u32, u32) anyerror!void,
-    set_toplevel: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    set_transient: ?fn (*Context, Object, Object, i32, i32, u32) anyerror!void,
-    set_fullscreen: ?fn (*Context, Object, u32, u32, ?Object) anyerror!void,
-    set_popup: ?fn (*Context, Object, Object, u32, Object, i32, i32, u32) anyerror!void,
-    set_maximized: ?fn (*Context, Object, ?Object) anyerror!void,
-    set_title: ?fn (*Context, Object, []u8) anyerror!void,
-    set_class: ?fn (*Context, Object, []u8) anyerror!void,
-};
-
-fn wl_shell_surface_pong_default(context: *Context, object: Object, serial: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, serial });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_shell_surface_move_default(context: *Context, object: Object, seat: Object, serial: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, seat, serial });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_shell_surface_resize_default(context: *Context, object: Object, seat: Object, serial: u32, edges: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any}", .{ context, object, seat, serial, edges });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_shell_surface_set_toplevel_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_shell_surface_set_transient_default(context: *Context, object: Object, parent: Object, x: i32, y: i32, flags: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any}", .{ context, object, parent, x, y, flags });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_shell_surface_set_fullscreen_default(context: *Context, object: Object, method: u32, framerate: u32, output: ?Object) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any}", .{ context, object, method, framerate, output });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_shell_surface_set_popup_default(context: *Context, object: Object, seat: Object, serial: u32, parent: Object, x: i32, y: i32, flags: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any} {any} {any}", .{ context, object, seat, serial, parent, x, y, flags });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_shell_surface_set_maximized_default(context: *Context, object: Object, output: ?Object) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, output });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_shell_surface_set_title_default(context: *Context, object: Object, title: []u8) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, title });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_shell_surface_set_class_default(context: *Context, object: Object, class_: []u8) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, class_ });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_SHELL_SURFACE = wl_shell_surface_interface{
-    .pong = wl_shell_surface_pong_default,
-    .move = wl_shell_surface_move_default,
-    .resize = wl_shell_surface_resize_default,
-    .set_toplevel = wl_shell_surface_set_toplevel_default,
-    .set_transient = wl_shell_surface_set_transient_default,
-    .set_fullscreen = wl_shell_surface_set_fullscreen_default,
-    .set_popup = wl_shell_surface_set_popup_default,
-    .set_maximized = wl_shell_surface_set_maximized_default,
-    .set_title = wl_shell_surface_set_title_default,
-    .set_class = wl_shell_surface_set_class_default,
-};
-
 pub fn new_wl_shell_surface(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -1314,14 +927,14 @@ pub fn new_wl_shell_surface(id: u32, context: *Context, container: usize) Object
     };
 }
 
-fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // pong
         0 => {
             var serial: u32 = try object.context.next_u32();
-            if (WL_SHELL_SURFACE.pong) |pong| {
-                try pong(object.context, object, serial);
-            }
+            return WlShellSurfacePongMsg{
+                .serial = serial,
+            };
         },
         // move
         1 => {
@@ -1330,9 +943,10 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
                 return error.ObjectWrongType;
             }
             var serial: u32 = try object.context.next_u32();
-            if (WL_SHELL_SURFACE.move) |move| {
-                try move(object.context, object, seat, serial);
-            }
+            return WlShellSurfaceMoveMsg{
+                .seat = seat,
+                .serial = serial,
+            };
         },
         // resize
         2 => {
@@ -1342,18 +956,15 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
             }
             var serial: u32 = try object.context.next_u32();
             var edges: u32 = try object.context.next_u32();
-            if (WL_SHELL_SURFACE.resize) |resize| {
-                try resize(object.context, object, seat, serial, edges);
-            }
+            return WlShellSurfaceResizeMsg{
+                .seat = seat,
+                .serial = serial,
+                .edges = edges,
+            };
         },
         // set_toplevel
         3 => {
-            if (WL_SHELL_SURFACE.set_toplevel) |set_toplevel| {
-                try set_toplevel(
-                    object.context,
-                    object,
-                );
-            }
+            return WlShellSurfaceSetToplevelMsg{};
         },
         // set_transient
         4 => {
@@ -1364,9 +975,12 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
             var flags: u32 = try object.context.next_u32();
-            if (WL_SHELL_SURFACE.set_transient) |set_transient| {
-                try set_transient(object.context, object, parent, x, y, flags);
-            }
+            return WlShellSurfaceSetTransientMsg{
+                .parent = parent,
+                .x = x,
+                .y = y,
+                .flags = flags,
+            };
         },
         // set_fullscreen
         5 => {
@@ -1378,9 +992,11 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
                     return error.ObjectWrongType;
                 }
             }
-            if (WL_SHELL_SURFACE.set_fullscreen) |set_fullscreen| {
-                try set_fullscreen(object.context, object, method, framerate, output);
-            }
+            return WlShellSurfaceSetFullscreenMsg{
+                .method = method,
+                .framerate = framerate,
+                .output = output,
+            };
         },
         // set_popup
         6 => {
@@ -1396,9 +1012,14 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
             var flags: u32 = try object.context.next_u32();
-            if (WL_SHELL_SURFACE.set_popup) |set_popup| {
-                try set_popup(object.context, object, seat, serial, parent, x, y, flags);
-            }
+            return WlShellSurfaceSetPopupMsg{
+                .seat = seat,
+                .serial = serial,
+                .parent = parent,
+                .x = x,
+                .y = y,
+                .flags = flags,
+            };
         },
         // set_maximized
         7 => {
@@ -1408,25 +1029,27 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!void {
                     return error.ObjectWrongType;
                 }
             }
-            if (WL_SHELL_SURFACE.set_maximized) |set_maximized| {
-                try set_maximized(object.context, object, output);
-            }
+            return WlShellSurfaceSetMaximizedMsg{
+                .output = output,
+            };
         },
         // set_title
         8 => {
             var title: []u8 = try object.context.next_string();
-            if (WL_SHELL_SURFACE.set_title) |set_title| {
-                try set_title(object.context, object, title);
-            }
+            return WlShellSurfaceSetTitleMsg{
+                .title = title,
+            };
         },
         // set_class
         9 => {
             var class_: []u8 = try object.context.next_string();
-            if (WL_SHELL_SURFACE.set_class) |set_class| {
-                try set_class(object.context, object, class_);
-            }
+            return WlShellSurfaceSetClassMsg{
+                .class_ = class_,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -1501,96 +1124,6 @@ pub fn wl_shell_surface_send_popup_done(object: Object) anyerror!void {
 }
 
 // wl_surface
-pub const wl_surface_interface = struct {
-    // an onscreen surface
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    attach: ?fn (*Context, Object, ?Object, i32, i32) anyerror!void,
-    damage: ?fn (*Context, Object, i32, i32, i32, i32) anyerror!void,
-    frame: ?fn (*Context, Object, u32) anyerror!void,
-    set_opaque_region: ?fn (*Context, Object, ?Object) anyerror!void,
-    set_input_region: ?fn (*Context, Object, ?Object) anyerror!void,
-    commit: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    set_buffer_transform: ?fn (*Context, Object, i32) anyerror!void,
-    set_buffer_scale: ?fn (*Context, Object, i32) anyerror!void,
-    damage_buffer: ?fn (*Context, Object, i32, i32, i32, i32) anyerror!void,
-    offset: ?fn (*Context, Object, i32, i32) anyerror!void,
-};
-
-fn wl_surface_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_surface_attach_default(context: *Context, object: Object, buffer: ?Object, x: i32, y: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any}", .{ context, object, buffer, x, y });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_surface_damage_default(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any}", .{ context, object, x, y, width, height });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_surface_frame_default(context: *Context, object: Object, callback: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, callback });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_surface_set_opaque_region_default(context: *Context, object: Object, region: ?Object) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, region });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_surface_set_input_region_default(context: *Context, object: Object, region: ?Object) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, region });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_surface_commit_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_surface_set_buffer_transform_default(context: *Context, object: Object, transform: i32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, transform });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_surface_set_buffer_scale_default(context: *Context, object: Object, scale: i32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, scale });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_surface_damage_buffer_default(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any}", .{ context, object, x, y, width, height });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_surface_offset_default(context: *Context, object: Object, x: i32, y: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, x, y });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_SURFACE = wl_surface_interface{
-    .destroy = wl_surface_destroy_default,
-    .attach = wl_surface_attach_default,
-    .damage = wl_surface_damage_default,
-    .frame = wl_surface_frame_default,
-    .set_opaque_region = wl_surface_set_opaque_region_default,
-    .set_input_region = wl_surface_set_input_region_default,
-    .commit = wl_surface_commit_default,
-    .set_buffer_transform = wl_surface_set_buffer_transform_default,
-    .set_buffer_scale = wl_surface_set_buffer_scale_default,
-    .damage_buffer = wl_surface_damage_buffer_default,
-    .offset = wl_surface_offset_default,
-};
-
 pub fn new_wl_surface(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -1601,16 +1134,11 @@ pub fn new_wl_surface(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // destroy
         0 => {
-            if (WL_SURFACE.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return WlSurfaceDestroyMsg{};
         },
         // attach
         1 => {
@@ -1622,9 +1150,11 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
             }
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
-            if (WL_SURFACE.attach) |attach| {
-                try attach(object.context, object, buffer, x, y);
-            }
+            return WlSurfaceAttachMsg{
+                .buffer = buffer,
+                .x = x,
+                .y = y,
+            };
         },
         // damage
         2 => {
@@ -1632,16 +1162,19 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
             var y: i32 = try object.context.next_i32();
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            if (WL_SURFACE.damage) |damage| {
-                try damage(object.context, object, x, y, width, height);
-            }
+            return WlSurfaceDamageMsg{
+                .x = x,
+                .y = y,
+                .width = width,
+                .height = height,
+            };
         },
         // frame
         3 => {
             var callback: u32 = try object.context.next_u32();
-            if (WL_SURFACE.frame) |frame| {
-                try frame(object.context, object, callback);
-            }
+            return WlSurfaceFrameMsg{
+                .callback = callback,
+            };
         },
         // set_opaque_region
         4 => {
@@ -1651,9 +1184,9 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
                     return error.ObjectWrongType;
                 }
             }
-            if (WL_SURFACE.set_opaque_region) |set_opaque_region| {
-                try set_opaque_region(object.context, object, region);
-            }
+            return WlSurfaceSetOpaqueRegionMsg{
+                .region = region,
+            };
         },
         // set_input_region
         5 => {
@@ -1663,32 +1196,27 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
                     return error.ObjectWrongType;
                 }
             }
-            if (WL_SURFACE.set_input_region) |set_input_region| {
-                try set_input_region(object.context, object, region);
-            }
+            return WlSurfaceSetInputRegionMsg{
+                .region = region,
+            };
         },
         // commit
         6 => {
-            if (WL_SURFACE.commit) |commit| {
-                try commit(
-                    object.context,
-                    object,
-                );
-            }
+            return WlSurfaceCommitMsg{};
         },
         // set_buffer_transform
         7 => {
             var transform: i32 = try object.context.next_i32();
-            if (WL_SURFACE.set_buffer_transform) |set_buffer_transform| {
-                try set_buffer_transform(object.context, object, transform);
-            }
+            return WlSurfaceSetBufferTransformMsg{
+                .transform = transform,
+            };
         },
         // set_buffer_scale
         8 => {
             var scale: i32 = try object.context.next_i32();
-            if (WL_SURFACE.set_buffer_scale) |set_buffer_scale| {
-                try set_buffer_scale(object.context, object, scale);
-            }
+            return WlSurfaceSetBufferScaleMsg{
+                .scale = scale,
+            };
         },
         // damage_buffer
         9 => {
@@ -1696,27 +1224,22 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!void {
             var y: i32 = try object.context.next_i32();
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            if (WL_SURFACE.damage_buffer) |damage_buffer| {
-                try damage_buffer(object.context, object, x, y, width, height);
-            }
+            return WlSurfaceDamageBufferMsg{
+                .x = x,
+                .y = y,
+                .width = width,
+                .height = height,
+            };
         },
-        // offset
-        10 => {
-            var x: i32 = try object.context.next_i32();
-            var y: i32 = try object.context.next_i32();
-            if (WL_SURFACE.offset) |offset| {
-                try offset(object.context, object, x, y);
-            }
+        else => {
+            return error.UnknownOpcode;
         },
-        else => {},
     }
 }
 
 pub const wl_surface_error = enum(u32) {
     invalid_scale = 0,
     invalid_transform = 1,
-    invalid_size = 2,
-    invalid_offset = 3,
 };
 
 //
@@ -1737,12 +1260,6 @@ pub fn wl_surface_send_enter(object: Object, output: u32) anyerror!void {
 // results in it no longer having any part of it within the scanout region
 // of an output.
 //
-// Clients should not use the number of outputs the surface is on for frame
-// throttling purposes. The surface might be hidden even if no leave event
-// has been sent, and the compositor might expect new surface content
-// updates even if no enter event has been sent. The frame event should be
-// used instead.
-//
 pub fn wl_surface_send_leave(object: Object, output: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(output);
@@ -1750,44 +1267,6 @@ pub fn wl_surface_send_leave(object: Object, output: u32) anyerror!void {
 }
 
 // wl_seat
-pub const wl_seat_interface = struct {
-    // group of input devices
-    get_pointer: ?fn (*Context, Object, u32) anyerror!void,
-    get_keyboard: ?fn (*Context, Object, u32) anyerror!void,
-    get_touch: ?fn (*Context, Object, u32) anyerror!void,
-    release: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-};
-
-fn wl_seat_get_pointer_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, id });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_seat_get_keyboard_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, id });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_seat_get_touch_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, id });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_seat_release_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_SEAT = wl_seat_interface{
-    .get_pointer = wl_seat_get_pointer_default,
-    .get_keyboard = wl_seat_get_keyboard_default,
-    .get_touch = wl_seat_get_touch_default,
-    .release = wl_seat_release_default,
-};
-
 pub fn new_wl_seat(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -1798,39 +1277,36 @@ pub fn new_wl_seat(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_seat_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_seat_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // get_pointer
         0 => {
             var id: u32 = try object.context.next_u32();
-            if (WL_SEAT.get_pointer) |get_pointer| {
-                try get_pointer(object.context, object, id);
-            }
+            return WlSeatGetPointerMsg{
+                .id = id,
+            };
         },
         // get_keyboard
         1 => {
             var id: u32 = try object.context.next_u32();
-            if (WL_SEAT.get_keyboard) |get_keyboard| {
-                try get_keyboard(object.context, object, id);
-            }
+            return WlSeatGetKeyboardMsg{
+                .id = id,
+            };
         },
         // get_touch
         2 => {
             var id: u32 = try object.context.next_u32();
-            if (WL_SEAT.get_touch) |get_touch| {
-                try get_touch(object.context, object, id);
-            }
+            return WlSeatGetTouchMsg{
+                .id = id,
+            };
         },
         // release
         3 => {
-            if (WL_SEAT.release) |release| {
-                try release(
-                    object.context,
-                    object,
-                );
-            }
+            return WlSeatReleaseMsg{};
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -1838,10 +1314,6 @@ pub const wl_seat_capability = enum(u32) {
     pointer = 1,
     keyboard = 2,
     touch = 4,
-};
-
-pub const wl_seat_error = enum(u32) {
-    missing_capability = 0,
 };
 
 //
@@ -1877,22 +1349,9 @@ pub fn wl_seat_send_capabilities(object: Object, capabilities: u32) anyerror!voi
 }
 
 //
-// In a multi-seat configuration the seat name can be used by clients to
-// help identify which physical devices the seat represents.
-//
-// The seat name is a UTF-8 string with no convention defined for its
-// contents. Each name is unique among all wl_seat globals. The name is
-// only guaranteed to be unique for the current compositor instance.
-//
-// The same seat names are used for all clients. Thus, the name can be
-// shared across processes to refer to a specific wl_seat global.
-//
-// The name event is sent after binding to the seat global. This event is
-// only sent once per seat object, and the name does not change over the
-// lifetime of the wl_seat global.
-//
-// Compositors may re-use the same seat name if the wl_seat global is
-// destroyed and re-created later.
+// In a multiseat configuration this can be used by the client to help
+// identify which physical devices the seat represents. Based on
+// the seat configuration used by the compositor.
 //
 pub fn wl_seat_send_name(object: Object, name: []const u8) anyerror!void {
     object.context.startWrite();
@@ -1901,30 +1360,6 @@ pub fn wl_seat_send_name(object: Object, name: []const u8) anyerror!void {
 }
 
 // wl_pointer
-pub const wl_pointer_interface = struct {
-    // pointer input device
-    set_cursor: ?fn (*Context, Object, u32, ?Object, i32, i32) anyerror!void,
-    release: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-};
-
-fn wl_pointer_set_cursor_default(context: *Context, object: Object, serial: u32, surface: ?Object, hotspot_x: i32, hotspot_y: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any}", .{ context, object, serial, surface, hotspot_x, hotspot_y });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_pointer_release_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_POINTER = wl_pointer_interface{
-    .set_cursor = wl_pointer_set_cursor_default,
-    .release = wl_pointer_release_default,
-};
-
 pub fn new_wl_pointer(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -1935,7 +1370,7 @@ pub fn new_wl_pointer(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // set_cursor
         0 => {
@@ -1948,20 +1383,20 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!void {
             }
             var hotspot_x: i32 = try object.context.next_i32();
             var hotspot_y: i32 = try object.context.next_i32();
-            if (WL_POINTER.set_cursor) |set_cursor| {
-                try set_cursor(object.context, object, serial, surface, hotspot_x, hotspot_y);
-            }
+            return WlPointerSetCursorMsg{
+                .serial = serial,
+                .surface = surface,
+                .hotspot_x = hotspot_x,
+                .hotspot_y = hotspot_y,
+            };
         },
         // release
         1 => {
-            if (WL_POINTER.release) |release| {
-                try release(
-                    object.context,
-                    object,
-                );
-            }
+            return WlPointerReleaseMsg{};
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -2214,23 +1649,6 @@ pub fn wl_pointer_send_axis_discrete(object: Object, axis: u32, discrete: i32) a
 }
 
 // wl_keyboard
-pub const wl_keyboard_interface = struct {
-    // keyboard input device
-    release: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-};
-
-fn wl_keyboard_release_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_KEYBOARD = wl_keyboard_interface{
-    .release = wl_keyboard_release_default,
-};
-
 pub fn new_wl_keyboard(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -2241,18 +1659,15 @@ pub fn new_wl_keyboard(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_keyboard_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_keyboard_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // release
         0 => {
-            if (WL_KEYBOARD.release) |release| {
-                try release(
-                    object.context,
-                    object,
-                );
-            }
+            return WlKeyboardReleaseMsg{};
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -2268,8 +1683,7 @@ pub const wl_keyboard_key_state = enum(u32) {
 
 //
 // This event provides a file descriptor to the client which can be
-// memory-mapped in read-only mode to provide a keyboard mapping
-// description.
+// memory-mapped to provide a keyboard mapping description.
 //
 // From version 7 onwards, the fd must be mapped with MAP_PRIVATE by
 // the recipient, as MAP_SHARED may fail.
@@ -2286,9 +1700,6 @@ pub fn wl_keyboard_send_keymap(object: Object, format: u32, fd: i32, size: u32) 
 // Notification that this seat's keyboard focus is on a certain
 // surface.
 //
-// The compositor must send the wl_keyboard.modifiers event after this
-// event.
-//
 pub fn wl_keyboard_send_enter(object: Object, serial: u32, surface: u32, keys: []u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
@@ -2304,9 +1715,6 @@ pub fn wl_keyboard_send_enter(object: Object, serial: u32, surface: u32, keys: [
 // The leave notification is sent before the enter notification
 // for the new focus.
 //
-// After this event client must assume that all keys, including modifiers,
-// are lifted and also it must stop key repeating if there's some going on.
-//
 pub fn wl_keyboard_send_leave(object: Object, serial: u32, surface: u32) anyerror!void {
     object.context.startWrite();
     object.context.putU32(serial);
@@ -2318,12 +1726,6 @@ pub fn wl_keyboard_send_leave(object: Object, serial: u32, surface: u32) anyerro
 // A key was pressed or released.
 // The time argument is a timestamp with millisecond
 // granularity, with an undefined base.
-//
-// The key is a platform-specific key code that can be interpreted
-// by feeding it to the keyboard mapping (see the keymap event).
-//
-// If this event produces a change in modifiers, then the resulting
-// wl_keyboard.modifiers event must be sent after this event.
 //
 pub fn wl_keyboard_send_key(object: Object, serial: u32, time: u32, key: u32, state: u32) anyerror!void {
     object.context.startWrite();
@@ -2370,23 +1772,6 @@ pub fn wl_keyboard_send_repeat_info(object: Object, rate: i32, delay: i32) anyer
 }
 
 // wl_touch
-pub const wl_touch_interface = struct {
-    // touchscreen input device
-    release: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-};
-
-fn wl_touch_release_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_TOUCH = wl_touch_interface{
-    .release = wl_touch_release_default,
-};
-
 pub fn new_wl_touch(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -2397,18 +1782,15 @@ pub fn new_wl_touch(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_touch_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_touch_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // release
         0 => {
-            if (WL_TOUCH.release) |release| {
-                try release(
-                    object.context,
-                    object,
-                );
-            }
+            return WlTouchReleaseMsg{};
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -2550,23 +1932,6 @@ pub fn wl_touch_send_orientation(object: Object, id: i32, orientation: f32) anye
 }
 
 // wl_output
-pub const wl_output_interface = struct {
-    // compositor output region
-    release: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-};
-
-fn wl_output_release_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_OUTPUT = wl_output_interface{
-    .release = wl_output_release_default,
-};
-
 pub fn new_wl_output(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -2577,18 +1942,15 @@ pub fn new_wl_output(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_output_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_output_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // release
         0 => {
-            if (WL_OUTPUT.release) |release| {
-                try release(
-                    object.context,
-                    object,
-                );
-            }
+            return WlOutputReleaseMsg{};
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -2625,15 +1987,12 @@ pub const wl_output_mode = enum(u32) {
 // The physical size can be set to zero if it doesn't make sense for this
 // output (e.g. for projectors or virtual outputs).
 //
-// The geometry event will be followed by a done event (starting from
-// version 2).
-//
 // Note: wl_output only advertises partial information about the output
 // position and identification. Some compositors, for instance those not
 // implementing a desktop-style output layout or those exposing virtual
 // outputs, might fake this information. Instead of using x and y, clients
 // should use xdg_output.logical_position. Instead of using make and model,
-// clients should use name and description.
+// clients should use xdg_output.name and xdg_output.description.
 //
 pub fn wl_output_send_geometry(object: Object, x: i32, y: i32, physical_width: i32, physical_height: i32, subpixel: i32, make: []const u8, model: []const u8, transform: i32) anyerror!void {
     object.context.startWrite();
@@ -2657,10 +2016,6 @@ pub fn wl_output_send_geometry(object: Object, x: i32, y: i32, physical_width: i
 // current.  In other words, the current mode is always the last
 // mode that was received with the current flag set.
 //
-// Non-current modes are deprecated. A compositor can decide to only
-// advertise the current mode and never send other modes. Clients
-// should not rely on non-current modes.
-//
 // The size of a mode is given in physical hardware units of
 // the output device. This is not necessarily the same as
 // the output size in the global compositor space. For instance,
@@ -2668,12 +2023,6 @@ pub fn wl_output_send_geometry(object: Object, x: i32, y: i32, physical_width: i
 // or transformed, as described in wl_output.transform. Clients
 // willing to retrieve the output size in the global compositor
 // space should use xdg_output.logical_size instead.
-//
-// The vertical refresh rate can be set to zero if it doesn't make
-// sense for this output (e.g. for virtual outputs).
-//
-// The mode event will be followed by a done event (starting from
-// version 2).
 //
 // Clients should not use the refresh rate to schedule frames. Instead,
 // they should use the wl_surface.frame event or the presentation-time
@@ -2724,104 +2073,13 @@ pub fn wl_output_send_done(object: Object) anyerror!void {
 // avoid scaling the surface, and the client can supply
 // a higher detail image.
 //
-// The scale event will be followed by a done event.
-//
 pub fn wl_output_send_scale(object: Object, factor: i32) anyerror!void {
     object.context.startWrite();
     object.context.putI32(factor);
     try object.context.finishWrite(object.id, 3);
 }
 
-//
-// Many compositors will assign user-friendly names to their outputs, show
-// them to the user, allow the user to refer to an output, etc. The client
-// may wish to know this name as well to offer the user similar behaviors.
-//
-// The name is a UTF-8 string with no convention defined for its contents.
-// Each name is unique among all wl_output globals. The name is only
-// guaranteed to be unique for the compositor instance.
-//
-// The same output name is used for all clients for a given wl_output
-// global. Thus, the name can be shared across processes to refer to a
-// specific wl_output global.
-//
-// The name is not guaranteed to be persistent across sessions, thus cannot
-// be used to reliably identify an output in e.g. configuration files.
-//
-// Examples of names include 'HDMI-A-1', 'WL-1', 'X11-1', etc. However, do
-// not assume that the name is a reflection of an underlying DRM connector,
-// X11 connection, etc.
-//
-// The name event is sent after binding the output object. This event is
-// only sent once per output object, and the name does not change over the
-// lifetime of the wl_output global.
-//
-// Compositors may re-use the same output name if the wl_output global is
-// destroyed and re-created later. Compositors should avoid re-using the
-// same name if possible.
-//
-// The name event will be followed by a done event.
-//
-pub fn wl_output_send_name(object: Object, name: []const u8) anyerror!void {
-    object.context.startWrite();
-    object.context.putString(name);
-    try object.context.finishWrite(object.id, 4);
-}
-
-//
-// Many compositors can produce human-readable descriptions of their
-// outputs. The client may wish to know this description as well, e.g. for
-// output selection purposes.
-//
-// The description is a UTF-8 string with no convention defined for its
-// contents. The description is not guaranteed to be unique among all
-// wl_output globals. Examples might include 'Foocorp 11" Display' or
-// 'Virtual X11 output via :1'.
-//
-// The description event is sent after binding the output object and
-// whenever the description changes. The description is optional, and may
-// not be sent at all.
-//
-// The description event will be followed by a done event.
-//
-pub fn wl_output_send_description(object: Object, description: []const u8) anyerror!void {
-    object.context.startWrite();
-    object.context.putString(description);
-    try object.context.finishWrite(object.id, 5);
-}
-
 // wl_region
-pub const wl_region_interface = struct {
-    // region interface
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    add: ?fn (*Context, Object, i32, i32, i32, i32) anyerror!void,
-    subtract: ?fn (*Context, Object, i32, i32, i32, i32) anyerror!void,
-};
-
-fn wl_region_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_region_add_default(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any}", .{ context, object, x, y, width, height });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_region_subtract_default(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any}", .{ context, object, x, y, width, height });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_REGION = wl_region_interface{
-    .destroy = wl_region_destroy_default,
-    .add = wl_region_add_default,
-    .subtract = wl_region_subtract_default,
-};
-
 pub fn new_wl_region(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -2832,16 +2090,11 @@ pub fn new_wl_region(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_region_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_region_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // destroy
         0 => {
-            if (WL_REGION.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return WlRegionDestroyMsg{};
         },
         // add
         1 => {
@@ -2849,9 +2102,12 @@ fn wl_region_dispatch(object: Object, opcode: u16) anyerror!void {
             var y: i32 = try object.context.next_i32();
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            if (WL_REGION.add) |add| {
-                try add(object.context, object, x, y, width, height);
-            }
+            return WlRegionAddMsg{
+                .x = x,
+                .y = y,
+                .width = width,
+                .height = height,
+            };
         },
         // subtract
         2 => {
@@ -2859,39 +2115,20 @@ fn wl_region_dispatch(object: Object, opcode: u16) anyerror!void {
             var y: i32 = try object.context.next_i32();
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            if (WL_REGION.subtract) |subtract| {
-                try subtract(object.context, object, x, y, width, height);
-            }
+            return WlRegionSubtractMsg{
+                .x = x,
+                .y = y,
+                .width = width,
+                .height = height,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
 // wl_subcompositor
-pub const wl_subcompositor_interface = struct {
-    // sub-surface compositing
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    get_subsurface: ?fn (*Context, Object, u32, Object, Object) anyerror!void,
-};
-
-fn wl_subcompositor_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_subcompositor_get_subsurface_default(context: *Context, object: Object, id: u32, surface: Object, parent: Object) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any}", .{ context, object, id, surface, parent });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_SUBCOMPOSITOR = wl_subcompositor_interface{
-    .destroy = wl_subcompositor_destroy_default,
-    .get_subsurface = wl_subcompositor_get_subsurface_default,
-};
-
 pub fn new_wl_subcompositor(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -2902,16 +2139,11 @@ pub fn new_wl_subcompositor(id: u32, context: *Context, container: usize) Object
     };
 }
 
-fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // destroy
         0 => {
-            if (WL_SUBCOMPOSITOR.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return WlSubcompositorDestroyMsg{};
         },
         // get_subsurface
         1 => {
@@ -2924,11 +2156,15 @@ fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!void {
             if (parent.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
-            if (WL_SUBCOMPOSITOR.get_subsurface) |get_subsurface| {
-                try get_subsurface(object.context, object, id, surface, parent);
-            }
+            return WlSubcompositorGetSubsurfaceMsg{
+                .id = id,
+                .surface = surface,
+                .parent = parent,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -2937,64 +2173,6 @@ pub const wl_subcompositor_error = enum(u32) {
 };
 
 // wl_subsurface
-pub const wl_subsurface_interface = struct {
-    // sub-surface interface to a wl_surface
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    set_position: ?fn (*Context, Object, i32, i32) anyerror!void,
-    place_above: ?fn (*Context, Object, Object) anyerror!void,
-    place_below: ?fn (*Context, Object, Object) anyerror!void,
-    set_sync: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    set_desync: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-};
-
-fn wl_subsurface_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_subsurface_set_position_default(context: *Context, object: Object, x: i32, y: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, x, y });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_subsurface_place_above_default(context: *Context, object: Object, sibling: Object) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, sibling });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_subsurface_place_below_default(context: *Context, object: Object, sibling: Object) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, sibling });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_subsurface_set_sync_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn wl_subsurface_set_desync_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var WL_SUBSURFACE = wl_subsurface_interface{
-    .destroy = wl_subsurface_destroy_default,
-    .set_position = wl_subsurface_set_position_default,
-    .place_above = wl_subsurface_place_above_default,
-    .place_below = wl_subsurface_place_below_default,
-    .set_sync = wl_subsurface_set_sync_default,
-    .set_desync = wl_subsurface_set_desync_default,
-};
-
 pub fn new_wl_subsurface(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -3005,24 +2183,20 @@ pub fn new_wl_subsurface(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!void {
+fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // destroy
         0 => {
-            if (WL_SUBSURFACE.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return WlSubsurfaceDestroyMsg{};
         },
         // set_position
         1 => {
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
-            if (WL_SUBSURFACE.set_position) |set_position| {
-                try set_position(object.context, object, x, y);
-            }
+            return WlSubsurfaceSetPositionMsg{
+                .x = x,
+                .y = y,
+            };
         },
         // place_above
         2 => {
@@ -3030,9 +2204,9 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!void {
             if (sibling.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
-            if (WL_SUBSURFACE.place_above) |place_above| {
-                try place_above(object.context, object, sibling);
-            }
+            return WlSubsurfacePlaceAboveMsg{
+                .sibling = sibling,
+            };
         },
         // place_below
         3 => {
@@ -3040,29 +2214,21 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!void {
             if (sibling.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
-            if (WL_SUBSURFACE.place_below) |place_below| {
-                try place_below(object.context, object, sibling);
-            }
+            return WlSubsurfacePlaceBelowMsg{
+                .sibling = sibling,
+            };
         },
         // set_sync
         4 => {
-            if (WL_SUBSURFACE.set_sync) |set_sync| {
-                try set_sync(
-                    object.context,
-                    object,
-                );
-            }
+            return WlSubsurfaceSetSyncMsg{};
         },
         // set_desync
         5 => {
-            if (WL_SUBSURFACE.set_desync) |set_desync| {
-                try set_desync(
-                    object.context,
-                    object,
-                );
-            }
+            return WlSubsurfaceSetDesyncMsg{};
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -3071,44 +2237,6 @@ pub const wl_subsurface_error = enum(u32) {
 };
 
 // xdg_wm_base
-pub const xdg_wm_base_interface = struct {
-    // create desktop-style surfaces
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    create_positioner: ?fn (*Context, Object, u32) anyerror!void,
-    get_xdg_surface: ?fn (*Context, Object, u32, Object) anyerror!void,
-    pong: ?fn (*Context, Object, u32) anyerror!void,
-};
-
-fn xdg_wm_base_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_wm_base_create_positioner_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, id });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_wm_base_get_xdg_surface_default(context: *Context, object: Object, id: u32, surface: Object) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, id, surface });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_wm_base_pong_default(context: *Context, object: Object, serial: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, serial });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var XDG_WM_BASE = xdg_wm_base_interface{
-    .destroy = xdg_wm_base_destroy_default,
-    .create_positioner = xdg_wm_base_create_positioner_default,
-    .get_xdg_surface = xdg_wm_base_get_xdg_surface_default,
-    .pong = xdg_wm_base_pong_default,
-};
-
 pub fn new_xdg_wm_base(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -3119,23 +2247,18 @@ pub fn new_xdg_wm_base(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!void {
+fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // destroy
         0 => {
-            if (XDG_WM_BASE.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return XdgWmBaseDestroyMsg{};
         },
         // create_positioner
         1 => {
             var id: u32 = try object.context.next_u32();
-            if (XDG_WM_BASE.create_positioner) |create_positioner| {
-                try create_positioner(object.context, object, id);
-            }
+            return XdgWmBaseCreatePositionerMsg{
+                .id = id,
+            };
         },
         // get_xdg_surface
         2 => {
@@ -3144,18 +2267,21 @@ fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!void {
             if (surface.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
-            if (XDG_WM_BASE.get_xdg_surface) |get_xdg_surface| {
-                try get_xdg_surface(object.context, object, id, surface);
-            }
+            return XdgWmBaseGetXdgSurfaceMsg{
+                .id = id,
+                .surface = surface,
+            };
         },
         // pong
         3 => {
             var serial: u32 = try object.context.next_u32();
-            if (XDG_WM_BASE.pong) |pong| {
-                try pong(object.context, object, serial);
-            }
+            return XdgWmBasePongMsg{
+                .serial = serial,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -3188,89 +2314,6 @@ pub fn xdg_wm_base_send_ping(object: Object, serial: u32) anyerror!void {
 }
 
 // xdg_positioner
-pub const xdg_positioner_interface = struct {
-    // child surface positioner
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    set_size: ?fn (*Context, Object, i32, i32) anyerror!void,
-    set_anchor_rect: ?fn (*Context, Object, i32, i32, i32, i32) anyerror!void,
-    set_anchor: ?fn (*Context, Object, u32) anyerror!void,
-    set_gravity: ?fn (*Context, Object, u32) anyerror!void,
-    set_constraint_adjustment: ?fn (*Context, Object, u32) anyerror!void,
-    set_offset: ?fn (*Context, Object, i32, i32) anyerror!void,
-    set_reactive: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    set_parent_size: ?fn (*Context, Object, i32, i32) anyerror!void,
-    set_parent_configure: ?fn (*Context, Object, u32) anyerror!void,
-};
-
-fn xdg_positioner_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_positioner_set_size_default(context: *Context, object: Object, width: i32, height: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, width, height });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_positioner_set_anchor_rect_default(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any}", .{ context, object, x, y, width, height });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_positioner_set_anchor_default(context: *Context, object: Object, anchor: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, anchor });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_positioner_set_gravity_default(context: *Context, object: Object, gravity: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, gravity });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_positioner_set_constraint_adjustment_default(context: *Context, object: Object, constraint_adjustment: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, constraint_adjustment });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_positioner_set_offset_default(context: *Context, object: Object, x: i32, y: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, x, y });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_positioner_set_reactive_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_positioner_set_parent_size_default(context: *Context, object: Object, parent_width: i32, parent_height: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, parent_width, parent_height });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_positioner_set_parent_configure_default(context: *Context, object: Object, serial: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, serial });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var XDG_POSITIONER = xdg_positioner_interface{
-    .destroy = xdg_positioner_destroy_default,
-    .set_size = xdg_positioner_set_size_default,
-    .set_anchor_rect = xdg_positioner_set_anchor_rect_default,
-    .set_anchor = xdg_positioner_set_anchor_default,
-    .set_gravity = xdg_positioner_set_gravity_default,
-    .set_constraint_adjustment = xdg_positioner_set_constraint_adjustment_default,
-    .set_offset = xdg_positioner_set_offset_default,
-    .set_reactive = xdg_positioner_set_reactive_default,
-    .set_parent_size = xdg_positioner_set_parent_size_default,
-    .set_parent_configure = xdg_positioner_set_parent_configure_default,
-};
-
 pub fn new_xdg_positioner(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -3281,24 +2324,20 @@ pub fn new_xdg_positioner(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn xdg_positioner_dispatch(object: Object, opcode: u16) anyerror!void {
+fn xdg_positioner_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // destroy
         0 => {
-            if (XDG_POSITIONER.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return XdgPositionerDestroyMsg{};
         },
         // set_size
         1 => {
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            if (XDG_POSITIONER.set_size) |set_size| {
-                try set_size(object.context, object, width, height);
-            }
+            return XdgPositionerSetSizeMsg{
+                .width = width,
+                .height = height,
+            };
         },
         // set_anchor_rect
         2 => {
@@ -3306,64 +2345,46 @@ fn xdg_positioner_dispatch(object: Object, opcode: u16) anyerror!void {
             var y: i32 = try object.context.next_i32();
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            if (XDG_POSITIONER.set_anchor_rect) |set_anchor_rect| {
-                try set_anchor_rect(object.context, object, x, y, width, height);
-            }
+            return XdgPositionerSetAnchorRectMsg{
+                .x = x,
+                .y = y,
+                .width = width,
+                .height = height,
+            };
         },
         // set_anchor
         3 => {
             var anchor: u32 = try object.context.next_u32();
-            if (XDG_POSITIONER.set_anchor) |set_anchor| {
-                try set_anchor(object.context, object, anchor);
-            }
+            return XdgPositionerSetAnchorMsg{
+                .anchor = anchor,
+            };
         },
         // set_gravity
         4 => {
             var gravity: u32 = try object.context.next_u32();
-            if (XDG_POSITIONER.set_gravity) |set_gravity| {
-                try set_gravity(object.context, object, gravity);
-            }
+            return XdgPositionerSetGravityMsg{
+                .gravity = gravity,
+            };
         },
         // set_constraint_adjustment
         5 => {
             var constraint_adjustment: u32 = try object.context.next_u32();
-            if (XDG_POSITIONER.set_constraint_adjustment) |set_constraint_adjustment| {
-                try set_constraint_adjustment(object.context, object, constraint_adjustment);
-            }
+            return XdgPositionerSetConstraintAdjustmentMsg{
+                .constraint_adjustment = constraint_adjustment,
+            };
         },
         // set_offset
         6 => {
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
-            if (XDG_POSITIONER.set_offset) |set_offset| {
-                try set_offset(object.context, object, x, y);
-            }
+            return XdgPositionerSetOffsetMsg{
+                .x = x,
+                .y = y,
+            };
         },
-        // set_reactive
-        7 => {
-            if (XDG_POSITIONER.set_reactive) |set_reactive| {
-                try set_reactive(
-                    object.context,
-                    object,
-                );
-            }
+        else => {
+            return error.UnknownOpcode;
         },
-        // set_parent_size
-        8 => {
-            var parent_width: i32 = try object.context.next_i32();
-            var parent_height: i32 = try object.context.next_i32();
-            if (XDG_POSITIONER.set_parent_size) |set_parent_size| {
-                try set_parent_size(object.context, object, parent_width, parent_height);
-            }
-        },
-        // set_parent_configure
-        9 => {
-            var serial: u32 = try object.context.next_u32();
-            if (XDG_POSITIONER.set_parent_configure) |set_parent_configure| {
-                try set_parent_configure(object.context, object, serial);
-            }
-        },
-        else => {},
     }
 }
 
@@ -3406,51 +2427,6 @@ pub const xdg_positioner_constraint_adjustment = enum(u32) {
 };
 
 // xdg_surface
-pub const xdg_surface_interface = struct {
-    // desktop user interface surface base interface
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    get_toplevel: ?fn (*Context, Object, u32) anyerror!void,
-    get_popup: ?fn (*Context, Object, u32, ?Object, Object) anyerror!void,
-    set_window_geometry: ?fn (*Context, Object, i32, i32, i32, i32) anyerror!void,
-    ack_configure: ?fn (*Context, Object, u32) anyerror!void,
-};
-
-fn xdg_surface_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_surface_get_toplevel_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, id });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_surface_get_popup_default(context: *Context, object: Object, id: u32, parent: ?Object, positioner: Object) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any}", .{ context, object, id, parent, positioner });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_surface_set_window_geometry_default(context: *Context, object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any}", .{ context, object, x, y, width, height });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_surface_ack_configure_default(context: *Context, object: Object, serial: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, serial });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var XDG_SURFACE = xdg_surface_interface{
-    .destroy = xdg_surface_destroy_default,
-    .get_toplevel = xdg_surface_get_toplevel_default,
-    .get_popup = xdg_surface_get_popup_default,
-    .set_window_geometry = xdg_surface_set_window_geometry_default,
-    .ack_configure = xdg_surface_ack_configure_default,
-};
-
 pub fn new_xdg_surface(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -3461,23 +2437,18 @@ pub fn new_xdg_surface(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!void {
+fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // destroy
         0 => {
-            if (XDG_SURFACE.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return XdgSurfaceDestroyMsg{};
         },
         // get_toplevel
         1 => {
             var id: u32 = try object.context.next_u32();
-            if (XDG_SURFACE.get_toplevel) |get_toplevel| {
-                try get_toplevel(object.context, object, id);
-            }
+            return XdgSurfaceGetToplevelMsg{
+                .id = id,
+            };
         },
         // get_popup
         2 => {
@@ -3492,9 +2463,11 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!void {
             if (positioner.dispatch != xdg_positioner_dispatch) {
                 return error.ObjectWrongType;
             }
-            if (XDG_SURFACE.get_popup) |get_popup| {
-                try get_popup(object.context, object, id, parent, positioner);
-            }
+            return XdgSurfaceGetPopupMsg{
+                .id = id,
+                .parent = parent,
+                .positioner = positioner,
+            };
         },
         // set_window_geometry
         3 => {
@@ -3502,18 +2475,23 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!void {
             var y: i32 = try object.context.next_i32();
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            if (XDG_SURFACE.set_window_geometry) |set_window_geometry| {
-                try set_window_geometry(object.context, object, x, y, width, height);
-            }
+            return XdgSurfaceSetWindowGeometryMsg{
+                .x = x,
+                .y = y,
+                .width = width,
+                .height = height,
+            };
         },
         // ack_configure
         4 => {
             var serial: u32 = try object.context.next_u32();
-            if (XDG_SURFACE.ack_configure) |ack_configure| {
-                try ack_configure(object.context, object, serial);
-            }
+            return XdgSurfaceAckConfigureMsg{
+                .serial = serial,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -3548,126 +2526,6 @@ pub fn xdg_surface_send_configure(object: Object, serial: u32) anyerror!void {
 }
 
 // xdg_toplevel
-pub const xdg_toplevel_interface = struct {
-    // toplevel surface
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    set_parent: ?fn (*Context, Object, ?Object) anyerror!void,
-    set_title: ?fn (*Context, Object, []u8) anyerror!void,
-    set_app_id: ?fn (*Context, Object, []u8) anyerror!void,
-    show_window_menu: ?fn (*Context, Object, Object, u32, i32, i32) anyerror!void,
-    move: ?fn (*Context, Object, Object, u32) anyerror!void,
-    resize: ?fn (*Context, Object, Object, u32, u32) anyerror!void,
-    set_max_size: ?fn (*Context, Object, i32, i32) anyerror!void,
-    set_min_size: ?fn (*Context, Object, i32, i32) anyerror!void,
-    set_maximized: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    unset_maximized: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    set_fullscreen: ?fn (*Context, Object, ?Object) anyerror!void,
-    unset_fullscreen: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    set_minimized: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-};
-
-fn xdg_toplevel_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_toplevel_set_parent_default(context: *Context, object: Object, parent: ?Object) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, parent });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_toplevel_set_title_default(context: *Context, object: Object, title: []u8) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, title });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_toplevel_set_app_id_default(context: *Context, object: Object, app_id: []u8) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, app_id });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_toplevel_show_window_menu_default(context: *Context, object: Object, seat: Object, serial: u32, x: i32, y: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any}", .{ context, object, seat, serial, x, y });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_toplevel_move_default(context: *Context, object: Object, seat: Object, serial: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, seat, serial });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_toplevel_resize_default(context: *Context, object: Object, seat: Object, serial: u32, edges: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any}", .{ context, object, seat, serial, edges });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_toplevel_set_max_size_default(context: *Context, object: Object, width: i32, height: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, width, height });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_toplevel_set_min_size_default(context: *Context, object: Object, width: i32, height: i32) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, width, height });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_toplevel_set_maximized_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_toplevel_unset_maximized_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_toplevel_set_fullscreen_default(context: *Context, object: Object, output: ?Object) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, output });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_toplevel_unset_fullscreen_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_toplevel_set_minimized_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var XDG_TOPLEVEL = xdg_toplevel_interface{
-    .destroy = xdg_toplevel_destroy_default,
-    .set_parent = xdg_toplevel_set_parent_default,
-    .set_title = xdg_toplevel_set_title_default,
-    .set_app_id = xdg_toplevel_set_app_id_default,
-    .show_window_menu = xdg_toplevel_show_window_menu_default,
-    .move = xdg_toplevel_move_default,
-    .resize = xdg_toplevel_resize_default,
-    .set_max_size = xdg_toplevel_set_max_size_default,
-    .set_min_size = xdg_toplevel_set_min_size_default,
-    .set_maximized = xdg_toplevel_set_maximized_default,
-    .unset_maximized = xdg_toplevel_unset_maximized_default,
-    .set_fullscreen = xdg_toplevel_set_fullscreen_default,
-    .unset_fullscreen = xdg_toplevel_unset_fullscreen_default,
-    .set_minimized = xdg_toplevel_set_minimized_default,
-};
-
 pub fn new_xdg_toplevel(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -3678,16 +2536,11 @@ pub fn new_xdg_toplevel(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
+fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // destroy
         0 => {
-            if (XDG_TOPLEVEL.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return XdgToplevelDestroyMsg{};
         },
         // set_parent
         1 => {
@@ -3697,23 +2550,23 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
                     return error.ObjectWrongType;
                 }
             }
-            if (XDG_TOPLEVEL.set_parent) |set_parent| {
-                try set_parent(object.context, object, parent);
-            }
+            return XdgToplevelSetParentMsg{
+                .parent = parent,
+            };
         },
         // set_title
         2 => {
             var title: []u8 = try object.context.next_string();
-            if (XDG_TOPLEVEL.set_title) |set_title| {
-                try set_title(object.context, object, title);
-            }
+            return XdgToplevelSetTitleMsg{
+                .title = title,
+            };
         },
         // set_app_id
         3 => {
             var app_id: []u8 = try object.context.next_string();
-            if (XDG_TOPLEVEL.set_app_id) |set_app_id| {
-                try set_app_id(object.context, object, app_id);
-            }
+            return XdgToplevelSetAppIdMsg{
+                .app_id = app_id,
+            };
         },
         // show_window_menu
         4 => {
@@ -3724,9 +2577,12 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
             var serial: u32 = try object.context.next_u32();
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
-            if (XDG_TOPLEVEL.show_window_menu) |show_window_menu| {
-                try show_window_menu(object.context, object, seat, serial, x, y);
-            }
+            return XdgToplevelShowWindowMenuMsg{
+                .seat = seat,
+                .serial = serial,
+                .x = x,
+                .y = y,
+            };
         },
         // move
         5 => {
@@ -3735,9 +2591,10 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
                 return error.ObjectWrongType;
             }
             var serial: u32 = try object.context.next_u32();
-            if (XDG_TOPLEVEL.move) |move| {
-                try move(object.context, object, seat, serial);
-            }
+            return XdgToplevelMoveMsg{
+                .seat = seat,
+                .serial = serial,
+            };
         },
         // resize
         6 => {
@@ -3747,43 +2604,37 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
             }
             var serial: u32 = try object.context.next_u32();
             var edges: u32 = try object.context.next_u32();
-            if (XDG_TOPLEVEL.resize) |resize| {
-                try resize(object.context, object, seat, serial, edges);
-            }
+            return XdgToplevelResizeMsg{
+                .seat = seat,
+                .serial = serial,
+                .edges = edges,
+            };
         },
         // set_max_size
         7 => {
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            if (XDG_TOPLEVEL.set_max_size) |set_max_size| {
-                try set_max_size(object.context, object, width, height);
-            }
+            return XdgToplevelSetMaxSizeMsg{
+                .width = width,
+                .height = height,
+            };
         },
         // set_min_size
         8 => {
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            if (XDG_TOPLEVEL.set_min_size) |set_min_size| {
-                try set_min_size(object.context, object, width, height);
-            }
+            return XdgToplevelSetMinSizeMsg{
+                .width = width,
+                .height = height,
+            };
         },
         // set_maximized
         9 => {
-            if (XDG_TOPLEVEL.set_maximized) |set_maximized| {
-                try set_maximized(
-                    object.context,
-                    object,
-                );
-            }
+            return XdgToplevelSetMaximizedMsg{};
         },
         // unset_maximized
         10 => {
-            if (XDG_TOPLEVEL.unset_maximized) |unset_maximized| {
-                try unset_maximized(
-                    object.context,
-                    object,
-                );
-            }
+            return XdgToplevelUnsetMaximizedMsg{};
         },
         // set_fullscreen
         11 => {
@@ -3793,35 +2644,23 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!void {
                     return error.ObjectWrongType;
                 }
             }
-            if (XDG_TOPLEVEL.set_fullscreen) |set_fullscreen| {
-                try set_fullscreen(object.context, object, output);
-            }
+            return XdgToplevelSetFullscreenMsg{
+                .output = output,
+            };
         },
         // unset_fullscreen
         12 => {
-            if (XDG_TOPLEVEL.unset_fullscreen) |unset_fullscreen| {
-                try unset_fullscreen(
-                    object.context,
-                    object,
-                );
-            }
+            return XdgToplevelUnsetFullscreenMsg{};
         },
         // set_minimized
         13 => {
-            if (XDG_TOPLEVEL.set_minimized) |set_minimized| {
-                try set_minimized(
-                    object.context,
-                    object,
-                );
-            }
+            return XdgToplevelSetMinimizedMsg{};
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
-
-pub const xdg_toplevel_error = enum(u32) {
-    invalid_resize_edge = 0,
-};
 
 pub const xdg_toplevel_resize_edge = enum(u32) {
     none = 0,
@@ -3844,13 +2683,6 @@ pub const xdg_toplevel_state = enum(u32) {
     tiled_right = 6,
     tiled_top = 7,
     tiled_bottom = 8,
-};
-
-pub const xdg_toplevel_wm_capabilities = enum(u32) {
-    window_menu = 1,
-    maximize = 2,
-    fullscreen = 3,
-    minimize = 4,
 };
 
 //
@@ -3897,90 +2729,7 @@ pub fn xdg_toplevel_send_close(object: Object) anyerror!void {
     try object.context.finishWrite(object.id, 1);
 }
 
-//
-// The configure_bounds event may be sent prior to a xdg_toplevel.configure
-// event to communicate the bounds a window geometry size is recommended
-// to constrain to.
-//
-// The passed width and height are in surface coordinate space. If width
-// and height are 0, it means bounds is unknown and equivalent to as if no
-// configure_bounds event was ever sent for this surface.
-//
-// The bounds can for example correspond to the size of a monitor excluding
-// any panels or other shell components, so that a surface isn't created in
-// a way that it cannot fit.
-//
-// The bounds may change at any point, and in such a case, a new
-// xdg_toplevel.configure_bounds will be sent, followed by
-// xdg_toplevel.configure and xdg_surface.configure.
-//
-pub fn xdg_toplevel_send_configure_bounds(object: Object, width: i32, height: i32) anyerror!void {
-    object.context.startWrite();
-    object.context.putI32(width);
-    object.context.putI32(height);
-    try object.context.finishWrite(object.id, 2);
-}
-
-//
-// This event advertises the capabilities supported by the compositor. If
-// a capability isn't supported, clients should hide or disable the UI
-// elements that expose this functionality. For instance, if the
-// compositor doesn't advertise support for minimized toplevels, a button
-// triggering the set_minimized request should not be displayed.
-//
-// The compositor will ignore requests it doesn't support. For instance,
-// a compositor which doesn't advertise support for minimized will ignore
-// set_minimized requests.
-//
-// Compositors must send this event once before the first
-// xdg_surface.configure event. When the capabilities change, compositors
-// must send this event again and then send an xdg_surface.configure
-// event.
-//
-// The configured state should not be applied immediately. See
-// xdg_surface.configure for details.
-//
-// The capabilities are sent as an array of 32-bit unsigned integers in
-// native endianness.
-//
-pub fn xdg_toplevel_send_wm_capabilities(object: Object, capabilities: []u32) anyerror!void {
-    object.context.startWrite();
-    object.context.putArray(capabilities);
-    try object.context.finishWrite(object.id, 3);
-}
-
 // xdg_popup
-pub const xdg_popup_interface = struct {
-    // short-lived, popup surfaces for menus
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    grab: ?fn (*Context, Object, Object, u32) anyerror!void,
-    reposition: ?fn (*Context, Object, Object, u32) anyerror!void,
-};
-
-fn xdg_popup_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_popup_grab_default(context: *Context, object: Object, seat: Object, serial: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, seat, serial });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn xdg_popup_reposition_default(context: *Context, object: Object, positioner: Object, token: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, positioner, token });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var XDG_POPUP = xdg_popup_interface{
-    .destroy = xdg_popup_destroy_default,
-    .grab = xdg_popup_grab_default,
-    .reposition = xdg_popup_reposition_default,
-};
-
 pub fn new_xdg_popup(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -3991,16 +2740,11 @@ pub fn new_xdg_popup(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!void {
+fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // destroy
         0 => {
-            if (XDG_POPUP.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return XdgPopupDestroyMsg{};
         },
         // grab
         1 => {
@@ -4009,22 +2753,14 @@ fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!void {
                 return error.ObjectWrongType;
             }
             var serial: u32 = try object.context.next_u32();
-            if (XDG_POPUP.grab) |grab| {
-                try grab(object.context, object, seat, serial);
-            }
+            return XdgPopupGrabMsg{
+                .seat = seat,
+                .serial = serial,
+            };
         },
-        // reposition
-        2 => {
-            var positioner: Object = object.context.objects.get(try object.context.next_u32()).?;
-            if (positioner.dispatch != xdg_positioner_dispatch) {
-                return error.ObjectWrongType;
-            }
-            var token: u32 = try object.context.next_u32();
-            if (XDG_POPUP.reposition) |reposition| {
-                try reposition(object.context, object, positioner, token);
-            }
+        else => {
+            return error.UnknownOpcode;
         },
-        else => {},
     }
 }
 
@@ -4040,11 +2776,6 @@ pub const xdg_popup_error = enum(u32) {
 // The x and y arguments represent the position the popup was placed at
 // given the xdg_positioner rule, relative to the upper left corner of the
 // window geometry of the parent surface.
-//
-// For version 2 or older, the configure event for an xdg_popup is only
-// ever sent once for the initial configuration. Starting with version 3,
-// it may be sent again if the popup is setup with an xdg_positioner with
-// set_reactive requested, or in response to xdg_popup.reposition requests.
 //
 pub fn xdg_popup_send_configure(object: Object, x: i32, y: i32, width: i32, height: i32) anyerror!void {
     object.context.startWrite();
@@ -4065,68 +2796,7 @@ pub fn xdg_popup_send_popup_done(object: Object) anyerror!void {
     try object.context.finishWrite(object.id, 1);
 }
 
-//
-// The repositioned event is sent as part of a popup configuration
-// sequence, together with xdg_popup.configure and lastly
-// xdg_surface.configure to notify the completion of a reposition request.
-//
-// The repositioned event is to notify about the completion of a
-// xdg_popup.reposition request. The token argument is the token passed
-// in the xdg_popup.reposition request.
-//
-// Immediately after this event is emitted, xdg_popup.configure and
-// xdg_surface.configure will be sent with the updated size and position,
-// as well as a new configure serial.
-//
-// The client should optionally update the content of the popup, but must
-// acknowledge the new popup configuration for the new position to take
-// effect. See xdg_surface.ack_configure for details.
-//
-pub fn xdg_popup_send_repositioned(object: Object, token: u32) anyerror!void {
-    object.context.startWrite();
-    object.context.putU32(token);
-    try object.context.finishWrite(object.id, 2);
-}
-
 // zwp_linux_dmabuf_v1
-pub const zwp_linux_dmabuf_v1_interface = struct {
-    // factory for creating dmabuf-based wl_buffers
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    create_params: ?fn (*Context, Object, u32) anyerror!void,
-    get_default_feedback: ?fn (*Context, Object, u32) anyerror!void,
-    get_surface_feedback: ?fn (*Context, Object, u32, Object) anyerror!void,
-};
-
-fn zwp_linux_dmabuf_v1_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn zwp_linux_dmabuf_v1_create_params_default(context: *Context, object: Object, params_id: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, params_id });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn zwp_linux_dmabuf_v1_get_default_feedback_default(context: *Context, object: Object, id: u32) anyerror!void {
-    std.log.info("{any} {any} {any}", .{ context, object, id });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn zwp_linux_dmabuf_v1_get_surface_feedback_default(context: *Context, object: Object, id: u32, surface: Object) anyerror!void {
-    std.log.info("{any} {any} {any} {any}", .{ context, object, id, surface });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var ZWP_LINUX_DMABUF_V1 = zwp_linux_dmabuf_v1_interface{
-    .destroy = zwp_linux_dmabuf_v1_destroy_default,
-    .create_params = zwp_linux_dmabuf_v1_create_params_default,
-    .get_default_feedback = zwp_linux_dmabuf_v1_get_default_feedback_default,
-    .get_surface_feedback = zwp_linux_dmabuf_v1_get_surface_feedback_default,
-};
-
 pub fn new_zwp_linux_dmabuf_v1(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -4137,43 +2807,22 @@ pub fn new_zwp_linux_dmabuf_v1(id: u32, context: *Context, container: usize) Obj
     };
 }
 
-fn zwp_linux_dmabuf_v1_dispatch(object: Object, opcode: u16) anyerror!void {
+fn zwp_linux_dmabuf_v1_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // destroy
         0 => {
-            if (ZWP_LINUX_DMABUF_V1.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return ZwpLinuxDmabufV1DestroyMsg{};
         },
         // create_params
         1 => {
             var params_id: u32 = try object.context.next_u32();
-            if (ZWP_LINUX_DMABUF_V1.create_params) |create_params| {
-                try create_params(object.context, object, params_id);
-            }
+            return ZwpLinuxDmabufV1CreateParamsMsg{
+                .params_id = params_id,
+            };
         },
-        // get_default_feedback
-        2 => {
-            var id: u32 = try object.context.next_u32();
-            if (ZWP_LINUX_DMABUF_V1.get_default_feedback) |get_default_feedback| {
-                try get_default_feedback(object.context, object, id);
-            }
+        else => {
+            return error.UnknownOpcode;
         },
-        // get_surface_feedback
-        3 => {
-            var id: u32 = try object.context.next_u32();
-            var surface: Object = object.context.objects.get(try object.context.next_u32()).?;
-            if (surface.dispatch != wl_surface_dispatch) {
-                return error.ObjectWrongType;
-            }
-            if (ZWP_LINUX_DMABUF_V1.get_surface_feedback) |get_surface_feedback| {
-                try get_surface_feedback(object.context, object, id, surface);
-            }
-        },
-        else => {},
     }
 }
 
@@ -4186,9 +2835,10 @@ fn zwp_linux_dmabuf_v1_dispatch(object: Object, opcode: u16) anyerror!void {
 //         For the definition of the format codes, see the
 //         zwp_linux_buffer_params_v1::create request.
 //
-//         Starting version 4, the format event is deprecated and must not be
-//         sent by compositors. Instead, use get_default_feedback or
-//         get_surface_feedback.
+//         Warning: the 'format' event is likely to be deprecated and replaced
+//         with the 'modifier' event introduced in zwp_linux_dmabuf_v1
+//         version 3, described below. Please refrain from using the information
+//         received from this event.
 //
 pub fn zwp_linux_dmabuf_v1_send_format(object: Object, format: u32) anyerror!void {
     object.context.startWrite();
@@ -4210,16 +2860,9 @@ pub fn zwp_linux_dmabuf_v1_send_format(object: Object, format: u32) anyerror!voi
 //         is as if no explicit modifier is specified. The effective modifier
 //         will be derived from the dmabuf.
 //
-//         A compositor that sends valid modifiers and DRM_FORMAT_MOD_INVALID for
-//         a given format supports both explicit modifiers and implicit modifiers.
-//
 //         For the definition of the format and modifier codes, see the
 //         zwp_linux_buffer_params_v1::create and zwp_linux_buffer_params_v1::add
 //         requests.
-//
-//         Starting version 4, the modifier event is deprecated and must not be
-//         sent by compositors. Instead, use get_default_feedback or
-//         get_surface_feedback.
 //
 pub fn zwp_linux_dmabuf_v1_send_modifier(object: Object, format: u32, modifier_hi: u32, modifier_lo: u32) anyerror!void {
     object.context.startWrite();
@@ -4230,44 +2873,6 @@ pub fn zwp_linux_dmabuf_v1_send_modifier(object: Object, format: u32, modifier_h
 }
 
 // zwp_linux_buffer_params_v1
-pub const zwp_linux_buffer_params_v1_interface = struct {
-    // parameters for creating a dmabuf-based wl_buffer
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    add: ?fn (*Context, Object, i32, u32, u32, u32, u32, u32) anyerror!void,
-    create: ?fn (*Context, Object, i32, i32, u32, u32) anyerror!void,
-    create_immed: ?fn (*Context, Object, u32, i32, i32, u32, u32) anyerror!void,
-};
-
-fn zwp_linux_buffer_params_v1_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn zwp_linux_buffer_params_v1_add_default(context: *Context, object: Object, fd: i32, plane_idx: u32, offset: u32, stride: u32, modifier_hi: u32, modifier_lo: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any} {any} {any}", .{ context, object, fd, plane_idx, offset, stride, modifier_hi, modifier_lo });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn zwp_linux_buffer_params_v1_create_default(context: *Context, object: Object, width: i32, height: i32, format: u32, flags: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any}", .{ context, object, width, height, format, flags });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn zwp_linux_buffer_params_v1_create_immed_default(context: *Context, object: Object, buffer_id: u32, width: i32, height: i32, format: u32, flags: u32) anyerror!void {
-    std.log.info("{any} {any} {any} {any} {any} {any} {any}", .{ context, object, buffer_id, width, height, format, flags });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var ZWP_LINUX_BUFFER_PARAMS_V1 = zwp_linux_buffer_params_v1_interface{
-    .destroy = zwp_linux_buffer_params_v1_destroy_default,
-    .add = zwp_linux_buffer_params_v1_add_default,
-    .create = zwp_linux_buffer_params_v1_create_default,
-    .create_immed = zwp_linux_buffer_params_v1_create_immed_default,
-};
-
 pub fn new_zwp_linux_buffer_params_v1(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -4278,16 +2883,11 @@ pub fn new_zwp_linux_buffer_params_v1(id: u32, context: *Context, container: usi
     };
 }
 
-fn zwp_linux_buffer_params_v1_dispatch(object: Object, opcode: u16) anyerror!void {
+fn zwp_linux_buffer_params_v1_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // destroy
         0 => {
-            if (ZWP_LINUX_BUFFER_PARAMS_V1.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return ZwpLinuxBufferParamsV1DestroyMsg{};
         },
         // add
         1 => {
@@ -4297,9 +2897,14 @@ fn zwp_linux_buffer_params_v1_dispatch(object: Object, opcode: u16) anyerror!voi
             var stride: u32 = try object.context.next_u32();
             var modifier_hi: u32 = try object.context.next_u32();
             var modifier_lo: u32 = try object.context.next_u32();
-            if (ZWP_LINUX_BUFFER_PARAMS_V1.add) |add| {
-                try add(object.context, object, fd, plane_idx, offset, stride, modifier_hi, modifier_lo);
-            }
+            return ZwpLinuxBufferParamsV1AddMsg{
+                .fd = fd,
+                .plane_idx = plane_idx,
+                .offset = offset,
+                .stride = stride,
+                .modifier_hi = modifier_hi,
+                .modifier_lo = modifier_lo,
+            };
         },
         // create
         2 => {
@@ -4307,9 +2912,12 @@ fn zwp_linux_buffer_params_v1_dispatch(object: Object, opcode: u16) anyerror!voi
             var height: i32 = try object.context.next_i32();
             var format: u32 = try object.context.next_u32();
             var flags: u32 = try object.context.next_u32();
-            if (ZWP_LINUX_BUFFER_PARAMS_V1.create) |create| {
-                try create(object.context, object, width, height, format, flags);
-            }
+            return ZwpLinuxBufferParamsV1CreateMsg{
+                .width = width,
+                .height = height,
+                .format = format,
+                .flags = flags,
+            };
         },
         // create_immed
         3 => {
@@ -4318,11 +2926,17 @@ fn zwp_linux_buffer_params_v1_dispatch(object: Object, opcode: u16) anyerror!voi
             var height: i32 = try object.context.next_i32();
             var format: u32 = try object.context.next_u32();
             var flags: u32 = try object.context.next_u32();
-            if (ZWP_LINUX_BUFFER_PARAMS_V1.create_immed) |create_immed| {
-                try create_immed(object.context, object, buffer_id, width, height, format, flags);
-            }
+            return ZwpLinuxBufferParamsV1CreateImmedMsg{
+                .buffer_id = buffer_id,
+                .width = width,
+                .height = height,
+                .format = format,
+                .flags = flags,
+            };
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
@@ -4369,260 +2983,7 @@ pub fn zwp_linux_buffer_params_v1_send_failed(object: Object) anyerror!void {
     try object.context.finishWrite(object.id, 1);
 }
 
-// zwp_linux_dmabuf_feedback_v1
-pub const zwp_linux_dmabuf_feedback_v1_interface = struct {
-    // dmabuf feedback
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-};
-
-fn zwp_linux_dmabuf_feedback_v1_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var ZWP_LINUX_DMABUF_FEEDBACK_V1 = zwp_linux_dmabuf_feedback_v1_interface{
-    .destroy = zwp_linux_dmabuf_feedback_v1_destroy_default,
-};
-
-pub fn new_zwp_linux_dmabuf_feedback_v1(id: u32, context: *Context, container: usize) Object {
-    return Object{
-        .id = id,
-        .dispatch = zwp_linux_dmabuf_feedback_v1_dispatch,
-        .context = context,
-        .version = 0,
-        .container = container,
-    };
-}
-
-fn zwp_linux_dmabuf_feedback_v1_dispatch(object: Object, opcode: u16) anyerror!void {
-    switch (opcode) {
-        // destroy
-        0 => {
-            if (ZWP_LINUX_DMABUF_FEEDBACK_V1.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
-        },
-        else => {},
-    }
-}
-
-pub const zwp_linux_dmabuf_feedback_v1_tranche_flags = enum(u32) {
-    scanout = 1,
-};
-
-//
-//         This event is sent after all parameters of a wp_linux_dmabuf_feedback
-//         object have been sent.
-//
-//         This allows changes to the wp_linux_dmabuf_feedback parameters to be
-//         seen as atomic, even if they happen via multiple events.
-//
-pub fn zwp_linux_dmabuf_feedback_v1_send_done(object: Object) anyerror!void {
-    object.context.startWrite();
-    try object.context.finishWrite(object.id, 0);
-}
-
-//
-//         This event provides a file descriptor which can be memory-mapped to
-//         access the format and modifier table.
-//
-//         The table contains a tightly packed array of consecutive format +
-//         modifier pairs. Each pair is 16 bytes wide. It contains a format as a
-//         32-bit unsigned integer, followed by 4 bytes of unused padding, and a
-//         modifier as a 64-bit unsigned integer. The native endianness is used.
-//
-//         The client must map the file descriptor in read-only private mode.
-//
-//         Compositors are not allowed to mutate the table file contents once this
-//         event has been sent. Instead, compositors must create a new, separate
-//         table file and re-send feedback parameters. Compositors are allowed to
-//         store duplicate format + modifier pairs in the table.
-//
-pub fn zwp_linux_dmabuf_feedback_v1_send_format_table(object: Object, fd: i32, size: u32) anyerror!void {
-    object.context.startWrite();
-    object.context.putFd(fd);
-    object.context.putU32(size);
-    try object.context.finishWrite(object.id, 1);
-}
-
-//
-//         This event advertises the main device that the server prefers to use
-//         when direct scan-out to the target device isn't possible. The
-//         advertised main device may be different for each
-//         wp_linux_dmabuf_feedback object, and may change over time.
-//
-//         There is exactly one main device. The compositor must send at least
-//         one preference tranche with tranche_target_device equal to main_device.
-//
-//         Clients need to create buffers that the main device can import and
-//         read from, otherwise creating the dmabuf wl_buffer will fail (see the
-//         wp_linux_buffer_params.create and create_immed requests for details).
-//         The main device will also likely be kept active by the compositor,
-//         so clients can use it instead of waking up another device for power
-//         savings.
-//
-//         In general the device is a DRM node. The DRM node type (primary vs.
-//         render) is unspecified. Clients must not rely on the compositor sending
-//         a particular node type. Clients cannot check two devices for equality
-//         by comparing the dev_t value.
-//
-//         If explicit modifiers are not supported and the client performs buffer
-//         allocations on a different device than the main device, then the client
-//         must force the buffer to have a linear layout.
-//
-pub fn zwp_linux_dmabuf_feedback_v1_send_main_device(object: Object, device: []u32) anyerror!void {
-    object.context.startWrite();
-    object.context.putArray(device);
-    try object.context.finishWrite(object.id, 2);
-}
-
-//
-//         This event splits tranche_target_device and tranche_modifier events in
-//         preference tranches. It is sent after a set of tranche_target_device
-//         and tranche_modifier events; it represents the end of a tranche. The
-//         next tranche will have a lower preference.
-//
-pub fn zwp_linux_dmabuf_feedback_v1_send_tranche_done(object: Object) anyerror!void {
-    object.context.startWrite();
-    try object.context.finishWrite(object.id, 3);
-}
-
-//
-//         This event advertises the target device that the server prefers to use
-//         for a buffer created given this tranche. The advertised target device
-//         may be different for each preference tranche, and may change over time.
-//
-//         There is exactly one target device per tranche.
-//
-//         The target device may be a scan-out device, for example if the
-//         compositor prefers to directly scan-out a buffer created given this
-//         tranche. The target device may be a rendering device, for example if
-//         the compositor prefers to texture from said buffer.
-//
-//         The client can use this hint to allocate the buffer in a way that makes
-//         it accessible from the target device, ideally directly. The buffer must
-//         still be accessible from the main device, either through direct import
-//         or through a potentially more expensive fallback path. If the buffer
-//         can't be directly imported from the main device then clients must be
-//         prepared for the compositor changing the tranche priority or making
-//         wl_buffer creation fail (see the wp_linux_buffer_params.create and
-//         create_immed requests for details).
-//
-//         If the device is a DRM node, the DRM node type (primary vs. render) is
-//         unspecified. Clients must not rely on the compositor sending a
-//         particular node type. Clients cannot check two devices for equality by
-//         comparing the dev_t value.
-//
-//         This event is tied to a preference tranche, see the tranche_done event.
-//
-pub fn zwp_linux_dmabuf_feedback_v1_send_tranche_target_device(object: Object, device: []u32) anyerror!void {
-    object.context.startWrite();
-    object.context.putArray(device);
-    try object.context.finishWrite(object.id, 4);
-}
-
-//
-//         This event advertises the format + modifier combinations that the
-//         compositor supports.
-//
-//         It carries an array of indices, each referring to a format + modifier
-//         pair in the last received format table (see the format_table event).
-//         Each index is a 16-bit unsigned integer in native endianness.
-//
-//         For legacy support, DRM_FORMAT_MOD_INVALID is an allowed modifier.
-//         It indicates that the server can support the format with an implicit
-//         modifier. When a buffer has DRM_FORMAT_MOD_INVALID as its modifier, it
-//         is as if no explicit modifier is specified. The effective modifier
-//         will be derived from the dmabuf.
-//
-//         A compositor that sends valid modifiers and DRM_FORMAT_MOD_INVALID for
-//         a given format supports both explicit modifiers and implicit modifiers.
-//
-//         Compositors must not send duplicate format + modifier pairs within the
-//         same tranche or across two different tranches with the same target
-//         device and flags.
-//
-//         This event is tied to a preference tranche, see the tranche_done event.
-//
-//         For the definition of the format and modifier codes, see the
-//         wp_linux_buffer_params.create request.
-//
-pub fn zwp_linux_dmabuf_feedback_v1_send_tranche_formats(object: Object, indices: []u32) anyerror!void {
-    object.context.startWrite();
-    object.context.putArray(indices);
-    try object.context.finishWrite(object.id, 5);
-}
-
-//
-//         This event sets tranche-specific flags.
-//
-//         The scanout flag is a hint that direct scan-out may be attempted by the
-//         compositor on the target device if the client appropriately allocates a
-//         buffer. How to allocate a buffer that can be scanned out on the target
-//         device is implementation-defined.
-//
-//         This event is tied to a preference tranche, see the tranche_done event.
-//
-pub fn zwp_linux_dmabuf_feedback_v1_send_tranche_flags(object: Object, flags: u32) anyerror!void {
-    object.context.startWrite();
-    object.context.putU32(flags);
-    try object.context.finishWrite(object.id, 6);
-}
-
 // fw_control
-pub const fw_control_interface = struct {
-    // protocol for querying and controlling foxwhale
-    get_clients: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    get_windows: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    get_window_trees: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-    destroy: ?fn (
-        *Context,
-        Object,
-    ) anyerror!void,
-};
-
-fn fw_control_get_clients_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn fw_control_get_windows_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn fw_control_get_window_trees_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-fn fw_control_destroy_default(context: *Context, object: Object) anyerror!void {
-    std.log.info("{any} {any}", .{ context, object });
-    return error.DebugFunctionNotImplemented;
-}
-
-pub var FW_CONTROL = fw_control_interface{
-    .get_clients = fw_control_get_clients_default,
-    .get_windows = fw_control_get_windows_default,
-    .get_window_trees = fw_control_get_window_trees_default,
-    .destroy = fw_control_destroy_default,
-};
-
 pub fn new_fw_control(id: u32, context: *Context, container: usize) Object {
     return Object{
         .id = id,
@@ -4633,45 +2994,27 @@ pub fn new_fw_control(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn fw_control_dispatch(object: Object, opcode: u16) anyerror!void {
+fn fw_control_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
     switch (opcode) {
         // get_clients
         0 => {
-            if (FW_CONTROL.get_clients) |get_clients| {
-                try get_clients(
-                    object.context,
-                    object,
-                );
-            }
+            return FwControlGetClientsMsg{};
         },
         // get_windows
         1 => {
-            if (FW_CONTROL.get_windows) |get_windows| {
-                try get_windows(
-                    object.context,
-                    object,
-                );
-            }
+            return FwControlGetWindowsMsg{};
         },
         // get_window_trees
         2 => {
-            if (FW_CONTROL.get_window_trees) |get_window_trees| {
-                try get_window_trees(
-                    object.context,
-                    object,
-                );
-            }
+            return FwControlGetWindowTreesMsg{};
         },
         // destroy
         3 => {
-            if (FW_CONTROL.destroy) |destroy| {
-                try destroy(
-                    object.context,
-                    object,
-                );
-            }
+            return FwControlDestroyMsg{};
         },
-        else => {},
+        else => {
+            return error.UnknownOpcode;
+        },
     }
 }
 
