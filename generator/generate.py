@@ -72,6 +72,25 @@ def generate_dispatch_function(interface, receiveType):
     print(f"\t\telse => {{return error.UnknownOpcode;}},")
     print(f"\t}}")
     print(f"}}")
+    # Generate *Msg
+    i = 0
+    for child in interface:
+        if child.tag == receiveType:
+            generate_msg(i, child, interface)
+            i = i + 1
+
+def generate_msg(i, receive, interface):
+    print(f"const {camelCase(interface.attrib['name'])}{camelCase(receive.attrib['name'])}Msg = struct {{")
+    print(f"// TODO: should we include the interface's Object?")
+    for arg in receive:
+        if arg.tag == "arg":
+            generate_msg_field(arg)
+    print(f"}};")
+
+def generate_msg_field(arg):
+    name = arg.attrib["name"]
+    atype = lookup_type(arg.attrib["type"], arg)
+    print(f"\t\t\t\t{name}: {atype},")
 
 def fix_wl_registry(interface, request):
     global wl_registry_fixed
