@@ -19,20 +19,31 @@ def generate(context, side, files):
     print(f'const Context = @import("{context}").Context;')
     print(f'const Object = @import("{context}").Object;\n')
 
+    msgs = []
     for file in files:
         tree = Tree.parse(file)
         protocol = tree.getroot()
         if protocol.tag == "protocol":
-            generate_protocol(protocol, sendType, receiveType)
+            generate_protocol(protocol, sendType, receiveType, msgs)
 
-def generate_protocol(protocol, sendType, receiveType):
+    # msgs.reverse()
+    generate_message_union(msgs)
+
+
+def generate_protocol(protocol, sendType, receiveType, msgs):
     for child in protocol:
         if child.tag == "interface":
             print(f"\n// {child.attrib['name']}")
             generate_new_object(child)
-            generate_dispatch_function(child, receiveType)
+            generate_dispatch_function(child, receiveType, msgs)
             generate_enum(child)
             generate_send(child, sendType)
+
+def generate_message_union(msgs):
+    print(f"const WlMessage = enum {{")
+    for m in msgs:
+        print(f"{m},")
+    print(f"}};")
 
 # Generate enum
 def generate_enum(interface):
@@ -60,7 +71,7 @@ def generate_new_object(interface):
     print(f"}}\n")
 
 # Generate Dispatch function
-def generate_dispatch_function(interface, receiveType):
+def generate_dispatch_function(interface, receiveType, msgs):
     print(f"fn {interface.attrib['name']}_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {{")
     print(f"\tswitch(opcode) {{")
     i = 0
@@ -76,11 +87,13 @@ def generate_dispatch_function(interface, receiveType):
     i = 0
     for child in interface:
         if child.tag == receiveType:
-            generate_msg(i, child, interface)
+            generate_msg(i, child, interface, msgs)
             i = i + 1
 
-def generate_msg(i, receive, interface):
-    print(f"const {camelCase(interface.attrib['name'])}{camelCase(receive.attrib['name'])}Msg = struct {{")
+def generate_msg(i, receive, interface, msgs):
+    messageName = f"{camelCase(interface.attrib['name'])}{camelCase(receive.attrib['name'])}Msg"
+    msgs.append(messageName)
+    print(f"const {messageName} = struct {{")
     print(f"// TODO: should we include the interface's Object?")
     for arg in receive:
         if arg.tag == "arg":
