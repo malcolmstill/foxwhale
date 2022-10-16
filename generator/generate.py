@@ -97,7 +97,7 @@ def generate_dispatch_function(interface, receiveType, msgs):
 
 def generate_msg(i, receive, interface, msgs):
     enumName = f"{interface.attrib['name']}_{receive.attrib['name']}"
-    messageName = f"{camelCase(interface.attrib['name'])}{camelCase(receive.attrib['name'])}Msg"
+    messageName = f"{camelCase(interface.attrib['name'])}{camelCase(receive.attrib['name'])}Message"
     msgs.append([enumName, messageName])
     print(f"const {messageName} = struct {{")
     print(f"// TODO: should we include the interface's Object?")
@@ -132,7 +132,7 @@ def generate_receive_dispatch(index, receive, interface):
         if arg.tag == "arg":
             generate_next(arg)
 
-    print(f"return {camelCase(interface.attrib['name'])}{camelCase(receive.attrib['name'])}Msg {{")
+    print(f"return {camelCase(interface.attrib['name'])}{camelCase(receive.attrib['name'])}Message {{")
     for arg in receive:
         if arg.tag == "arg":
             arg_name = arg.attrib["name"]

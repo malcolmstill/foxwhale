@@ -18,14 +18,14 @@ fn wl_display_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         // sync
         0 => {
             var callback: u32 = try object.context.next_u32();
-            return WlDisplaySyncMsg{
+            return WlDisplaySyncMessage{
                 .callback = callback,
             };
         },
         // get_registry
         1 => {
             var registry: u32 = try object.context.next_u32();
-            return WlDisplayGetRegistryMsg{
+            return WlDisplayGetRegistryMessage{
                 .registry = registry,
             };
         },
@@ -34,11 +34,11 @@ fn wl_display_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const WlDisplaySyncMsg = struct {
+const WlDisplaySyncMessage = struct {
     // TODO: should we include the interface's Object?
     callback: u32,
 };
-const WlDisplayGetRegistryMsg = struct {
+const WlDisplayGetRegistryMessage = struct {
     // TODO: should we include the interface's Object?
     registry: u32,
 };
@@ -99,7 +99,7 @@ fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             var name_string: []u8 = try object.context.next_string();
             var version: u32 = try object.context.next_u32();
             var id: u32 = try object.context.next_u32();
-            return WlRegistryBindMsg{
+            return WlRegistryBindMessage{
                 .name = name,
                 .name_string = name_string,
                 .version = version,
@@ -111,7 +111,7 @@ fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const WlRegistryBindMsg = struct {
+const WlRegistryBindMessage = struct {
     // TODO: should we include the interface's Object?
     name: u32,
     name_string: []u8,
@@ -196,14 +196,14 @@ fn wl_compositor_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         // create_surface
         0 => {
             var id: u32 = try object.context.next_u32();
-            return WlCompositorCreateSurfaceMsg{
+            return WlCompositorCreateSurfaceMessage{
                 .id = id,
             };
         },
         // create_region
         1 => {
             var id: u32 = try object.context.next_u32();
-            return WlCompositorCreateRegionMsg{
+            return WlCompositorCreateRegionMessage{
                 .id = id,
             };
         },
@@ -212,11 +212,11 @@ fn wl_compositor_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const WlCompositorCreateSurfaceMsg = struct {
+const WlCompositorCreateSurfaceMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
 };
-const WlCompositorCreateRegionMsg = struct {
+const WlCompositorCreateRegionMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
 };
@@ -242,7 +242,7 @@ fn wl_shm_pool_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             var height: i32 = try object.context.next_i32();
             var stride: i32 = try object.context.next_i32();
             var format: u32 = try object.context.next_u32();
-            return WlShmPoolCreateBufferMsg{
+            return WlShmPoolCreateBufferMessage{
                 .id = id,
                 .offset = offset,
                 .width = width,
@@ -253,12 +253,12 @@ fn wl_shm_pool_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
         // destroy
         1 => {
-            return WlShmPoolDestroyMsg{};
+            return WlShmPoolDestroyMessage{};
         },
         // resize
         2 => {
             var size: i32 = try object.context.next_i32();
-            return WlShmPoolResizeMsg{
+            return WlShmPoolResizeMessage{
                 .size = size,
             };
         },
@@ -267,7 +267,7 @@ fn wl_shm_pool_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const WlShmPoolCreateBufferMsg = struct {
+const WlShmPoolCreateBufferMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
     offset: i32,
@@ -276,10 +276,10 @@ const WlShmPoolCreateBufferMsg = struct {
     stride: i32,
     format: u32,
 };
-const WlShmPoolDestroyMsg = struct {
+const WlShmPoolDestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const WlShmPoolResizeMsg = struct {
+const WlShmPoolResizeMessage = struct {
     // TODO: should we include the interface's Object?
     size: i32,
 };
@@ -302,7 +302,7 @@ fn wl_shm_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             var id: u32 = try object.context.next_u32();
             var fd: i32 = try object.context.next_fd();
             var size: i32 = try object.context.next_i32();
-            return WlShmCreatePoolMsg{
+            return WlShmCreatePoolMessage{
                 .id = id,
                 .fd = fd,
                 .size = size,
@@ -313,7 +313,7 @@ fn wl_shm_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const WlShmCreatePoolMsg = struct {
+const WlShmCreatePoolMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
     fd: i32,
@@ -413,14 +413,14 @@ fn wl_buffer_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
-            return WlBufferDestroyMsg{};
+            return WlBufferDestroyMessage{};
         },
         else => {
             return error.UnknownOpcode;
         },
     }
 }
-const WlBufferDestroyMsg = struct {
+const WlBufferDestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
 
@@ -460,7 +460,7 @@ fn wl_data_offer_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         0 => {
             var serial: u32 = try object.context.next_u32();
             var mime_type: []u8 = try object.context.next_string();
-            return WlDataOfferAcceptMsg{
+            return WlDataOfferAcceptMessage{
                 .serial = serial,
                 .mime_type = mime_type,
             };
@@ -469,24 +469,24 @@ fn wl_data_offer_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         1 => {
             var mime_type: []u8 = try object.context.next_string();
             var fd: i32 = try object.context.next_fd();
-            return WlDataOfferReceiveMsg{
+            return WlDataOfferReceiveMessage{
                 .mime_type = mime_type,
                 .fd = fd,
             };
         },
         // destroy
         2 => {
-            return WlDataOfferDestroyMsg{};
+            return WlDataOfferDestroyMessage{};
         },
         // finish
         3 => {
-            return WlDataOfferFinishMsg{};
+            return WlDataOfferFinishMessage{};
         },
         // set_actions
         4 => {
             var dnd_actions: u32 = try object.context.next_u32();
             var preferred_action: u32 = try object.context.next_u32();
-            return WlDataOfferSetActionsMsg{
+            return WlDataOfferSetActionsMessage{
                 .dnd_actions = dnd_actions,
                 .preferred_action = preferred_action,
             };
@@ -496,23 +496,23 @@ fn wl_data_offer_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const WlDataOfferAcceptMsg = struct {
+const WlDataOfferAcceptMessage = struct {
     // TODO: should we include the interface's Object?
     serial: u32,
     mime_type: []u8,
 };
-const WlDataOfferReceiveMsg = struct {
+const WlDataOfferReceiveMessage = struct {
     // TODO: should we include the interface's Object?
     mime_type: []u8,
     fd: i32,
 };
-const WlDataOfferDestroyMsg = struct {
+const WlDataOfferDestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const WlDataOfferFinishMsg = struct {
+const WlDataOfferFinishMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const WlDataOfferSetActionsMsg = struct {
+const WlDataOfferSetActionsMessage = struct {
     // TODO: should we include the interface's Object?
     dnd_actions: u32,
     preferred_action: u32,
@@ -605,18 +605,18 @@ fn wl_data_source_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         // offer
         0 => {
             var mime_type: []u8 = try object.context.next_string();
-            return WlDataSourceOfferMsg{
+            return WlDataSourceOfferMessage{
                 .mime_type = mime_type,
             };
         },
         // destroy
         1 => {
-            return WlDataSourceDestroyMsg{};
+            return WlDataSourceDestroyMessage{};
         },
         // set_actions
         2 => {
             var dnd_actions: u32 = try object.context.next_u32();
-            return WlDataSourceSetActionsMsg{
+            return WlDataSourceSetActionsMessage{
                 .dnd_actions = dnd_actions,
             };
         },
@@ -625,14 +625,14 @@ fn wl_data_source_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const WlDataSourceOfferMsg = struct {
+const WlDataSourceOfferMessage = struct {
     // TODO: should we include the interface's Object?
     mime_type: []u8,
 };
-const WlDataSourceDestroyMsg = struct {
+const WlDataSourceDestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const WlDataSourceSetActionsMsg = struct {
+const WlDataSourceSetActionsMessage = struct {
     // TODO: should we include the interface's Object?
     dnd_actions: u32,
 };
@@ -787,7 +787,7 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
                 }
             }
             var serial: u32 = try object.context.next_u32();
-            return WlDataDeviceStartDragMsg{
+            return WlDataDeviceStartDragMessage{
                 .source = source,
                 .origin = origin,
                 .icon = icon,
@@ -803,33 +803,33 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
                 }
             }
             var serial: u32 = try object.context.next_u32();
-            return WlDataDeviceSetSelectionMsg{
+            return WlDataDeviceSetSelectionMessage{
                 .source = source,
                 .serial = serial,
             };
         },
         // release
         2 => {
-            return WlDataDeviceReleaseMsg{};
+            return WlDataDeviceReleaseMessage{};
         },
         else => {
             return error.UnknownOpcode;
         },
     }
 }
-const WlDataDeviceStartDragMsg = struct {
+const WlDataDeviceStartDragMessage = struct {
     // TODO: should we include the interface's Object?
     source: ?Object,
     origin: Object,
     icon: ?Object,
     serial: u32,
 };
-const WlDataDeviceSetSelectionMsg = struct {
+const WlDataDeviceSetSelectionMessage = struct {
     // TODO: should we include the interface's Object?
     source: ?Object,
     serial: u32,
 };
-const WlDataDeviceReleaseMsg = struct {
+const WlDataDeviceReleaseMessage = struct {
     // TODO: should we include the interface's Object?
 };
 
@@ -947,7 +947,7 @@ fn wl_data_device_manager_dispatch(object: Object, opcode: u16) anyerror!WlMessa
         // create_data_source
         0 => {
             var id: u32 = try object.context.next_u32();
-            return WlDataDeviceManagerCreateDataSourceMsg{
+            return WlDataDeviceManagerCreateDataSourceMessage{
                 .id = id,
             };
         },
@@ -958,7 +958,7 @@ fn wl_data_device_manager_dispatch(object: Object, opcode: u16) anyerror!WlMessa
             if (seat.dispatch != wl_seat_dispatch) {
                 return error.ObjectWrongType;
             }
-            return WlDataDeviceManagerGetDataDeviceMsg{
+            return WlDataDeviceManagerGetDataDeviceMessage{
                 .id = id,
                 .seat = seat,
             };
@@ -968,11 +968,11 @@ fn wl_data_device_manager_dispatch(object: Object, opcode: u16) anyerror!WlMessa
         },
     }
 }
-const WlDataDeviceManagerCreateDataSourceMsg = struct {
+const WlDataDeviceManagerCreateDataSourceMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
 };
-const WlDataDeviceManagerGetDataDeviceMsg = struct {
+const WlDataDeviceManagerGetDataDeviceMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
     seat: Object,
@@ -1005,7 +1005,7 @@ fn wl_shell_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             if (surface.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
-            return WlShellGetShellSurfaceMsg{
+            return WlShellGetShellSurfaceMessage{
                 .id = id,
                 .surface = surface,
             };
@@ -1015,7 +1015,7 @@ fn wl_shell_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const WlShellGetShellSurfaceMsg = struct {
+const WlShellGetShellSurfaceMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
     surface: Object,
@@ -1041,7 +1041,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         // pong
         0 => {
             var serial: u32 = try object.context.next_u32();
-            return WlShellSurfacePongMsg{
+            return WlShellSurfacePongMessage{
                 .serial = serial,
             };
         },
@@ -1052,7 +1052,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
                 return error.ObjectWrongType;
             }
             var serial: u32 = try object.context.next_u32();
-            return WlShellSurfaceMoveMsg{
+            return WlShellSurfaceMoveMessage{
                 .seat = seat,
                 .serial = serial,
             };
@@ -1065,7 +1065,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             }
             var serial: u32 = try object.context.next_u32();
             var edges: u32 = try object.context.next_u32();
-            return WlShellSurfaceResizeMsg{
+            return WlShellSurfaceResizeMessage{
                 .seat = seat,
                 .serial = serial,
                 .edges = edges,
@@ -1073,7 +1073,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
         // set_toplevel
         3 => {
-            return WlShellSurfaceSetToplevelMsg{};
+            return WlShellSurfaceSetToplevelMessage{};
         },
         // set_transient
         4 => {
@@ -1084,7 +1084,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
             var flags: u32 = try object.context.next_u32();
-            return WlShellSurfaceSetTransientMsg{
+            return WlShellSurfaceSetTransientMessage{
                 .parent = parent,
                 .x = x,
                 .y = y,
@@ -1101,7 +1101,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
                     return error.ObjectWrongType;
                 }
             }
-            return WlShellSurfaceSetFullscreenMsg{
+            return WlShellSurfaceSetFullscreenMessage{
                 .method = method,
                 .framerate = framerate,
                 .output = output,
@@ -1121,7 +1121,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
             var flags: u32 = try object.context.next_u32();
-            return WlShellSurfaceSetPopupMsg{
+            return WlShellSurfaceSetPopupMessage{
                 .seat = seat,
                 .serial = serial,
                 .parent = parent,
@@ -1138,21 +1138,21 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
                     return error.ObjectWrongType;
                 }
             }
-            return WlShellSurfaceSetMaximizedMsg{
+            return WlShellSurfaceSetMaximizedMessage{
                 .output = output,
             };
         },
         // set_title
         8 => {
             var title: []u8 = try object.context.next_string();
-            return WlShellSurfaceSetTitleMsg{
+            return WlShellSurfaceSetTitleMessage{
                 .title = title,
             };
         },
         // set_class
         9 => {
             var class_: []u8 = try object.context.next_string();
-            return WlShellSurfaceSetClassMsg{
+            return WlShellSurfaceSetClassMessage{
                 .class_ = class_,
             };
         },
@@ -1161,38 +1161,38 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const WlShellSurfacePongMsg = struct {
+const WlShellSurfacePongMessage = struct {
     // TODO: should we include the interface's Object?
     serial: u32,
 };
-const WlShellSurfaceMoveMsg = struct {
+const WlShellSurfaceMoveMessage = struct {
     // TODO: should we include the interface's Object?
     seat: Object,
     serial: u32,
 };
-const WlShellSurfaceResizeMsg = struct {
+const WlShellSurfaceResizeMessage = struct {
     // TODO: should we include the interface's Object?
     seat: Object,
     serial: u32,
     edges: u32,
 };
-const WlShellSurfaceSetToplevelMsg = struct {
+const WlShellSurfaceSetToplevelMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const WlShellSurfaceSetTransientMsg = struct {
+const WlShellSurfaceSetTransientMessage = struct {
     // TODO: should we include the interface's Object?
     parent: Object,
     x: i32,
     y: i32,
     flags: u32,
 };
-const WlShellSurfaceSetFullscreenMsg = struct {
+const WlShellSurfaceSetFullscreenMessage = struct {
     // TODO: should we include the interface's Object?
     method: u32,
     framerate: u32,
     output: ?Object,
 };
-const WlShellSurfaceSetPopupMsg = struct {
+const WlShellSurfaceSetPopupMessage = struct {
     // TODO: should we include the interface's Object?
     seat: Object,
     serial: u32,
@@ -1201,15 +1201,15 @@ const WlShellSurfaceSetPopupMsg = struct {
     y: i32,
     flags: u32,
 };
-const WlShellSurfaceSetMaximizedMsg = struct {
+const WlShellSurfaceSetMaximizedMessage = struct {
     // TODO: should we include the interface's Object?
     output: ?Object,
 };
-const WlShellSurfaceSetTitleMsg = struct {
+const WlShellSurfaceSetTitleMessage = struct {
     // TODO: should we include the interface's Object?
     title: []u8,
 };
-const WlShellSurfaceSetClassMsg = struct {
+const WlShellSurfaceSetClassMessage = struct {
     // TODO: should we include the interface's Object?
     class_: []u8,
 };
@@ -1299,7 +1299,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
-            return WlSurfaceDestroyMsg{};
+            return WlSurfaceDestroyMessage{};
         },
         // attach
         1 => {
@@ -1311,7 +1311,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             }
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
-            return WlSurfaceAttachMsg{
+            return WlSurfaceAttachMessage{
                 .buffer = buffer,
                 .x = x,
                 .y = y,
@@ -1323,7 +1323,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             var y: i32 = try object.context.next_i32();
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            return WlSurfaceDamageMsg{
+            return WlSurfaceDamageMessage{
                 .x = x,
                 .y = y,
                 .width = width,
@@ -1333,7 +1333,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         // frame
         3 => {
             var callback: u32 = try object.context.next_u32();
-            return WlSurfaceFrameMsg{
+            return WlSurfaceFrameMessage{
                 .callback = callback,
             };
         },
@@ -1345,7 +1345,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
                     return error.ObjectWrongType;
                 }
             }
-            return WlSurfaceSetOpaqueRegionMsg{
+            return WlSurfaceSetOpaqueRegionMessage{
                 .region = region,
             };
         },
@@ -1357,25 +1357,25 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
                     return error.ObjectWrongType;
                 }
             }
-            return WlSurfaceSetInputRegionMsg{
+            return WlSurfaceSetInputRegionMessage{
                 .region = region,
             };
         },
         // commit
         6 => {
-            return WlSurfaceCommitMsg{};
+            return WlSurfaceCommitMessage{};
         },
         // set_buffer_transform
         7 => {
             var transform: i32 = try object.context.next_i32();
-            return WlSurfaceSetBufferTransformMsg{
+            return WlSurfaceSetBufferTransformMessage{
                 .transform = transform,
             };
         },
         // set_buffer_scale
         8 => {
             var scale: i32 = try object.context.next_i32();
-            return WlSurfaceSetBufferScaleMsg{
+            return WlSurfaceSetBufferScaleMessage{
                 .scale = scale,
             };
         },
@@ -1385,7 +1385,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             var y: i32 = try object.context.next_i32();
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            return WlSurfaceDamageBufferMsg{
+            return WlSurfaceDamageBufferMessage{
                 .x = x,
                 .y = y,
                 .width = width,
@@ -1397,46 +1397,46 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const WlSurfaceDestroyMsg = struct {
+const WlSurfaceDestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const WlSurfaceAttachMsg = struct {
+const WlSurfaceAttachMessage = struct {
     // TODO: should we include the interface's Object?
     buffer: ?Object,
     x: i32,
     y: i32,
 };
-const WlSurfaceDamageMsg = struct {
+const WlSurfaceDamageMessage = struct {
     // TODO: should we include the interface's Object?
     x: i32,
     y: i32,
     width: i32,
     height: i32,
 };
-const WlSurfaceFrameMsg = struct {
+const WlSurfaceFrameMessage = struct {
     // TODO: should we include the interface's Object?
     callback: u32,
 };
-const WlSurfaceSetOpaqueRegionMsg = struct {
+const WlSurfaceSetOpaqueRegionMessage = struct {
     // TODO: should we include the interface's Object?
     region: ?Object,
 };
-const WlSurfaceSetInputRegionMsg = struct {
+const WlSurfaceSetInputRegionMessage = struct {
     // TODO: should we include the interface's Object?
     region: ?Object,
 };
-const WlSurfaceCommitMsg = struct {
+const WlSurfaceCommitMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const WlSurfaceSetBufferTransformMsg = struct {
+const WlSurfaceSetBufferTransformMessage = struct {
     // TODO: should we include the interface's Object?
     transform: i32,
 };
-const WlSurfaceSetBufferScaleMsg = struct {
+const WlSurfaceSetBufferScaleMessage = struct {
     // TODO: should we include the interface's Object?
     scale: i32,
 };
-const WlSurfaceDamageBufferMsg = struct {
+const WlSurfaceDamageBufferMessage = struct {
     // TODO: should we include the interface's Object?
     x: i32,
     y: i32,
@@ -1489,46 +1489,46 @@ fn wl_seat_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         // get_pointer
         0 => {
             var id: u32 = try object.context.next_u32();
-            return WlSeatGetPointerMsg{
+            return WlSeatGetPointerMessage{
                 .id = id,
             };
         },
         // get_keyboard
         1 => {
             var id: u32 = try object.context.next_u32();
-            return WlSeatGetKeyboardMsg{
+            return WlSeatGetKeyboardMessage{
                 .id = id,
             };
         },
         // get_touch
         2 => {
             var id: u32 = try object.context.next_u32();
-            return WlSeatGetTouchMsg{
+            return WlSeatGetTouchMessage{
                 .id = id,
             };
         },
         // release
         3 => {
-            return WlSeatReleaseMsg{};
+            return WlSeatReleaseMessage{};
         },
         else => {
             return error.UnknownOpcode;
         },
     }
 }
-const WlSeatGetPointerMsg = struct {
+const WlSeatGetPointerMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
 };
-const WlSeatGetKeyboardMsg = struct {
+const WlSeatGetKeyboardMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
 };
-const WlSeatGetTouchMsg = struct {
+const WlSeatGetTouchMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
 };
-const WlSeatReleaseMsg = struct {
+const WlSeatReleaseMessage = struct {
     // TODO: should we include the interface's Object?
 };
 
@@ -1605,7 +1605,7 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             }
             var hotspot_x: i32 = try object.context.next_i32();
             var hotspot_y: i32 = try object.context.next_i32();
-            return WlPointerSetCursorMsg{
+            return WlPointerSetCursorMessage{
                 .serial = serial,
                 .surface = surface,
                 .hotspot_x = hotspot_x,
@@ -1614,21 +1614,21 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
         // release
         1 => {
-            return WlPointerReleaseMsg{};
+            return WlPointerReleaseMessage{};
         },
         else => {
             return error.UnknownOpcode;
         },
     }
 }
-const WlPointerSetCursorMsg = struct {
+const WlPointerSetCursorMessage = struct {
     // TODO: should we include the interface's Object?
     serial: u32,
     surface: ?Object,
     hotspot_x: i32,
     hotspot_y: i32,
 };
-const WlPointerReleaseMsg = struct {
+const WlPointerReleaseMessage = struct {
     // TODO: should we include the interface's Object?
 };
 
@@ -1895,14 +1895,14 @@ fn wl_keyboard_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // release
         0 => {
-            return WlKeyboardReleaseMsg{};
+            return WlKeyboardReleaseMessage{};
         },
         else => {
             return error.UnknownOpcode;
         },
     }
 }
-const WlKeyboardReleaseMsg = struct {
+const WlKeyboardReleaseMessage = struct {
     // TODO: should we include the interface's Object?
 };
 
@@ -2021,14 +2021,14 @@ fn wl_touch_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // release
         0 => {
-            return WlTouchReleaseMsg{};
+            return WlTouchReleaseMessage{};
         },
         else => {
             return error.UnknownOpcode;
         },
     }
 }
-const WlTouchReleaseMsg = struct {
+const WlTouchReleaseMessage = struct {
     // TODO: should we include the interface's Object?
 };
 
@@ -2184,14 +2184,14 @@ fn wl_output_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // release
         0 => {
-            return WlOutputReleaseMsg{};
+            return WlOutputReleaseMessage{};
         },
         else => {
             return error.UnknownOpcode;
         },
     }
 }
-const WlOutputReleaseMsg = struct {
+const WlOutputReleaseMessage = struct {
     // TODO: should we include the interface's Object?
 };
 
@@ -2335,7 +2335,7 @@ fn wl_region_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
-            return WlRegionDestroyMsg{};
+            return WlRegionDestroyMessage{};
         },
         // add
         1 => {
@@ -2343,7 +2343,7 @@ fn wl_region_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             var y: i32 = try object.context.next_i32();
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            return WlRegionAddMsg{
+            return WlRegionAddMessage{
                 .x = x,
                 .y = y,
                 .width = width,
@@ -2356,7 +2356,7 @@ fn wl_region_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             var y: i32 = try object.context.next_i32();
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            return WlRegionSubtractMsg{
+            return WlRegionSubtractMessage{
                 .x = x,
                 .y = y,
                 .width = width,
@@ -2368,17 +2368,17 @@ fn wl_region_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const WlRegionDestroyMsg = struct {
+const WlRegionDestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const WlRegionAddMsg = struct {
+const WlRegionAddMessage = struct {
     // TODO: should we include the interface's Object?
     x: i32,
     y: i32,
     width: i32,
     height: i32,
 };
-const WlRegionSubtractMsg = struct {
+const WlRegionSubtractMessage = struct {
     // TODO: should we include the interface's Object?
     x: i32,
     y: i32,
@@ -2401,7 +2401,7 @@ fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
-            return WlSubcompositorDestroyMsg{};
+            return WlSubcompositorDestroyMessage{};
         },
         // get_subsurface
         1 => {
@@ -2414,7 +2414,7 @@ fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             if (parent.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
-            return WlSubcompositorGetSubsurfaceMsg{
+            return WlSubcompositorGetSubsurfaceMessage{
                 .id = id,
                 .surface = surface,
                 .parent = parent,
@@ -2425,10 +2425,10 @@ fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const WlSubcompositorDestroyMsg = struct {
+const WlSubcompositorDestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const WlSubcompositorGetSubsurfaceMsg = struct {
+const WlSubcompositorGetSubsurfaceMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
     surface: Object,
@@ -2454,13 +2454,13 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
-            return WlSubsurfaceDestroyMsg{};
+            return WlSubsurfaceDestroyMessage{};
         },
         // set_position
         1 => {
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
-            return WlSubsurfaceSetPositionMsg{
+            return WlSubsurfaceSetPositionMessage{
                 .x = x,
                 .y = y,
             };
@@ -2471,7 +2471,7 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             if (sibling.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
-            return WlSubsurfacePlaceAboveMsg{
+            return WlSubsurfacePlaceAboveMessage{
                 .sibling = sibling,
             };
         },
@@ -2481,43 +2481,43 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             if (sibling.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
-            return WlSubsurfacePlaceBelowMsg{
+            return WlSubsurfacePlaceBelowMessage{
                 .sibling = sibling,
             };
         },
         // set_sync
         4 => {
-            return WlSubsurfaceSetSyncMsg{};
+            return WlSubsurfaceSetSyncMessage{};
         },
         // set_desync
         5 => {
-            return WlSubsurfaceSetDesyncMsg{};
+            return WlSubsurfaceSetDesyncMessage{};
         },
         else => {
             return error.UnknownOpcode;
         },
     }
 }
-const WlSubsurfaceDestroyMsg = struct {
+const WlSubsurfaceDestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const WlSubsurfaceSetPositionMsg = struct {
+const WlSubsurfaceSetPositionMessage = struct {
     // TODO: should we include the interface's Object?
     x: i32,
     y: i32,
 };
-const WlSubsurfacePlaceAboveMsg = struct {
+const WlSubsurfacePlaceAboveMessage = struct {
     // TODO: should we include the interface's Object?
     sibling: Object,
 };
-const WlSubsurfacePlaceBelowMsg = struct {
+const WlSubsurfacePlaceBelowMessage = struct {
     // TODO: should we include the interface's Object?
     sibling: Object,
 };
-const WlSubsurfaceSetSyncMsg = struct {
+const WlSubsurfaceSetSyncMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const WlSubsurfaceSetDesyncMsg = struct {
+const WlSubsurfaceSetDesyncMessage = struct {
     // TODO: should we include the interface's Object?
 };
 
@@ -2540,12 +2540,12 @@ fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
-            return XdgWmBaseDestroyMsg{};
+            return XdgWmBaseDestroyMessage{};
         },
         // create_positioner
         1 => {
             var id: u32 = try object.context.next_u32();
-            return XdgWmBaseCreatePositionerMsg{
+            return XdgWmBaseCreatePositionerMessage{
                 .id = id,
             };
         },
@@ -2556,7 +2556,7 @@ fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             if (surface.dispatch != wl_surface_dispatch) {
                 return error.ObjectWrongType;
             }
-            return XdgWmBaseGetXdgSurfaceMsg{
+            return XdgWmBaseGetXdgSurfaceMessage{
                 .id = id,
                 .surface = surface,
             };
@@ -2564,7 +2564,7 @@ fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         // pong
         3 => {
             var serial: u32 = try object.context.next_u32();
-            return XdgWmBasePongMsg{
+            return XdgWmBasePongMessage{
                 .serial = serial,
             };
         },
@@ -2573,19 +2573,19 @@ fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const XdgWmBaseDestroyMsg = struct {
+const XdgWmBaseDestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const XdgWmBaseCreatePositionerMsg = struct {
+const XdgWmBaseCreatePositionerMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
 };
-const XdgWmBaseGetXdgSurfaceMsg = struct {
+const XdgWmBaseGetXdgSurfaceMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
     surface: Object,
 };
-const XdgWmBasePongMsg = struct {
+const XdgWmBasePongMessage = struct {
     // TODO: should we include the interface's Object?
     serial: u32,
 };
@@ -2633,13 +2633,13 @@ fn xdg_positioner_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
-            return XdgPositionerDestroyMsg{};
+            return XdgPositionerDestroyMessage{};
         },
         // set_size
         1 => {
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            return XdgPositionerSetSizeMsg{
+            return XdgPositionerSetSizeMessage{
                 .width = width,
                 .height = height,
             };
@@ -2650,7 +2650,7 @@ fn xdg_positioner_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             var y: i32 = try object.context.next_i32();
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            return XdgPositionerSetAnchorRectMsg{
+            return XdgPositionerSetAnchorRectMessage{
                 .x = x,
                 .y = y,
                 .width = width,
@@ -2660,21 +2660,21 @@ fn xdg_positioner_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         // set_anchor
         3 => {
             var anchor: u32 = try object.context.next_u32();
-            return XdgPositionerSetAnchorMsg{
+            return XdgPositionerSetAnchorMessage{
                 .anchor = anchor,
             };
         },
         // set_gravity
         4 => {
             var gravity: u32 = try object.context.next_u32();
-            return XdgPositionerSetGravityMsg{
+            return XdgPositionerSetGravityMessage{
                 .gravity = gravity,
             };
         },
         // set_constraint_adjustment
         5 => {
             var constraint_adjustment: u32 = try object.context.next_u32();
-            return XdgPositionerSetConstraintAdjustmentMsg{
+            return XdgPositionerSetConstraintAdjustmentMessage{
                 .constraint_adjustment = constraint_adjustment,
             };
         },
@@ -2682,7 +2682,7 @@ fn xdg_positioner_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         6 => {
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
-            return XdgPositionerSetOffsetMsg{
+            return XdgPositionerSetOffsetMessage{
                 .x = x,
                 .y = y,
             };
@@ -2692,34 +2692,34 @@ fn xdg_positioner_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const XdgPositionerDestroyMsg = struct {
+const XdgPositionerDestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const XdgPositionerSetSizeMsg = struct {
+const XdgPositionerSetSizeMessage = struct {
     // TODO: should we include the interface's Object?
     width: i32,
     height: i32,
 };
-const XdgPositionerSetAnchorRectMsg = struct {
+const XdgPositionerSetAnchorRectMessage = struct {
     // TODO: should we include the interface's Object?
     x: i32,
     y: i32,
     width: i32,
     height: i32,
 };
-const XdgPositionerSetAnchorMsg = struct {
+const XdgPositionerSetAnchorMessage = struct {
     // TODO: should we include the interface's Object?
     anchor: u32,
 };
-const XdgPositionerSetGravityMsg = struct {
+const XdgPositionerSetGravityMessage = struct {
     // TODO: should we include the interface's Object?
     gravity: u32,
 };
-const XdgPositionerSetConstraintAdjustmentMsg = struct {
+const XdgPositionerSetConstraintAdjustmentMessage = struct {
     // TODO: should we include the interface's Object?
     constraint_adjustment: u32,
 };
-const XdgPositionerSetOffsetMsg = struct {
+const XdgPositionerSetOffsetMessage = struct {
     // TODO: should we include the interface's Object?
     x: i32,
     y: i32,
@@ -2778,12 +2778,12 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
-            return XdgSurfaceDestroyMsg{};
+            return XdgSurfaceDestroyMessage{};
         },
         // get_toplevel
         1 => {
             var id: u32 = try object.context.next_u32();
-            return XdgSurfaceGetToplevelMsg{
+            return XdgSurfaceGetToplevelMessage{
                 .id = id,
             };
         },
@@ -2800,7 +2800,7 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             if (positioner.dispatch != xdg_positioner_dispatch) {
                 return error.ObjectWrongType;
             }
-            return XdgSurfaceGetPopupMsg{
+            return XdgSurfaceGetPopupMessage{
                 .id = id,
                 .parent = parent,
                 .positioner = positioner,
@@ -2812,7 +2812,7 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             var y: i32 = try object.context.next_i32();
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            return XdgSurfaceSetWindowGeometryMsg{
+            return XdgSurfaceSetWindowGeometryMessage{
                 .x = x,
                 .y = y,
                 .width = width,
@@ -2822,7 +2822,7 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         // ack_configure
         4 => {
             var serial: u32 = try object.context.next_u32();
-            return XdgSurfaceAckConfigureMsg{
+            return XdgSurfaceAckConfigureMessage{
                 .serial = serial,
             };
         },
@@ -2831,27 +2831,27 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const XdgSurfaceDestroyMsg = struct {
+const XdgSurfaceDestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const XdgSurfaceGetToplevelMsg = struct {
+const XdgSurfaceGetToplevelMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
 };
-const XdgSurfaceGetPopupMsg = struct {
+const XdgSurfaceGetPopupMessage = struct {
     // TODO: should we include the interface's Object?
     id: u32,
     parent: ?Object,
     positioner: Object,
 };
-const XdgSurfaceSetWindowGeometryMsg = struct {
+const XdgSurfaceSetWindowGeometryMessage = struct {
     // TODO: should we include the interface's Object?
     x: i32,
     y: i32,
     width: i32,
     height: i32,
 };
-const XdgSurfaceAckConfigureMsg = struct {
+const XdgSurfaceAckConfigureMessage = struct {
     // TODO: should we include the interface's Object?
     serial: u32,
 };
@@ -2901,7 +2901,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
-            return XdgToplevelDestroyMsg{};
+            return XdgToplevelDestroyMessage{};
         },
         // set_parent
         1 => {
@@ -2911,21 +2911,21 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
                     return error.ObjectWrongType;
                 }
             }
-            return XdgToplevelSetParentMsg{
+            return XdgToplevelSetParentMessage{
                 .parent = parent,
             };
         },
         // set_title
         2 => {
             var title: []u8 = try object.context.next_string();
-            return XdgToplevelSetTitleMsg{
+            return XdgToplevelSetTitleMessage{
                 .title = title,
             };
         },
         // set_app_id
         3 => {
             var app_id: []u8 = try object.context.next_string();
-            return XdgToplevelSetAppIdMsg{
+            return XdgToplevelSetAppIdMessage{
                 .app_id = app_id,
             };
         },
@@ -2938,7 +2938,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             var serial: u32 = try object.context.next_u32();
             var x: i32 = try object.context.next_i32();
             var y: i32 = try object.context.next_i32();
-            return XdgToplevelShowWindowMenuMsg{
+            return XdgToplevelShowWindowMenuMessage{
                 .seat = seat,
                 .serial = serial,
                 .x = x,
@@ -2952,7 +2952,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
                 return error.ObjectWrongType;
             }
             var serial: u32 = try object.context.next_u32();
-            return XdgToplevelMoveMsg{
+            return XdgToplevelMoveMessage{
                 .seat = seat,
                 .serial = serial,
             };
@@ -2965,7 +2965,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             }
             var serial: u32 = try object.context.next_u32();
             var edges: u32 = try object.context.next_u32();
-            return XdgToplevelResizeMsg{
+            return XdgToplevelResizeMessage{
                 .seat = seat,
                 .serial = serial,
                 .edges = edges,
@@ -2975,7 +2975,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         7 => {
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            return XdgToplevelSetMaxSizeMsg{
+            return XdgToplevelSetMaxSizeMessage{
                 .width = width,
                 .height = height,
             };
@@ -2984,18 +2984,18 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         8 => {
             var width: i32 = try object.context.next_i32();
             var height: i32 = try object.context.next_i32();
-            return XdgToplevelSetMinSizeMsg{
+            return XdgToplevelSetMinSizeMessage{
                 .width = width,
                 .height = height,
             };
         },
         // set_maximized
         9 => {
-            return XdgToplevelSetMaximizedMsg{};
+            return XdgToplevelSetMaximizedMessage{};
         },
         // unset_maximized
         10 => {
-            return XdgToplevelUnsetMaximizedMsg{};
+            return XdgToplevelUnsetMaximizedMessage{};
         },
         // set_fullscreen
         11 => {
@@ -3005,80 +3005,80 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
                     return error.ObjectWrongType;
                 }
             }
-            return XdgToplevelSetFullscreenMsg{
+            return XdgToplevelSetFullscreenMessage{
                 .output = output,
             };
         },
         // unset_fullscreen
         12 => {
-            return XdgToplevelUnsetFullscreenMsg{};
+            return XdgToplevelUnsetFullscreenMessage{};
         },
         // set_minimized
         13 => {
-            return XdgToplevelSetMinimizedMsg{};
+            return XdgToplevelSetMinimizedMessage{};
         },
         else => {
             return error.UnknownOpcode;
         },
     }
 }
-const XdgToplevelDestroyMsg = struct {
+const XdgToplevelDestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const XdgToplevelSetParentMsg = struct {
+const XdgToplevelSetParentMessage = struct {
     // TODO: should we include the interface's Object?
     parent: ?Object,
 };
-const XdgToplevelSetTitleMsg = struct {
+const XdgToplevelSetTitleMessage = struct {
     // TODO: should we include the interface's Object?
     title: []u8,
 };
-const XdgToplevelSetAppIdMsg = struct {
+const XdgToplevelSetAppIdMessage = struct {
     // TODO: should we include the interface's Object?
     app_id: []u8,
 };
-const XdgToplevelShowWindowMenuMsg = struct {
+const XdgToplevelShowWindowMenuMessage = struct {
     // TODO: should we include the interface's Object?
     seat: Object,
     serial: u32,
     x: i32,
     y: i32,
 };
-const XdgToplevelMoveMsg = struct {
+const XdgToplevelMoveMessage = struct {
     // TODO: should we include the interface's Object?
     seat: Object,
     serial: u32,
 };
-const XdgToplevelResizeMsg = struct {
+const XdgToplevelResizeMessage = struct {
     // TODO: should we include the interface's Object?
     seat: Object,
     serial: u32,
     edges: u32,
 };
-const XdgToplevelSetMaxSizeMsg = struct {
+const XdgToplevelSetMaxSizeMessage = struct {
     // TODO: should we include the interface's Object?
     width: i32,
     height: i32,
 };
-const XdgToplevelSetMinSizeMsg = struct {
+const XdgToplevelSetMinSizeMessage = struct {
     // TODO: should we include the interface's Object?
     width: i32,
     height: i32,
 };
-const XdgToplevelSetMaximizedMsg = struct {
+const XdgToplevelSetMaximizedMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const XdgToplevelUnsetMaximizedMsg = struct {
+const XdgToplevelUnsetMaximizedMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const XdgToplevelSetFullscreenMsg = struct {
+const XdgToplevelSetFullscreenMessage = struct {
     // TODO: should we include the interface's Object?
     output: ?Object,
 };
-const XdgToplevelUnsetFullscreenMsg = struct {
+const XdgToplevelUnsetFullscreenMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const XdgToplevelSetMinimizedMsg = struct {
+const XdgToplevelSetMinimizedMessage = struct {
     // TODO: should we include the interface's Object?
 };
 
@@ -3164,7 +3164,7 @@ fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
-            return XdgPopupDestroyMsg{};
+            return XdgPopupDestroyMessage{};
         },
         // grab
         1 => {
@@ -3173,7 +3173,7 @@ fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
                 return error.ObjectWrongType;
             }
             var serial: u32 = try object.context.next_u32();
-            return XdgPopupGrabMsg{
+            return XdgPopupGrabMessage{
                 .seat = seat,
                 .serial = serial,
             };
@@ -3183,10 +3183,10 @@ fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
         },
     }
 }
-const XdgPopupDestroyMsg = struct {
+const XdgPopupDestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const XdgPopupGrabMsg = struct {
+const XdgPopupGrabMessage = struct {
     // TODO: should we include the interface's Object?
     seat: Object,
     serial: u32,
@@ -3239,12 +3239,12 @@ fn zwp_linux_dmabuf_v1_dispatch(object: Object, opcode: u16) anyerror!WlMessage 
     switch (opcode) {
         // destroy
         0 => {
-            return ZwpLinuxDmabufV1DestroyMsg{};
+            return ZwpLinuxDmabufV1DestroyMessage{};
         },
         // create_params
         1 => {
             var params_id: u32 = try object.context.next_u32();
-            return ZwpLinuxDmabufV1CreateParamsMsg{
+            return ZwpLinuxDmabufV1CreateParamsMessage{
                 .params_id = params_id,
             };
         },
@@ -3253,10 +3253,10 @@ fn zwp_linux_dmabuf_v1_dispatch(object: Object, opcode: u16) anyerror!WlMessage 
         },
     }
 }
-const ZwpLinuxDmabufV1DestroyMsg = struct {
+const ZwpLinuxDmabufV1DestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const ZwpLinuxDmabufV1CreateParamsMsg = struct {
+const ZwpLinuxDmabufV1CreateParamsMessage = struct {
     // TODO: should we include the interface's Object?
     params_id: u32,
 };
@@ -3322,7 +3322,7 @@ fn zwp_linux_buffer_params_v1_dispatch(object: Object, opcode: u16) anyerror!WlM
     switch (opcode) {
         // destroy
         0 => {
-            return ZwpLinuxBufferParamsV1DestroyMsg{};
+            return ZwpLinuxBufferParamsV1DestroyMessage{};
         },
         // add
         1 => {
@@ -3332,7 +3332,7 @@ fn zwp_linux_buffer_params_v1_dispatch(object: Object, opcode: u16) anyerror!WlM
             var stride: u32 = try object.context.next_u32();
             var modifier_hi: u32 = try object.context.next_u32();
             var modifier_lo: u32 = try object.context.next_u32();
-            return ZwpLinuxBufferParamsV1AddMsg{
+            return ZwpLinuxBufferParamsV1AddMessage{
                 .fd = fd,
                 .plane_idx = plane_idx,
                 .offset = offset,
@@ -3347,7 +3347,7 @@ fn zwp_linux_buffer_params_v1_dispatch(object: Object, opcode: u16) anyerror!WlM
             var height: i32 = try object.context.next_i32();
             var format: u32 = try object.context.next_u32();
             var flags: u32 = try object.context.next_u32();
-            return ZwpLinuxBufferParamsV1CreateMsg{
+            return ZwpLinuxBufferParamsV1CreateMessage{
                 .width = width,
                 .height = height,
                 .format = format,
@@ -3361,7 +3361,7 @@ fn zwp_linux_buffer_params_v1_dispatch(object: Object, opcode: u16) anyerror!WlM
             var height: i32 = try object.context.next_i32();
             var format: u32 = try object.context.next_u32();
             var flags: u32 = try object.context.next_u32();
-            return ZwpLinuxBufferParamsV1CreateImmedMsg{
+            return ZwpLinuxBufferParamsV1CreateImmedMessage{
                 .buffer_id = buffer_id,
                 .width = width,
                 .height = height,
@@ -3374,10 +3374,10 @@ fn zwp_linux_buffer_params_v1_dispatch(object: Object, opcode: u16) anyerror!WlM
         },
     }
 }
-const ZwpLinuxBufferParamsV1DestroyMsg = struct {
+const ZwpLinuxBufferParamsV1DestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const ZwpLinuxBufferParamsV1AddMsg = struct {
+const ZwpLinuxBufferParamsV1AddMessage = struct {
     // TODO: should we include the interface's Object?
     fd: i32,
     plane_idx: u32,
@@ -3386,14 +3386,14 @@ const ZwpLinuxBufferParamsV1AddMsg = struct {
     modifier_hi: u32,
     modifier_lo: u32,
 };
-const ZwpLinuxBufferParamsV1CreateMsg = struct {
+const ZwpLinuxBufferParamsV1CreateMessage = struct {
     // TODO: should we include the interface's Object?
     width: i32,
     height: i32,
     format: u32,
     flags: u32,
 };
-const ZwpLinuxBufferParamsV1CreateImmedMsg = struct {
+const ZwpLinuxBufferParamsV1CreateImmedMessage = struct {
     // TODO: should we include the interface's Object?
     buffer_id: u32,
     width: i32,
@@ -3460,35 +3460,35 @@ fn fw_control_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // get_clients
         0 => {
-            return FwControlGetClientsMsg{};
+            return FwControlGetClientsMessage{};
         },
         // get_windows
         1 => {
-            return FwControlGetWindowsMsg{};
+            return FwControlGetWindowsMessage{};
         },
         // get_window_trees
         2 => {
-            return FwControlGetWindowTreesMsg{};
+            return FwControlGetWindowTreesMessage{};
         },
         // destroy
         3 => {
-            return FwControlDestroyMsg{};
+            return FwControlDestroyMessage{};
         },
         else => {
             return error.UnknownOpcode;
         },
     }
 }
-const FwControlGetClientsMsg = struct {
+const FwControlGetClientsMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const FwControlGetWindowsMsg = struct {
+const FwControlGetWindowsMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const FwControlGetWindowTreesMsg = struct {
+const FwControlGetWindowTreesMessage = struct {
     // TODO: should we include the interface's Object?
 };
-const FwControlDestroyMsg = struct {
+const FwControlDestroyMessage = struct {
     // TODO: should we include the interface's Object?
 };
 
@@ -3656,110 +3656,110 @@ const WlMessageTypes = enum {
     fw_control_destroy,
 };
 const WlMessage = union(WlMessageTypes) {
-    wl_display_sync: WlDisplaySyncMsg,
-    wl_display_get_registry: WlDisplayGetRegistryMsg,
-    wl_registry_bind: WlRegistryBindMsg,
-    wl_compositor_create_surface: WlCompositorCreateSurfaceMsg,
-    wl_compositor_create_region: WlCompositorCreateRegionMsg,
-    wl_shm_pool_create_buffer: WlShmPoolCreateBufferMsg,
-    wl_shm_pool_destroy: WlShmPoolDestroyMsg,
-    wl_shm_pool_resize: WlShmPoolResizeMsg,
-    wl_shm_create_pool: WlShmCreatePoolMsg,
-    wl_buffer_destroy: WlBufferDestroyMsg,
-    wl_data_offer_accept: WlDataOfferAcceptMsg,
-    wl_data_offer_receive: WlDataOfferReceiveMsg,
-    wl_data_offer_destroy: WlDataOfferDestroyMsg,
-    wl_data_offer_finish: WlDataOfferFinishMsg,
-    wl_data_offer_set_actions: WlDataOfferSetActionsMsg,
-    wl_data_source_offer: WlDataSourceOfferMsg,
-    wl_data_source_destroy: WlDataSourceDestroyMsg,
-    wl_data_source_set_actions: WlDataSourceSetActionsMsg,
-    wl_data_device_start_drag: WlDataDeviceStartDragMsg,
-    wl_data_device_set_selection: WlDataDeviceSetSelectionMsg,
-    wl_data_device_release: WlDataDeviceReleaseMsg,
-    wl_data_device_manager_create_data_source: WlDataDeviceManagerCreateDataSourceMsg,
-    wl_data_device_manager_get_data_device: WlDataDeviceManagerGetDataDeviceMsg,
-    wl_shell_get_shell_surface: WlShellGetShellSurfaceMsg,
-    wl_shell_surface_pong: WlShellSurfacePongMsg,
-    wl_shell_surface_move: WlShellSurfaceMoveMsg,
-    wl_shell_surface_resize: WlShellSurfaceResizeMsg,
-    wl_shell_surface_set_toplevel: WlShellSurfaceSetToplevelMsg,
-    wl_shell_surface_set_transient: WlShellSurfaceSetTransientMsg,
-    wl_shell_surface_set_fullscreen: WlShellSurfaceSetFullscreenMsg,
-    wl_shell_surface_set_popup: WlShellSurfaceSetPopupMsg,
-    wl_shell_surface_set_maximized: WlShellSurfaceSetMaximizedMsg,
-    wl_shell_surface_set_title: WlShellSurfaceSetTitleMsg,
-    wl_shell_surface_set_class: WlShellSurfaceSetClassMsg,
-    wl_surface_destroy: WlSurfaceDestroyMsg,
-    wl_surface_attach: WlSurfaceAttachMsg,
-    wl_surface_damage: WlSurfaceDamageMsg,
-    wl_surface_frame: WlSurfaceFrameMsg,
-    wl_surface_set_opaque_region: WlSurfaceSetOpaqueRegionMsg,
-    wl_surface_set_input_region: WlSurfaceSetInputRegionMsg,
-    wl_surface_commit: WlSurfaceCommitMsg,
-    wl_surface_set_buffer_transform: WlSurfaceSetBufferTransformMsg,
-    wl_surface_set_buffer_scale: WlSurfaceSetBufferScaleMsg,
-    wl_surface_damage_buffer: WlSurfaceDamageBufferMsg,
-    wl_seat_get_pointer: WlSeatGetPointerMsg,
-    wl_seat_get_keyboard: WlSeatGetKeyboardMsg,
-    wl_seat_get_touch: WlSeatGetTouchMsg,
-    wl_seat_release: WlSeatReleaseMsg,
-    wl_pointer_set_cursor: WlPointerSetCursorMsg,
-    wl_pointer_release: WlPointerReleaseMsg,
-    wl_keyboard_release: WlKeyboardReleaseMsg,
-    wl_touch_release: WlTouchReleaseMsg,
-    wl_output_release: WlOutputReleaseMsg,
-    wl_region_destroy: WlRegionDestroyMsg,
-    wl_region_add: WlRegionAddMsg,
-    wl_region_subtract: WlRegionSubtractMsg,
-    wl_subcompositor_destroy: WlSubcompositorDestroyMsg,
-    wl_subcompositor_get_subsurface: WlSubcompositorGetSubsurfaceMsg,
-    wl_subsurface_destroy: WlSubsurfaceDestroyMsg,
-    wl_subsurface_set_position: WlSubsurfaceSetPositionMsg,
-    wl_subsurface_place_above: WlSubsurfacePlaceAboveMsg,
-    wl_subsurface_place_below: WlSubsurfacePlaceBelowMsg,
-    wl_subsurface_set_sync: WlSubsurfaceSetSyncMsg,
-    wl_subsurface_set_desync: WlSubsurfaceSetDesyncMsg,
-    xdg_wm_base_destroy: XdgWmBaseDestroyMsg,
-    xdg_wm_base_create_positioner: XdgWmBaseCreatePositionerMsg,
-    xdg_wm_base_get_xdg_surface: XdgWmBaseGetXdgSurfaceMsg,
-    xdg_wm_base_pong: XdgWmBasePongMsg,
-    xdg_positioner_destroy: XdgPositionerDestroyMsg,
-    xdg_positioner_set_size: XdgPositionerSetSizeMsg,
-    xdg_positioner_set_anchor_rect: XdgPositionerSetAnchorRectMsg,
-    xdg_positioner_set_anchor: XdgPositionerSetAnchorMsg,
-    xdg_positioner_set_gravity: XdgPositionerSetGravityMsg,
-    xdg_positioner_set_constraint_adjustment: XdgPositionerSetConstraintAdjustmentMsg,
-    xdg_positioner_set_offset: XdgPositionerSetOffsetMsg,
-    xdg_surface_destroy: XdgSurfaceDestroyMsg,
-    xdg_surface_get_toplevel: XdgSurfaceGetToplevelMsg,
-    xdg_surface_get_popup: XdgSurfaceGetPopupMsg,
-    xdg_surface_set_window_geometry: XdgSurfaceSetWindowGeometryMsg,
-    xdg_surface_ack_configure: XdgSurfaceAckConfigureMsg,
-    xdg_toplevel_destroy: XdgToplevelDestroyMsg,
-    xdg_toplevel_set_parent: XdgToplevelSetParentMsg,
-    xdg_toplevel_set_title: XdgToplevelSetTitleMsg,
-    xdg_toplevel_set_app_id: XdgToplevelSetAppIdMsg,
-    xdg_toplevel_show_window_menu: XdgToplevelShowWindowMenuMsg,
-    xdg_toplevel_move: XdgToplevelMoveMsg,
-    xdg_toplevel_resize: XdgToplevelResizeMsg,
-    xdg_toplevel_set_max_size: XdgToplevelSetMaxSizeMsg,
-    xdg_toplevel_set_min_size: XdgToplevelSetMinSizeMsg,
-    xdg_toplevel_set_maximized: XdgToplevelSetMaximizedMsg,
-    xdg_toplevel_unset_maximized: XdgToplevelUnsetMaximizedMsg,
-    xdg_toplevel_set_fullscreen: XdgToplevelSetFullscreenMsg,
-    xdg_toplevel_unset_fullscreen: XdgToplevelUnsetFullscreenMsg,
-    xdg_toplevel_set_minimized: XdgToplevelSetMinimizedMsg,
-    xdg_popup_destroy: XdgPopupDestroyMsg,
-    xdg_popup_grab: XdgPopupGrabMsg,
-    zwp_linux_dmabuf_v1_destroy: ZwpLinuxDmabufV1DestroyMsg,
-    zwp_linux_dmabuf_v1_create_params: ZwpLinuxDmabufV1CreateParamsMsg,
-    zwp_linux_buffer_params_v1_destroy: ZwpLinuxBufferParamsV1DestroyMsg,
-    zwp_linux_buffer_params_v1_add: ZwpLinuxBufferParamsV1AddMsg,
-    zwp_linux_buffer_params_v1_create: ZwpLinuxBufferParamsV1CreateMsg,
-    zwp_linux_buffer_params_v1_create_immed: ZwpLinuxBufferParamsV1CreateImmedMsg,
-    fw_control_get_clients: FwControlGetClientsMsg,
-    fw_control_get_windows: FwControlGetWindowsMsg,
-    fw_control_get_window_trees: FwControlGetWindowTreesMsg,
-    fw_control_destroy: FwControlDestroyMsg,
+    wl_display_sync: WlDisplaySyncMessage,
+    wl_display_get_registry: WlDisplayGetRegistryMessage,
+    wl_registry_bind: WlRegistryBindMessage,
+    wl_compositor_create_surface: WlCompositorCreateSurfaceMessage,
+    wl_compositor_create_region: WlCompositorCreateRegionMessage,
+    wl_shm_pool_create_buffer: WlShmPoolCreateBufferMessage,
+    wl_shm_pool_destroy: WlShmPoolDestroyMessage,
+    wl_shm_pool_resize: WlShmPoolResizeMessage,
+    wl_shm_create_pool: WlShmCreatePoolMessage,
+    wl_buffer_destroy: WlBufferDestroyMessage,
+    wl_data_offer_accept: WlDataOfferAcceptMessage,
+    wl_data_offer_receive: WlDataOfferReceiveMessage,
+    wl_data_offer_destroy: WlDataOfferDestroyMessage,
+    wl_data_offer_finish: WlDataOfferFinishMessage,
+    wl_data_offer_set_actions: WlDataOfferSetActionsMessage,
+    wl_data_source_offer: WlDataSourceOfferMessage,
+    wl_data_source_destroy: WlDataSourceDestroyMessage,
+    wl_data_source_set_actions: WlDataSourceSetActionsMessage,
+    wl_data_device_start_drag: WlDataDeviceStartDragMessage,
+    wl_data_device_set_selection: WlDataDeviceSetSelectionMessage,
+    wl_data_device_release: WlDataDeviceReleaseMessage,
+    wl_data_device_manager_create_data_source: WlDataDeviceManagerCreateDataSourceMessage,
+    wl_data_device_manager_get_data_device: WlDataDeviceManagerGetDataDeviceMessage,
+    wl_shell_get_shell_surface: WlShellGetShellSurfaceMessage,
+    wl_shell_surface_pong: WlShellSurfacePongMessage,
+    wl_shell_surface_move: WlShellSurfaceMoveMessage,
+    wl_shell_surface_resize: WlShellSurfaceResizeMessage,
+    wl_shell_surface_set_toplevel: WlShellSurfaceSetToplevelMessage,
+    wl_shell_surface_set_transient: WlShellSurfaceSetTransientMessage,
+    wl_shell_surface_set_fullscreen: WlShellSurfaceSetFullscreenMessage,
+    wl_shell_surface_set_popup: WlShellSurfaceSetPopupMessage,
+    wl_shell_surface_set_maximized: WlShellSurfaceSetMaximizedMessage,
+    wl_shell_surface_set_title: WlShellSurfaceSetTitleMessage,
+    wl_shell_surface_set_class: WlShellSurfaceSetClassMessage,
+    wl_surface_destroy: WlSurfaceDestroyMessage,
+    wl_surface_attach: WlSurfaceAttachMessage,
+    wl_surface_damage: WlSurfaceDamageMessage,
+    wl_surface_frame: WlSurfaceFrameMessage,
+    wl_surface_set_opaque_region: WlSurfaceSetOpaqueRegionMessage,
+    wl_surface_set_input_region: WlSurfaceSetInputRegionMessage,
+    wl_surface_commit: WlSurfaceCommitMessage,
+    wl_surface_set_buffer_transform: WlSurfaceSetBufferTransformMessage,
+    wl_surface_set_buffer_scale: WlSurfaceSetBufferScaleMessage,
+    wl_surface_damage_buffer: WlSurfaceDamageBufferMessage,
+    wl_seat_get_pointer: WlSeatGetPointerMessage,
+    wl_seat_get_keyboard: WlSeatGetKeyboardMessage,
+    wl_seat_get_touch: WlSeatGetTouchMessage,
+    wl_seat_release: WlSeatReleaseMessage,
+    wl_pointer_set_cursor: WlPointerSetCursorMessage,
+    wl_pointer_release: WlPointerReleaseMessage,
+    wl_keyboard_release: WlKeyboardReleaseMessage,
+    wl_touch_release: WlTouchReleaseMessage,
+    wl_output_release: WlOutputReleaseMessage,
+    wl_region_destroy: WlRegionDestroyMessage,
+    wl_region_add: WlRegionAddMessage,
+    wl_region_subtract: WlRegionSubtractMessage,
+    wl_subcompositor_destroy: WlSubcompositorDestroyMessage,
+    wl_subcompositor_get_subsurface: WlSubcompositorGetSubsurfaceMessage,
+    wl_subsurface_destroy: WlSubsurfaceDestroyMessage,
+    wl_subsurface_set_position: WlSubsurfaceSetPositionMessage,
+    wl_subsurface_place_above: WlSubsurfacePlaceAboveMessage,
+    wl_subsurface_place_below: WlSubsurfacePlaceBelowMessage,
+    wl_subsurface_set_sync: WlSubsurfaceSetSyncMessage,
+    wl_subsurface_set_desync: WlSubsurfaceSetDesyncMessage,
+    xdg_wm_base_destroy: XdgWmBaseDestroyMessage,
+    xdg_wm_base_create_positioner: XdgWmBaseCreatePositionerMessage,
+    xdg_wm_base_get_xdg_surface: XdgWmBaseGetXdgSurfaceMessage,
+    xdg_wm_base_pong: XdgWmBasePongMessage,
+    xdg_positioner_destroy: XdgPositionerDestroyMessage,
+    xdg_positioner_set_size: XdgPositionerSetSizeMessage,
+    xdg_positioner_set_anchor_rect: XdgPositionerSetAnchorRectMessage,
+    xdg_positioner_set_anchor: XdgPositionerSetAnchorMessage,
+    xdg_positioner_set_gravity: XdgPositionerSetGravityMessage,
+    xdg_positioner_set_constraint_adjustment: XdgPositionerSetConstraintAdjustmentMessage,
+    xdg_positioner_set_offset: XdgPositionerSetOffsetMessage,
+    xdg_surface_destroy: XdgSurfaceDestroyMessage,
+    xdg_surface_get_toplevel: XdgSurfaceGetToplevelMessage,
+    xdg_surface_get_popup: XdgSurfaceGetPopupMessage,
+    xdg_surface_set_window_geometry: XdgSurfaceSetWindowGeometryMessage,
+    xdg_surface_ack_configure: XdgSurfaceAckConfigureMessage,
+    xdg_toplevel_destroy: XdgToplevelDestroyMessage,
+    xdg_toplevel_set_parent: XdgToplevelSetParentMessage,
+    xdg_toplevel_set_title: XdgToplevelSetTitleMessage,
+    xdg_toplevel_set_app_id: XdgToplevelSetAppIdMessage,
+    xdg_toplevel_show_window_menu: XdgToplevelShowWindowMenuMessage,
+    xdg_toplevel_move: XdgToplevelMoveMessage,
+    xdg_toplevel_resize: XdgToplevelResizeMessage,
+    xdg_toplevel_set_max_size: XdgToplevelSetMaxSizeMessage,
+    xdg_toplevel_set_min_size: XdgToplevelSetMinSizeMessage,
+    xdg_toplevel_set_maximized: XdgToplevelSetMaximizedMessage,
+    xdg_toplevel_unset_maximized: XdgToplevelUnsetMaximizedMessage,
+    xdg_toplevel_set_fullscreen: XdgToplevelSetFullscreenMessage,
+    xdg_toplevel_unset_fullscreen: XdgToplevelUnsetFullscreenMessage,
+    xdg_toplevel_set_minimized: XdgToplevelSetMinimizedMessage,
+    xdg_popup_destroy: XdgPopupDestroyMessage,
+    xdg_popup_grab: XdgPopupGrabMessage,
+    zwp_linux_dmabuf_v1_destroy: ZwpLinuxDmabufV1DestroyMessage,
+    zwp_linux_dmabuf_v1_create_params: ZwpLinuxDmabufV1CreateParamsMessage,
+    zwp_linux_buffer_params_v1_destroy: ZwpLinuxBufferParamsV1DestroyMessage,
+    zwp_linux_buffer_params_v1_add: ZwpLinuxBufferParamsV1AddMessage,
+    zwp_linux_buffer_params_v1_create: ZwpLinuxBufferParamsV1CreateMessage,
+    zwp_linux_buffer_params_v1_create_immed: ZwpLinuxBufferParamsV1CreateImmedMessage,
+    fw_control_get_clients: FwControlGetClientsMessage,
+    fw_control_get_windows: FwControlGetWindowsMessage,
+    fw_control_get_window_trees: FwControlGetWindowTreesMessage,
+    fw_control_destroy: FwControlDestroyMessage,
 };
