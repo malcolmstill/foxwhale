@@ -40,9 +40,13 @@ def generate_protocol(protocol, sendType, receiveType, msgs):
             generate_send(child, sendType)
 
 def generate_message_union(msgs):
-    print(f"const WlMessage = enum {{")
+    print(f"const WlMessageTypes = enum {{")
     for m in msgs:
-        print(f"{m},")
+        print(f"{m[0]},")
+    print(f"}};")
+    print(f"const WlMessage = union(WlMessageTypes) {{")
+    for m in msgs:
+        print(f"{m[0]}: {m[1]},")
     print(f"}};")
 
 # Generate enum
@@ -72,7 +76,8 @@ def generate_new_object(interface):
 
 # Generate Dispatch function
 def generate_dispatch_function(interface, receiveType, msgs):
-    print(f"fn {interface.attrib['name']}_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {{")
+    dispatch_function_name = f"{interface.attrib['name']}_dispatch"
+    print(f"fn {dispatch_function_name}(object: Object, opcode: u16) anyerror!WlMessage {{")
     print(f"\tswitch(opcode) {{")
     i = 0
     for child in interface:
@@ -91,8 +96,9 @@ def generate_dispatch_function(interface, receiveType, msgs):
             i = i + 1
 
 def generate_msg(i, receive, interface, msgs):
+    enumName = f"{interface.attrib['name']}_{receive.attrib['name']}"
     messageName = f"{camelCase(interface.attrib['name'])}{camelCase(receive.attrib['name'])}Msg"
-    msgs.append(messageName)
+    msgs.append([enumName, messageName])
     print(f"const {messageName} = struct {{")
     print(f"// TODO: should we include the interface's Object?")
     for arg in receive:

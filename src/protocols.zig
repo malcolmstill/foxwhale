@@ -13,7 +13,7 @@ pub fn new_wl_display(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_display_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_display_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // sync
         0 => {
@@ -91,7 +91,7 @@ pub fn new_wl_registry(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // bind
         0 => {
@@ -163,7 +163,7 @@ pub fn new_wl_callback(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_callback_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_callback_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         else => {
             return error.UnknownOpcode;
@@ -191,7 +191,7 @@ pub fn new_wl_compositor(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_compositor_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_compositor_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // create_surface
         0 => {
@@ -232,7 +232,7 @@ pub fn new_wl_shm_pool(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_shm_pool_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_shm_pool_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // create_buffer
         0 => {
@@ -295,7 +295,7 @@ pub fn new_wl_shm(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_shm_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_shm_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // create_pool
         0 => {
@@ -409,7 +409,7 @@ pub fn new_wl_buffer(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_buffer_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_buffer_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
@@ -454,7 +454,7 @@ pub fn new_wl_data_offer(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_data_offer_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_data_offer_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // accept
         0 => {
@@ -600,7 +600,7 @@ pub fn new_wl_data_source(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_data_source_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_data_source_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // offer
         0 => {
@@ -766,7 +766,7 @@ pub fn new_wl_data_device(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // start_drag
         0 => {
@@ -942,7 +942,7 @@ pub fn new_wl_data_device_manager(id: u32, context: *Context, container: usize) 
     };
 }
 
-fn wl_data_device_manager_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_data_device_manager_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // create_data_source
         0 => {
@@ -996,7 +996,7 @@ pub fn new_wl_shell(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_shell_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_shell_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // get_shell_surface
         0 => {
@@ -1036,7 +1036,7 @@ pub fn new_wl_shell_surface(id: u32, context: *Context, container: usize) Object
     };
 }
 
-fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // pong
         0 => {
@@ -1295,7 +1295,7 @@ pub fn new_wl_surface(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
@@ -1484,7 +1484,7 @@ pub fn new_wl_seat(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_seat_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_seat_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // get_pointer
         0 => {
@@ -1592,7 +1592,7 @@ pub fn new_wl_pointer(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // set_cursor
         0 => {
@@ -1891,7 +1891,7 @@ pub fn new_wl_keyboard(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_keyboard_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_keyboard_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // release
         0 => {
@@ -2017,7 +2017,7 @@ pub fn new_wl_touch(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_touch_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_touch_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // release
         0 => {
@@ -2180,7 +2180,7 @@ pub fn new_wl_output(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_output_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_output_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // release
         0 => {
@@ -2331,7 +2331,7 @@ pub fn new_wl_region(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_region_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_region_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
@@ -2397,7 +2397,7 @@ pub fn new_wl_subcompositor(id: u32, context: *Context, container: usize) Object
     };
 }
 
-fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
@@ -2450,7 +2450,7 @@ pub fn new_wl_subsurface(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
@@ -2536,7 +2536,7 @@ pub fn new_xdg_wm_base(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
@@ -2629,7 +2629,7 @@ pub fn new_xdg_positioner(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn xdg_positioner_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn xdg_positioner_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
@@ -2774,7 +2774,7 @@ pub fn new_xdg_surface(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
@@ -2897,7 +2897,7 @@ pub fn new_xdg_toplevel(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
@@ -3160,7 +3160,7 @@ pub fn new_xdg_popup(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
@@ -3235,7 +3235,7 @@ pub fn new_zwp_linux_dmabuf_v1(id: u32, context: *Context, container: usize) Obj
     };
 }
 
-fn zwp_linux_dmabuf_v1_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn zwp_linux_dmabuf_v1_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
@@ -3318,7 +3318,7 @@ pub fn new_zwp_linux_buffer_params_v1(id: u32, context: *Context, container: usi
     };
 }
 
-fn zwp_linux_buffer_params_v1_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn zwp_linux_buffer_params_v1_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // destroy
         0 => {
@@ -3456,7 +3456,7 @@ pub fn new_fw_control(id: u32, context: *Context, container: usize) Object {
     };
 }
 
-fn fw_control_dispatch(object: Object, opcode: u16) anyerror!WaylandMsg {
+fn fw_control_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         // get_clients
         0 => {
@@ -3547,111 +3547,219 @@ pub fn fw_control_send_done(object: Object) anyerror!void {
     object.context.startWrite();
     try object.context.finishWrite(object.id, 4);
 }
-const WlMessage = enum {
-    WlDisplaySyncMsg,
-    WlDisplayGetRegistryMsg,
-    WlRegistryBindMsg,
-    WlCompositorCreateSurfaceMsg,
-    WlCompositorCreateRegionMsg,
-    WlShmPoolCreateBufferMsg,
-    WlShmPoolDestroyMsg,
-    WlShmPoolResizeMsg,
-    WlShmCreatePoolMsg,
-    WlBufferDestroyMsg,
-    WlDataOfferAcceptMsg,
-    WlDataOfferReceiveMsg,
-    WlDataOfferDestroyMsg,
-    WlDataOfferFinishMsg,
-    WlDataOfferSetActionsMsg,
-    WlDataSourceOfferMsg,
-    WlDataSourceDestroyMsg,
-    WlDataSourceSetActionsMsg,
-    WlDataDeviceStartDragMsg,
-    WlDataDeviceSetSelectionMsg,
-    WlDataDeviceReleaseMsg,
-    WlDataDeviceManagerCreateDataSourceMsg,
-    WlDataDeviceManagerGetDataDeviceMsg,
-    WlShellGetShellSurfaceMsg,
-    WlShellSurfacePongMsg,
-    WlShellSurfaceMoveMsg,
-    WlShellSurfaceResizeMsg,
-    WlShellSurfaceSetToplevelMsg,
-    WlShellSurfaceSetTransientMsg,
-    WlShellSurfaceSetFullscreenMsg,
-    WlShellSurfaceSetPopupMsg,
-    WlShellSurfaceSetMaximizedMsg,
-    WlShellSurfaceSetTitleMsg,
-    WlShellSurfaceSetClassMsg,
-    WlSurfaceDestroyMsg,
-    WlSurfaceAttachMsg,
-    WlSurfaceDamageMsg,
-    WlSurfaceFrameMsg,
-    WlSurfaceSetOpaqueRegionMsg,
-    WlSurfaceSetInputRegionMsg,
-    WlSurfaceCommitMsg,
-    WlSurfaceSetBufferTransformMsg,
-    WlSurfaceSetBufferScaleMsg,
-    WlSurfaceDamageBufferMsg,
-    WlSeatGetPointerMsg,
-    WlSeatGetKeyboardMsg,
-    WlSeatGetTouchMsg,
-    WlSeatReleaseMsg,
-    WlPointerSetCursorMsg,
-    WlPointerReleaseMsg,
-    WlKeyboardReleaseMsg,
-    WlTouchReleaseMsg,
-    WlOutputReleaseMsg,
-    WlRegionDestroyMsg,
-    WlRegionAddMsg,
-    WlRegionSubtractMsg,
-    WlSubcompositorDestroyMsg,
-    WlSubcompositorGetSubsurfaceMsg,
-    WlSubsurfaceDestroyMsg,
-    WlSubsurfaceSetPositionMsg,
-    WlSubsurfacePlaceAboveMsg,
-    WlSubsurfacePlaceBelowMsg,
-    WlSubsurfaceSetSyncMsg,
-    WlSubsurfaceSetDesyncMsg,
-    XdgWmBaseDestroyMsg,
-    XdgWmBaseCreatePositionerMsg,
-    XdgWmBaseGetXdgSurfaceMsg,
-    XdgWmBasePongMsg,
-    XdgPositionerDestroyMsg,
-    XdgPositionerSetSizeMsg,
-    XdgPositionerSetAnchorRectMsg,
-    XdgPositionerSetAnchorMsg,
-    XdgPositionerSetGravityMsg,
-    XdgPositionerSetConstraintAdjustmentMsg,
-    XdgPositionerSetOffsetMsg,
-    XdgSurfaceDestroyMsg,
-    XdgSurfaceGetToplevelMsg,
-    XdgSurfaceGetPopupMsg,
-    XdgSurfaceSetWindowGeometryMsg,
-    XdgSurfaceAckConfigureMsg,
-    XdgToplevelDestroyMsg,
-    XdgToplevelSetParentMsg,
-    XdgToplevelSetTitleMsg,
-    XdgToplevelSetAppIdMsg,
-    XdgToplevelShowWindowMenuMsg,
-    XdgToplevelMoveMsg,
-    XdgToplevelResizeMsg,
-    XdgToplevelSetMaxSizeMsg,
-    XdgToplevelSetMinSizeMsg,
-    XdgToplevelSetMaximizedMsg,
-    XdgToplevelUnsetMaximizedMsg,
-    XdgToplevelSetFullscreenMsg,
-    XdgToplevelUnsetFullscreenMsg,
-    XdgToplevelSetMinimizedMsg,
-    XdgPopupDestroyMsg,
-    XdgPopupGrabMsg,
-    ZwpLinuxDmabufV1DestroyMsg,
-    ZwpLinuxDmabufV1CreateParamsMsg,
-    ZwpLinuxBufferParamsV1DestroyMsg,
-    ZwpLinuxBufferParamsV1AddMsg,
-    ZwpLinuxBufferParamsV1CreateMsg,
-    ZwpLinuxBufferParamsV1CreateImmedMsg,
-    FwControlGetClientsMsg,
-    FwControlGetWindowsMsg,
-    FwControlGetWindowTreesMsg,
-    FwControlDestroyMsg,
+const WlMessageTypes = enum {
+    wl_display_sync,
+    wl_display_get_registry,
+    wl_registry_bind,
+    wl_compositor_create_surface,
+    wl_compositor_create_region,
+    wl_shm_pool_create_buffer,
+    wl_shm_pool_destroy,
+    wl_shm_pool_resize,
+    wl_shm_create_pool,
+    wl_buffer_destroy,
+    wl_data_offer_accept,
+    wl_data_offer_receive,
+    wl_data_offer_destroy,
+    wl_data_offer_finish,
+    wl_data_offer_set_actions,
+    wl_data_source_offer,
+    wl_data_source_destroy,
+    wl_data_source_set_actions,
+    wl_data_device_start_drag,
+    wl_data_device_set_selection,
+    wl_data_device_release,
+    wl_data_device_manager_create_data_source,
+    wl_data_device_manager_get_data_device,
+    wl_shell_get_shell_surface,
+    wl_shell_surface_pong,
+    wl_shell_surface_move,
+    wl_shell_surface_resize,
+    wl_shell_surface_set_toplevel,
+    wl_shell_surface_set_transient,
+    wl_shell_surface_set_fullscreen,
+    wl_shell_surface_set_popup,
+    wl_shell_surface_set_maximized,
+    wl_shell_surface_set_title,
+    wl_shell_surface_set_class,
+    wl_surface_destroy,
+    wl_surface_attach,
+    wl_surface_damage,
+    wl_surface_frame,
+    wl_surface_set_opaque_region,
+    wl_surface_set_input_region,
+    wl_surface_commit,
+    wl_surface_set_buffer_transform,
+    wl_surface_set_buffer_scale,
+    wl_surface_damage_buffer,
+    wl_seat_get_pointer,
+    wl_seat_get_keyboard,
+    wl_seat_get_touch,
+    wl_seat_release,
+    wl_pointer_set_cursor,
+    wl_pointer_release,
+    wl_keyboard_release,
+    wl_touch_release,
+    wl_output_release,
+    wl_region_destroy,
+    wl_region_add,
+    wl_region_subtract,
+    wl_subcompositor_destroy,
+    wl_subcompositor_get_subsurface,
+    wl_subsurface_destroy,
+    wl_subsurface_set_position,
+    wl_subsurface_place_above,
+    wl_subsurface_place_below,
+    wl_subsurface_set_sync,
+    wl_subsurface_set_desync,
+    xdg_wm_base_destroy,
+    xdg_wm_base_create_positioner,
+    xdg_wm_base_get_xdg_surface,
+    xdg_wm_base_pong,
+    xdg_positioner_destroy,
+    xdg_positioner_set_size,
+    xdg_positioner_set_anchor_rect,
+    xdg_positioner_set_anchor,
+    xdg_positioner_set_gravity,
+    xdg_positioner_set_constraint_adjustment,
+    xdg_positioner_set_offset,
+    xdg_surface_destroy,
+    xdg_surface_get_toplevel,
+    xdg_surface_get_popup,
+    xdg_surface_set_window_geometry,
+    xdg_surface_ack_configure,
+    xdg_toplevel_destroy,
+    xdg_toplevel_set_parent,
+    xdg_toplevel_set_title,
+    xdg_toplevel_set_app_id,
+    xdg_toplevel_show_window_menu,
+    xdg_toplevel_move,
+    xdg_toplevel_resize,
+    xdg_toplevel_set_max_size,
+    xdg_toplevel_set_min_size,
+    xdg_toplevel_set_maximized,
+    xdg_toplevel_unset_maximized,
+    xdg_toplevel_set_fullscreen,
+    xdg_toplevel_unset_fullscreen,
+    xdg_toplevel_set_minimized,
+    xdg_popup_destroy,
+    xdg_popup_grab,
+    zwp_linux_dmabuf_v1_destroy,
+    zwp_linux_dmabuf_v1_create_params,
+    zwp_linux_buffer_params_v1_destroy,
+    zwp_linux_buffer_params_v1_add,
+    zwp_linux_buffer_params_v1_create,
+    zwp_linux_buffer_params_v1_create_immed,
+    fw_control_get_clients,
+    fw_control_get_windows,
+    fw_control_get_window_trees,
+    fw_control_destroy,
+};
+const WlMessage = union(WlMessageTypes) {
+    wl_display_sync: WlDisplaySyncMsg,
+    wl_display_get_registry: WlDisplayGetRegistryMsg,
+    wl_registry_bind: WlRegistryBindMsg,
+    wl_compositor_create_surface: WlCompositorCreateSurfaceMsg,
+    wl_compositor_create_region: WlCompositorCreateRegionMsg,
+    wl_shm_pool_create_buffer: WlShmPoolCreateBufferMsg,
+    wl_shm_pool_destroy: WlShmPoolDestroyMsg,
+    wl_shm_pool_resize: WlShmPoolResizeMsg,
+    wl_shm_create_pool: WlShmCreatePoolMsg,
+    wl_buffer_destroy: WlBufferDestroyMsg,
+    wl_data_offer_accept: WlDataOfferAcceptMsg,
+    wl_data_offer_receive: WlDataOfferReceiveMsg,
+    wl_data_offer_destroy: WlDataOfferDestroyMsg,
+    wl_data_offer_finish: WlDataOfferFinishMsg,
+    wl_data_offer_set_actions: WlDataOfferSetActionsMsg,
+    wl_data_source_offer: WlDataSourceOfferMsg,
+    wl_data_source_destroy: WlDataSourceDestroyMsg,
+    wl_data_source_set_actions: WlDataSourceSetActionsMsg,
+    wl_data_device_start_drag: WlDataDeviceStartDragMsg,
+    wl_data_device_set_selection: WlDataDeviceSetSelectionMsg,
+    wl_data_device_release: WlDataDeviceReleaseMsg,
+    wl_data_device_manager_create_data_source: WlDataDeviceManagerCreateDataSourceMsg,
+    wl_data_device_manager_get_data_device: WlDataDeviceManagerGetDataDeviceMsg,
+    wl_shell_get_shell_surface: WlShellGetShellSurfaceMsg,
+    wl_shell_surface_pong: WlShellSurfacePongMsg,
+    wl_shell_surface_move: WlShellSurfaceMoveMsg,
+    wl_shell_surface_resize: WlShellSurfaceResizeMsg,
+    wl_shell_surface_set_toplevel: WlShellSurfaceSetToplevelMsg,
+    wl_shell_surface_set_transient: WlShellSurfaceSetTransientMsg,
+    wl_shell_surface_set_fullscreen: WlShellSurfaceSetFullscreenMsg,
+    wl_shell_surface_set_popup: WlShellSurfaceSetPopupMsg,
+    wl_shell_surface_set_maximized: WlShellSurfaceSetMaximizedMsg,
+    wl_shell_surface_set_title: WlShellSurfaceSetTitleMsg,
+    wl_shell_surface_set_class: WlShellSurfaceSetClassMsg,
+    wl_surface_destroy: WlSurfaceDestroyMsg,
+    wl_surface_attach: WlSurfaceAttachMsg,
+    wl_surface_damage: WlSurfaceDamageMsg,
+    wl_surface_frame: WlSurfaceFrameMsg,
+    wl_surface_set_opaque_region: WlSurfaceSetOpaqueRegionMsg,
+    wl_surface_set_input_region: WlSurfaceSetInputRegionMsg,
+    wl_surface_commit: WlSurfaceCommitMsg,
+    wl_surface_set_buffer_transform: WlSurfaceSetBufferTransformMsg,
+    wl_surface_set_buffer_scale: WlSurfaceSetBufferScaleMsg,
+    wl_surface_damage_buffer: WlSurfaceDamageBufferMsg,
+    wl_seat_get_pointer: WlSeatGetPointerMsg,
+    wl_seat_get_keyboard: WlSeatGetKeyboardMsg,
+    wl_seat_get_touch: WlSeatGetTouchMsg,
+    wl_seat_release: WlSeatReleaseMsg,
+    wl_pointer_set_cursor: WlPointerSetCursorMsg,
+    wl_pointer_release: WlPointerReleaseMsg,
+    wl_keyboard_release: WlKeyboardReleaseMsg,
+    wl_touch_release: WlTouchReleaseMsg,
+    wl_output_release: WlOutputReleaseMsg,
+    wl_region_destroy: WlRegionDestroyMsg,
+    wl_region_add: WlRegionAddMsg,
+    wl_region_subtract: WlRegionSubtractMsg,
+    wl_subcompositor_destroy: WlSubcompositorDestroyMsg,
+    wl_subcompositor_get_subsurface: WlSubcompositorGetSubsurfaceMsg,
+    wl_subsurface_destroy: WlSubsurfaceDestroyMsg,
+    wl_subsurface_set_position: WlSubsurfaceSetPositionMsg,
+    wl_subsurface_place_above: WlSubsurfacePlaceAboveMsg,
+    wl_subsurface_place_below: WlSubsurfacePlaceBelowMsg,
+    wl_subsurface_set_sync: WlSubsurfaceSetSyncMsg,
+    wl_subsurface_set_desync: WlSubsurfaceSetDesyncMsg,
+    xdg_wm_base_destroy: XdgWmBaseDestroyMsg,
+    xdg_wm_base_create_positioner: XdgWmBaseCreatePositionerMsg,
+    xdg_wm_base_get_xdg_surface: XdgWmBaseGetXdgSurfaceMsg,
+    xdg_wm_base_pong: XdgWmBasePongMsg,
+    xdg_positioner_destroy: XdgPositionerDestroyMsg,
+    xdg_positioner_set_size: XdgPositionerSetSizeMsg,
+    xdg_positioner_set_anchor_rect: XdgPositionerSetAnchorRectMsg,
+    xdg_positioner_set_anchor: XdgPositionerSetAnchorMsg,
+    xdg_positioner_set_gravity: XdgPositionerSetGravityMsg,
+    xdg_positioner_set_constraint_adjustment: XdgPositionerSetConstraintAdjustmentMsg,
+    xdg_positioner_set_offset: XdgPositionerSetOffsetMsg,
+    xdg_surface_destroy: XdgSurfaceDestroyMsg,
+    xdg_surface_get_toplevel: XdgSurfaceGetToplevelMsg,
+    xdg_surface_get_popup: XdgSurfaceGetPopupMsg,
+    xdg_surface_set_window_geometry: XdgSurfaceSetWindowGeometryMsg,
+    xdg_surface_ack_configure: XdgSurfaceAckConfigureMsg,
+    xdg_toplevel_destroy: XdgToplevelDestroyMsg,
+    xdg_toplevel_set_parent: XdgToplevelSetParentMsg,
+    xdg_toplevel_set_title: XdgToplevelSetTitleMsg,
+    xdg_toplevel_set_app_id: XdgToplevelSetAppIdMsg,
+    xdg_toplevel_show_window_menu: XdgToplevelShowWindowMenuMsg,
+    xdg_toplevel_move: XdgToplevelMoveMsg,
+    xdg_toplevel_resize: XdgToplevelResizeMsg,
+    xdg_toplevel_set_max_size: XdgToplevelSetMaxSizeMsg,
+    xdg_toplevel_set_min_size: XdgToplevelSetMinSizeMsg,
+    xdg_toplevel_set_maximized: XdgToplevelSetMaximizedMsg,
+    xdg_toplevel_unset_maximized: XdgToplevelUnsetMaximizedMsg,
+    xdg_toplevel_set_fullscreen: XdgToplevelSetFullscreenMsg,
+    xdg_toplevel_unset_fullscreen: XdgToplevelUnsetFullscreenMsg,
+    xdg_toplevel_set_minimized: XdgToplevelSetMinimizedMsg,
+    xdg_popup_destroy: XdgPopupDestroyMsg,
+    xdg_popup_grab: XdgPopupGrabMsg,
+    zwp_linux_dmabuf_v1_destroy: ZwpLinuxDmabufV1DestroyMsg,
+    zwp_linux_dmabuf_v1_create_params: ZwpLinuxDmabufV1CreateParamsMsg,
+    zwp_linux_buffer_params_v1_destroy: ZwpLinuxBufferParamsV1DestroyMsg,
+    zwp_linux_buffer_params_v1_add: ZwpLinuxBufferParamsV1AddMsg,
+    zwp_linux_buffer_params_v1_create: ZwpLinuxBufferParamsV1CreateMsg,
+    zwp_linux_buffer_params_v1_create_immed: ZwpLinuxBufferParamsV1CreateImmedMsg,
+    fw_control_get_clients: FwControlGetClientsMsg,
+    fw_control_get_windows: FwControlGetWindowsMsg,
+    fw_control_get_window_trees: FwControlGetWindowTreesMsg,
+    fw_control_destroy: FwControlDestroyMsg,
 };
