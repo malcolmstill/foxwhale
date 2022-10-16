@@ -85,7 +85,7 @@ def generate_dispatch_function(interface, receiveType, msgs):
             fix_wl_registry(interface, child)
             generate_receive_dispatch(i, child, interface)
             i = i + 1
-    print(f"\t\telse => {{return error.UnknownOpcode;}},")
+    print(f"\t\telse => {{std.log.info(\"{{}}\", .{{object}}); return error.UnknownOpcode;}},")
     print(f"\t}}")
     print(f"}}")
     # Generate *Msg

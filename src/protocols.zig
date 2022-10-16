@@ -30,6 +30,7 @@ fn wl_display_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -107,6 +108,7 @@ fn wl_registry_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -166,6 +168,7 @@ pub fn new_wl_callback(id: u32, context: *Context, container: usize) Object {
 fn wl_callback_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
     switch (opcode) {
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -208,6 +211,7 @@ fn wl_compositor_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -263,6 +267,7 @@ fn wl_shm_pool_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -309,6 +314,7 @@ fn wl_shm_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -416,6 +422,7 @@ fn wl_buffer_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             return WlBufferDestroyMessage{};
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -492,6 +499,7 @@ fn wl_data_offer_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -621,6 +629,7 @@ fn wl_data_source_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -813,6 +822,7 @@ fn wl_data_device_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             return WlDataDeviceReleaseMessage{};
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -964,6 +974,7 @@ fn wl_data_device_manager_dispatch(object: Object, opcode: u16) anyerror!WlMessa
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -1011,6 +1022,7 @@ fn wl_shell_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -1157,6 +1169,7 @@ fn wl_shell_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -1393,6 +1406,7 @@ fn wl_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -1512,6 +1526,7 @@ fn wl_seat_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             return WlSeatReleaseMessage{};
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -1617,6 +1632,7 @@ fn wl_pointer_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             return WlPointerReleaseMessage{};
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -1898,6 +1914,7 @@ fn wl_keyboard_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             return WlKeyboardReleaseMessage{};
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -2024,6 +2041,7 @@ fn wl_touch_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             return WlTouchReleaseMessage{};
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -2187,6 +2205,7 @@ fn wl_output_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             return WlOutputReleaseMessage{};
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -2364,6 +2383,7 @@ fn wl_region_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -2421,6 +2441,7 @@ fn wl_subcompositor_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -2494,6 +2515,7 @@ fn wl_subsurface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             return WlSubsurfaceSetDesyncMessage{};
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -2569,6 +2591,7 @@ fn xdg_wm_base_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -2688,6 +2711,7 @@ fn xdg_positioner_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -2827,6 +2851,7 @@ fn xdg_surface_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -3018,6 +3043,7 @@ fn xdg_toplevel_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             return XdgToplevelSetMinimizedMessage{};
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -3179,6 +3205,7 @@ fn xdg_popup_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -3249,6 +3276,7 @@ fn zwp_linux_dmabuf_v1_dispatch(object: Object, opcode: u16) anyerror!WlMessage 
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -3370,6 +3398,7 @@ fn zwp_linux_buffer_params_v1_dispatch(object: Object, opcode: u16) anyerror!WlM
             };
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
@@ -3475,6 +3504,7 @@ fn fw_control_dispatch(object: Object, opcode: u16) anyerror!WlMessage {
             return FwControlDestroyMessage{};
         },
         else => {
+            std.log.info("{}", .{object});
             return error.UnknownOpcode;
         },
     }
