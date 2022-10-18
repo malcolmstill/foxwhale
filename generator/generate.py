@@ -218,18 +218,18 @@ def generate_next(arg):
             if "interface" in arg.attrib:
                 object_interface = arg.attrib["interface"]
                 object_type = camelCase(arg.attrib["interface"])
-                print(f"\t\t\tvar {name}: ?{object_type} = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else null;")
+                print(f"\t\t\tconst {name}: ?{object_type} = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else null;")
             else:
-                print(f"\t\t\tvar {name}: ?WlObject = try self.client.context.objects.get(try self.client.context.next_u32());")
+                print(f"\t\t\tconst {name}: ?WlObject = try self.client.context.objects.get(try self.client.context.next_u32());")
         else:
             if "interface" in arg.attrib:
                 object_interface = arg.attrib["interface"]
                 object_type = camelCase(arg.attrib["interface"])
-                print(f"\t\t\tvar {name}: {object_type} = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else return error.ExpectedObject;")
+                print(f"\t\t\tconst {name}: {object_type} = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else return error.ExpectedObject;")
             else:
-                print(f"\t\t\tvar {name}: WlObject = try self.client.context.objects.get(try self.client.context.next_u32());")
+                print(f"\t\t\tconst {name}: WlObject = try self.client.context.objects.get(try self.client.context.next_u32());")
     else:    
-        print(f"\t\t\t\tvar {name}: {atype} = try self.client.context.next{next_type(arg.attrib['type'])}();")
+        print(f"\t\t\t\tconst {name}: {atype} = try self.client.context.next{next_type(arg.attrib['type'])}();")
 
 def next_type(type):
     types = {

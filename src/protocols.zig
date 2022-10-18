@@ -23,7 +23,7 @@ pub const WlDisplay = struct {
         switch (opcode) {
             // sync
             0 => {
-                var callback: u32 = try self.client.context.nextU32();
+                const callback: u32 = try self.client.context.nextU32();
                 return Message{
                     .sync = SyncMessage{
                         .callback = callback,
@@ -32,7 +32,7 @@ pub const WlDisplay = struct {
             },
             // get_registry
             1 => {
-                var registry: u32 = try self.client.context.nextU32();
+                const registry: u32 = try self.client.context.nextU32();
                 return Message{
                     .get_registry = GetRegistryMessage{
                         .registry = registry,
@@ -126,10 +126,10 @@ pub const WlRegistry = struct {
         switch (opcode) {
             // bind
             0 => {
-                var name: u32 = try self.client.context.nextU32();
-                var name_string: []u8 = try self.client.context.nextString();
-                var version: u32 = try self.client.context.nextU32();
-                var id: u32 = try self.client.context.nextU32();
+                const name: u32 = try self.client.context.nextU32();
+                const name_string: []u8 = try self.client.context.nextString();
+                const version: u32 = try self.client.context.nextU32();
+                const id: u32 = try self.client.context.nextU32();
                 return Message{
                     .bind = BindMessage{
                         .name = name,
@@ -259,7 +259,7 @@ pub const WlCompositor = struct {
         switch (opcode) {
             // create_surface
             0 => {
-                var id: u32 = try self.client.context.nextU32();
+                const id: u32 = try self.client.context.nextU32();
                 return Message{
                     .create_surface = CreateSurfaceMessage{
                         .id = id,
@@ -268,7 +268,7 @@ pub const WlCompositor = struct {
             },
             // create_region
             1 => {
-                var id: u32 = try self.client.context.nextU32();
+                const id: u32 = try self.client.context.nextU32();
                 return Message{
                     .create_region = CreateRegionMessage{
                         .id = id,
@@ -325,12 +325,12 @@ pub const WlShmPool = struct {
         switch (opcode) {
             // create_buffer
             0 => {
-                var id: u32 = try self.client.context.nextU32();
-                var offset: i32 = try self.client.context.nextI32();
-                var width: i32 = try self.client.context.nextI32();
-                var height: i32 = try self.client.context.nextI32();
-                var stride: i32 = try self.client.context.nextI32();
-                var format: u32 = try self.client.context.nextU32();
+                const id: u32 = try self.client.context.nextU32();
+                const offset: i32 = try self.client.context.nextI32();
+                const width: i32 = try self.client.context.nextI32();
+                const height: i32 = try self.client.context.nextI32();
+                const stride: i32 = try self.client.context.nextI32();
+                const format: u32 = try self.client.context.nextU32();
                 return Message{
                     .create_buffer = CreateBufferMessage{
                         .id = id,
@@ -350,7 +350,7 @@ pub const WlShmPool = struct {
             },
             // resize
             2 => {
-                var size: i32 = try self.client.context.nextI32();
+                const size: i32 = try self.client.context.nextI32();
                 return Message{
                     .resize = ResizeMessage{
                         .size = size,
@@ -418,9 +418,9 @@ pub const WlShm = struct {
         switch (opcode) {
             // create_pool
             0 => {
-                var id: u32 = try self.client.context.nextU32();
-                var fd: i32 = try self.client.context.nextFd();
-                var size: i32 = try self.client.context.nextI32();
+                const id: u32 = try self.client.context.nextU32();
+                const fd: i32 = try self.client.context.nextFd();
+                const size: i32 = try self.client.context.nextI32();
                 return Message{
                     .create_pool = CreatePoolMessage{
                         .id = id,
@@ -617,8 +617,8 @@ pub const WlDataOffer = struct {
         switch (opcode) {
             // accept
             0 => {
-                var serial: u32 = try self.client.context.nextU32();
-                var mime_type: []u8 = try self.client.context.nextString();
+                const serial: u32 = try self.client.context.nextU32();
+                const mime_type: []u8 = try self.client.context.nextString();
                 return Message{
                     .accept = AcceptMessage{
                         .serial = serial,
@@ -628,8 +628,8 @@ pub const WlDataOffer = struct {
             },
             // receive
             1 => {
-                var mime_type: []u8 = try self.client.context.nextString();
-                var fd: i32 = try self.client.context.nextFd();
+                const mime_type: []u8 = try self.client.context.nextString();
+                const fd: i32 = try self.client.context.nextFd();
                 return Message{
                     .receive = ReceiveMessage{
                         .mime_type = mime_type,
@@ -651,8 +651,8 @@ pub const WlDataOffer = struct {
             },
             // set_actions
             4 => {
-                var dnd_actions: u32 = try self.client.context.nextU32();
-                var preferred_action: u32 = try self.client.context.nextU32();
+                const dnd_actions: u32 = try self.client.context.nextU32();
+                const preferred_action: u32 = try self.client.context.nextU32();
                 return Message{
                     .set_actions = SetActionsMessage{
                         .dnd_actions = dnd_actions,
@@ -803,7 +803,7 @@ pub const WlDataSource = struct {
         switch (opcode) {
             // offer
             0 => {
-                var mime_type: []u8 = try self.client.context.nextString();
+                const mime_type: []u8 = try self.client.context.nextString();
                 return Message{
                     .offer = OfferMessage{
                         .mime_type = mime_type,
@@ -818,7 +818,7 @@ pub const WlDataSource = struct {
             },
             // set_actions
             2 => {
-                var dnd_actions: u32 = try self.client.context.nextU32();
+                const dnd_actions: u32 = try self.client.context.nextU32();
                 return Message{
                     .set_actions = SetActionsMessage{
                         .dnd_actions = dnd_actions,
@@ -999,19 +999,19 @@ pub const WlDataDevice = struct {
         switch (opcode) {
             // start_drag
             0 => {
-                var source: ?WlDataSource = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const source: ?WlDataSource = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_data_source => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
-                var origin: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const origin: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                var icon: ?WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const icon: ?WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
-                var serial: u32 = try self.client.context.nextU32();
+                const serial: u32 = try self.client.context.nextU32();
                 return Message{
                     .start_drag = StartDragMessage{
                         .source = source,
@@ -1023,11 +1023,11 @@ pub const WlDataDevice = struct {
             },
             // set_selection
             1 => {
-                var source: ?WlDataSource = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const source: ?WlDataSource = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_data_source => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
-                var serial: u32 = try self.client.context.nextU32();
+                const serial: u32 = try self.client.context.nextU32();
                 return Message{
                     .set_selection = SetSelectionMessage{
                         .source = source,
@@ -1199,7 +1199,7 @@ pub const WlDataDeviceManager = struct {
         switch (opcode) {
             // create_data_source
             0 => {
-                var id: u32 = try self.client.context.nextU32();
+                const id: u32 = try self.client.context.nextU32();
                 return Message{
                     .create_data_source = CreateDataSourceMessage{
                         .id = id,
@@ -1208,8 +1208,8 @@ pub const WlDataDeviceManager = struct {
             },
             // get_data_device
             1 => {
-                var id: u32 = try self.client.context.nextU32();
-                var seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const id: u32 = try self.client.context.nextU32();
+                const seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -1278,8 +1278,8 @@ pub const WlShell = struct {
         switch (opcode) {
             // get_shell_surface
             0 => {
-                var id: u32 = try self.client.context.nextU32();
-                var surface: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const id: u32 = try self.client.context.nextU32();
+                const surface: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -1338,7 +1338,7 @@ pub const WlShellSurface = struct {
         switch (opcode) {
             // pong
             0 => {
-                var serial: u32 = try self.client.context.nextU32();
+                const serial: u32 = try self.client.context.nextU32();
                 return Message{
                     .pong = PongMessage{
                         .serial = serial,
@@ -1347,11 +1347,11 @@ pub const WlShellSurface = struct {
             },
             // move
             1 => {
-                var seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                var serial: u32 = try self.client.context.nextU32();
+                const serial: u32 = try self.client.context.nextU32();
                 return Message{
                     .move = MoveMessage{
                         .seat = seat,
@@ -1361,12 +1361,12 @@ pub const WlShellSurface = struct {
             },
             // resize
             2 => {
-                var seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                var serial: u32 = try self.client.context.nextU32();
-                var edges: u32 = try self.client.context.nextU32();
+                const serial: u32 = try self.client.context.nextU32();
+                const edges: u32 = try self.client.context.nextU32();
                 return Message{
                     .resize = ResizeMessage{
                         .seat = seat,
@@ -1383,13 +1383,13 @@ pub const WlShellSurface = struct {
             },
             // set_transient
             4 => {
-                var parent: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const parent: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                var x: i32 = try self.client.context.nextI32();
-                var y: i32 = try self.client.context.nextI32();
-                var flags: u32 = try self.client.context.nextU32();
+                const x: i32 = try self.client.context.nextI32();
+                const y: i32 = try self.client.context.nextI32();
+                const flags: u32 = try self.client.context.nextU32();
                 return Message{
                     .set_transient = SetTransientMessage{
                         .parent = parent,
@@ -1401,9 +1401,9 @@ pub const WlShellSurface = struct {
             },
             // set_fullscreen
             5 => {
-                var method: u32 = try self.client.context.nextU32();
-                var framerate: u32 = try self.client.context.nextU32();
-                var output: ?WlOutput = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const method: u32 = try self.client.context.nextU32();
+                const framerate: u32 = try self.client.context.nextU32();
+                const output: ?WlOutput = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_output => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1417,18 +1417,18 @@ pub const WlShellSurface = struct {
             },
             // set_popup
             6 => {
-                var seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                var serial: u32 = try self.client.context.nextU32();
-                var parent: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const serial: u32 = try self.client.context.nextU32();
+                const parent: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                var x: i32 = try self.client.context.nextI32();
-                var y: i32 = try self.client.context.nextI32();
-                var flags: u32 = try self.client.context.nextU32();
+                const x: i32 = try self.client.context.nextI32();
+                const y: i32 = try self.client.context.nextI32();
+                const flags: u32 = try self.client.context.nextU32();
                 return Message{
                     .set_popup = SetPopupMessage{
                         .seat = seat,
@@ -1442,7 +1442,7 @@ pub const WlShellSurface = struct {
             },
             // set_maximized
             7 => {
-                var output: ?WlOutput = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const output: ?WlOutput = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_output => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1454,7 +1454,7 @@ pub const WlShellSurface = struct {
             },
             // set_title
             8 => {
-                var title: []u8 = try self.client.context.nextString();
+                const title: []u8 = try self.client.context.nextString();
                 return Message{
                     .set_title = SetTitleMessage{
                         .title = title,
@@ -1463,7 +1463,7 @@ pub const WlShellSurface = struct {
             },
             // set_class
             9 => {
-                var class_: []u8 = try self.client.context.nextString();
+                const class_: []u8 = try self.client.context.nextString();
                 return Message{
                     .set_class = SetClassMessage{
                         .class_ = class_,
@@ -1664,12 +1664,12 @@ pub const WlSurface = struct {
             },
             // attach
             1 => {
-                var buffer: ?WlBuffer = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const buffer: ?WlBuffer = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_buffer => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
-                var x: i32 = try self.client.context.nextI32();
-                var y: i32 = try self.client.context.nextI32();
+                const x: i32 = try self.client.context.nextI32();
+                const y: i32 = try self.client.context.nextI32();
                 return Message{
                     .attach = AttachMessage{
                         .buffer = buffer,
@@ -1680,10 +1680,10 @@ pub const WlSurface = struct {
             },
             // damage
             2 => {
-                var x: i32 = try self.client.context.nextI32();
-                var y: i32 = try self.client.context.nextI32();
-                var width: i32 = try self.client.context.nextI32();
-                var height: i32 = try self.client.context.nextI32();
+                const x: i32 = try self.client.context.nextI32();
+                const y: i32 = try self.client.context.nextI32();
+                const width: i32 = try self.client.context.nextI32();
+                const height: i32 = try self.client.context.nextI32();
                 return Message{
                     .damage = DamageMessage{
                         .x = x,
@@ -1695,7 +1695,7 @@ pub const WlSurface = struct {
             },
             // frame
             3 => {
-                var callback: u32 = try self.client.context.nextU32();
+                const callback: u32 = try self.client.context.nextU32();
                 return Message{
                     .frame = FrameMessage{
                         .callback = callback,
@@ -1704,7 +1704,7 @@ pub const WlSurface = struct {
             },
             // set_opaque_region
             4 => {
-                var region: ?WlRegion = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const region: ?WlRegion = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_region => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1716,7 +1716,7 @@ pub const WlSurface = struct {
             },
             // set_input_region
             5 => {
-                var region: ?WlRegion = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const region: ?WlRegion = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_region => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1734,7 +1734,7 @@ pub const WlSurface = struct {
             },
             // set_buffer_transform
             7 => {
-                var transform: i32 = try self.client.context.nextI32();
+                const transform: i32 = try self.client.context.nextI32();
                 return Message{
                     .set_buffer_transform = SetBufferTransformMessage{
                         .transform = transform,
@@ -1743,7 +1743,7 @@ pub const WlSurface = struct {
             },
             // set_buffer_scale
             8 => {
-                var scale: i32 = try self.client.context.nextI32();
+                const scale: i32 = try self.client.context.nextI32();
                 return Message{
                     .set_buffer_scale = SetBufferScaleMessage{
                         .scale = scale,
@@ -1752,10 +1752,10 @@ pub const WlSurface = struct {
             },
             // damage_buffer
             9 => {
-                var x: i32 = try self.client.context.nextI32();
-                var y: i32 = try self.client.context.nextI32();
-                var width: i32 = try self.client.context.nextI32();
-                var height: i32 = try self.client.context.nextI32();
+                const x: i32 = try self.client.context.nextI32();
+                const y: i32 = try self.client.context.nextI32();
+                const width: i32 = try self.client.context.nextI32();
+                const height: i32 = try self.client.context.nextI32();
                 return Message{
                     .damage_buffer = DamageBufferMessage{
                         .x = x,
@@ -1906,7 +1906,7 @@ pub const WlSeat = struct {
         switch (opcode) {
             // get_pointer
             0 => {
-                var id: u32 = try self.client.context.nextU32();
+                const id: u32 = try self.client.context.nextU32();
                 return Message{
                     .get_pointer = GetPointerMessage{
                         .id = id,
@@ -1915,7 +1915,7 @@ pub const WlSeat = struct {
             },
             // get_keyboard
             1 => {
-                var id: u32 = try self.client.context.nextU32();
+                const id: u32 = try self.client.context.nextU32();
                 return Message{
                     .get_keyboard = GetKeyboardMessage{
                         .id = id,
@@ -1924,7 +1924,7 @@ pub const WlSeat = struct {
             },
             // get_touch
             2 => {
-                var id: u32 = try self.client.context.nextU32();
+                const id: u32 = try self.client.context.nextU32();
                 return Message{
                     .get_touch = GetTouchMessage{
                         .id = id,
@@ -2049,13 +2049,13 @@ pub const WlPointer = struct {
         switch (opcode) {
             // set_cursor
             0 => {
-                var serial: u32 = try self.client.context.nextU32();
-                var surface: ?WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const serial: u32 = try self.client.context.nextU32();
+                const surface: ?WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
-                var hotspot_x: i32 = try self.client.context.nextI32();
-                var hotspot_y: i32 = try self.client.context.nextI32();
+                const hotspot_x: i32 = try self.client.context.nextI32();
+                const hotspot_y: i32 = try self.client.context.nextI32();
                 return Message{
                     .set_cursor = SetCursorMessage{
                         .serial = serial,
@@ -2877,10 +2877,10 @@ pub const WlRegion = struct {
             },
             // add
             1 => {
-                var x: i32 = try self.client.context.nextI32();
-                var y: i32 = try self.client.context.nextI32();
-                var width: i32 = try self.client.context.nextI32();
-                var height: i32 = try self.client.context.nextI32();
+                const x: i32 = try self.client.context.nextI32();
+                const y: i32 = try self.client.context.nextI32();
+                const width: i32 = try self.client.context.nextI32();
+                const height: i32 = try self.client.context.nextI32();
                 return Message{
                     .add = AddMessage{
                         .x = x,
@@ -2892,10 +2892,10 @@ pub const WlRegion = struct {
             },
             // subtract
             2 => {
-                var x: i32 = try self.client.context.nextI32();
-                var y: i32 = try self.client.context.nextI32();
-                var width: i32 = try self.client.context.nextI32();
-                var height: i32 = try self.client.context.nextI32();
+                const x: i32 = try self.client.context.nextI32();
+                const y: i32 = try self.client.context.nextI32();
+                const width: i32 = try self.client.context.nextI32();
+                const height: i32 = try self.client.context.nextI32();
                 return Message{
                     .subtract = SubtractMessage{
                         .x = x,
@@ -2973,12 +2973,12 @@ pub const WlSubcompositor = struct {
             },
             // get_subsurface
             1 => {
-                var id: u32 = try self.client.context.nextU32();
-                var surface: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const id: u32 = try self.client.context.nextU32();
+                const surface: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                var parent: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const parent: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3051,8 +3051,8 @@ pub const WlSubsurface = struct {
             },
             // set_position
             1 => {
-                var x: i32 = try self.client.context.nextI32();
-                var y: i32 = try self.client.context.nextI32();
+                const x: i32 = try self.client.context.nextI32();
+                const y: i32 = try self.client.context.nextI32();
                 return Message{
                     .set_position = SetPositionMessage{
                         .x = x,
@@ -3062,7 +3062,7 @@ pub const WlSubsurface = struct {
             },
             // place_above
             2 => {
-                var sibling: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const sibling: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3074,7 +3074,7 @@ pub const WlSubsurface = struct {
             },
             // place_below
             3 => {
-                var sibling: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const sibling: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3182,7 +3182,7 @@ pub const XdgWmBase = struct {
             },
             // create_positioner
             1 => {
-                var id: u32 = try self.client.context.nextU32();
+                const id: u32 = try self.client.context.nextU32();
                 return Message{
                     .create_positioner = CreatePositionerMessage{
                         .id = id,
@@ -3191,8 +3191,8 @@ pub const XdgWmBase = struct {
             },
             // get_xdg_surface
             2 => {
-                var id: u32 = try self.client.context.nextU32();
-                var surface: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const id: u32 = try self.client.context.nextU32();
+                const surface: WlSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3205,7 +3205,7 @@ pub const XdgWmBase = struct {
             },
             // pong
             3 => {
-                var serial: u32 = try self.client.context.nextU32();
+                const serial: u32 = try self.client.context.nextU32();
                 return Message{
                     .pong = PongMessage{
                         .serial = serial,
@@ -3310,8 +3310,8 @@ pub const XdgPositioner = struct {
             },
             // set_size
             1 => {
-                var width: i32 = try self.client.context.nextI32();
-                var height: i32 = try self.client.context.nextI32();
+                const width: i32 = try self.client.context.nextI32();
+                const height: i32 = try self.client.context.nextI32();
                 return Message{
                     .set_size = SetSizeMessage{
                         .width = width,
@@ -3321,10 +3321,10 @@ pub const XdgPositioner = struct {
             },
             // set_anchor_rect
             2 => {
-                var x: i32 = try self.client.context.nextI32();
-                var y: i32 = try self.client.context.nextI32();
-                var width: i32 = try self.client.context.nextI32();
-                var height: i32 = try self.client.context.nextI32();
+                const x: i32 = try self.client.context.nextI32();
+                const y: i32 = try self.client.context.nextI32();
+                const width: i32 = try self.client.context.nextI32();
+                const height: i32 = try self.client.context.nextI32();
                 return Message{
                     .set_anchor_rect = SetAnchorRectMessage{
                         .x = x,
@@ -3336,7 +3336,7 @@ pub const XdgPositioner = struct {
             },
             // set_anchor
             3 => {
-                var anchor: u32 = try self.client.context.nextU32();
+                const anchor: u32 = try self.client.context.nextU32();
                 return Message{
                     .set_anchor = SetAnchorMessage{
                         .anchor = anchor,
@@ -3345,7 +3345,7 @@ pub const XdgPositioner = struct {
             },
             // set_gravity
             4 => {
-                var gravity: u32 = try self.client.context.nextU32();
+                const gravity: u32 = try self.client.context.nextU32();
                 return Message{
                     .set_gravity = SetGravityMessage{
                         .gravity = gravity,
@@ -3354,7 +3354,7 @@ pub const XdgPositioner = struct {
             },
             // set_constraint_adjustment
             5 => {
-                var constraint_adjustment: u32 = try self.client.context.nextU32();
+                const constraint_adjustment: u32 = try self.client.context.nextU32();
                 return Message{
                     .set_constraint_adjustment = SetConstraintAdjustmentMessage{
                         .constraint_adjustment = constraint_adjustment,
@@ -3363,8 +3363,8 @@ pub const XdgPositioner = struct {
             },
             // set_offset
             6 => {
-                var x: i32 = try self.client.context.nextI32();
-                var y: i32 = try self.client.context.nextI32();
+                const x: i32 = try self.client.context.nextI32();
+                const y: i32 = try self.client.context.nextI32();
                 return Message{
                     .set_offset = SetOffsetMessage{
                         .x = x,
@@ -3505,7 +3505,7 @@ pub const XdgSurface = struct {
             },
             // get_toplevel
             1 => {
-                var id: u32 = try self.client.context.nextU32();
+                const id: u32 = try self.client.context.nextU32();
                 return Message{
                     .get_toplevel = GetToplevelMessage{
                         .id = id,
@@ -3514,12 +3514,12 @@ pub const XdgSurface = struct {
             },
             // get_popup
             2 => {
-                var id: u32 = try self.client.context.nextU32();
-                var parent: ?XdgSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const id: u32 = try self.client.context.nextU32();
+                const parent: ?XdgSurface = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .xdg_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
-                var positioner: XdgPositioner = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const positioner: XdgPositioner = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .xdg_positioner => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3533,10 +3533,10 @@ pub const XdgSurface = struct {
             },
             // set_window_geometry
             3 => {
-                var x: i32 = try self.client.context.nextI32();
-                var y: i32 = try self.client.context.nextI32();
-                var width: i32 = try self.client.context.nextI32();
-                var height: i32 = try self.client.context.nextI32();
+                const x: i32 = try self.client.context.nextI32();
+                const y: i32 = try self.client.context.nextI32();
+                const width: i32 = try self.client.context.nextI32();
+                const height: i32 = try self.client.context.nextI32();
                 return Message{
                     .set_window_geometry = SetWindowGeometryMessage{
                         .x = x,
@@ -3548,7 +3548,7 @@ pub const XdgSurface = struct {
             },
             // ack_configure
             4 => {
-                var serial: u32 = try self.client.context.nextU32();
+                const serial: u32 = try self.client.context.nextU32();
                 return Message{
                     .ack_configure = AckConfigureMessage{
                         .serial = serial,
@@ -3666,7 +3666,7 @@ pub const XdgToplevel = struct {
             },
             // set_parent
             1 => {
-                var parent: ?XdgToplevel = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const parent: ?XdgToplevel = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .xdg_toplevel => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -3678,7 +3678,7 @@ pub const XdgToplevel = struct {
             },
             // set_title
             2 => {
-                var title: []u8 = try self.client.context.nextString();
+                const title: []u8 = try self.client.context.nextString();
                 return Message{
                     .set_title = SetTitleMessage{
                         .title = title,
@@ -3687,7 +3687,7 @@ pub const XdgToplevel = struct {
             },
             // set_app_id
             3 => {
-                var app_id: []u8 = try self.client.context.nextString();
+                const app_id: []u8 = try self.client.context.nextString();
                 return Message{
                     .set_app_id = SetAppIdMessage{
                         .app_id = app_id,
@@ -3696,13 +3696,13 @@ pub const XdgToplevel = struct {
             },
             // show_window_menu
             4 => {
-                var seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                var serial: u32 = try self.client.context.nextU32();
-                var x: i32 = try self.client.context.nextI32();
-                var y: i32 = try self.client.context.nextI32();
+                const serial: u32 = try self.client.context.nextU32();
+                const x: i32 = try self.client.context.nextI32();
+                const y: i32 = try self.client.context.nextI32();
                 return Message{
                     .show_window_menu = ShowWindowMenuMessage{
                         .seat = seat,
@@ -3714,11 +3714,11 @@ pub const XdgToplevel = struct {
             },
             // move
             5 => {
-                var seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                var serial: u32 = try self.client.context.nextU32();
+                const serial: u32 = try self.client.context.nextU32();
                 return Message{
                     .move = MoveMessage{
                         .seat = seat,
@@ -3728,12 +3728,12 @@ pub const XdgToplevel = struct {
             },
             // resize
             6 => {
-                var seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                var serial: u32 = try self.client.context.nextU32();
-                var edges: u32 = try self.client.context.nextU32();
+                const serial: u32 = try self.client.context.nextU32();
+                const edges: u32 = try self.client.context.nextU32();
                 return Message{
                     .resize = ResizeMessage{
                         .seat = seat,
@@ -3744,8 +3744,8 @@ pub const XdgToplevel = struct {
             },
             // set_max_size
             7 => {
-                var width: i32 = try self.client.context.nextI32();
-                var height: i32 = try self.client.context.nextI32();
+                const width: i32 = try self.client.context.nextI32();
+                const height: i32 = try self.client.context.nextI32();
                 return Message{
                     .set_max_size = SetMaxSizeMessage{
                         .width = width,
@@ -3755,8 +3755,8 @@ pub const XdgToplevel = struct {
             },
             // set_min_size
             8 => {
-                var width: i32 = try self.client.context.nextI32();
-                var height: i32 = try self.client.context.nextI32();
+                const width: i32 = try self.client.context.nextI32();
+                const height: i32 = try self.client.context.nextI32();
                 return Message{
                     .set_min_size = SetMinSizeMessage{
                         .width = width,
@@ -3778,7 +3778,7 @@ pub const XdgToplevel = struct {
             },
             // set_fullscreen
             11 => {
-                var output: ?WlOutput = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const output: ?WlOutput = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_output => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -4010,11 +4010,11 @@ pub const XdgPopup = struct {
             },
             // grab
             1 => {
-                var seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                var serial: u32 = try self.client.context.nextU32();
+                const serial: u32 = try self.client.context.nextU32();
                 return Message{
                     .grab = GrabMessage{
                         .seat = seat,
@@ -4110,7 +4110,7 @@ pub const ZwpLinuxDmabufV1 = struct {
             },
             // create_params
             1 => {
-                var params_id: u32 = try self.client.context.nextU32();
+                const params_id: u32 = try self.client.context.nextU32();
                 return Message{
                     .create_params = CreateParamsMessage{
                         .params_id = params_id,
@@ -4218,12 +4218,12 @@ pub const ZwpLinuxBufferParamsV1 = struct {
             },
             // add
             1 => {
-                var fd: i32 = try self.client.context.nextFd();
-                var plane_idx: u32 = try self.client.context.nextU32();
-                var offset: u32 = try self.client.context.nextU32();
-                var stride: u32 = try self.client.context.nextU32();
-                var modifier_hi: u32 = try self.client.context.nextU32();
-                var modifier_lo: u32 = try self.client.context.nextU32();
+                const fd: i32 = try self.client.context.nextFd();
+                const plane_idx: u32 = try self.client.context.nextU32();
+                const offset: u32 = try self.client.context.nextU32();
+                const stride: u32 = try self.client.context.nextU32();
+                const modifier_hi: u32 = try self.client.context.nextU32();
+                const modifier_lo: u32 = try self.client.context.nextU32();
                 return Message{
                     .add = AddMessage{
                         .fd = fd,
@@ -4237,10 +4237,10 @@ pub const ZwpLinuxBufferParamsV1 = struct {
             },
             // create
             2 => {
-                var width: i32 = try self.client.context.nextI32();
-                var height: i32 = try self.client.context.nextI32();
-                var format: u32 = try self.client.context.nextU32();
-                var flags: u32 = try self.client.context.nextU32();
+                const width: i32 = try self.client.context.nextI32();
+                const height: i32 = try self.client.context.nextI32();
+                const format: u32 = try self.client.context.nextU32();
+                const flags: u32 = try self.client.context.nextU32();
                 return Message{
                     .create = CreateMessage{
                         .width = width,
@@ -4252,11 +4252,11 @@ pub const ZwpLinuxBufferParamsV1 = struct {
             },
             // create_immed
             3 => {
-                var buffer_id: u32 = try self.client.context.nextU32();
-                var width: i32 = try self.client.context.nextI32();
-                var height: i32 = try self.client.context.nextI32();
-                var format: u32 = try self.client.context.nextU32();
-                var flags: u32 = try self.client.context.nextU32();
+                const buffer_id: u32 = try self.client.context.nextU32();
+                const width: i32 = try self.client.context.nextI32();
+                const height: i32 = try self.client.context.nextI32();
+                const format: u32 = try self.client.context.nextU32();
+                const flags: u32 = try self.client.context.nextU32();
                 return Message{
                     .create_immed = CreateImmedMessage{
                         .buffer_id = buffer_id,
