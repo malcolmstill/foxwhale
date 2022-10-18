@@ -25,9 +25,7 @@ pub fn build(b: *Builder) void {
     exe.linkSystemLibrary("libdrm");
     exe.linkSystemLibrary("gbm");
     exe.linkSystemLibrary("egl");
-    if (mode != .Debug) {
-        exe.strip = true;
-    }
+    exe.use_stage1 = true;
     exe.single_threaded = true;
     exe.install();
 

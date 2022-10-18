@@ -16,8 +16,7 @@ def generate(context, side, files):
         sendType = "request"
 
     print(f'const std = @import("std");')
-    print(f'const Context = @import("{context}").Context;')
-    print(f'const Object = @import("{context}").Object;\n')
+    print(f'const Client = @import("{context}").Client;')
 
     msgs = []
     for file in files:
@@ -34,26 +33,80 @@ def generate_protocol(protocol, sendType, receiveType, msgs):
     for child in protocol:
         if child.tag == "interface":
             print(f"\n// {child.attrib['name']}")
-            generate_new_object(child)
-            generate_dispatch_function(child, receiveType, msgs)
-            generate_enum(child)
-            generate_send(child, sendType)
+            generate_interface_struct(child, receiveType, sendType)
+            msgs.append(child.attrib['name'])
+
+def generate_interface_struct(interface, receiveType, sendType):
+    interfaceName = camelCase(interface.attrib['name'])
+    print(f"pub const {interfaceName} = struct {{")
+    print(f"\t\tid: u32,")
+    print(f"\t\tclient: *Client,")
+    print(f"\t\tversion: usize,")
+    print(f"\t\tcontainer: usize,")
+    print(f"")
+    print("const Self = @This();")
+    print(f"")
+    print(f"pub fn init(id: u32, client: *Client, version: u32, container: usize) Self {{")
+    print(f"\treturn Self {{")
+    print(f"\t\t.id = id,")
+    print(f"\t\t.client = client,")
+    print(f"\t\t.version = version,")
+    print(f"\t\t.container = container,")
+    print(f"\t}};")
+    print(f"}}")
+
+    print(f"")
+    generate_dispatch_function(interface, receiveType)
+    generate_send(interface, sendType)
+
+
+    generate_enum(interface)
+
+    print(f"}};\n")
 
 def generate_message_union(msgs):
-    print(f"const WlMessageTypes = enum {{")
+    # Enum
+    print(f"")
+    print(f"pub const WlInterfaceType = enum {{")
     for m in msgs:
-        print(f"{m[0]},")
+        print(f"{m},")
     print(f"}};")
-    print(f"const WlMessage = union(WlMessageTypes) {{")
+    print(f"")
+    # Union
+    print(f"pub const WlMessage = union(WlInterfaceType) {{")
     for m in msgs:
-        print(f"{m[0]}: {m[1]},")
+        print(f"{m}: {camelCase(m)}.Message,")
+    print(f"}};")
+    # Object
+    print(f"")
+    print(f"pub const WlObject = union(WlInterfaceType) {{")
+    for m in msgs:
+        print(f"{m}: {camelCase(m)},")
+    print(f"")
+    # 
+    print(f"pub fn dispatch(self: *WlObject, opcode: u16) !WlMessage {{")
+    print(f"return switch (self.*) {{")
+    for m in msgs:
+        print(f".{m} => |*o| WlMessage{{ .{m} = try o.dispatch(opcode) }},")
+    print(f"}};")
+    print(f"}}")
+    print(f"// end of dispatch")
+    # 
+    print(f"pub fn id(self: WlObject) u32 {{")
+    print(f"return switch (self) {{")
+    for m in msgs:
+        print(f".{m} => |o| o.id,")
+    print(f"}};")
+    print(f"}}")
+    print(f"// end of id")
+
     print(f"}};")
 
 # Generate enum
 def generate_enum(interface):
     for child in interface:
         if child.tag == "enum":
-            print(f"\npub const {interface.attrib['name']}_{child.attrib['name']} = enum(u32) {{")
+            print(f"\npub const {camelCase(child.attrib['name'])} = enum(u32) {{")
             for value in child:
                 if value.tag == "entry":
                     if value.attrib['name'].isdigit():
@@ -62,22 +115,10 @@ def generate_enum(interface):
                         print(f"\t{value.attrib['name']} = {value.attrib['value']},")
             print(f"}};")
 
-# Generate new object
-def generate_new_object(interface):
-    print(f"pub fn new_{interface.attrib['name']}(id: u32, context: *Context, container: usize) Object {{")
-    print(f"\treturn Object {{")
-    print(f"\t\t.id = id,")
-    print(f"\t\t.dispatch = {interface.attrib['name']}_dispatch,")
-    print(f"\t\t.context = context,")
-    print(f"\t\t.version = 0,")
-    print(f"\t\t.container = container,")
-    print(f"\t}};")
-    print(f"}}\n")
-
 # Generate Dispatch function
-def generate_dispatch_function(interface, receiveType, msgs):
-    dispatch_function_name = f"{interface.attrib['name']}_dispatch"
-    print(f"fn {dispatch_function_name}(object: Object, opcode: u16) anyerror!WlMessage {{")
+def generate_dispatch_function(interface, receiveType):
+    interfaceName = f"{camelCase(interface.attrib['name'])}"
+    print(f"pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {{")
     print(f"\tswitch(opcode) {{")
     i = 0
     for child in interface:
@@ -85,20 +126,48 @@ def generate_dispatch_function(interface, receiveType, msgs):
             fix_wl_registry(interface, child)
             generate_receive_dispatch(i, child, interface)
             i = i + 1
-    print(f"\t\telse => {{std.log.info(\"{{}}\", .{{object}}); return error.UnknownOpcode;}},")
+    print(f"\t\telse => {{std.log.info(\"{{}}\", .{{self}}); return error.UnknownOpcode;}},")
     print(f"\t}}")
     print(f"}}")
-    # Generate *Msg
+    # Generate enum
+    print(f"")
+    i = 0
+    print(f"const MessageType = enum(u8) {{")
+    for child in interface:
+        if child.tag == receiveType:
+            print(f"{child.attrib['name']},")
+            i = i + 1
+    print(f"}};")
+    print(f"")
+    # Generate Union
+    print(f"")
+    messageCount = 0
+    for child in interface:
+        if child.tag == receiveType:
+            messageCount = messageCount + 1
+            
+    if (messageCount > 0):
+        print(f"pub const Message = union(MessageType) {{")
+        i = 0
+        for child in interface:
+            if child.tag == receiveType:
+                print(f"{child.attrib['name']}: {camelCase(child.attrib['name'])}Message,")
+                i = i + 1
+        print(f"}};")
+    else: 
+        print(f"const Message = struct {{}};")
+    print(f"")
+    # Generate *Message
     i = 0
     for child in interface:
         if child.tag == receiveType:
-            generate_msg(i, child, interface, msgs)
+            generate_msg(i, child, interface)
             i = i + 1
 
-def generate_msg(i, receive, interface, msgs):
+def generate_msg(i, receive, interface):
     enumName = f"{interface.attrib['name']}_{receive.attrib['name']}"
-    messageName = f"{camelCase(interface.attrib['name'])}{camelCase(receive.attrib['name'])}Message"
-    msgs.append([enumName, messageName])
+    messageName = f"{camelCase(receive.attrib['name'])}Message"
+    print(f"")
     print(f"const {messageName} = struct {{")
     print(f"// TODO: should we include the interface's Object?")
     for arg in receive:
@@ -132,12 +201,13 @@ def generate_receive_dispatch(index, receive, interface):
         if arg.tag == "arg":
             generate_next(arg)
 
-    print(f"return {camelCase(interface.attrib['name'])}{camelCase(receive.attrib['name'])}Message {{")
+    messageName = f"{camelCase(receive.attrib['name'])}Message"
+    print(f"return Message{{ .{receive.attrib['name']} = {messageName}{{")
     for arg in receive:
         if arg.tag == "arg":
             arg_name = arg.attrib["name"]
             print(f".{arg_name} = {arg_name},")
-    print(f"}};")
+    print(f"}}, }};")
     print(f"\t\t\t}},")
 
 def generate_next(arg):
@@ -145,28 +215,32 @@ def generate_next(arg):
     atype = lookup_type(arg.attrib["type"], arg)
     if arg.attrib["type"] == "object":
         if "allow-null" in arg.attrib and arg.attrib["allow-null"] == "true":
-            print(f"\t\t\tvar {name}: ?Object = object.context.objects.get(try object.context.next_u32());")
             if "interface" in arg.attrib:
                 object_interface = arg.attrib["interface"]
-                print(f"\t\t\tif ({name} != null) {{if ({name}.?.dispatch != {object_interface}_dispatch) {{ return error.ObjectWrongType; }} }}")
+                object_type = camelCase(arg.attrib["interface"])
+                print(f"\t\t\tvar {name}: ?{object_type} = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else null;")
+            else:
+                print(f"\t\t\tvar {name}: ?WlObject = try self.client.context.objects.get(try self.client.context.next_u32());")
         else:
-            print(f"\t\t\tvar {name}: Object = object.context.objects.get(try object.context.next_u32()).?;")
             if "interface" in arg.attrib:
                 object_interface = arg.attrib["interface"]
-                print(f"\t\t\tif ({name}.dispatch != {object_interface}_dispatch) {{ return error.ObjectWrongType; }}")
+                object_type = camelCase(arg.attrib["interface"])
+                print(f"\t\t\tvar {name}: {object_type} = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else return error.ExpectedObject;")
+            else:
+                print(f"\t\t\tvar {name}: WlObject = try self.client.context.objects.get(try self.client.context.next_u32());")
     else:    
-        print(f"\t\t\t\tvar {name}: {atype} = try object.context.next_{next_type(arg.attrib['type'])}();")
+        print(f"\t\t\t\tvar {name}: {atype} = try self.client.context.next{next_type(arg.attrib['type'])}();")
 
 def next_type(type):
     types = {
-        "int": "i32",
-        "uint": "u32",
-        "new_id": "u32",
-        "fd": "fd",
-        "string": "string",
-        "array": "array",
+        "int": "I32",
+        "uint": "U32",
+        "new_id": "U32",
+        "fd": "Fd",
+        "string": "String",
+        "array": "Array",
         "object": "OBJECT",
-        "fixed": "fixed"
+        "fixed": "Fixed"
     }
     return types[type]
 
@@ -202,30 +276,6 @@ def generate_description(description):
     desc = description.attrib["summary"]
     print(f"\t// {desc}")
 
-# Generate Interface
-# def generate_interface(interface, sendType, receiveType):
-#     print(f"pub const {interface.attrib['name']}_interface = struct {{")
-#     for child in interface:
-#         if child.tag == "description":
-#             generate_description(child)
-#         if child.tag == receiveType:
-#             generate_receive(interface, child)
-#         # if child.tag == sendType:
-#         #     generate_event(child)
-#     print(f"}};\n")
-
-def generate_receive(interface, receive):
-    fix_wl_registry(interface, receive)
-    name = escapename(receive.attrib["name"])
-    print(f"\t{name}: ?fn(*Context, Object, ", end = '')
-    first = True
-    for arg in receive:
-        if arg.tag == "arg":
-            generate_receive_arg(arg, first)
-            if first == True:
-                first = False
-    print(") anyerror!void,")
-
 def escapename(name):
     if name == "error":
         return "@\"error\""
@@ -245,6 +295,7 @@ def generate_send(interface, sentType):
     i = 0
     for child in interface:
         if child.tag == sentType:
+            print(f"")
             fix_wl_registry(interface, child)
             for desc in child:
                 if desc.tag == "description":
@@ -254,26 +305,41 @@ def generate_send(interface, sentType):
                         for line in lines:
                             line = line.replace('\t', '')
                             print(f"// {line}")
-            print(f"pub fn {interface.attrib['name']}_send_{child.attrib['name']}(object: Object", end = '')
+            print(f"pub fn send{camelCase(child.attrib['name'])}(self: Self", end = '')
             for arg in child:
                 if arg.tag == "arg":
-                    print(f", {arg.attrib['name']}: {put_type_arg(arg.attrib['type'])}", end = '')
+                    if "enum" in arg.attrib:
+                        # We have an enum...use enum instead
+                        print(f", {arg.attrib['name']}: {camelCase(arg.attrib['enum'])}", end = '')
+                    else:
+                        print(f", {arg.attrib['name']}: {put_type_arg(arg.attrib['type'])}", end = '')
             print(f") anyerror!void {{")
-            print(f"\tobject.context.startWrite();")
+            print(f"\tself.client.context.startWrite();")
             for arg in child:
                 if arg.tag == "arg":
-                    print(f"\tobject.context.put{put_type(arg.attrib['type'])}({arg.attrib['name']});")
-            print(f"\ttry object.context.finishWrite(object.id, {i});")
+                    if "enum" in arg.attrib:
+                        print(f"\tself.client.context.put{put_type(arg.attrib['type'])}(@enumToInt({arg.attrib['name']}));")
+                    else:
+                        print(f"\tself.client.context.put{put_type(arg.attrib['type'])}({arg.attrib['name']});")
+            print(f"\ttry self.client.context.finishWrite(self.id, {i});")
             print(f"}}")
             i = i + 1
 
 def lookup_type(type, arg):
     if type == "object":
         if "allow-null" in arg.attrib and arg.attrib["allow-null"]:
-            return "?Object"
+            if "interface" in arg.attrib:
+                object_type = camelCase(arg.attrib["interface"])
+                return f"?{object_type}"
+            else:
+                return "?Object"
         # return "*" + arg.attrib["interface"]
         else:
-            return "Object"
+            if "interface" in arg.attrib:
+                object_type = camelCase(arg.attrib["interface"])
+                return object_type
+            else:
+                return "Object"
     else:
         types = {
             "int": "i32",

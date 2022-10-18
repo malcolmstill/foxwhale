@@ -1,60 +1,101 @@
 const std = @import("std");
-const linux = std.os.linux;
+const os = std.os;
+const mem = std.mem;
+const linux = os.linux;
 
-var epfd: i32 = -1;
-var events: [256]std.os.linux.epoll_event = undefined;
-
-pub fn init() !void {
-    epfd = try std.os.epoll_create1(linux.EPOLL.CLOEXEC);
-}
-
-pub fn wait(timeout: i32) usize {
-    return std.os.epoll_wait(epfd, events[0..events.len], timeout);
-}
-
-pub fn addFd(fd: i32, dis: *Dispatchable) !void {
-    var ev = linux.epoll_event{
-        .events = linux.EPOLL.IN,
-        .data = linux.epoll_data{
-            .ptr = @ptrToInt(dis),
-        },
+pub fn Epoll(comptime Subsystem: type, comptime SubsystemIterator: type, comptime Event: type, comptime Target: type) type {
+    const EventTagType = switch (@typeInfo(Event)) {
+        .Union => |info| info.tag_type orelse @compileError("Expected tag type"),
+        else => @compileError("Event type must be union"),
     };
-
-    try std.os.epoll_ctl(epfd, linux.EPOLL.CTL_ADD, fd, &ev);
-}
-
-pub fn removeFd(fd: i32) !void {
-    var ev = std.os.linux.epoll_event{
-        .events = std.os.linux.EPOLL.IN,
-        .data = std.os.linux.epoll_data{
-            .ptr = undefined,
-        },
+    const TargetTagType = switch (@typeInfo(Target)) {
+        .Union => |info| info.tag_type orelse @compileError("Expected tag type"),
+        else => @compileError("Event type must be union"),
     };
+    if (EventTagType != Subsystem) @compileError("Subsystem must match Event tag");
+    if (TargetTagType != Subsystem) @compileError("Subsystem must match Target tag");
 
-    try std.os.epoll_ctl(epfd, linux.EPOLL.CTL_DEL, fd, &ev);
+    return struct {
+        alloc: mem.Allocator,
+        fd: i32,
+        events: [256]linux.epoll_event = undefined,
+        targets: std.AutoHashMap(i32, Target),
+
+        const Self = @This();
+
+        pub fn init(alloc: mem.Allocator) !Self {
+            const epfd = try os.epoll_create1(linux.EPOLL.CLOEXEC);
+            const targets = std.AutoHashMap(i32, Target).init(alloc);
+
+            return Self{
+                .alloc = alloc,
+                .fd = epfd,
+                .targets = targets,
+            };
+        }
+
+        pub fn deinit(self: *Self) void {
+            os.close(self.fd);
+            self.targets.deinit();
+        }
+
+        pub fn wait(self: *Self, timeout: i32) Iterator {
+            const n = os.epoll_wait(self.fd, self.events[0..], timeout);
+
+            return Iterator{
+                .epoll = self,
+                .n = n,
+            };
+        }
+
+        const Iterator = struct {
+            i: usize = 0,
+            n: usize,
+            it: ?SubsystemIterator = null,
+            epoll: *Epoll(Subsystem, SubsystemIterator, Event, Target),
+
+            pub fn next(self: *Iterator) !?Event {
+                if (self.i == self.n) return null;
+
+                if (self.it == null) {
+                    const fd = self.epoll.events[self.i].data.fd;
+                    const target = self.epoll.targets.get(fd) orelse return error.ExpectedTarget;
+
+                    self.it = target.iterator();
+                }
+
+                const event = try self.it.?.next(self.epoll.events[self.i].events);
+                if (event == null) {
+                    self.i += 1;
+                    self.it = null;
+                }
+
+                return event;
+            }
+        };
+
+        pub fn addFd(self: *Self, fd: i32, target: Target) !void {
+            try self.targets.put(fd, target);
+
+            var ev = linux.epoll_event{
+                .events = linux.EPOLL.IN,
+                .data = linux.epoll_data{
+                    .fd = fd,
+                },
+            };
+
+            try os.epoll_ctl(self.fd, linux.EPOLL.CTL_ADD, fd, &ev);
+        }
+
+        pub fn removeFd(self: *Self, fd: i32) !void {
+            var ev = linux.epoll_event{
+                .events = linux.EPOLLIN,
+                .data = linux.epoll_data{
+                    .ptr = undefined,
+                },
+            };
+
+            try os.epoll_ctl(self.fd, os.EPOLL_CTL_DEL, fd, &ev);
+        }
+    };
 }
-
-// For a given event index that has activity
-// call the Dispatchable function
-pub fn dispatch(i: usize) !void {
-    var ev = @intToPtr(*Dispatchable, events[i].data.ptr);
-    try ev.dispatch(events[i].events);
-}
-
-// The Dispatchable interface allows for dispatching
-// on epoll activity. A struct containing a Dispatchable
-// can define a function that gets set as impl. The impl
-// will be passed a pointer to container. The container
-// will typically be (a pointer to) the struct itself.
-pub const Dispatchable = struct {
-    impl: fn (*Self, usize) anyerror!void,
-
-    const Self = @This();
-
-    pub fn dispatch(self: *Self, event_type: usize) !void {
-        // self.impl(self, event_type) catch |err| {
-        //     std.log.warn("Error dispatching epoll: {}\n", .{ err });
-        // };
-        try self.impl(self, event_type);
-    }
-};
