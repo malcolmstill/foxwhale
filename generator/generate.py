@@ -84,10 +84,10 @@ def generate_message_union(msgs):
         print(f"{m}: {camelCase(m)},")
     print(f"")
     # 
-    print(f"pub fn dispatch(self: *WlObject, opcode: u16) !WlMessage {{")
+    print(f"pub fn readMessage(self: *WlObject, opcode: u16) !WlMessage {{")
     print(f"return switch (self.*) {{")
     for m in msgs:
-        print(f".{m} => |*o| WlMessage{{ .{m} = try o.dispatch(opcode) }},")
+        print(f".{m} => |*o| WlMessage{{ .{m} = try o.readMessage(opcode) }},")
     print(f"}};")
     print(f"}}")
     print(f"// end of dispatch")
@@ -118,7 +118,7 @@ def generate_enum(interface):
 # Generate Dispatch function
 def generate_dispatch_function(interface, receiveType):
     interfaceName = f"{camelCase(interface.attrib['name'])}"
-    print(f"pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {{")
+    print(f"pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {{")
     print(f"\tswitch(opcode) {{")
     i = 0
     for child in interface:

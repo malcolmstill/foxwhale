@@ -19,7 +19,7 @@ pub const WlDisplay = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // sync
             0 => {
@@ -122,7 +122,7 @@ pub const WlRegistry = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // bind
             0 => {
@@ -214,7 +214,7 @@ pub const WlCallback = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             else => {
                 std.log.info("{}", .{self});
@@ -255,7 +255,7 @@ pub const WlCompositor = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // create_surface
             0 => {
@@ -321,7 +321,7 @@ pub const WlShmPool = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // create_buffer
             0 => {
@@ -414,7 +414,7 @@ pub const WlShm = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // create_pool
             0 => {
@@ -548,7 +548,7 @@ pub const WlBuffer = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // destroy
             0 => {
@@ -613,7 +613,7 @@ pub const WlDataOffer = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // accept
             0 => {
@@ -799,7 +799,7 @@ pub const WlDataSource = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // offer
             0 => {
@@ -995,7 +995,7 @@ pub const WlDataDevice = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // start_drag
             0 => {
@@ -1195,7 +1195,7 @@ pub const WlDataDeviceManager = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // create_data_source
             0 => {
@@ -1274,7 +1274,7 @@ pub const WlShell = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // get_shell_surface
             0 => {
@@ -1334,7 +1334,7 @@ pub const WlShellSurface = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // pong
             0 => {
@@ -1654,7 +1654,7 @@ pub const WlSurface = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // destroy
             0 => {
@@ -1902,7 +1902,7 @@ pub const WlSeat = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // get_pointer
             0 => {
@@ -2045,7 +2045,7 @@ pub const WlPointer = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // set_cursor
             0 => {
@@ -2367,7 +2367,7 @@ pub const WlKeyboard = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // release
             0 => {
@@ -2513,7 +2513,7 @@ pub const WlTouch = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // release
             0 => {
@@ -2696,7 +2696,7 @@ pub const WlOutput = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // release
             0 => {
@@ -2867,7 +2867,7 @@ pub const WlRegion = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // destroy
             0 => {
@@ -2963,7 +2963,7 @@ pub const WlSubcompositor = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // destroy
             0 => {
@@ -3041,7 +3041,7 @@ pub const WlSubsurface = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // destroy
             0 => {
@@ -3172,7 +3172,7 @@ pub const XdgWmBase = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // destroy
             0 => {
@@ -3300,7 +3300,7 @@ pub const XdgPositioner = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // destroy
             0 => {
@@ -3495,7 +3495,7 @@ pub const XdgSurface = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // destroy
             0 => {
@@ -3656,7 +3656,7 @@ pub const XdgToplevel = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // destroy
             0 => {
@@ -4000,7 +4000,7 @@ pub const XdgPopup = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // destroy
             0 => {
@@ -4100,7 +4100,7 @@ pub const ZwpLinuxDmabufV1 = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // destroy
             0 => {
@@ -4208,7 +4208,7 @@ pub const ZwpLinuxBufferParamsV1 = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // destroy
             0 => {
@@ -4381,7 +4381,7 @@ pub const FwControl = struct {
         };
     }
 
-    pub fn dispatch(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
         switch (opcode) {
             // get_clients
             0 => {
@@ -4604,38 +4604,38 @@ pub const WlObject = union(WlInterfaceType) {
     zwp_linux_buffer_params_v1: ZwpLinuxBufferParamsV1,
     fw_control: FwControl,
 
-    pub fn dispatch(self: *WlObject, opcode: u16) !WlMessage {
+    pub fn readMessage(self: *WlObject, opcode: u16) !WlMessage {
         return switch (self.*) {
-            .wl_display => |*o| WlMessage{ .wl_display = try o.dispatch(opcode) },
-            .wl_registry => |*o| WlMessage{ .wl_registry = try o.dispatch(opcode) },
-            .wl_callback => |*o| WlMessage{ .wl_callback = try o.dispatch(opcode) },
-            .wl_compositor => |*o| WlMessage{ .wl_compositor = try o.dispatch(opcode) },
-            .wl_shm_pool => |*o| WlMessage{ .wl_shm_pool = try o.dispatch(opcode) },
-            .wl_shm => |*o| WlMessage{ .wl_shm = try o.dispatch(opcode) },
-            .wl_buffer => |*o| WlMessage{ .wl_buffer = try o.dispatch(opcode) },
-            .wl_data_offer => |*o| WlMessage{ .wl_data_offer = try o.dispatch(opcode) },
-            .wl_data_source => |*o| WlMessage{ .wl_data_source = try o.dispatch(opcode) },
-            .wl_data_device => |*o| WlMessage{ .wl_data_device = try o.dispatch(opcode) },
-            .wl_data_device_manager => |*o| WlMessage{ .wl_data_device_manager = try o.dispatch(opcode) },
-            .wl_shell => |*o| WlMessage{ .wl_shell = try o.dispatch(opcode) },
-            .wl_shell_surface => |*o| WlMessage{ .wl_shell_surface = try o.dispatch(opcode) },
-            .wl_surface => |*o| WlMessage{ .wl_surface = try o.dispatch(opcode) },
-            .wl_seat => |*o| WlMessage{ .wl_seat = try o.dispatch(opcode) },
-            .wl_pointer => |*o| WlMessage{ .wl_pointer = try o.dispatch(opcode) },
-            .wl_keyboard => |*o| WlMessage{ .wl_keyboard = try o.dispatch(opcode) },
-            .wl_touch => |*o| WlMessage{ .wl_touch = try o.dispatch(opcode) },
-            .wl_output => |*o| WlMessage{ .wl_output = try o.dispatch(opcode) },
-            .wl_region => |*o| WlMessage{ .wl_region = try o.dispatch(opcode) },
-            .wl_subcompositor => |*o| WlMessage{ .wl_subcompositor = try o.dispatch(opcode) },
-            .wl_subsurface => |*o| WlMessage{ .wl_subsurface = try o.dispatch(opcode) },
-            .xdg_wm_base => |*o| WlMessage{ .xdg_wm_base = try o.dispatch(opcode) },
-            .xdg_positioner => |*o| WlMessage{ .xdg_positioner = try o.dispatch(opcode) },
-            .xdg_surface => |*o| WlMessage{ .xdg_surface = try o.dispatch(opcode) },
-            .xdg_toplevel => |*o| WlMessage{ .xdg_toplevel = try o.dispatch(opcode) },
-            .xdg_popup => |*o| WlMessage{ .xdg_popup = try o.dispatch(opcode) },
-            .zwp_linux_dmabuf_v1 => |*o| WlMessage{ .zwp_linux_dmabuf_v1 = try o.dispatch(opcode) },
-            .zwp_linux_buffer_params_v1 => |*o| WlMessage{ .zwp_linux_buffer_params_v1 = try o.dispatch(opcode) },
-            .fw_control => |*o| WlMessage{ .fw_control = try o.dispatch(opcode) },
+            .wl_display => |*o| WlMessage{ .wl_display = try o.readMessage(opcode) },
+            .wl_registry => |*o| WlMessage{ .wl_registry = try o.readMessage(opcode) },
+            .wl_callback => |*o| WlMessage{ .wl_callback = try o.readMessage(opcode) },
+            .wl_compositor => |*o| WlMessage{ .wl_compositor = try o.readMessage(opcode) },
+            .wl_shm_pool => |*o| WlMessage{ .wl_shm_pool = try o.readMessage(opcode) },
+            .wl_shm => |*o| WlMessage{ .wl_shm = try o.readMessage(opcode) },
+            .wl_buffer => |*o| WlMessage{ .wl_buffer = try o.readMessage(opcode) },
+            .wl_data_offer => |*o| WlMessage{ .wl_data_offer = try o.readMessage(opcode) },
+            .wl_data_source => |*o| WlMessage{ .wl_data_source = try o.readMessage(opcode) },
+            .wl_data_device => |*o| WlMessage{ .wl_data_device = try o.readMessage(opcode) },
+            .wl_data_device_manager => |*o| WlMessage{ .wl_data_device_manager = try o.readMessage(opcode) },
+            .wl_shell => |*o| WlMessage{ .wl_shell = try o.readMessage(opcode) },
+            .wl_shell_surface => |*o| WlMessage{ .wl_shell_surface = try o.readMessage(opcode) },
+            .wl_surface => |*o| WlMessage{ .wl_surface = try o.readMessage(opcode) },
+            .wl_seat => |*o| WlMessage{ .wl_seat = try o.readMessage(opcode) },
+            .wl_pointer => |*o| WlMessage{ .wl_pointer = try o.readMessage(opcode) },
+            .wl_keyboard => |*o| WlMessage{ .wl_keyboard = try o.readMessage(opcode) },
+            .wl_touch => |*o| WlMessage{ .wl_touch = try o.readMessage(opcode) },
+            .wl_output => |*o| WlMessage{ .wl_output = try o.readMessage(opcode) },
+            .wl_region => |*o| WlMessage{ .wl_region = try o.readMessage(opcode) },
+            .wl_subcompositor => |*o| WlMessage{ .wl_subcompositor = try o.readMessage(opcode) },
+            .wl_subsurface => |*o| WlMessage{ .wl_subsurface = try o.readMessage(opcode) },
+            .xdg_wm_base => |*o| WlMessage{ .xdg_wm_base = try o.readMessage(opcode) },
+            .xdg_positioner => |*o| WlMessage{ .xdg_positioner = try o.readMessage(opcode) },
+            .xdg_surface => |*o| WlMessage{ .xdg_surface = try o.readMessage(opcode) },
+            .xdg_toplevel => |*o| WlMessage{ .xdg_toplevel = try o.readMessage(opcode) },
+            .xdg_popup => |*o| WlMessage{ .xdg_popup = try o.readMessage(opcode) },
+            .zwp_linux_dmabuf_v1 => |*o| WlMessage{ .zwp_linux_dmabuf_v1 = try o.readMessage(opcode) },
+            .zwp_linux_buffer_params_v1 => |*o| WlMessage{ .zwp_linux_buffer_params_v1 = try o.readMessage(opcode) },
+            .fw_control => |*o| WlMessage{ .fw_control = try o.readMessage(opcode) },
         };
     }
     // end of dispatch
