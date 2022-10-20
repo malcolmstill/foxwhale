@@ -27,7 +27,7 @@ pub fn main() !void {
             // 1. Handle new wayland connections
             .server => |ev| switch (ev.event) {
                 .client_connected => |conn| {
-                    const client = try ev.target.addClient(conn);
+                    const client = try server.addClient(conn);
                     try epoll.addFd(conn.stream.handle, Target{ .client = client });
                 },
             },

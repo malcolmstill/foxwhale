@@ -41,7 +41,7 @@ pub const Server = struct {
     pub fn addClient(self: *Self, conn: std.net.StreamServer.Connection) !*Client {
         const client = try self.alloc.create(Client);
         client.* = Client{
-            .connection = conn,
+            .conn = conn,
             .wl_display = WlDisplay.init(1, client, 0, 0),
             .context = Context.init(conn.stream.handle),
         };
