@@ -89,13 +89,13 @@ pub fn Epoll(comptime Subsystem: type, comptime SubsystemIterator: type, comptim
 
         pub fn removeFd(self: *Self, fd: i32) !void {
             var ev = linux.epoll_event{
-                .events = linux.EPOLLIN,
+                .events = linux.EPOLL.IN,
                 .data = linux.epoll_data{
                     .ptr = undefined,
                 },
             };
 
-            try os.epoll_ctl(self.fd, os.EPOLL_CTL_DEL, fd, &ev);
+            try os.epoll_ctl(self.fd, linux.EPOLL.CTL_DEL, fd, &ev);
         }
     };
 }
