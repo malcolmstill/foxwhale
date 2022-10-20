@@ -31,7 +31,7 @@ const WlMessage = @import("protocols.zig").WlMessage;
 pub const Client = struct {
     // compositor: *Compositor,
     // alloc: mem.Allocator,
-    connection: std.net.StreamServer.Connection,
+    conn: std.net.StreamServer.Connection,
     context: Context,
     serial: u32 = 0,
     server_id: u32 = 0xff000000 - 1,
@@ -61,7 +61,7 @@ pub const Client = struct {
     pub fn deinit(self: *Self) void {
         self.context.deinit();
 
-        std.os.close(self.connection.stream.handle);
+        std.os.close(self.conn.stream.handle);
 
         // TODO: have caller destroy?
         self.alloc.destroy(self);
