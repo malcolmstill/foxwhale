@@ -100,7 +100,7 @@ pub const Client = struct {
                 self.state = .done;
                 return Event{
                     .client = ClientTargetEvent{
-                        .target = self.client,
+                        .client = self.client,
                         .event = ClientEvent{
                             .hangup = 0,
                         },
@@ -117,7 +117,7 @@ pub const Client = struct {
                 if (err == error.ClientSigbusd or builtin.mode != .Debug) {
                     return Event{
                         .client = ClientTargetEvent{
-                            .target = self.client,
+                            .client = self.client,
                             .event = ClientEvent{
                                 .err = 0,
                             },

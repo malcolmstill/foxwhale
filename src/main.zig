@@ -34,10 +34,10 @@ pub fn main() !void {
             // 2. Handle wayland events per client
             .client => |ev| switch (ev.event) {
                 .hangup => {
-                    try epoll.removeFd(ev.target.conn.stream.handle);
-                    server.removeClient(ev.target);
+                    try epoll.removeFd(ev.client.conn.stream.handle);
+                    server.removeClient(ev.client);
                 },
-                .message => |m| try ev.target.dispatch(m),
+                .message => |m| try ev.client.dispatch(m),
                 .err => std.debug.print("got err\n", .{}),
             },
         };

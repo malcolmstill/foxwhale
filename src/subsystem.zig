@@ -39,7 +39,7 @@ pub const SubsystemIterator = union(Subsystem) {
 };
 
 pub const ServerTargetEvent = struct {
-    target: *Server,
+    server: *Server,
     event: ServerEvent,
 };
 
@@ -52,7 +52,7 @@ pub const ServerEvent = union(ServerEventType) {
 };
 
 pub const ClientTargetEvent = struct {
-    target: *Client,
+    client: *Client,
     event: ClientEvent,
 };
 

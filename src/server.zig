@@ -17,7 +17,7 @@ pub const Server = struct {
     server: std.net.StreamServer,
     clients: std.TailQueue(Client),
 
-    const Node = std.TailQueue(Clients).Node;
+    const Node = std.TailQueue(Client).Node;
 
     const Self = @This();
 
@@ -25,7 +25,7 @@ pub const Server = struct {
         return Server{
             .alloc = alloc,
             .server = try socket(),
-            .clients = std.TailQueue(Clients){},
+            .clients = std.TailQueue(Client){},
         };
     }
 
@@ -83,7 +83,7 @@ pub const Server = struct {
 
             return Event{
                 .server = ServerTargetEvent{
-                    .target = self.server,
+                    .server = self.server,
                     .event = ServerEvent{
                         .client_connected = conn,
                     },

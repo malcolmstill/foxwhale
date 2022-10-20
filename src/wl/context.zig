@@ -81,7 +81,7 @@ pub const Context = struct {
 
         const event = Event{
             .client = ClientTargetEvent{
-                .target = client,
+                .client = client,
                 .event = ClientEvent{
                     .message = try object.readMessage(header.opcode),
                 },
