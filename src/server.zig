@@ -15,7 +15,9 @@ const StaticArray = @import("stalloc.zig").StaticArray;
 pub const Server = struct {
     alloc: mem.Allocator,
     server: std.net.StreamServer,
-    clients: StaticArray(*Client),
+    clients: Clients,
+
+    const Clients = std.TailQueue(Client);
 
     const Self = @This();
 
@@ -23,23 +25,22 @@ pub const Server = struct {
         return Server{
             .alloc = alloc,
             .server = try socket(),
-            .clients = try StaticArray(*Client).init(alloc, 1024),
+            .clients = Clients{},
         };
     }
 
     pub fn deinit(self: *Self) void {
-        for (self.clients.entries) |e| {
-            if (e.in_use) {
-                const client = e.value;
-                self.alloc.destroy(client);
-            }
+        while (self.clients.pop()) |node| {
+            self.removeClient(&node.data);
         }
-        self.clients.deinit();
+
         self.server.close();
     }
 
     pub fn addClient(self: *Self, conn: std.net.StreamServer.Connection) !*Client {
-        const client = try self.alloc.create(Client);
+        const node = try self.alloc.create(Clients.Node);
+        const client: *Client = &node.data;
+
         client.* = Client{
             .conn = conn,
             .wl_display = WlDisplay.init(1, client, 0, 0),
@@ -48,10 +49,15 @@ pub const Server = struct {
 
         try client.context.register(WlObject{ .wl_display = client.wl_display });
 
-        const client_ptr = try self.clients.create();
-        client_ptr.* = client;
+        self.clients.append(node);
 
         return client;
+    }
+
+    pub fn removeClient(self: *Self, client: *Client) void {
+        const node: *Clients.Node = @fieldParentPtr(Clients.Node, "data", client);
+        self.clients.remove(node);
+        self.alloc.destroy(node);
     }
 
     pub fn iterator(self: *Server) SubsystemIterator {
