@@ -16,6 +16,8 @@ const WlSurface = @import("protocols.zig").WlSurface;
 const WlRegion = @import("protocols.zig").WlRegion;
 const WlCallback = @import("protocols.zig").WlCallback;
 const XdgWmBase = @import("protocols.zig").XdgWmBase;
+const XdgSurface = @import("protocols.zig").XdgSurface;
+const XdgToplevel = @import("protocols.zig").XdgToplevel;
 const WlMessage = @import("protocols.zig").WlMessage;
 // const shm_pool = @import("shm_pool.zig");
 // const shm_buffer = @import("shm_buffer.zig");
@@ -140,9 +142,13 @@ pub const Client = struct {
 
     pub fn dispatch(self: *Client, msg: WlMessage) !void {
         switch (msg) {
-            .wl_display => |p| try self.handleDisplay(p),
-            .wl_registry => |p| try self.handleRegistry(p),
-            .wl_compositor => |p| try self.handleCompositor(p),
+            .wl_display => |p| try self.handleWlDisplay(p),
+            .wl_registry => |p| try self.handleWlRegistry(p),
+            .wl_compositor => |p| try self.handleWlCompositor(p),
+            .wl_surface => |p| try self.handleWlSurface(p),
+            .xdg_wm_base => |p| try self.handleXdgWmBase(p),
+            .xdg_surface => |p| try self.handleXdgSurface(p),
+            .xdg_toplevel => |p| try self.handleXdgToplevel(p),
             else => {
                 std.log.err("UNHANDLED = {}", .{msg});
                 return error.UnhandledMessage;
@@ -150,7 +156,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleDisplay(self: *Client, msg: WlDisplay.Message) !void {
+    pub fn handleWlDisplay(self: *Client, msg: WlDisplay.Message) !void {
         switch (msg) {
             .get_registry => |p| {
                 const registry = WlRegistry.init(p.registry, self, 0, 0);
@@ -183,7 +189,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleRegistry(self: *Client, msg: WlRegistry.Message) !void {
+    pub fn handleWlRegistry(self: *Client, msg: WlRegistry.Message) !void {
         switch (msg) {
             .bind => |p| switch (p.name) {
                 1 => {
@@ -211,7 +217,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleCompositor(self: *Client, msg: WlCompositor.Message) !void {
+    pub fn handleWlCompositor(self: *Client, msg: WlCompositor.Message) !void {
         switch (msg) {
             .create_surface => |p| {
                 const surface = WlSurface.init(p.id, self, 0, 0);
@@ -230,6 +236,46 @@ pub const Client = struct {
 
                 try self.context.register(WlObject{ .wl_region = region });
             },
+        }
+    }
+
+    pub fn handleWlSurface(_: *Client, msg: WlSurface.Message) !void {
+        switch (msg) {
+            .commit => |_| {},
+            .damage => |_| {},
+            else => {
+                std.log.err("UNHANDLED = {}", .{msg});
+                return error.UnhandledMessage;
+            },
+        }
+    }
+
+    pub fn handleXdgWmBase(self: *Client, msg: XdgWmBase.Message) !void {
+        switch (msg) {
+            .get_xdg_surface => |p| {
+                const xdg_surface = XdgSurface.init(p.id, self, 0, 0);
+
+                try self.context.register(WlObject{ .xdg_surface = xdg_surface });
+            },
+            else => return error.XdgWmBaseUnhandledMessage,
+        }
+    }
+
+    pub fn handleXdgSurface(self: *Client, msg: XdgSurface.Message) !void {
+        switch (msg) {
+            .get_toplevel => |p| {
+                const xdg_toplevel = XdgToplevel.init(p.id, self, 0, 0);
+
+                try self.context.register(WlObject{ .xdg_toplevel = xdg_toplevel });
+            },
+            else => return error.XdgSurfaceUnhandledMessage,
+        }
+    }
+
+    pub fn handleXdgToplevel(_: *Client, msg: XdgToplevel.Message) !void {
+        switch (msg) {
+            .set_title => |_| {},
+            else => return error.XdgToplevelUnhandledMessage,
         }
     }
 };
