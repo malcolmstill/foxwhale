@@ -15,9 +15,9 @@ const StaticArray = @import("stalloc.zig").StaticArray;
 pub const Server = struct {
     alloc: mem.Allocator,
     server: std.net.StreamServer,
-    clients: Clients,
+    clients: std.TailQueue(Client),
 
-    const Clients = std.TailQueue(Client);
+    const Node = std.TailQueue(Clients).Node;
 
     const Self = @This();
 
@@ -25,7 +25,7 @@ pub const Server = struct {
         return Server{
             .alloc = alloc,
             .server = try socket(),
-            .clients = Clients{},
+            .clients = std.TailQueue(Clients){},
         };
     }
 
@@ -38,7 +38,7 @@ pub const Server = struct {
     }
 
     pub fn addClient(self: *Self, conn: std.net.StreamServer.Connection) !*Client {
-        const node = try self.alloc.create(Clients.Node);
+        const node = try self.alloc.create(Node);
         const client: *Client = &node.data;
 
         client.* = Client{
@@ -55,7 +55,7 @@ pub const Server = struct {
     }
 
     pub fn removeClient(self: *Self, client: *Client) void {
-        const node: *Clients.Node = @fieldParentPtr(Clients.Node, "data", client);
+        const node: *Node = @fieldParentPtr(Node, "data", client);
         self.clients.remove(node);
         self.alloc.destroy(node);
     }
