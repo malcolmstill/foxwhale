@@ -13,6 +13,7 @@ const WlRegistry = @import("protocols.zig").WlRegistry;
 const WlCompositor = @import("protocols.zig").WlCompositor;
 const WlShm = @import("protocols.zig").WlShm;
 const WlSurface = @import("protocols.zig").WlSurface;
+const WlRegion = @import("protocols.zig").WlRegion;
 const WlCallback = @import("protocols.zig").WlCallback;
 const XdgWmBase = @import("protocols.zig").XdgWmBase;
 const WlMessage = @import("protocols.zig").WlMessage;
@@ -214,10 +215,21 @@ pub const Client = struct {
         switch (msg) {
             .create_surface => |p| {
                 const surface = WlSurface.init(p.id, self, 0, 0);
+
                 // TODO: Add window and link to surface
+                // const window = try win.newWindow(context.client, new_id);
+                // window.view = context.client.compositor.current_view;
+
                 try self.context.register(WlObject{ .wl_surface = surface });
             },
-            else => return error.WlCompositorUnhandledMessage,
+            .create_region => |p| {
+                const region = WlRegion.init(p.id, self, 0, 0);
+
+                // const region = try reg.newRegion(context.client, new_id);
+                // const wl_region = prot.new_wl_region(new_id, context, @ptrToInt(region));
+
+                try self.context.register(WlObject{ .wl_region = region });
+            },
         }
     }
 };
