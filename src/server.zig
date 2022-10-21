@@ -93,7 +93,7 @@ pub const Server = struct {
     };
 };
 
-pub fn socket() !std.net.StreamServer {
+fn socket() !std.net.StreamServer {
     _ = std.os.unlink("/run/user/1000/wayland-1") catch {};
     var addr = try std.net.Address.initUnix("/run/user/1000/wayland-1");
 

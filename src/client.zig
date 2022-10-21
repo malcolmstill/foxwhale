@@ -34,7 +34,7 @@ pub const Client = struct {
     conn: std.net.StreamServer.Connection,
     context: Context,
     serial: u32 = 0,
-    server_id: u32 = 0xff000000 - 1,
+    server_id: u32 = 0xFF00_0000 - 1,
 
     wl_display: WlDisplay,
     wl_registry: ?WlRegistry = null,
@@ -51,12 +51,6 @@ pub const Client = struct {
     // zwp_linux_dmabuf_id: ?u32 = null,
 
     const Self = @This();
-
-    pub fn initContext(self: *Self, conn: std.net.StreamServer.Connection) void {
-        self.context.init(conn, self);
-
-        try self.context.register(self.wl_display);
-    }
 
     pub fn deinit(self: *Self) void {
         self.context.deinit();
