@@ -30,8 +30,7 @@ pub fn main() !void {
 
     var output = try backend.newOutput(400, 300);
 
-    var frames: usize = 0;
-    var then = std.time.milliTimestamp();
+    var counter = FrameCounter.init();
 
     while (true) {
         var it = epoll.wait(-1);
@@ -57,12 +56,7 @@ pub fn main() !void {
                 .button_press => |bp| std.log.info("button press = {}", .{bp}),
                 .sync => {
                     // For the moment we will draw but we'll want to trigger a timer instead
-                    frames += 1;
-                    if ((std.time.milliTimestamp() - then) > 5000) {
-                        std.log.info("fps = {}", .{frames / 5});
-                        then = std.time.milliTimestamp();
-                        frames = 0;
-                    }
+                    counter.update();
                     c.glClearColor(1.0, 0.0, 0.3, 1.0);
                     c.glClear(c.GL_COLOR_BUFFER_BIT);
                     try output.swap();
@@ -71,3 +65,24 @@ pub fn main() !void {
         };
     }
 }
+
+const FrameCounter = struct {
+    frames: usize = 0,
+    then: i64,
+
+    pub fn init() FrameCounter {
+        return FrameCounter{
+            .then = std.time.milliTimestamp(),
+        };
+    }
+
+    pub fn update(self: *FrameCounter) void {
+        self.frames += 1;
+
+        if ((std.time.milliTimestamp() - self.then) > 5000) {
+            std.log.info("fps = {}", .{self.frames / 5});
+            self.then = std.time.milliTimestamp();
+            self.frames = 0;
+        }
+    }
+};
