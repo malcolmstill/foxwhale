@@ -78,10 +78,11 @@ const FrameCounter = struct {
 
     pub fn update(self: *FrameCounter) void {
         self.frames += 1;
+        const now = std.time.milliTimestamp();
 
-        if ((std.time.milliTimestamp() - self.then) > 5000) {
+        if ((now - self.then) > 5000) {
             std.log.info("fps = {}", .{self.frames / 5});
-            self.then = std.time.milliTimestamp();
+            self.then = now;
             self.frames = 0;
         }
     }
