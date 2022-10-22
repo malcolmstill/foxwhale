@@ -16,7 +16,7 @@ pub fn build(b: *Builder) void {
     exe.setTarget(target);
     exe.setBuildMode(mode);
     exe.linkSystemLibrary("c");
-    exe.linkSystemLibrary("glfw3");
+    // exe.linkSystemLibrary("glfw3");
     exe.linkSystemLibrary("gl");
     exe.linkSystemLibrary("xkbcommon");
     exe.linkSystemLibrary("libsystemd");
@@ -25,6 +25,9 @@ pub fn build(b: *Builder) void {
     exe.linkSystemLibrary("libdrm");
     exe.linkSystemLibrary("gbm");
     exe.linkSystemLibrary("egl");
+    exe.linkSystemLibrary("xcb");
+    exe.linkSystemLibrary("X11");
+    exe.linkSystemLibrary("X11-xcb");
     exe.use_stage1 = true;
     exe.single_threaded = true;
     exe.install();

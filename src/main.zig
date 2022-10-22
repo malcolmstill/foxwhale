@@ -5,10 +5,15 @@ const Subsystem = @import("subsystem.zig").Subsystem;
 const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
 const Event = @import("subsystem.zig").Event;
 const Target = @import("subsystem.zig").Target;
+const Backend = @import("backend/backend.zig").Backend;
+const c = @cImport({
+    @cInclude("GLES3/gl3.h");
+});
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 
 pub fn main() !void {
     std.debug.print("Starting gunflint...\n", .{});
+
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
@@ -19,6 +24,14 @@ pub fn main() !void {
     defer server.deinit();
 
     try epoll.addFd(server.server.sockfd.?, Target{ .server = &server });
+
+    var backend = try Backend.init(.x11);
+    try epoll.addFd(backend.getFd(), Target{ .backend = &backend });
+
+    var output = try backend.newOutput(400, 300);
+
+    var frames: usize = 0;
+    var then = std.time.milliTimestamp();
 
     while (true) {
         var it = epoll.wait(-1);
@@ -39,6 +52,21 @@ pub fn main() !void {
                 },
                 .message => |m| try ev.client.dispatch(m),
                 .err => std.debug.print("got err\n", .{}),
+            },
+            .backend => |ev| switch (ev.event) {
+                .button_press => |bp| std.log.info("button press = {}", .{bp}),
+                .sync => {
+                    // For the moment we will draw but we'll want to trigger a timer instead
+                    frames += 1;
+                    if ((std.time.milliTimestamp() - then) > 5000) {
+                        std.log.info("fps = {}", .{frames / 5});
+                        then = std.time.milliTimestamp();
+                        frames = 0;
+                    }
+                    c.glClearColor(1.0, 0.0, 0.3, 1.0);
+                    c.glClear(c.GL_COLOR_BUFFER_BIT);
+                    try output.swap();
+                },
             },
         };
     }
