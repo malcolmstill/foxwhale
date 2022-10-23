@@ -298,6 +298,15 @@ pub const Client = struct {
                 }
             },
             .damage => |_| {},
+            .attach => |p| {
+                const window = client.server.windows.get(p.wl_surface.id) orelse return error.NoSuchWindow;
+
+                if (p.buffer) |wl_buffer| {
+                    window.wl_buffer = wl_buffer;
+                } else {
+                    window.wl_buffer = null;
+                }
+            },
             else => {
                 std.log.err("UNHANDLED = {}", .{msg});
                 return error.UnhandledMessage;
