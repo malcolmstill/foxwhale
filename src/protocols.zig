@@ -26,6 +26,7 @@ pub const WlDisplay = struct {
                 const callback: u32 = try self.context.nextU32();
                 return Message{
                     .sync = SyncMessage{
+                        .wl_display = self.*,
                         .callback = callback,
                     },
                 };
@@ -35,6 +36,7 @@ pub const WlDisplay = struct {
                 const registry: u32 = try self.context.nextU32();
                 return Message{
                     .get_registry = GetRegistryMessage{
+                        .wl_display = self.*,
                         .registry = registry,
                     },
                 };
@@ -57,12 +59,12 @@ pub const WlDisplay = struct {
     };
 
     const SyncMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_display: WlDisplay,
         callback: u32,
     };
 
     const GetRegistryMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_display: WlDisplay,
         registry: u32,
     };
 
@@ -132,6 +134,7 @@ pub const WlRegistry = struct {
                 const id: u32 = try self.context.nextU32();
                 return Message{
                     .bind = BindMessage{
+                        .wl_registry = self.*,
                         .name = name,
                         .name_string = name_string,
                         .version = version,
@@ -155,7 +158,7 @@ pub const WlRegistry = struct {
     };
 
     const BindMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_registry: WlRegistry,
         name: u32,
         name_string: []u8,
         version: u32,
@@ -262,6 +265,7 @@ pub const WlCompositor = struct {
                 const id: u32 = try self.context.nextU32();
                 return Message{
                     .create_surface = CreateSurfaceMessage{
+                        .wl_compositor = self.*,
                         .id = id,
                     },
                 };
@@ -271,6 +275,7 @@ pub const WlCompositor = struct {
                 const id: u32 = try self.context.nextU32();
                 return Message{
                     .create_region = CreateRegionMessage{
+                        .wl_compositor = self.*,
                         .id = id,
                     },
                 };
@@ -293,12 +298,12 @@ pub const WlCompositor = struct {
     };
 
     const CreateSurfaceMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_compositor: WlCompositor,
         id: u32,
     };
 
     const CreateRegionMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_compositor: WlCompositor,
         id: u32,
     };
 };
@@ -333,6 +338,7 @@ pub const WlShmPool = struct {
                 const format: u32 = try self.context.nextU32();
                 return Message{
                     .create_buffer = CreateBufferMessage{
+                        .wl_shm_pool = self.*,
                         .id = id,
                         .offset = offset,
                         .width = width,
@@ -345,7 +351,9 @@ pub const WlShmPool = struct {
             // destroy
             1 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .wl_shm_pool = self.*,
+                    },
                 };
             },
             // resize
@@ -353,6 +361,7 @@ pub const WlShmPool = struct {
                 const size: i32 = try self.context.nextI32();
                 return Message{
                     .resize = ResizeMessage{
+                        .wl_shm_pool = self.*,
                         .size = size,
                     },
                 };
@@ -377,7 +386,7 @@ pub const WlShmPool = struct {
     };
 
     const CreateBufferMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shm_pool: WlShmPool,
         id: u32,
         offset: i32,
         width: i32,
@@ -387,11 +396,11 @@ pub const WlShmPool = struct {
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shm_pool: WlShmPool,
     };
 
     const ResizeMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shm_pool: WlShmPool,
         size: i32,
     };
 };
@@ -423,6 +432,7 @@ pub const WlShm = struct {
                 const size: i32 = try self.context.nextI32();
                 return Message{
                     .create_pool = CreatePoolMessage{
+                        .wl_shm = self.*,
                         .id = id,
                         .fd = fd,
                         .size = size,
@@ -445,7 +455,7 @@ pub const WlShm = struct {
     };
 
     const CreatePoolMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shm: WlShm,
         id: u32,
         fd: i32,
         size: i32,
@@ -553,7 +563,9 @@ pub const WlBuffer = struct {
             // destroy
             0 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .wl_buffer = self.*,
+                    },
                 };
             },
             else => {
@@ -572,7 +584,7 @@ pub const WlBuffer = struct {
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_buffer: WlBuffer,
     };
 
     //
@@ -621,6 +633,7 @@ pub const WlDataOffer = struct {
                 const mime_type: []u8 = try self.context.nextString();
                 return Message{
                     .accept = AcceptMessage{
+                        .wl_data_offer = self.*,
                         .serial = serial,
                         .mime_type = mime_type,
                     },
@@ -632,6 +645,7 @@ pub const WlDataOffer = struct {
                 const fd: i32 = try self.context.nextFd();
                 return Message{
                     .receive = ReceiveMessage{
+                        .wl_data_offer = self.*,
                         .mime_type = mime_type,
                         .fd = fd,
                     },
@@ -640,13 +654,17 @@ pub const WlDataOffer = struct {
             // destroy
             2 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .wl_data_offer = self.*,
+                    },
                 };
             },
             // finish
             3 => {
                 return Message{
-                    .finish = FinishMessage{},
+                    .finish = FinishMessage{
+                        .wl_data_offer = self.*,
+                    },
                 };
             },
             // set_actions
@@ -655,6 +673,7 @@ pub const WlDataOffer = struct {
                 const preferred_action: u32 = try self.context.nextU32();
                 return Message{
                     .set_actions = SetActionsMessage{
+                        .wl_data_offer = self.*,
                         .dnd_actions = dnd_actions,
                         .preferred_action = preferred_action,
                     },
@@ -684,27 +703,27 @@ pub const WlDataOffer = struct {
     };
 
     const AcceptMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_data_offer: WlDataOffer,
         serial: u32,
         mime_type: []u8,
     };
 
     const ReceiveMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_data_offer: WlDataOffer,
         mime_type: []u8,
         fd: i32,
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_data_offer: WlDataOffer,
     };
 
     const FinishMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_data_offer: WlDataOffer,
     };
 
     const SetActionsMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_data_offer: WlDataOffer,
         dnd_actions: u32,
         preferred_action: u32,
     };
@@ -806,6 +825,7 @@ pub const WlDataSource = struct {
                 const mime_type: []u8 = try self.context.nextString();
                 return Message{
                     .offer = OfferMessage{
+                        .wl_data_source = self.*,
                         .mime_type = mime_type,
                     },
                 };
@@ -813,7 +833,9 @@ pub const WlDataSource = struct {
             // destroy
             1 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .wl_data_source = self.*,
+                    },
                 };
             },
             // set_actions
@@ -821,6 +843,7 @@ pub const WlDataSource = struct {
                 const dnd_actions: u32 = try self.context.nextU32();
                 return Message{
                     .set_actions = SetActionsMessage{
+                        .wl_data_source = self.*,
                         .dnd_actions = dnd_actions,
                     },
                 };
@@ -845,16 +868,16 @@ pub const WlDataSource = struct {
     };
 
     const OfferMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_data_source: WlDataSource,
         mime_type: []u8,
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_data_source: WlDataSource,
     };
 
     const SetActionsMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_data_source: WlDataSource,
         dnd_actions: u32,
     };
 
@@ -1014,6 +1037,7 @@ pub const WlDataDevice = struct {
                 const serial: u32 = try self.context.nextU32();
                 return Message{
                     .start_drag = StartDragMessage{
+                        .wl_data_device = self.*,
                         .source = source,
                         .origin = origin,
                         .icon = icon,
@@ -1030,6 +1054,7 @@ pub const WlDataDevice = struct {
                 const serial: u32 = try self.context.nextU32();
                 return Message{
                     .set_selection = SetSelectionMessage{
+                        .wl_data_device = self.*,
                         .source = source,
                         .serial = serial,
                     },
@@ -1038,7 +1063,9 @@ pub const WlDataDevice = struct {
             // release
             2 => {
                 return Message{
-                    .release = ReleaseMessage{},
+                    .release = ReleaseMessage{
+                        .wl_data_device = self.*,
+                    },
                 };
             },
             else => {
@@ -1061,7 +1088,7 @@ pub const WlDataDevice = struct {
     };
 
     const StartDragMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_data_device: WlDataDevice,
         source: ?WlDataSource,
         origin: WlSurface,
         icon: ?WlSurface,
@@ -1069,13 +1096,13 @@ pub const WlDataDevice = struct {
     };
 
     const SetSelectionMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_data_device: WlDataDevice,
         source: ?WlDataSource,
         serial: u32,
     };
 
     const ReleaseMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_data_device: WlDataDevice,
     };
 
     //
@@ -1202,6 +1229,7 @@ pub const WlDataDeviceManager = struct {
                 const id: u32 = try self.context.nextU32();
                 return Message{
                     .create_data_source = CreateDataSourceMessage{
+                        .wl_data_device_manager = self.*,
                         .id = id,
                     },
                 };
@@ -1215,6 +1243,7 @@ pub const WlDataDeviceManager = struct {
                 } else return error.ExpectedObject;
                 return Message{
                     .get_data_device = GetDataDeviceMessage{
+                        .wl_data_device_manager = self.*,
                         .id = id,
                         .seat = seat,
                     },
@@ -1238,12 +1267,12 @@ pub const WlDataDeviceManager = struct {
     };
 
     const CreateDataSourceMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_data_device_manager: WlDataDeviceManager,
         id: u32,
     };
 
     const GetDataDeviceMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_data_device_manager: WlDataDeviceManager,
         id: u32,
         seat: WlSeat,
     };
@@ -1285,6 +1314,7 @@ pub const WlShell = struct {
                 } else return error.ExpectedObject;
                 return Message{
                     .get_shell_surface = GetShellSurfaceMessage{
+                        .wl_shell = self.*,
                         .id = id,
                         .surface = surface,
                     },
@@ -1306,7 +1336,7 @@ pub const WlShell = struct {
     };
 
     const GetShellSurfaceMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shell: WlShell,
         id: u32,
         surface: WlSurface,
     };
@@ -1341,6 +1371,7 @@ pub const WlShellSurface = struct {
                 const serial: u32 = try self.context.nextU32();
                 return Message{
                     .pong = PongMessage{
+                        .wl_shell_surface = self.*,
                         .serial = serial,
                     },
                 };
@@ -1354,6 +1385,7 @@ pub const WlShellSurface = struct {
                 const serial: u32 = try self.context.nextU32();
                 return Message{
                     .move = MoveMessage{
+                        .wl_shell_surface = self.*,
                         .seat = seat,
                         .serial = serial,
                     },
@@ -1369,6 +1401,7 @@ pub const WlShellSurface = struct {
                 const edges: u32 = try self.context.nextU32();
                 return Message{
                     .resize = ResizeMessage{
+                        .wl_shell_surface = self.*,
                         .seat = seat,
                         .serial = serial,
                         .edges = edges,
@@ -1378,7 +1411,9 @@ pub const WlShellSurface = struct {
             // set_toplevel
             3 => {
                 return Message{
-                    .set_toplevel = SetToplevelMessage{},
+                    .set_toplevel = SetToplevelMessage{
+                        .wl_shell_surface = self.*,
+                    },
                 };
             },
             // set_transient
@@ -1392,6 +1427,7 @@ pub const WlShellSurface = struct {
                 const flags: u32 = try self.context.nextU32();
                 return Message{
                     .set_transient = SetTransientMessage{
+                        .wl_shell_surface = self.*,
                         .parent = parent,
                         .x = x,
                         .y = y,
@@ -1409,6 +1445,7 @@ pub const WlShellSurface = struct {
                 } else null;
                 return Message{
                     .set_fullscreen = SetFullscreenMessage{
+                        .wl_shell_surface = self.*,
                         .method = method,
                         .framerate = framerate,
                         .output = output,
@@ -1431,6 +1468,7 @@ pub const WlShellSurface = struct {
                 const flags: u32 = try self.context.nextU32();
                 return Message{
                     .set_popup = SetPopupMessage{
+                        .wl_shell_surface = self.*,
                         .seat = seat,
                         .serial = serial,
                         .parent = parent,
@@ -1448,6 +1486,7 @@ pub const WlShellSurface = struct {
                 } else null;
                 return Message{
                     .set_maximized = SetMaximizedMessage{
+                        .wl_shell_surface = self.*,
                         .output = output,
                     },
                 };
@@ -1457,6 +1496,7 @@ pub const WlShellSurface = struct {
                 const title: []u8 = try self.context.nextString();
                 return Message{
                     .set_title = SetTitleMessage{
+                        .wl_shell_surface = self.*,
                         .title = title,
                     },
                 };
@@ -1466,6 +1506,7 @@ pub const WlShellSurface = struct {
                 const class_: []u8 = try self.context.nextString();
                 return Message{
                     .set_class = SetClassMessage{
+                        .wl_shell_surface = self.*,
                         .class_ = class_,
                     },
                 };
@@ -1504,29 +1545,29 @@ pub const WlShellSurface = struct {
     };
 
     const PongMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shell_surface: WlShellSurface,
         serial: u32,
     };
 
     const MoveMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shell_surface: WlShellSurface,
         seat: WlSeat,
         serial: u32,
     };
 
     const ResizeMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shell_surface: WlShellSurface,
         seat: WlSeat,
         serial: u32,
         edges: u32,
     };
 
     const SetToplevelMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shell_surface: WlShellSurface,
     };
 
     const SetTransientMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shell_surface: WlShellSurface,
         parent: WlSurface,
         x: i32,
         y: i32,
@@ -1534,14 +1575,14 @@ pub const WlShellSurface = struct {
     };
 
     const SetFullscreenMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shell_surface: WlShellSurface,
         method: u32,
         framerate: u32,
         output: ?WlOutput,
     };
 
     const SetPopupMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shell_surface: WlShellSurface,
         seat: WlSeat,
         serial: u32,
         parent: WlSurface,
@@ -1551,17 +1592,17 @@ pub const WlShellSurface = struct {
     };
 
     const SetMaximizedMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shell_surface: WlShellSurface,
         output: ?WlOutput,
     };
 
     const SetTitleMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shell_surface: WlShellSurface,
         title: []u8,
     };
 
     const SetClassMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_shell_surface: WlShellSurface,
         class_: []u8,
     };
 
@@ -1659,7 +1700,9 @@ pub const WlSurface = struct {
             // destroy
             0 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .wl_surface = self.*,
+                    },
                 };
             },
             // attach
@@ -1672,6 +1715,7 @@ pub const WlSurface = struct {
                 const y: i32 = try self.context.nextI32();
                 return Message{
                     .attach = AttachMessage{
+                        .wl_surface = self.*,
                         .buffer = buffer,
                         .x = x,
                         .y = y,
@@ -1686,6 +1730,7 @@ pub const WlSurface = struct {
                 const height: i32 = try self.context.nextI32();
                 return Message{
                     .damage = DamageMessage{
+                        .wl_surface = self.*,
                         .x = x,
                         .y = y,
                         .width = width,
@@ -1698,6 +1743,7 @@ pub const WlSurface = struct {
                 const callback: u32 = try self.context.nextU32();
                 return Message{
                     .frame = FrameMessage{
+                        .wl_surface = self.*,
                         .callback = callback,
                     },
                 };
@@ -1710,6 +1756,7 @@ pub const WlSurface = struct {
                 } else null;
                 return Message{
                     .set_opaque_region = SetOpaqueRegionMessage{
+                        .wl_surface = self.*,
                         .region = region,
                     },
                 };
@@ -1722,6 +1769,7 @@ pub const WlSurface = struct {
                 } else null;
                 return Message{
                     .set_input_region = SetInputRegionMessage{
+                        .wl_surface = self.*,
                         .region = region,
                     },
                 };
@@ -1729,7 +1777,9 @@ pub const WlSurface = struct {
             // commit
             6 => {
                 return Message{
-                    .commit = CommitMessage{},
+                    .commit = CommitMessage{
+                        .wl_surface = self.*,
+                    },
                 };
             },
             // set_buffer_transform
@@ -1737,6 +1787,7 @@ pub const WlSurface = struct {
                 const transform: i32 = try self.context.nextI32();
                 return Message{
                     .set_buffer_transform = SetBufferTransformMessage{
+                        .wl_surface = self.*,
                         .transform = transform,
                     },
                 };
@@ -1746,6 +1797,7 @@ pub const WlSurface = struct {
                 const scale: i32 = try self.context.nextI32();
                 return Message{
                     .set_buffer_scale = SetBufferScaleMessage{
+                        .wl_surface = self.*,
                         .scale = scale,
                     },
                 };
@@ -1758,6 +1810,7 @@ pub const WlSurface = struct {
                 const height: i32 = try self.context.nextI32();
                 return Message{
                     .damage_buffer = DamageBufferMessage{
+                        .wl_surface = self.*,
                         .x = x,
                         .y = y,
                         .width = width,
@@ -1799,18 +1852,18 @@ pub const WlSurface = struct {
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_surface: WlSurface,
     };
 
     const AttachMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_surface: WlSurface,
         buffer: ?WlBuffer,
         x: i32,
         y: i32,
     };
 
     const DamageMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_surface: WlSurface,
         x: i32,
         y: i32,
         width: i32,
@@ -1818,36 +1871,36 @@ pub const WlSurface = struct {
     };
 
     const FrameMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_surface: WlSurface,
         callback: u32,
     };
 
     const SetOpaqueRegionMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_surface: WlSurface,
         region: ?WlRegion,
     };
 
     const SetInputRegionMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_surface: WlSurface,
         region: ?WlRegion,
     };
 
     const CommitMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_surface: WlSurface,
     };
 
     const SetBufferTransformMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_surface: WlSurface,
         transform: i32,
     };
 
     const SetBufferScaleMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_surface: WlSurface,
         scale: i32,
     };
 
     const DamageBufferMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_surface: WlSurface,
         x: i32,
         y: i32,
         width: i32,
@@ -1909,6 +1962,7 @@ pub const WlSeat = struct {
                 const id: u32 = try self.context.nextU32();
                 return Message{
                     .get_pointer = GetPointerMessage{
+                        .wl_seat = self.*,
                         .id = id,
                     },
                 };
@@ -1918,6 +1972,7 @@ pub const WlSeat = struct {
                 const id: u32 = try self.context.nextU32();
                 return Message{
                     .get_keyboard = GetKeyboardMessage{
+                        .wl_seat = self.*,
                         .id = id,
                     },
                 };
@@ -1927,6 +1982,7 @@ pub const WlSeat = struct {
                 const id: u32 = try self.context.nextU32();
                 return Message{
                     .get_touch = GetTouchMessage{
+                        .wl_seat = self.*,
                         .id = id,
                     },
                 };
@@ -1934,7 +1990,9 @@ pub const WlSeat = struct {
             // release
             3 => {
                 return Message{
-                    .release = ReleaseMessage{},
+                    .release = ReleaseMessage{
+                        .wl_seat = self.*,
+                    },
                 };
             },
             else => {
@@ -1959,22 +2017,22 @@ pub const WlSeat = struct {
     };
 
     const GetPointerMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_seat: WlSeat,
         id: u32,
     };
 
     const GetKeyboardMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_seat: WlSeat,
         id: u32,
     };
 
     const GetTouchMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_seat: WlSeat,
         id: u32,
     };
 
     const ReleaseMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_seat: WlSeat,
     };
 
     //
@@ -2058,6 +2116,7 @@ pub const WlPointer = struct {
                 const hotspot_y: i32 = try self.context.nextI32();
                 return Message{
                     .set_cursor = SetCursorMessage{
+                        .wl_pointer = self.*,
                         .serial = serial,
                         .surface = surface,
                         .hotspot_x = hotspot_x,
@@ -2068,7 +2127,9 @@ pub const WlPointer = struct {
             // release
             1 => {
                 return Message{
-                    .release = ReleaseMessage{},
+                    .release = ReleaseMessage{
+                        .wl_pointer = self.*,
+                    },
                 };
             },
             else => {
@@ -2089,7 +2150,7 @@ pub const WlPointer = struct {
     };
 
     const SetCursorMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_pointer: WlPointer,
         serial: u32,
         surface: ?WlSurface,
         hotspot_x: i32,
@@ -2097,7 +2158,7 @@ pub const WlPointer = struct {
     };
 
     const ReleaseMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_pointer: WlPointer,
     };
 
     //
@@ -2372,7 +2433,9 @@ pub const WlKeyboard = struct {
             // release
             0 => {
                 return Message{
-                    .release = ReleaseMessage{},
+                    .release = ReleaseMessage{
+                        .wl_keyboard = self.*,
+                    },
                 };
             },
             else => {
@@ -2391,7 +2454,7 @@ pub const WlKeyboard = struct {
     };
 
     const ReleaseMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_keyboard: WlKeyboard,
     };
 
     //
@@ -2518,7 +2581,9 @@ pub const WlTouch = struct {
             // release
             0 => {
                 return Message{
-                    .release = ReleaseMessage{},
+                    .release = ReleaseMessage{
+                        .wl_touch = self.*,
+                    },
                 };
             },
             else => {
@@ -2537,7 +2602,7 @@ pub const WlTouch = struct {
     };
 
     const ReleaseMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_touch: WlTouch,
     };
 
     //
@@ -2701,7 +2766,9 @@ pub const WlOutput = struct {
             // release
             0 => {
                 return Message{
-                    .release = ReleaseMessage{},
+                    .release = ReleaseMessage{
+                        .wl_output = self.*,
+                    },
                 };
             },
             else => {
@@ -2720,7 +2787,7 @@ pub const WlOutput = struct {
     };
 
     const ReleaseMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_output: WlOutput,
     };
 
     //
@@ -2872,7 +2939,9 @@ pub const WlRegion = struct {
             // destroy
             0 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .wl_region = self.*,
+                    },
                 };
             },
             // add
@@ -2883,6 +2952,7 @@ pub const WlRegion = struct {
                 const height: i32 = try self.context.nextI32();
                 return Message{
                     .add = AddMessage{
+                        .wl_region = self.*,
                         .x = x,
                         .y = y,
                         .width = width,
@@ -2898,6 +2968,7 @@ pub const WlRegion = struct {
                 const height: i32 = try self.context.nextI32();
                 return Message{
                     .subtract = SubtractMessage{
+                        .wl_region = self.*,
                         .x = x,
                         .y = y,
                         .width = width,
@@ -2925,11 +2996,11 @@ pub const WlRegion = struct {
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_region: WlRegion,
     };
 
     const AddMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_region: WlRegion,
         x: i32,
         y: i32,
         width: i32,
@@ -2937,7 +3008,7 @@ pub const WlRegion = struct {
     };
 
     const SubtractMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_region: WlRegion,
         x: i32,
         y: i32,
         width: i32,
@@ -2968,7 +3039,9 @@ pub const WlSubcompositor = struct {
             // destroy
             0 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .wl_subcompositor = self.*,
+                    },
                 };
             },
             // get_subsurface
@@ -2984,6 +3057,7 @@ pub const WlSubcompositor = struct {
                 } else return error.ExpectedObject;
                 return Message{
                     .get_subsurface = GetSubsurfaceMessage{
+                        .wl_subcompositor = self.*,
                         .id = id,
                         .surface = surface,
                         .parent = parent,
@@ -3008,11 +3082,11 @@ pub const WlSubcompositor = struct {
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_subcompositor: WlSubcompositor,
     };
 
     const GetSubsurfaceMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_subcompositor: WlSubcompositor,
         id: u32,
         surface: WlSurface,
         parent: WlSurface,
@@ -3046,7 +3120,9 @@ pub const WlSubsurface = struct {
             // destroy
             0 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .wl_subsurface = self.*,
+                    },
                 };
             },
             // set_position
@@ -3055,6 +3131,7 @@ pub const WlSubsurface = struct {
                 const y: i32 = try self.context.nextI32();
                 return Message{
                     .set_position = SetPositionMessage{
+                        .wl_subsurface = self.*,
                         .x = x,
                         .y = y,
                     },
@@ -3068,6 +3145,7 @@ pub const WlSubsurface = struct {
                 } else return error.ExpectedObject;
                 return Message{
                     .place_above = PlaceAboveMessage{
+                        .wl_subsurface = self.*,
                         .sibling = sibling,
                     },
                 };
@@ -3080,6 +3158,7 @@ pub const WlSubsurface = struct {
                 } else return error.ExpectedObject;
                 return Message{
                     .place_below = PlaceBelowMessage{
+                        .wl_subsurface = self.*,
                         .sibling = sibling,
                     },
                 };
@@ -3087,13 +3166,17 @@ pub const WlSubsurface = struct {
             // set_sync
             4 => {
                 return Message{
-                    .set_sync = SetSyncMessage{},
+                    .set_sync = SetSyncMessage{
+                        .wl_subsurface = self.*,
+                    },
                 };
             },
             // set_desync
             5 => {
                 return Message{
-                    .set_desync = SetDesyncMessage{},
+                    .set_desync = SetDesyncMessage{
+                        .wl_subsurface = self.*,
+                    },
                 };
             },
             else => {
@@ -3122,31 +3205,31 @@ pub const WlSubsurface = struct {
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_subsurface: WlSubsurface,
     };
 
     const SetPositionMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_subsurface: WlSubsurface,
         x: i32,
         y: i32,
     };
 
     const PlaceAboveMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_subsurface: WlSubsurface,
         sibling: WlSurface,
     };
 
     const PlaceBelowMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_subsurface: WlSubsurface,
         sibling: WlSurface,
     };
 
     const SetSyncMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_subsurface: WlSubsurface,
     };
 
     const SetDesyncMessage = struct {
-        // TODO: should we include the interface's Object?
+        wl_subsurface: WlSubsurface,
     };
 
     pub const Error = enum(u32) {
@@ -3177,7 +3260,9 @@ pub const XdgWmBase = struct {
             // destroy
             0 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .xdg_wm_base = self.*,
+                    },
                 };
             },
             // create_positioner
@@ -3185,6 +3270,7 @@ pub const XdgWmBase = struct {
                 const id: u32 = try self.context.nextU32();
                 return Message{
                     .create_positioner = CreatePositionerMessage{
+                        .xdg_wm_base = self.*,
                         .id = id,
                     },
                 };
@@ -3198,6 +3284,7 @@ pub const XdgWmBase = struct {
                 } else return error.ExpectedObject;
                 return Message{
                     .get_xdg_surface = GetXdgSurfaceMessage{
+                        .xdg_wm_base = self.*,
                         .id = id,
                         .surface = surface,
                     },
@@ -3208,6 +3295,7 @@ pub const XdgWmBase = struct {
                 const serial: u32 = try self.context.nextU32();
                 return Message{
                     .pong = PongMessage{
+                        .xdg_wm_base = self.*,
                         .serial = serial,
                     },
                 };
@@ -3234,22 +3322,22 @@ pub const XdgWmBase = struct {
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_wm_base: XdgWmBase,
     };
 
     const CreatePositionerMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_wm_base: XdgWmBase,
         id: u32,
     };
 
     const GetXdgSurfaceMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_wm_base: XdgWmBase,
         id: u32,
         surface: WlSurface,
     };
 
     const PongMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_wm_base: XdgWmBase,
         serial: u32,
     };
 
@@ -3305,7 +3393,9 @@ pub const XdgPositioner = struct {
             // destroy
             0 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .xdg_positioner = self.*,
+                    },
                 };
             },
             // set_size
@@ -3314,6 +3404,7 @@ pub const XdgPositioner = struct {
                 const height: i32 = try self.context.nextI32();
                 return Message{
                     .set_size = SetSizeMessage{
+                        .xdg_positioner = self.*,
                         .width = width,
                         .height = height,
                     },
@@ -3327,6 +3418,7 @@ pub const XdgPositioner = struct {
                 const height: i32 = try self.context.nextI32();
                 return Message{
                     .set_anchor_rect = SetAnchorRectMessage{
+                        .xdg_positioner = self.*,
                         .x = x,
                         .y = y,
                         .width = width,
@@ -3339,6 +3431,7 @@ pub const XdgPositioner = struct {
                 const anchor: u32 = try self.context.nextU32();
                 return Message{
                     .set_anchor = SetAnchorMessage{
+                        .xdg_positioner = self.*,
                         .anchor = anchor,
                     },
                 };
@@ -3348,6 +3441,7 @@ pub const XdgPositioner = struct {
                 const gravity: u32 = try self.context.nextU32();
                 return Message{
                     .set_gravity = SetGravityMessage{
+                        .xdg_positioner = self.*,
                         .gravity = gravity,
                     },
                 };
@@ -3357,6 +3451,7 @@ pub const XdgPositioner = struct {
                 const constraint_adjustment: u32 = try self.context.nextU32();
                 return Message{
                     .set_constraint_adjustment = SetConstraintAdjustmentMessage{
+                        .xdg_positioner = self.*,
                         .constraint_adjustment = constraint_adjustment,
                     },
                 };
@@ -3367,6 +3462,7 @@ pub const XdgPositioner = struct {
                 const y: i32 = try self.context.nextI32();
                 return Message{
                     .set_offset = SetOffsetMessage{
+                        .xdg_positioner = self.*,
                         .x = x,
                         .y = y,
                     },
@@ -3400,17 +3496,17 @@ pub const XdgPositioner = struct {
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_positioner: XdgPositioner,
     };
 
     const SetSizeMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_positioner: XdgPositioner,
         width: i32,
         height: i32,
     };
 
     const SetAnchorRectMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_positioner: XdgPositioner,
         x: i32,
         y: i32,
         width: i32,
@@ -3418,22 +3514,22 @@ pub const XdgPositioner = struct {
     };
 
     const SetAnchorMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_positioner: XdgPositioner,
         anchor: u32,
     };
 
     const SetGravityMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_positioner: XdgPositioner,
         gravity: u32,
     };
 
     const SetConstraintAdjustmentMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_positioner: XdgPositioner,
         constraint_adjustment: u32,
     };
 
     const SetOffsetMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_positioner: XdgPositioner,
         x: i32,
         y: i32,
     };
@@ -3500,7 +3596,9 @@ pub const XdgSurface = struct {
             // destroy
             0 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .xdg_surface = self.*,
+                    },
                 };
             },
             // get_toplevel
@@ -3508,6 +3606,7 @@ pub const XdgSurface = struct {
                 const id: u32 = try self.context.nextU32();
                 return Message{
                     .get_toplevel = GetToplevelMessage{
+                        .xdg_surface = self.*,
                         .id = id,
                     },
                 };
@@ -3525,6 +3624,7 @@ pub const XdgSurface = struct {
                 } else return error.ExpectedObject;
                 return Message{
                     .get_popup = GetPopupMessage{
+                        .xdg_surface = self.*,
                         .id = id,
                         .parent = parent,
                         .positioner = positioner,
@@ -3539,6 +3639,7 @@ pub const XdgSurface = struct {
                 const height: i32 = try self.context.nextI32();
                 return Message{
                     .set_window_geometry = SetWindowGeometryMessage{
+                        .xdg_surface = self.*,
                         .x = x,
                         .y = y,
                         .width = width,
@@ -3551,6 +3652,7 @@ pub const XdgSurface = struct {
                 const serial: u32 = try self.context.nextU32();
                 return Message{
                     .ack_configure = AckConfigureMessage{
+                        .xdg_surface = self.*,
                         .serial = serial,
                     },
                 };
@@ -3579,23 +3681,23 @@ pub const XdgSurface = struct {
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_surface: XdgSurface,
     };
 
     const GetToplevelMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_surface: XdgSurface,
         id: u32,
     };
 
     const GetPopupMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_surface: XdgSurface,
         id: u32,
         parent: ?XdgSurface,
         positioner: XdgPositioner,
     };
 
     const SetWindowGeometryMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_surface: XdgSurface,
         x: i32,
         y: i32,
         width: i32,
@@ -3603,7 +3705,7 @@ pub const XdgSurface = struct {
     };
 
     const AckConfigureMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_surface: XdgSurface,
         serial: u32,
     };
 
@@ -3661,7 +3763,9 @@ pub const XdgToplevel = struct {
             // destroy
             0 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .xdg_toplevel = self.*,
+                    },
                 };
             },
             // set_parent
@@ -3672,6 +3776,7 @@ pub const XdgToplevel = struct {
                 } else null;
                 return Message{
                     .set_parent = SetParentMessage{
+                        .xdg_toplevel = self.*,
                         .parent = parent,
                     },
                 };
@@ -3681,6 +3786,7 @@ pub const XdgToplevel = struct {
                 const title: []u8 = try self.context.nextString();
                 return Message{
                     .set_title = SetTitleMessage{
+                        .xdg_toplevel = self.*,
                         .title = title,
                     },
                 };
@@ -3690,6 +3796,7 @@ pub const XdgToplevel = struct {
                 const app_id: []u8 = try self.context.nextString();
                 return Message{
                     .set_app_id = SetAppIdMessage{
+                        .xdg_toplevel = self.*,
                         .app_id = app_id,
                     },
                 };
@@ -3705,6 +3812,7 @@ pub const XdgToplevel = struct {
                 const y: i32 = try self.context.nextI32();
                 return Message{
                     .show_window_menu = ShowWindowMenuMessage{
+                        .xdg_toplevel = self.*,
                         .seat = seat,
                         .serial = serial,
                         .x = x,
@@ -3721,6 +3829,7 @@ pub const XdgToplevel = struct {
                 const serial: u32 = try self.context.nextU32();
                 return Message{
                     .move = MoveMessage{
+                        .xdg_toplevel = self.*,
                         .seat = seat,
                         .serial = serial,
                     },
@@ -3736,6 +3845,7 @@ pub const XdgToplevel = struct {
                 const edges: u32 = try self.context.nextU32();
                 return Message{
                     .resize = ResizeMessage{
+                        .xdg_toplevel = self.*,
                         .seat = seat,
                         .serial = serial,
                         .edges = edges,
@@ -3748,6 +3858,7 @@ pub const XdgToplevel = struct {
                 const height: i32 = try self.context.nextI32();
                 return Message{
                     .set_max_size = SetMaxSizeMessage{
+                        .xdg_toplevel = self.*,
                         .width = width,
                         .height = height,
                     },
@@ -3759,6 +3870,7 @@ pub const XdgToplevel = struct {
                 const height: i32 = try self.context.nextI32();
                 return Message{
                     .set_min_size = SetMinSizeMessage{
+                        .xdg_toplevel = self.*,
                         .width = width,
                         .height = height,
                     },
@@ -3767,13 +3879,17 @@ pub const XdgToplevel = struct {
             // set_maximized
             9 => {
                 return Message{
-                    .set_maximized = SetMaximizedMessage{},
+                    .set_maximized = SetMaximizedMessage{
+                        .xdg_toplevel = self.*,
+                    },
                 };
             },
             // unset_maximized
             10 => {
                 return Message{
-                    .unset_maximized = UnsetMaximizedMessage{},
+                    .unset_maximized = UnsetMaximizedMessage{
+                        .xdg_toplevel = self.*,
+                    },
                 };
             },
             // set_fullscreen
@@ -3784,6 +3900,7 @@ pub const XdgToplevel = struct {
                 } else null;
                 return Message{
                     .set_fullscreen = SetFullscreenMessage{
+                        .xdg_toplevel = self.*,
                         .output = output,
                     },
                 };
@@ -3791,13 +3908,17 @@ pub const XdgToplevel = struct {
             // unset_fullscreen
             12 => {
                 return Message{
-                    .unset_fullscreen = UnsetFullscreenMessage{},
+                    .unset_fullscreen = UnsetFullscreenMessage{
+                        .xdg_toplevel = self.*,
+                    },
                 };
             },
             // set_minimized
             13 => {
                 return Message{
-                    .set_minimized = SetMinimizedMessage{},
+                    .set_minimized = SetMinimizedMessage{
+                        .xdg_toplevel = self.*,
+                    },
                 };
             },
             else => {
@@ -3842,26 +3963,26 @@ pub const XdgToplevel = struct {
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_toplevel: XdgToplevel,
     };
 
     const SetParentMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_toplevel: XdgToplevel,
         parent: ?XdgToplevel,
     };
 
     const SetTitleMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_toplevel: XdgToplevel,
         title: []u8,
     };
 
     const SetAppIdMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_toplevel: XdgToplevel,
         app_id: []u8,
     };
 
     const ShowWindowMenuMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_toplevel: XdgToplevel,
         seat: WlSeat,
         serial: u32,
         x: i32,
@@ -3869,49 +3990,49 @@ pub const XdgToplevel = struct {
     };
 
     const MoveMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_toplevel: XdgToplevel,
         seat: WlSeat,
         serial: u32,
     };
 
     const ResizeMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_toplevel: XdgToplevel,
         seat: WlSeat,
         serial: u32,
         edges: u32,
     };
 
     const SetMaxSizeMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_toplevel: XdgToplevel,
         width: i32,
         height: i32,
     };
 
     const SetMinSizeMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_toplevel: XdgToplevel,
         width: i32,
         height: i32,
     };
 
     const SetMaximizedMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_toplevel: XdgToplevel,
     };
 
     const UnsetMaximizedMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_toplevel: XdgToplevel,
     };
 
     const SetFullscreenMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_toplevel: XdgToplevel,
         output: ?WlOutput,
     };
 
     const UnsetFullscreenMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_toplevel: XdgToplevel,
     };
 
     const SetMinimizedMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_toplevel: XdgToplevel,
     };
 
     //
@@ -4005,7 +4126,9 @@ pub const XdgPopup = struct {
             // destroy
             0 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .xdg_popup = self.*,
+                    },
                 };
             },
             // grab
@@ -4017,6 +4140,7 @@ pub const XdgPopup = struct {
                 const serial: u32 = try self.context.nextU32();
                 return Message{
                     .grab = GrabMessage{
+                        .xdg_popup = self.*,
                         .seat = seat,
                         .serial = serial,
                     },
@@ -4040,11 +4164,11 @@ pub const XdgPopup = struct {
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_popup: XdgPopup,
     };
 
     const GrabMessage = struct {
-        // TODO: should we include the interface's Object?
+        xdg_popup: XdgPopup,
         seat: WlSeat,
         serial: u32,
     };
@@ -4105,7 +4229,9 @@ pub const ZwpLinuxDmabufV1 = struct {
             // destroy
             0 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .zwp_linux_dmabuf_v1 = self.*,
+                    },
                 };
             },
             // create_params
@@ -4113,6 +4239,7 @@ pub const ZwpLinuxDmabufV1 = struct {
                 const params_id: u32 = try self.context.nextU32();
                 return Message{
                     .create_params = CreateParamsMessage{
+                        .zwp_linux_dmabuf_v1 = self.*,
                         .params_id = params_id,
                     },
                 };
@@ -4135,11 +4262,11 @@ pub const ZwpLinuxDmabufV1 = struct {
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        zwp_linux_dmabuf_v1: ZwpLinuxDmabufV1,
     };
 
     const CreateParamsMessage = struct {
-        // TODO: should we include the interface's Object?
+        zwp_linux_dmabuf_v1: ZwpLinuxDmabufV1,
         params_id: u32,
     };
 
@@ -4213,7 +4340,9 @@ pub const ZwpLinuxBufferParamsV1 = struct {
             // destroy
             0 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .zwp_linux_buffer_params_v1 = self.*,
+                    },
                 };
             },
             // add
@@ -4226,6 +4355,7 @@ pub const ZwpLinuxBufferParamsV1 = struct {
                 const modifier_lo: u32 = try self.context.nextU32();
                 return Message{
                     .add = AddMessage{
+                        .zwp_linux_buffer_params_v1 = self.*,
                         .fd = fd,
                         .plane_idx = plane_idx,
                         .offset = offset,
@@ -4243,6 +4373,7 @@ pub const ZwpLinuxBufferParamsV1 = struct {
                 const flags: u32 = try self.context.nextU32();
                 return Message{
                     .create = CreateMessage{
+                        .zwp_linux_buffer_params_v1 = self.*,
                         .width = width,
                         .height = height,
                         .format = format,
@@ -4259,6 +4390,7 @@ pub const ZwpLinuxBufferParamsV1 = struct {
                 const flags: u32 = try self.context.nextU32();
                 return Message{
                     .create_immed = CreateImmedMessage{
+                        .zwp_linux_buffer_params_v1 = self.*,
                         .buffer_id = buffer_id,
                         .width = width,
                         .height = height,
@@ -4289,11 +4421,11 @@ pub const ZwpLinuxBufferParamsV1 = struct {
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        zwp_linux_buffer_params_v1: ZwpLinuxBufferParamsV1,
     };
 
     const AddMessage = struct {
-        // TODO: should we include the interface's Object?
+        zwp_linux_buffer_params_v1: ZwpLinuxBufferParamsV1,
         fd: i32,
         plane_idx: u32,
         offset: u32,
@@ -4303,7 +4435,7 @@ pub const ZwpLinuxBufferParamsV1 = struct {
     };
 
     const CreateMessage = struct {
-        // TODO: should we include the interface's Object?
+        zwp_linux_buffer_params_v1: ZwpLinuxBufferParamsV1,
         width: i32,
         height: i32,
         format: u32,
@@ -4311,7 +4443,7 @@ pub const ZwpLinuxBufferParamsV1 = struct {
     };
 
     const CreateImmedMessage = struct {
-        // TODO: should we include the interface's Object?
+        zwp_linux_buffer_params_v1: ZwpLinuxBufferParamsV1,
         buffer_id: u32,
         width: i32,
         height: i32,
@@ -4386,25 +4518,33 @@ pub const FwControl = struct {
             // get_clients
             0 => {
                 return Message{
-                    .get_clients = GetClientsMessage{},
+                    .get_clients = GetClientsMessage{
+                        .fw_control = self.*,
+                    },
                 };
             },
             // get_windows
             1 => {
                 return Message{
-                    .get_windows = GetWindowsMessage{},
+                    .get_windows = GetWindowsMessage{
+                        .fw_control = self.*,
+                    },
                 };
             },
             // get_window_trees
             2 => {
                 return Message{
-                    .get_window_trees = GetWindowTreesMessage{},
+                    .get_window_trees = GetWindowTreesMessage{
+                        .fw_control = self.*,
+                    },
                 };
             },
             // destroy
             3 => {
                 return Message{
-                    .destroy = DestroyMessage{},
+                    .destroy = DestroyMessage{
+                        .fw_control = self.*,
+                    },
                 };
             },
             else => {
@@ -4429,19 +4569,19 @@ pub const FwControl = struct {
     };
 
     const GetClientsMessage = struct {
-        // TODO: should we include the interface's Object?
+        fw_control: FwControl,
     };
 
     const GetWindowsMessage = struct {
-        // TODO: should we include the interface's Object?
+        fw_control: FwControl,
     };
 
     const GetWindowTreesMessage = struct {
-        // TODO: should we include the interface's Object?
+        fw_control: FwControl,
     };
 
     const DestroyMessage = struct {
-        // TODO: should we include the interface's Object?
+        fw_control: FwControl,
     };
 
     pub fn sendClient(self: Self, index: u32) anyerror!void {

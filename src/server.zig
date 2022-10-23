@@ -10,15 +10,23 @@ const Client = @import("client.zig").Client;
 const Context = @import("wl/context.zig").Context;
 const WlObject = @import("protocols.zig").WlObject;
 const WlDisplay = @import("protocols.zig").WlDisplay;
+const WlSurface = @import("protocols.zig").WlSurface;
+const WlRegion = @import("protocols.zig").WlRegion;
 const StaticArray = @import("stalloc.zig").StaticArray;
+const Window = @import("window.zig").Window;
+const Buffer = @import("buffer.zig").Buffer;
+const Region = @import("region.zig").Region;
 
 pub const Server = struct {
     alloc: mem.Allocator,
     server: std.net.StreamServer,
     clients: std.TailQueue(Client),
+    // resources:
+    windows: List(Window),
+    regions: List(Region),
+    buffers: List(Buffer),
 
-    const Node = std.TailQueue(Client).Node;
-
+    const ClientNode = std.TailQueue(Client).Node;
     const Self = @This();
 
     pub fn init(alloc: mem.Allocator) !Server {
@@ -26,22 +34,42 @@ pub const Server = struct {
             .alloc = alloc,
             .server = try socket(),
             .clients = std.TailQueue(Client){},
+            .windows = List(Window).init(alloc),
+            .regions = List(Region).init(alloc),
+            .buffers = List(Buffer).init(alloc),
         };
     }
 
     pub fn deinit(self: *Self) void {
         while (self.clients.pop()) |node| {
-            self.removeClient(&node.data);
+            self.alloc.destroy(node);
         }
+
+        self.windows.deinit();
+        self.regions.deinit();
+        self.buffers.deinit();
 
         self.server.close();
     }
 
+    pub fn addWindow(self: *Self, client: *Client, surface: WlSurface) !*Window {
+        return try self.windows.add(surface.id, Window.init(client, surface));
+    }
+
+    pub fn addRegion(self: *Self, client: *Client, wl_region: WlRegion) !*Region {
+        return try self.regions.add(wl_region.id, Region.init(client, wl_region));
+    }
+
+    pub fn removeRegion(self: *Self, region: *Region) void {
+        self.regions.remove(region.wl_region.id, region);
+    }
+
     pub fn addClient(self: *Self, conn: std.net.StreamServer.Connection) !*Client {
-        const node = try self.alloc.create(Node);
+        const node = try self.alloc.create(ClientNode);
         const client: *Client = &node.data;
 
         client.* = Client{
+            .server = self,
             .conn = conn,
             .wl_display = WlDisplay.init(1, &client.context, 0, 0),
             .context = Context.init(conn.stream.handle),
@@ -55,7 +83,7 @@ pub const Server = struct {
     }
 
     pub fn removeClient(self: *Self, client: *Client) void {
-        const node: *Node = @fieldParentPtr(Node, "data", client);
+        const node: *ClientNode = @fieldParentPtr(ClientNode, "data", client);
         self.clients.remove(node);
         self.alloc.destroy(node);
     }
@@ -101,4 +129,59 @@ fn socket() !std.net.StreamServer {
     try server.listen(addr);
 
     return server;
+}
+
+fn List(comptime T: type) type {
+    return struct {
+        alloc: mem.Allocator,
+        resources: std.TailQueue(T),
+        resourceIndex: std.AutoHashMap(u32, *T),
+
+        const Self = @This();
+
+        const Node = std.TailQueue(T).Node;
+
+        pub fn init(alloc: mem.Allocator) Self {
+            return Self{
+                .alloc = alloc,
+                .resources = std.TailQueue(T){},
+                .resourceIndex = std.AutoHashMap(u32, *T).init(alloc),
+            };
+        }
+
+        pub fn add(self: *Self, id: u32, resource: T) !*T {
+            const node = try self.alloc.create(Node);
+            var resource_ptr: *T = &node.data;
+
+            resource_ptr.* = resource;
+
+            self.resources.append(node);
+            try self.resourceIndex.put(id, resource_ptr);
+
+            return resource_ptr;
+        }
+
+        pub fn remove(self: *Self, id: u32, resource_ptr: *T) void {
+            _ = self.resourceIndex.remove(id);
+            const node: *Node = @fieldParentPtr(Node, "data", resource_ptr);
+            self.resources.remove(node);
+            self.alloc.destroy(node);
+        }
+
+        pub fn get(self: *Self, id: u32) ?*T {
+            return self.resourceIndex.get(id);
+        }
+
+        pub fn associate(self: *Self, id: u32, resource_ptr: *T) !void {
+            try self.resourceIndex.put(id, resource_ptr);
+        }
+
+        pub fn deinit(self: *Self) void {
+            while (self.resources.pop()) |node| {
+                self.alloc.destroy(node);
+            }
+
+            self.resourceIndex.deinit();
+        }
+    };
 }

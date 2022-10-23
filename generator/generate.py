@@ -169,7 +169,8 @@ def generate_msg(i, receive, interface):
     messageName = f"{camelCase(receive.attrib['name'])}Message"
     print(f"")
     print(f"const {messageName} = struct {{")
-    print(f"// TODO: should we include the interface's Object?")
+    # print(f"// TODO: should we include the interface's Object?")
+    print(f"{interface.attrib['name']}: {camelCase(interface.attrib['name'])},")
     for arg in receive:
         if arg.tag == "arg":
             generate_msg_field(arg)
@@ -203,6 +204,7 @@ def generate_receive_dispatch(index, receive, interface):
 
     messageName = f"{camelCase(receive.attrib['name'])}Message"
     print(f"return Message{{ .{receive.attrib['name']} = {messageName}{{")
+    print(f".{interface.attrib['name']} = self.*,")
     for arg in receive:
         if arg.tag == "arg":
             arg_name = arg.attrib["name"]

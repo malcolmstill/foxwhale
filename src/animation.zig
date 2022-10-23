@@ -48,7 +48,7 @@ pub fn Animation(comptime Targets: type) type {
             final_value: f32,
             start_time: f64 = 0.0,
             duration: f64,
-            easing: fn (f64) f64,
+            easing: *const fn (f64) f64,
             property: []const u8,
             target: Targets,
 

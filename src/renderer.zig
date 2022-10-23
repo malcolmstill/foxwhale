@@ -13,7 +13,7 @@ const c = @cImport({
     @cInclude("EGL/egl.h");
     @cInclude("GLES2/gl2ext.h");
 });
-const egl = @import("backend/drm/egl.zig");
+// const egl = @import("backend/drm/egl.zig");
 
 pub const Renderer = struct {
     shaders: StringHashMap(c_uint),

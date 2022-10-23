@@ -26,9 +26,13 @@ const WlMessage = @import("protocols.zig").WlMessage;
 // const positioner = @import("positioner.zig");
 // const buffer = @import("buffer.zig");
 // const Stalloc = @import("stalloc.zig").Stalloc;
-// const Compositor = @import("compositor.zig").Compositor;
+const Server = @import("server.zig").Server;
+const Renderer = @import("renderer.zig").Renderer;
+const Rectangle = @import("rectangle.zig").Rectangle;
+const XdgConfigurations = @import("window.zig").XdgConfigurations;
 
 pub const Client = struct {
+    server: *Server,
     // compositor: *Compositor,
     // alloc: mem.Allocator,
     conn: std.net.StreamServer.Connection,
@@ -215,12 +219,8 @@ pub const Client = struct {
         switch (msg) {
             .create_surface => |p| {
                 const surface = WlSurface.init(p.id, &self.context, 0, 0);
-
-                // TODO: Add window and link to surface
-                // const window = try win.newWindow(context.client, new_id);
-                // window.view = context.client.compositor.current_view;
-
                 try self.context.register(WlObject{ .wl_surface = surface });
+                _ = try self.server.addWindow(self, surface);
             },
             .create_region => |p| {
                 const region = WlRegion.init(p.id, &self.context, 0, 0);
@@ -233,9 +233,63 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlSurface(_: *Client, msg: WlSurface.Message) !void {
+    pub fn handleWlSurface(client: *Client, msg: WlSurface.Message) !void {
         switch (msg) {
-            .commit => |_| {},
+            .commit => |p| {
+                const window = client.server.windows.get(p.wl_surface.id) orelse return error.NoSuchWindow;
+                defer {
+                    if (!window.synchronized) window.flip();
+                }
+
+                const wl_buffer = window.wl_buffer orelse return;
+
+                const buffer = client.server.buffers.get(wl_buffer.id) orelse return error.NoSuchBuffer; // @intToPtr(*Buffer, wl_buffer.container);
+                buffer.beginAccess();
+
+                if (window.texture) |texture| {
+                    window.texture = null;
+                    try Renderer.releaseTexture(texture);
+                }
+
+                // We need to set pending here (rather than in ack_configure) because
+                // we need to know the width and height of the new buffer
+                // TODO: reinstate
+                // if (compositor.COMPOSITOR.resize) |resize| {
+                //     if (resize.window == window) {
+                //         window.pending().x += resize.offsetX(window.width, buffer.width());
+                //         window.pending().y += resize.offsetY(window.height, buffer.height());
+                //     }
+                // }
+
+                window.width = buffer.width();
+                window.height = buffer.height();
+                window.texture = try buffer.makeTexture();
+                std.log.info("window.texture = {?}", .{window.texture});
+
+                if (window.first_buffer == false) {
+                    window.first_buffer = true;
+                }
+
+                try buffer.endAccess();
+                try wl_buffer.sendRelease();
+                window.wl_buffer = null;
+
+                if (window.view) |view| {
+                    if (window.xdg_toplevel != null) {
+                        if (window.toplevel.prev == null and window.toplevel.next == null) {
+                            view.remove(window);
+                            view.push(window);
+                        }
+                    }
+                }
+
+                if (window.xdg_surface != null) {
+                    if (window.first_configure and window.first_buffer and window.mapped == false) {
+                        try window.firstCommit();
+                        window.mapped = true;
+                    }
+                }
+            },
             .damage => |_| {},
             else => {
                 std.log.err("UNHANDLED = {}", .{msg});
@@ -247,7 +301,11 @@ pub const Client = struct {
     pub fn handleXdgWmBase(self: *Client, msg: XdgWmBase.Message) !void {
         switch (msg) {
             .get_xdg_surface => |p| {
+                const window = self.server.windows.get(p.surface.id) orelse return error.NoSuchWindow;
                 const xdg_surface = XdgSurface.init(p.id, &self.context, 0, 0);
+                try self.server.windows.associate(xdg_surface.id, window);
+
+                window.xdg_surface = xdg_surface;
 
                 try self.context.register(WlObject{ .xdg_surface = xdg_surface });
             },
@@ -258,9 +316,52 @@ pub const Client = struct {
     pub fn handleXdgSurface(self: *Client, msg: XdgSurface.Message) !void {
         switch (msg) {
             .get_toplevel => |p| {
+                const window = self.server.windows.get(p.xdg_surface.id) orelse return error.NoSuchWindow;
                 const xdg_toplevel = XdgToplevel.init(p.id, &self.context, 0, 0);
+                try self.server.windows.associate(xdg_toplevel.id, window);
+
+                window.xdg_toplevel = xdg_toplevel;
+
+                var array = [_]u32{};
+                const serial = self.nextSerial();
+                try xdg_toplevel.sendConfigure(0, 0, array[0..array.len]);
+                try p.xdg_surface.sendConfigure(serial);
 
                 try self.context.register(WlObject{ .xdg_toplevel = xdg_toplevel });
+            },
+            .ack_configure => |p| {
+                const window = self.server.windows.get(p.xdg_surface.id) orelse return error.NoSuchWindow;
+
+                while (window.xdg_configurations.readItem()) |xdg_configuration| {
+                    if (p.serial == xdg_configuration.serial) {
+                        switch (xdg_configuration.operation) {
+                            .Maximize => {
+                                if (window.maximized == null) {
+                                    window.pending().x = 0;
+                                    window.pending().y = 0;
+
+                                    window.maximized = Rectangle{
+                                        .x = window.current().x,
+                                        .y = window.current().y,
+                                        .width = if (window.window_geometry) |wg| wg.width else window.width,
+                                        .height = if (window.window_geometry) |wg| wg.height else window.height,
+                                    };
+                                }
+                            },
+                            .Unmaximize => {
+                                if (window.maximized) |maximized| {
+                                    window.pending().x = maximized.x;
+                                    window.pending().y = maximized.y;
+                                    window.maximized = null;
+                                }
+                            },
+                        }
+                    }
+                }
+
+                window.xdg_configurations = XdgConfigurations.init();
+
+                if (window.first_configure == false) window.first_configure = true;
             },
             else => return error.XdgSurfaceUnhandledMessage,
         }
