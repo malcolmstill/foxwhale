@@ -129,6 +129,7 @@ pub const X11 = struct {
         c.glClearColor(1.0, 0.0, 0.0, 0.0);
 
         return X11Output{
+            .window_id = window,
             .backend = self,
             .display = egl.display,
             .surface = egl.surface,
@@ -137,6 +138,7 @@ pub const X11 = struct {
 };
 
 pub const X11Output = struct {
+    window_id: u32,
     backend: *X11,
     display: c.EGLDisplay,
     surface: c.EGLSurface,
