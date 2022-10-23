@@ -16,6 +16,7 @@ const WlSurface = @import("protocols.zig").WlSurface;
 const WlBuffer = @import("protocols.zig").WlBuffer;
 const XdgSurface = @import("protocols.zig").XdgSurface;
 const XdgToplevel = @import("protocols.zig").XdgToplevel;
+const RemoveError = @import("client.zig").RemoveError;
 const ease = @import("ease.zig");
 
 pub const XdgConfigurations = LinearFifo(XdgConfiguration, LinearFifoBufferType{ .Static = 32 });
@@ -80,20 +81,20 @@ pub const Window = struct {
     }
 
     // flip double-buffered state
-    pub fn flip(self: *Self) void {
+    pub fn flip(self: *Self) RemoveError!void {
         // std.log.warn("flipping: {}\n", .{self.index});
         self.stateIndex +%= 1;
         if (self.current().input_region != self.pending().input_region) {
             if (self.pending().input_region) |input_region| {
                 // try input_region.deinit();
-                self.client.server.removeRegion(input_region);
+                try self.client.removeRegion(input_region.wl_region.id);
             }
         }
 
         if (self.current().opaque_region != self.pending().opaque_region) {
             if (self.pending().opaque_region) |opaque_region| {
                 // try opaque_region.deinit();
-                self.client.server.removeRegion(opaque_region);
+                try self.client.removeRegion(opaque_region.wl_region.id);
             }
         }
         self.pending().* = self.current().*;
@@ -102,7 +103,7 @@ pub const Window = struct {
         var forward_it = self.subwindowIterator();
         while (forward_it.nextPending()) |subwindow| {
             if (subwindow != self and subwindow.synchronized) {
-                subwindow.flip();
+                try subwindow.flip();
             }
         }
 
@@ -110,7 +111,7 @@ pub const Window = struct {
         var backward_it = self.subwindowIterator();
         while (backward_it.prevPending()) |subwindow| {
             if (subwindow != self and subwindow.synchronized) {
-                subwindow.flip();
+                try subwindow.flip();
             }
         }
     }

@@ -56,30 +56,14 @@ pub const Server = struct {
         self.server.close();
     }
 
-    pub fn addWindow(self: *Self, client: *Client, surface: WlSurface) !*Window {
-        return try self.windows.add(surface.id, Window.init(client, surface));
-    }
-
-    pub fn addRegion(self: *Self, client: *Client, wl_region: WlRegion) !*Region {
-        return try self.regions.add(wl_region.id, Region.init(client, wl_region));
-    }
-
-    pub fn removeRegion(self: *Self, region: *Region) void {
-        self.regions.remove(region.wl_region.id, region);
-    }
-
     pub fn addClient(self: *Self, conn: std.net.StreamServer.Connection) !*Client {
         const node = try self.alloc.create(ClientNode);
         const client: *Client = &node.data;
+        const wl_display = WlDisplay.init(1, &client.context, 0);
 
-        client.* = Client{
-            .server = self,
-            .conn = conn,
-            .wl_display = WlDisplay.init(1, &client.context, 0),
-            .context = Context.init(conn.stream.handle),
-        };
+        client.* = Client.init(self.alloc, self, conn, wl_display);
 
-        try client.context.register(WlObject{ .wl_display = client.wl_display });
+        try client.context.register(WlObject{ .wl_display = wl_display });
 
         self.clients.append(node);
 
@@ -139,7 +123,6 @@ fn List(comptime T: type) type {
     return struct {
         alloc: mem.Allocator,
         resources: std.TailQueue(T),
-        resourceIndex: std.AutoHashMap(u32, *T),
 
         const Self = @This();
 
@@ -149,43 +132,30 @@ fn List(comptime T: type) type {
             return Self{
                 .alloc = alloc,
                 .resources = std.TailQueue(T){},
-                .resourceIndex = std.AutoHashMap(u32, *T).init(alloc),
             };
         }
 
-        pub fn add(self: *Self, id: u32, resource: T) !*T {
+        pub fn add(self: *Self, resource: T) !*T {
             const node = try self.alloc.create(Node);
             var resource_ptr: *T = &node.data;
 
             resource_ptr.* = resource;
 
             self.resources.append(node);
-            try self.resourceIndex.put(id, resource_ptr);
 
             return resource_ptr;
         }
 
-        pub fn remove(self: *Self, id: u32, resource_ptr: *T) void {
-            _ = self.resourceIndex.remove(id);
+        pub fn remove(self: *Self, resource_ptr: *T) void {
             const node: *Node = @fieldParentPtr(Node, "data", resource_ptr);
             self.resources.remove(node);
             self.alloc.destroy(node);
-        }
-
-        pub fn get(self: *Self, id: u32) ?*T {
-            return self.resourceIndex.get(id);
-        }
-
-        pub fn associate(self: *Self, id: u32, resource_ptr: *T) !void {
-            try self.resourceIndex.put(id, resource_ptr);
         }
 
         pub fn deinit(self: *Self) void {
             while (self.resources.pop()) |node| {
                 self.alloc.destroy(node);
             }
-
-            self.resourceIndex.deinit();
         }
     };
 }

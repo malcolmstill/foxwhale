@@ -23,11 +23,12 @@ const XdgToplevel = @import("protocols.zig").XdgToplevel;
 const WlMessage = @import("protocols.zig").WlMessage;
 // const shm_pool = @import("shm_pool.zig");
 // const shm_buffer = @import("shm_buffer.zig");
-// const window = @import("window.zig");
 // const region = @import("region.zig");
 // const positioner = @import("positioner.zig");
 // const buffer = @import("buffer.zig");
 // const Stalloc = @import("stalloc.zig").Stalloc;
+const Window = @import("window.zig").Window;
+const Region = @import("region.zig").Region;
 const Server = @import("server.zig").Server;
 const ShmPool = @import("shm_pool.zig").ShmPool;
 const Buffer = @import("buffer.zig").Buffer;
@@ -39,11 +40,16 @@ const XdgConfigurations = @import("window.zig").XdgConfigurations;
 pub const Client = struct {
     server: *Server,
     // compositor: *Compositor,
-    // alloc: mem.Allocator,
+    alloc: mem.Allocator,
     conn: std.net.StreamServer.Connection,
     context: Context,
     serial: u32 = 0,
     server_id: u32 = 0xFF00_0000 - 1,
+
+    windows: std.AutoHashMap(u32, *Window),
+    regions: std.AutoHashMap(u32, *Region),
+    buffers: std.AutoHashMap(u32, *Buffer),
+    shm_pools: std.AutoHashMap(u32, *ShmPool),
 
     wl_display: WlDisplay,
     wl_registry: ?WlRegistry = null,
@@ -61,13 +67,32 @@ pub const Client = struct {
 
     const Self = @This();
 
+    pub fn init(alloc: mem.Allocator, server: *Server, conn: std.net.StreamServer.Connection, wl_display: WlDisplay) Client {
+        return Client{
+            .alloc = alloc,
+            .server = server,
+            .conn = conn,
+            .wl_display = wl_display,
+            .context = Context.init(conn.stream.handle),
+            .windows = std.AutoHashMap(u32, *Window).init(alloc),
+            .regions = std.AutoHashMap(u32, *Region).init(alloc),
+            .buffers = std.AutoHashMap(u32, *Buffer).init(alloc),
+            .shm_pools = std.AutoHashMap(u32, *ShmPool).init(alloc),
+        };
+    }
+
     pub fn deinit(self: *Self) void {
         self.context.deinit();
 
         std.os.close(self.conn.stream.handle);
 
+        self.windows.deinit();
+        self.regions.deinit();
+        self.buffers.deinit();
+        self.shm_pools.deinit();
+
         // TODO: have caller destroy?
-        self.alloc.destroy(self);
+        // self.alloc.destroy(self);
     }
 
     pub fn nextSerial(self: *Self) u32 {
@@ -141,6 +166,50 @@ pub const Client = struct {
 
     pub fn iterator(self: *Client) SubsystemIterator {
         return SubsystemIterator{ .client = Iterator.init(self) };
+    }
+
+    pub fn addWindow(self: *Client, id: u32, window: Window) !void {
+        const window_ptr = try self.server.windows.add(window);
+        try self.windows.put(id, window_ptr);
+    }
+
+    pub fn addRegion(self: *Client, id: u32, region: Region) !void {
+        const region_ptr = try self.server.regions.add(region);
+        try self.regions.put(id, region_ptr);
+    }
+
+    pub fn addShmPool(self: *Client, id: u32, shm_pool: ShmPool) !void {
+        const shm_pool_ptr = try self.server.shm_pools.add(shm_pool);
+        try self.shm_pools.put(id, shm_pool_ptr);
+    }
+
+    pub fn addBuffer(self: *Client, id: u32, buffer: Buffer) !void {
+        const buffer_ptr = try self.server.buffers.add(buffer);
+        try self.buffers.put(id, buffer_ptr);
+    }
+
+    pub fn removeWindow(self: *Client, id: u32) RemoveError!void {
+        const window = self.windows.get(id) orelse return error.NoSuchWindow;
+        self.server.windows.remove(window);
+        _ = self.windows.remove(id);
+    }
+
+    pub fn removeRegion(self: *Client, id: u32) RemoveError!void {
+        const region = self.regions.get(id) orelse return error.NoSuchRegion;
+        self.server.regions.remove(region);
+        _ = self.regions.remove(id);
+    }
+
+    pub fn removeShmPool(self: *Client, id: u32) RemoveError!void {
+        const shm_pool = self.shm_pools.get(id) orelse return error.NoSuchShmPool;
+        self.server.shm_pools.remove(shm_pool);
+        _ = self.shm_pools.remove(id);
+    }
+
+    pub fn removeBuffer(self: *Client, id: u32) RemoveError!void {
+        const buffer = self.buffers.get(id) orelse return error.NoSuchBuffer;
+        self.server.buffers.remove(buffer);
+        _ = self.buffers.remove(id);
     }
 
     pub fn dispatch(self: *Client, msg: WlMessage) !void {
@@ -225,9 +294,10 @@ pub const Client = struct {
     pub fn handleWlCompositor(self: *Client, msg: WlCompositor.Message) !void {
         switch (msg) {
             .create_surface => |p| {
-                const surface = WlSurface.init(p.id, &self.context, 0);
-                try self.context.register(WlObject{ .wl_surface = surface });
-                _ = try self.server.addWindow(self, surface);
+                const wl_surface = WlSurface.init(p.id, &self.context, 0);
+                try self.context.register(WlObject{ .wl_surface = wl_surface });
+
+                try self.addWindow(wl_surface.id, Window.init(self, wl_surface));
             },
             .create_region => |p| {
                 const region = WlRegion.init(p.id, &self.context, 0);
@@ -243,14 +313,13 @@ pub const Client = struct {
     pub fn handleWlSurface(self: *Client, msg: WlSurface.Message) !void {
         switch (msg) {
             .commit => |p| {
-                const window = self.server.windows.get(p.wl_surface.id) orelse return error.NoSuchWindow;
-                defer {
-                    if (!window.synchronized) window.flip();
-                }
+                const window = self.windows.get(p.wl_surface.id) orelse return error.NoSuchWindow;
 
+                // We may, without error, receive a .commit without an attached buffer.
+                // In that case we can make no further process so we just return
                 const wl_buffer = window.wl_buffer orelse return;
 
-                const buffer = self.server.buffers.get(wl_buffer.id) orelse return error.NoSuchBuffer; // @intToPtr(*Buffer, wl_buffer.container);
+                const buffer = self.buffers.get(wl_buffer.id) orelse return error.NoSuchBuffer; // @intToPtr(*Buffer, wl_buffer.container);
                 buffer.beginAccess();
 
                 if (window.texture) |texture| {
@@ -296,10 +365,12 @@ pub const Client = struct {
                         window.mapped = true;
                     }
                 }
+
+                if (!window.synchronized) try window.flip();
             },
             .damage => |_| {},
             .attach => |p| {
-                const window = self.server.windows.get(p.wl_surface.id) orelse return error.NoSuchWindow;
+                const window = self.windows.get(p.wl_surface.id) orelse return error.NoSuchWindow;
 
                 if (p.buffer) |wl_buffer| {
                     window.wl_buffer = wl_buffer;
@@ -308,7 +379,7 @@ pub const Client = struct {
                 }
             },
             .frame => |p| {
-                const window = self.server.windows.get(p.wl_surface.id) orelse return error.NoSuchWindow;
+                const window = self.windows.get(p.wl_surface.id) orelse return error.NoSuchWindow;
                 try window.callbacks.writeItem(p.callback);
 
                 var callback = WlCallback.init(p.callback, &self.context, 0);
@@ -324,9 +395,9 @@ pub const Client = struct {
     pub fn handleXdgWmBase(self: *Client, msg: XdgWmBase.Message) !void {
         switch (msg) {
             .get_xdg_surface => |p| {
-                const window = self.server.windows.get(p.surface.id) orelse return error.NoSuchWindow;
+                const window = self.windows.get(p.surface.id) orelse return error.NoSuchWindow;
                 const xdg_surface = XdgSurface.init(p.id, &self.context, 0);
-                try self.server.windows.associate(xdg_surface.id, window);
+                try self.windows.put(xdg_surface.id, window);
 
                 window.xdg_surface = xdg_surface;
 
@@ -339,9 +410,9 @@ pub const Client = struct {
     pub fn handleXdgSurface(self: *Client, msg: XdgSurface.Message) !void {
         switch (msg) {
             .get_toplevel => |p| {
-                const window = self.server.windows.get(p.xdg_surface.id) orelse return error.NoSuchWindow;
+                const window = self.windows.get(p.xdg_surface.id) orelse return error.NoSuchWindow;
                 const xdg_toplevel = XdgToplevel.init(p.id, &self.context, 0);
-                try self.server.windows.associate(xdg_toplevel.id, window);
+                try self.windows.put(xdg_toplevel.id, window);
 
                 window.xdg_toplevel = xdg_toplevel;
 
@@ -353,7 +424,7 @@ pub const Client = struct {
                 try self.context.register(WlObject{ .xdg_toplevel = xdg_toplevel });
             },
             .ack_configure => |p| {
-                const window = self.server.windows.get(p.xdg_surface.id) orelse return error.NoSuchWindow;
+                const window = self.windows.get(p.xdg_surface.id) orelse return error.NoSuchWindow;
 
                 while (window.xdg_configurations.readItem()) |xdg_configuration| {
                     if (p.serial == xdg_configuration.serial) {
@@ -402,7 +473,7 @@ pub const Client = struct {
             .create_pool => |p| {
                 const wl_shm_pool = WlShmPool.init(p.id, &self.context, 0);
 
-                _ = try self.server.shm_pools.add(wl_shm_pool.id, ShmPool.init(self, p.fd, wl_shm_pool));
+                _ = try self.addShmPool(wl_shm_pool.id, ShmPool.init(self, p.fd, wl_shm_pool));
 
                 try self.context.register(WlObject{ .wl_shm_pool = wl_shm_pool });
             },
@@ -415,20 +486,20 @@ pub const Client = struct {
                 const wl_shm_pool = p.wl_shm_pool;
                 const wl_buffer = WlBuffer.init(p.id, &self.context, 0);
 
-                const shm_pool = self.server.shm_pools.get(wl_shm_pool.id) orelse return error.NoSuchShmPool;
+                const shm_pool = self.shm_pools.get(wl_shm_pool.id) orelse return error.NoSuchShmPool;
 
-                _ = try self.server.buffers.add(wl_buffer.id, Buffer{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer) });
+                _ = try self.addBuffer(wl_buffer.id, Buffer{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer) });
 
                 try self.context.register(WlObject{ .wl_buffer = wl_buffer });
             },
             .destroy => |p| {
                 const wl_shm_pool = p.wl_shm_pool;
-                const shm_pool = self.server.shm_pools.get(wl_shm_pool.id) orelse return error.NoSuchShmPool;
+                const shm_pool = self.shm_pools.get(wl_shm_pool.id) orelse return error.NoSuchShmPool;
 
                 shm_pool.to_be_destroyed = true;
                 if (shm_pool.ref_count == 0) {
                     shm_pool.deinit();
-                    self.server.shm_pools.remove(wl_shm_pool.id, shm_pool);
+                    _ = self.shm_pools.remove(wl_shm_pool.id);
                 }
 
                 try self.wl_display.sendDeleteId(wl_shm_pool.id);
@@ -437,4 +508,11 @@ pub const Client = struct {
             else => return error.UnhandledWlShmPool,
         }
     }
+};
+
+pub const RemoveError = error{
+    NoSuchWindow,
+    NoSuchRegion,
+    NoSuchShmPool,
+    NoSuchBuffer,
 };
