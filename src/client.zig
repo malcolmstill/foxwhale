@@ -240,17 +240,17 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlSurface(client: *Client, msg: WlSurface.Message) !void {
+    pub fn handleWlSurface(self: *Client, msg: WlSurface.Message) !void {
         switch (msg) {
             .commit => |p| {
-                const window = client.server.windows.get(p.wl_surface.id) orelse return error.NoSuchWindow;
+                const window = self.server.windows.get(p.wl_surface.id) orelse return error.NoSuchWindow;
                 defer {
                     if (!window.synchronized) window.flip();
                 }
 
                 const wl_buffer = window.wl_buffer orelse return;
 
-                const buffer = client.server.buffers.get(wl_buffer.id) orelse return error.NoSuchBuffer; // @intToPtr(*Buffer, wl_buffer.container);
+                const buffer = self.server.buffers.get(wl_buffer.id) orelse return error.NoSuchBuffer; // @intToPtr(*Buffer, wl_buffer.container);
                 buffer.beginAccess();
 
                 if (window.texture) |texture| {
@@ -299,13 +299,20 @@ pub const Client = struct {
             },
             .damage => |_| {},
             .attach => |p| {
-                const window = client.server.windows.get(p.wl_surface.id) orelse return error.NoSuchWindow;
+                const window = self.server.windows.get(p.wl_surface.id) orelse return error.NoSuchWindow;
 
                 if (p.buffer) |wl_buffer| {
                     window.wl_buffer = wl_buffer;
                 } else {
                     window.wl_buffer = null;
                 }
+            },
+            .frame => |p| {
+                const window = self.server.windows.get(p.wl_surface.id) orelse return error.NoSuchWindow;
+                try window.callbacks.writeItem(p.callback);
+
+                var callback = WlCallback.init(p.callback, &self.context, 0);
+                try self.context.register(WlObject{ .wl_callback = callback });
             },
             else => {
                 std.log.err("UNHANDLED = {}", .{msg});
