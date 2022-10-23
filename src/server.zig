@@ -16,6 +16,7 @@ const StaticArray = @import("stalloc.zig").StaticArray;
 const Window = @import("window.zig").Window;
 const Buffer = @import("buffer.zig").Buffer;
 const Region = @import("region.zig").Region;
+const ShmPool = @import("shm_pool.zig").ShmPool;
 
 pub const Server = struct {
     alloc: mem.Allocator,
@@ -25,6 +26,7 @@ pub const Server = struct {
     windows: List(Window),
     regions: List(Region),
     buffers: List(Buffer),
+    shm_pools: List(ShmPool),
 
     const ClientNode = std.TailQueue(Client).Node;
     const Self = @This();
@@ -37,6 +39,7 @@ pub const Server = struct {
             .windows = List(Window).init(alloc),
             .regions = List(Region).init(alloc),
             .buffers = List(Buffer).init(alloc),
+            .shm_pools = List(ShmPool).init(alloc),
         };
     }
 
@@ -48,6 +51,7 @@ pub const Server = struct {
         self.windows.deinit();
         self.regions.deinit();
         self.buffers.deinit();
+        self.shm_pools.deinit();
 
         self.server.close();
     }
@@ -71,7 +75,7 @@ pub const Server = struct {
         client.* = Client{
             .server = self,
             .conn = conn,
-            .wl_display = WlDisplay.init(1, &client.context, 0, 0),
+            .wl_display = WlDisplay.init(1, &client.context, 0),
             .context = Context.init(conn.stream.handle),
         };
 

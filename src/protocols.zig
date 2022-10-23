@@ -6,16 +6,14 @@ pub const WlDisplay = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -111,16 +109,14 @@ pub const WlRegistry = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -204,16 +200,14 @@ pub const WlCallback = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -245,16 +239,14 @@ pub const WlCompositor = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -313,16 +305,14 @@ pub const WlShmPool = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -410,16 +400,14 @@ pub const WlShm = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -545,16 +533,14 @@ pub const WlBuffer = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -612,16 +598,14 @@ pub const WlDataOffer = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -805,16 +789,14 @@ pub const WlDataSource = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -1005,16 +987,14 @@ pub const WlDataDevice = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -1209,16 +1189,14 @@ pub const WlDataDeviceManager = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -1290,16 +1268,14 @@ pub const WlShell = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -1351,16 +1327,14 @@ pub const WlShellSurface = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -1682,16 +1656,14 @@ pub const WlSurface = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -1942,16 +1914,14 @@ pub const WlSeat = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -2090,16 +2060,14 @@ pub const WlPointer = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -2415,16 +2383,14 @@ pub const WlKeyboard = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -2563,16 +2529,14 @@ pub const WlTouch = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -2748,16 +2712,14 @@ pub const WlOutput = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -2921,16 +2883,14 @@ pub const WlRegion = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -3021,16 +2981,14 @@ pub const WlSubcompositor = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -3102,16 +3060,14 @@ pub const WlSubsurface = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -3242,16 +3198,14 @@ pub const XdgWmBase = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -3375,16 +3329,14 @@ pub const XdgPositioner = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -3578,16 +3530,14 @@ pub const XdgSurface = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -3745,16 +3695,14 @@ pub const XdgToplevel = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -4108,16 +4056,14 @@ pub const XdgPopup = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -4211,16 +4157,14 @@ pub const ZwpLinuxDmabufV1 = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -4322,16 +4266,14 @@ pub const ZwpLinuxBufferParamsV1 = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 
@@ -4500,16 +4442,14 @@ pub const FwControl = struct {
     id: u32,
     context: *Context,
     version: usize,
-    container: usize,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {
+    pub fn init(id: u32, context: *Context, version: u32) Self {
         return Self{
             .id = id,
             .context = context,
             .version = version,
-            .container = container,
         };
     }
 

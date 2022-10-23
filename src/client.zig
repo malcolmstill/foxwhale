@@ -12,6 +12,7 @@ const WlDisplay = @import("protocols.zig").WlDisplay;
 const WlRegistry = @import("protocols.zig").WlRegistry;
 const WlCompositor = @import("protocols.zig").WlCompositor;
 const WlShm = @import("protocols.zig").WlShm;
+const WlShmPool = @import("protocols.zig").WlShmPool;
 const WlSurface = @import("protocols.zig").WlSurface;
 const WlRegion = @import("protocols.zig").WlRegion;
 const WlCallback = @import("protocols.zig").WlCallback;
@@ -27,6 +28,7 @@ const WlMessage = @import("protocols.zig").WlMessage;
 // const buffer = @import("buffer.zig");
 // const Stalloc = @import("stalloc.zig").Stalloc;
 const Server = @import("server.zig").Server;
+const ShmPool = @import("shm_pool.zig").ShmPool;
 const Renderer = @import("renderer.zig").Renderer;
 const Rectangle = @import("rectangle.zig").Rectangle;
 const XdgConfigurations = @import("window.zig").XdgConfigurations;
@@ -144,6 +146,7 @@ pub const Client = struct {
             .wl_registry => |p| try self.handleWlRegistry(p),
             .wl_compositor => |p| try self.handleWlCompositor(p),
             .wl_surface => |p| try self.handleWlSurface(p),
+            .wl_shm => |p| try self.handleWlShm(p),
             .xdg_wm_base => |p| try self.handleXdgWmBase(p),
             .xdg_surface => |p| try self.handleXdgSurface(p),
             .xdg_toplevel => |p| try self.handleXdgToplevel(p),
@@ -157,7 +160,7 @@ pub const Client = struct {
     pub fn handleWlDisplay(self: *Client, msg: WlDisplay.Message) !void {
         switch (msg) {
             .get_registry => |p| {
-                const registry = WlRegistry.init(p.registry, &self.context, 0, 0);
+                const registry = WlRegistry.init(p.registry, &self.context, 0);
 
                 try registry.sendGlobal(1, "wl_compositor\x00", 4);
                 try registry.sendGlobal(2, "wl_subcompositor\x00", 1);
@@ -179,7 +182,7 @@ pub const Client = struct {
                 try self.context.register(WlObject{ .wl_registry = registry });
             },
             .sync => |p| {
-                const callback = WlCallback.init(p.callback, &self.context, 0, 0);
+                const callback = WlCallback.init(p.callback, &self.context, 0);
 
                 try callback.sendDone(self.nextSerial());
                 try self.wl_display.sendDeleteId(callback.id);
@@ -192,17 +195,17 @@ pub const Client = struct {
             .bind => |p| switch (p.name) {
                 1 => {
                     if (!mem.eql(u8, p.name_string, "wl_compositor\x00")) return error.UnexpectedName;
-                    self.wl_compositor = WlCompositor.init(p.id, &self.context, p.version, 0);
+                    self.wl_compositor = WlCompositor.init(p.id, &self.context, p.version);
                     try self.context.register(WlObject{ .wl_compositor = self.wl_compositor.? });
                 },
                 4 => {
                     if (!mem.eql(u8, p.name_string, "xdg_wm_base\x00")) return error.UnexpectedName;
-                    self.xdg_wm_base = XdgWmBase.init(p.id, &self.context, p.version, 0);
+                    self.xdg_wm_base = XdgWmBase.init(p.id, &self.context, p.version);
                     try self.context.register(WlObject{ .xdg_wm_base = self.xdg_wm_base.? });
                 },
                 8 => {
                     if (!std.mem.eql(u8, p.name_string, "wl_shm\x00")) return error.UnexpectedName;
-                    self.wl_shm = WlShm.init(p.id, &self.context, p.version, 0);
+                    self.wl_shm = WlShm.init(p.id, &self.context, p.version);
 
                     try self.wl_shm.?.sendFormat(WlShm.Format.argb8888);
                     try self.wl_shm.?.sendFormat(WlShm.Format.xrgb8888);
@@ -218,12 +221,12 @@ pub const Client = struct {
     pub fn handleWlCompositor(self: *Client, msg: WlCompositor.Message) !void {
         switch (msg) {
             .create_surface => |p| {
-                const surface = WlSurface.init(p.id, &self.context, 0, 0);
+                const surface = WlSurface.init(p.id, &self.context, 0);
                 try self.context.register(WlObject{ .wl_surface = surface });
                 _ = try self.server.addWindow(self, surface);
             },
             .create_region => |p| {
-                const region = WlRegion.init(p.id, &self.context, 0, 0);
+                const region = WlRegion.init(p.id, &self.context, 0);
 
                 // const region = try reg.newRegion(context.client, new_id);
                 // const wl_region = prot.new_wl_region(new_id, context, @ptrToInt(region));
@@ -302,7 +305,7 @@ pub const Client = struct {
         switch (msg) {
             .get_xdg_surface => |p| {
                 const window = self.server.windows.get(p.surface.id) orelse return error.NoSuchWindow;
-                const xdg_surface = XdgSurface.init(p.id, &self.context, 0, 0);
+                const xdg_surface = XdgSurface.init(p.id, &self.context, 0);
                 try self.server.windows.associate(xdg_surface.id, window);
 
                 window.xdg_surface = xdg_surface;
@@ -317,7 +320,7 @@ pub const Client = struct {
         switch (msg) {
             .get_toplevel => |p| {
                 const window = self.server.windows.get(p.xdg_surface.id) orelse return error.NoSuchWindow;
-                const xdg_toplevel = XdgToplevel.init(p.id, &self.context, 0, 0);
+                const xdg_toplevel = XdgToplevel.init(p.id, &self.context, 0);
                 try self.server.windows.associate(xdg_toplevel.id, window);
 
                 window.xdg_toplevel = xdg_toplevel;
@@ -371,6 +374,18 @@ pub const Client = struct {
         switch (msg) {
             .set_title => |_| {},
             else => return error.XdgToplevelUnhandledMessage,
+        }
+    }
+
+    pub fn handleWlShm(self: *Client, msg: WlShm.Message) !void {
+        switch (msg) {
+            .create_pool => |p| {
+                const wl_shm_pool = WlShmPool.init(p.id, &self.context, 0);
+
+                _ = try self.server.shm_pools.add(wl_shm_pool.id, ShmPool.init(self, p.fd, wl_shm_pool));
+
+                try self.context.register(WlObject{ .wl_shm_pool = wl_shm_pool });
+            },
         }
     }
 };
