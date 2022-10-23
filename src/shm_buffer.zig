@@ -8,37 +8,28 @@ const Client = @import("client.zig").Client;
 const ShmPool = @import("shm_pool.zig").ShmPool;
 const buffer = @import("buffer.zig");
 const Buffer = buffer.Buffer;
-
-pub fn newShmBuffer(client: *Client, id: u32, wl_shm_pool: Object, offset: i32, width: i32, height: i32, stride: i32, format: u32) !*Buffer {
-    const shm_buffer = ShmBuffer{
-        .client = client,
-        .shm_pool = @intToPtr(*ShmPool, wl_shm_pool.container),
-        .offset = offset,
-        .width = width,
-        .height = height,
-        .stride = stride,
-        .format = format,
-        .wl_buffer_id = id,
-    };
-
-    var buf = try buffer.newBuffer(client);
-    buf.* = Buffer{ .Shm = shm_buffer };
-
-    @intToPtr(*ShmPool, wl_shm_pool.container).incrementRefCount();
-    return buf;
-}
+const WlBuffer = @import("protocols.zig").WlBuffer;
 
 pub const ShmBuffer = struct {
     client: *Client,
-    wl_buffer_id: u32,
+    wl_buffer: WlBuffer,
     shm_pool: *ShmPool,
-    offset: i32,
-    width: i32,
-    height: i32,
-    stride: i32,
-    format: u32,
+    offset: i32 = 0,
+    width: i32 = 0,
+    height: i32 = 0,
+    stride: i32 = 0,
+    format: u32 = 0,
 
     const Self = @This();
+
+    pub fn init(client: *Client, shm_pool: *ShmPool, wl_buffer: WlBuffer) ShmBuffer {
+        shm_pool.incrementRefCount();
+        return ShmBuffer{
+            .client = client,
+            .shm_pool = shm_pool,
+            .wl_buffer = wl_buffer,
+        };
+    }
 
     pub fn deinit(_: *Self) void {}
 

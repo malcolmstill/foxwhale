@@ -172,7 +172,7 @@ pub const Context = struct {
     }
 
     pub fn unregister(self: *Self, object: WlObject) !void {
-        try self.objects.remove(object.id);
+        _ = self.objects.remove(object.id());
     }
 
     pub fn startWrite(self: *Self) void {

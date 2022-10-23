@@ -15,6 +15,7 @@ const WlShm = @import("protocols.zig").WlShm;
 const WlShmPool = @import("protocols.zig").WlShmPool;
 const WlSurface = @import("protocols.zig").WlSurface;
 const WlRegion = @import("protocols.zig").WlRegion;
+const WlBuffer = @import("protocols.zig").WlBuffer;
 const WlCallback = @import("protocols.zig").WlCallback;
 const XdgWmBase = @import("protocols.zig").XdgWmBase;
 const XdgSurface = @import("protocols.zig").XdgSurface;
@@ -29,6 +30,8 @@ const WlMessage = @import("protocols.zig").WlMessage;
 // const Stalloc = @import("stalloc.zig").Stalloc;
 const Server = @import("server.zig").Server;
 const ShmPool = @import("shm_pool.zig").ShmPool;
+const Buffer = @import("buffer.zig").Buffer;
+const ShmBuffer = @import("shm_buffer.zig").ShmBuffer;
 const Renderer = @import("renderer.zig").Renderer;
 const Rectangle = @import("rectangle.zig").Rectangle;
 const XdgConfigurations = @import("window.zig").XdgConfigurations;
@@ -147,6 +150,7 @@ pub const Client = struct {
             .wl_compositor => |p| try self.handleWlCompositor(p),
             .wl_surface => |p| try self.handleWlSurface(p),
             .wl_shm => |p| try self.handleWlShm(p),
+            .wl_shm_pool => |p| try self.handleWlShmPool(p),
             .xdg_wm_base => |p| try self.handleXdgWmBase(p),
             .xdg_surface => |p| try self.handleXdgSurface(p),
             .xdg_toplevel => |p| try self.handleXdgToplevel(p),
@@ -386,6 +390,35 @@ pub const Client = struct {
 
                 try self.context.register(WlObject{ .wl_shm_pool = wl_shm_pool });
             },
+        }
+    }
+
+    pub fn handleWlShmPool(self: *Client, msg: WlShmPool.Message) !void {
+        switch (msg) {
+            .create_buffer => |p| {
+                const wl_shm_pool = p.wl_shm_pool;
+                const wl_buffer = WlBuffer.init(p.id, &self.context, 0);
+
+                const shm_pool = self.server.shm_pools.get(wl_shm_pool.id) orelse return error.NoSuchShmPool;
+
+                _ = try self.server.buffers.add(wl_buffer.id, Buffer{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer) });
+
+                try self.context.register(WlObject{ .wl_buffer = wl_buffer });
+            },
+            .destroy => |p| {
+                const wl_shm_pool = p.wl_shm_pool;
+                const shm_pool = self.server.shm_pools.get(wl_shm_pool.id) orelse return error.NoSuchShmPool;
+
+                shm_pool.to_be_destroyed = true;
+                if (shm_pool.ref_count == 0) {
+                    shm_pool.deinit();
+                    self.server.shm_pools.remove(wl_shm_pool.id, shm_pool);
+                }
+
+                try self.wl_display.sendDeleteId(wl_shm_pool.id);
+                try self.context.unregister(WlObject{ .wl_shm_pool = wl_shm_pool });
+            },
+            else => return error.UnhandledWlShmPool,
         }
     }
 };

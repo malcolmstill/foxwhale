@@ -22,10 +22,8 @@ pub const ShmPool = struct {
 
     pub fn deinit(self: *Self) void {
         std.os.munmap(self.data);
-        // std.log.warn("shm_pool closing file descriptor: {}\n", .{self.fd});
         std.os.close(self.fd);
 
-        self.in_use = false;
         self.fd = -1;
     }
 
