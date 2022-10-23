@@ -153,7 +153,7 @@ pub const Client = struct {
     pub fn handleWlDisplay(self: *Client, msg: WlDisplay.Message) !void {
         switch (msg) {
             .get_registry => |p| {
-                const registry = WlRegistry.init(p.registry, self, 0, 0);
+                const registry = WlRegistry.init(p.registry, &self.context, 0, 0);
 
                 try registry.sendGlobal(1, "wl_compositor\x00", 4);
                 try registry.sendGlobal(2, "wl_subcompositor\x00", 1);
@@ -175,7 +175,7 @@ pub const Client = struct {
                 try self.context.register(WlObject{ .wl_registry = registry });
             },
             .sync => |p| {
-                const callback = WlCallback.init(p.callback, self, 0, 0);
+                const callback = WlCallback.init(p.callback, &self.context, 0, 0);
 
                 try callback.sendDone(self.nextSerial());
                 try self.wl_display.sendDeleteId(callback.id);
@@ -188,17 +188,17 @@ pub const Client = struct {
             .bind => |p| switch (p.name) {
                 1 => {
                     if (!mem.eql(u8, p.name_string, "wl_compositor\x00")) return error.UnexpectedName;
-                    self.wl_compositor = WlCompositor.init(p.id, self, p.version, 0);
+                    self.wl_compositor = WlCompositor.init(p.id, &self.context, p.version, 0);
                     try self.context.register(WlObject{ .wl_compositor = self.wl_compositor.? });
                 },
                 4 => {
                     if (!mem.eql(u8, p.name_string, "xdg_wm_base\x00")) return error.UnexpectedName;
-                    self.xdg_wm_base = XdgWmBase.init(p.id, self, p.version, 0);
+                    self.xdg_wm_base = XdgWmBase.init(p.id, &self.context, p.version, 0);
                     try self.context.register(WlObject{ .xdg_wm_base = self.xdg_wm_base.? });
                 },
                 8 => {
                     if (!std.mem.eql(u8, p.name_string, "wl_shm\x00")) return error.UnexpectedName;
-                    self.wl_shm = WlShm.init(p.id, self, p.version, 0);
+                    self.wl_shm = WlShm.init(p.id, &self.context, p.version, 0);
 
                     try self.wl_shm.?.sendFormat(WlShm.Format.argb8888);
                     try self.wl_shm.?.sendFormat(WlShm.Format.xrgb8888);
@@ -214,7 +214,7 @@ pub const Client = struct {
     pub fn handleWlCompositor(self: *Client, msg: WlCompositor.Message) !void {
         switch (msg) {
             .create_surface => |p| {
-                const surface = WlSurface.init(p.id, self, 0, 0);
+                const surface = WlSurface.init(p.id, &self.context, 0, 0);
 
                 // TODO: Add window and link to surface
                 // const window = try win.newWindow(context.client, new_id);
@@ -223,7 +223,7 @@ pub const Client = struct {
                 try self.context.register(WlObject{ .wl_surface = surface });
             },
             .create_region => |p| {
-                const region = WlRegion.init(p.id, self, 0, 0);
+                const region = WlRegion.init(p.id, &self.context, 0, 0);
 
                 // const region = try reg.newRegion(context.client, new_id);
                 // const wl_region = prot.new_wl_region(new_id, context, @ptrToInt(region));
@@ -247,7 +247,7 @@ pub const Client = struct {
     pub fn handleXdgWmBase(self: *Client, msg: XdgWmBase.Message) !void {
         switch (msg) {
             .get_xdg_surface => |p| {
-                const xdg_surface = XdgSurface.init(p.id, self, 0, 0);
+                const xdg_surface = XdgSurface.init(p.id, &self.context, 0, 0);
 
                 try self.context.register(WlObject{ .xdg_surface = xdg_surface });
             },
@@ -258,7 +258,7 @@ pub const Client = struct {
     pub fn handleXdgSurface(self: *Client, msg: XdgSurface.Message) !void {
         switch (msg) {
             .get_toplevel => |p| {
-                const xdg_toplevel = XdgToplevel.init(p.id, self, 0, 0);
+                const xdg_toplevel = XdgToplevel.init(p.id, &self.context, 0, 0);
 
                 try self.context.register(WlObject{ .xdg_toplevel = xdg_toplevel });
             },

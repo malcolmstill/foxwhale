@@ -16,7 +16,7 @@ def generate(context, side, files):
         sendType = "request"
 
     print(f'const std = @import("std");')
-    print(f'const Client = @import("{context}").Client;')
+    print(f'const Context = @import("wl/context.zig").Context;')
 
     msgs = []
     for file in files:
@@ -40,16 +40,16 @@ def generate_interface_struct(interface, receiveType, sendType):
     interfaceName = camelCase(interface.attrib['name'])
     print(f"pub const {interfaceName} = struct {{")
     print(f"\t\tid: u32,")
-    print(f"\t\tclient: *Client,")
+    print(f"\t\tcontext: *Context,")
     print(f"\t\tversion: usize,")
     print(f"\t\tcontainer: usize,")
     print(f"")
     print("const Self = @This();")
     print(f"")
-    print(f"pub fn init(id: u32, client: *Client, version: u32, container: usize) Self {{")
+    print(f"pub fn init(id: u32, context: *Context, version: u32, container: usize) Self {{")
     print(f"\treturn Self {{")
     print(f"\t\t.id = id,")
-    print(f"\t\t.client = client,")
+    print(f"\t\t.context = context,")
     print(f"\t\t.version = version,")
     print(f"\t\t.container = container,")
     print(f"\t}};")
@@ -218,18 +218,18 @@ def generate_next(arg):
             if "interface" in arg.attrib:
                 object_interface = arg.attrib["interface"]
                 object_type = camelCase(arg.attrib["interface"])
-                print(f"\t\t\tconst {name}: ?{object_type} = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else null;")
+                print(f"\t\t\tconst {name}: ?{object_type} = if (self.context.objects.get(try self.context.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else null;")
             else:
-                print(f"\t\t\tconst {name}: ?WlObject = try self.client.context.objects.get(try self.client.context.next_u32());")
+                print(f"\t\t\tconst {name}: ?WlObject = try self.context.objects.get(try self.context.next_u32());")
         else:
             if "interface" in arg.attrib:
                 object_interface = arg.attrib["interface"]
                 object_type = camelCase(arg.attrib["interface"])
-                print(f"\t\t\tconst {name}: {object_type} = if (self.client.context.objects.get(try self.client.context.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else return error.ExpectedObject;")
+                print(f"\t\t\tconst {name}: {object_type} = if (self.context.objects.get(try self.context.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else return error.ExpectedObject;")
             else:
-                print(f"\t\t\tconst {name}: WlObject = try self.client.context.objects.get(try self.client.context.next_u32());")
+                print(f"\t\t\tconst {name}: WlObject = try self.context.objects.get(try self.context.next_u32());")
     else:    
-        print(f"\t\t\t\tconst {name}: {atype} = try self.client.context.next{next_type(arg.attrib['type'])}();")
+        print(f"\t\t\t\tconst {name}: {atype} = try self.context.next{next_type(arg.attrib['type'])}();")
 
 def next_type(type):
     types = {
@@ -314,14 +314,14 @@ def generate_send(interface, sentType):
                     else:
                         print(f", {arg.attrib['name']}: {put_type_arg(arg.attrib['type'])}", end = '')
             print(f") anyerror!void {{")
-            print(f"\tself.client.context.startWrite();")
+            print(f"\tself.context.startWrite();")
             for arg in child:
                 if arg.tag == "arg":
                     if "enum" in arg.attrib:
-                        print(f"\tself.client.context.put{put_type(arg.attrib['type'])}(@enumToInt({arg.attrib['name']}));")
+                        print(f"\tself.context.put{put_type(arg.attrib['type'])}(@enumToInt({arg.attrib['name']}));")
                     else:
-                        print(f"\tself.client.context.put{put_type(arg.attrib['type'])}({arg.attrib['name']});")
-            print(f"\ttry self.client.context.finishWrite(self.id, {i});")
+                        print(f"\tself.context.put{put_type(arg.attrib['type'])}({arg.attrib['name']});")
+            print(f"\ttry self.context.finishWrite(self.id, {i});")
             print(f"}}")
             i = i + 1
 

@@ -43,7 +43,7 @@ pub const Server = struct {
 
         client.* = Client{
             .conn = conn,
-            .wl_display = WlDisplay.init(1, client, 0, 0),
+            .wl_display = WlDisplay.init(1, &client.context, 0, 0),
             .context = Context.init(conn.stream.handle),
         };
 
