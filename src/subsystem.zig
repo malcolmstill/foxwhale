@@ -11,8 +11,8 @@ pub const Subsystem = enum {
 };
 
 pub const Event = union(Subsystem) {
-    server: ServerTargetEvent,
-    client: ClientTargetEvent,
+    server: Server.TargetEvent,
+    client: Client.TargetEvent,
     backend: Backend.TargetEvent,
 };
 
@@ -43,34 +43,4 @@ pub const SubsystemIterator = union(Subsystem) {
             .backend => |*b| try b.next(events),
         };
     }
-};
-
-pub const ServerTargetEvent = struct {
-    server: *Server,
-    event: ServerEvent,
-};
-
-pub const ServerEventType = enum {
-    client_connected,
-};
-
-pub const ServerEvent = union(ServerEventType) {
-    client_connected: std.net.StreamServer.Connection,
-};
-
-pub const ClientTargetEvent = struct {
-    client: *Client,
-    event: ClientEvent,
-};
-
-pub const ClientEventType = enum {
-    hangup,
-    err,
-    message,
-};
-
-pub const ClientEvent = union(ClientEventType) {
-    hangup: i32,
-    err: i32,
-    message: WlMessage,
 };

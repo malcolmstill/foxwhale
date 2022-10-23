@@ -4,8 +4,6 @@ const fs = std.fs;
 const os = std.os;
 const Event = @import("subsystem.zig").Event;
 const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
-const ServerTargetEvent = @import("subsystem.zig").ServerTargetEvent;
-const ServerEvent = @import("subsystem.zig").ServerEvent;
 const Client = @import("client.zig").Client;
 const Context = @import("wl/context.zig").Context;
 const WlObject = @import("protocols.zig").WlObject;
@@ -30,6 +28,19 @@ pub const Server = struct {
 
     const ClientNode = std.TailQueue(Client).Node;
     const Self = @This();
+
+    pub const TargetEvent = struct {
+        server: *Server,
+        event: ServerEvent,
+    };
+
+    pub const EventType = enum {
+        client_connected,
+    };
+
+    pub const ServerEvent = union(EventType) {
+        client_connected: std.net.StreamServer.Connection,
+    };
 
     pub fn init(alloc: mem.Allocator) !Server {
         return Server{
@@ -98,7 +109,7 @@ pub const Server = struct {
             self.accepted = true;
 
             return Event{
-                .server = ServerTargetEvent{
+                .server = Server.TargetEvent{
                     .server = self.server,
                     .event = ServerEvent{
                         .client_connected = conn,

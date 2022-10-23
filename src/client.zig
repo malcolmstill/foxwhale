@@ -4,8 +4,6 @@ const mem = std.mem;
 const epoll = @import("epoll.zig");
 const Event = @import("subsystem.zig").Event;
 const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
-const ClientEvent = @import("subsystem.zig").ClientEvent;
-const ClientTargetEvent = @import("subsystem.zig").ClientTargetEvent;
 const Context = @import("wl/context.zig").Context;
 const WlObject = @import("protocols.zig").WlObject;
 const WlDisplay = @import("protocols.zig").WlDisplay;
@@ -64,6 +62,23 @@ pub const Client = struct {
     // wl_subcompositor_id: ?u32 = null,
     // fw_control_id: ?u32 = null,
     // zwp_linux_dmabuf_id: ?u32 = null,
+
+    pub const TargetEvent = struct {
+        client: *Client,
+        event: ClientEvent,
+    };
+
+    pub const EventType = enum {
+        hangup,
+        err,
+        message,
+    };
+
+    pub const ClientEvent = union(EventType) {
+        hangup: i32,
+        err: i32,
+        message: WlMessage,
+    };
 
     const Self = @This();
 
@@ -127,7 +142,7 @@ pub const Client = struct {
             if (event_type & std.os.linux.EPOLL.HUP > 0) {
                 self.state = .done;
                 return Event{
-                    .client = ClientTargetEvent{
+                    .client = Client.TargetEvent{
                         .client = self.client,
                         .event = ClientEvent{
                             .hangup = 0,
@@ -144,7 +159,7 @@ pub const Client = struct {
             const event = self.client.context.readEvent(self.client) catch |err| {
                 if (err == error.ClientSigbusd or builtin.mode != .Debug) {
                     return Event{
-                        .client = ClientTargetEvent{
+                        .client = Client.TargetEvent{
                             .client = self.client,
                             .event = ClientEvent{
                                 .err = 0,
