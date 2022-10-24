@@ -52,17 +52,22 @@ pub fn Pool(comptime T: type, comptime U: type) type {
         }
 
         pub fn destroy(self: *Self, value_ptr: *T) !void {
+            const index = self.indexOf(value_ptr) orelse return error.InvalidPointer;
+
+            self.free_list[index] = self.next_free;
+            self.next_free = index;
+        }
+
+        pub fn indexOf(self: *Self, value_ptr: *T) ?U {
             const start = @ptrToInt(&self.entities[0]);
             const end = @ptrToInt(&self.entities[self.entities.len - 1]);
             const v = @ptrToInt(value_ptr);
 
-            if (v < start) return error.InvalidPointer;
-            if (v > end) return error.InvalidPointer;
+            if (v < start or v > end) return null;
 
             const index = @intCast(U, (v - start) / @sizeOf(T));
 
-            self.free_list[index] = self.next_free;
-            self.next_free = index;
+            return index;
         }
     };
 }
