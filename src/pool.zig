@@ -14,6 +14,12 @@ pub fn Pool(comptime T: type, comptime U: type) type {
             var entities = try allocator.alloc(T, count);
             var free_list = try allocator.alloc(?U, count);
 
+            std.log.info("Allocating []{}: {} bytes (unit size {} bytes)", .{
+                T,
+                @sizeOf(T) * entities.len + @sizeOf(?U) * free_list.len + @sizeOf(?U) + @sizeOf(mem.Allocator),
+                @sizeOf(T),
+            });
+
             // Make every free_list node point to the next node
             for (free_list) |_, index| {
                 const i = @intCast(U, index);
@@ -38,14 +44,18 @@ pub fn Pool(comptime T: type, comptime U: type) type {
         }
 
         pub fn create(self: *Self, value: T) !*T {
+            const ptr = try self.createPtr();
+
+            ptr.* = value;
+
+            return ptr;
+        }
+
+        pub fn createPtr(self: *Self) !*T {
             if (self.next_free) |next_free| {
                 defer self.next_free = self.free_list[next_free];
 
-                const ptr = &self.entities[next_free];
-
-                ptr.* = value;
-
-                return ptr;
+                return &self.entities[next_free];
             }
 
             return error.OutOfMemory;

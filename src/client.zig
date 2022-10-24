@@ -184,46 +184,46 @@ pub const Client = struct {
     }
 
     pub fn addWindow(self: *Client, id: u32, window: Window) !void {
-        const window_ptr = try self.server.windows.add(window);
+        const window_ptr = try self.server.windows.create(window);
         try self.windows.put(id, window_ptr);
     }
 
     pub fn addRegion(self: *Client, id: u32, region: Region) !void {
-        const region_ptr = try self.server.regions.add(region);
+        const region_ptr = try self.server.regions.create(region);
         try self.regions.put(id, region_ptr);
     }
 
     pub fn addShmPool(self: *Client, id: u32, shm_pool: ShmPool) !void {
-        const shm_pool_ptr = try self.server.shm_pools.add(shm_pool);
+        const shm_pool_ptr = try self.server.shm_pools.create(shm_pool);
         try self.shm_pools.put(id, shm_pool_ptr);
     }
 
     pub fn addBuffer(self: *Client, id: u32, buffer: Buffer) !void {
-        const buffer_ptr = try self.server.buffers.add(buffer);
+        const buffer_ptr = try self.server.buffers.create(buffer);
         try self.buffers.put(id, buffer_ptr);
     }
 
     pub fn removeWindow(self: *Client, id: u32) RemoveError!void {
         const window = self.windows.get(id) orelse return error.NoSuchWindow;
-        self.server.windows.remove(window);
+        try self.server.windows.destroy(window);
         _ = self.windows.remove(id);
     }
 
     pub fn removeRegion(self: *Client, id: u32) RemoveError!void {
         const region = self.regions.get(id) orelse return error.NoSuchRegion;
-        self.server.regions.remove(region);
+        try self.server.regions.destroy(region);
         _ = self.regions.remove(id);
     }
 
     pub fn removeShmPool(self: *Client, id: u32) RemoveError!void {
         const shm_pool = self.shm_pools.get(id) orelse return error.NoSuchShmPool;
-        self.server.shm_pools.remove(shm_pool);
+        try self.server.shm_pools.destroy(shm_pool);
         _ = self.shm_pools.remove(id);
     }
 
     pub fn removeBuffer(self: *Client, id: u32) RemoveError!void {
         const buffer = self.buffers.get(id) orelse return error.NoSuchBuffer;
-        self.server.buffers.remove(buffer);
+        try self.server.buffers.destroy(buffer);
         _ = self.buffers.remove(id);
     }
 
@@ -530,4 +530,5 @@ pub const RemoveError = error{
     NoSuchRegion,
     NoSuchShmPool,
     NoSuchBuffer,
+    InvalidPointer,
 };

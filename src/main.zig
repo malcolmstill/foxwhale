@@ -47,7 +47,7 @@ pub fn main() !void {
             .client => |ev| switch (ev.event) {
                 .hangup => {
                     try epoll.removeFd(ev.client.conn.stream.handle);
-                    server.removeClient(ev.client);
+                    try server.removeClient(ev.client);
                 },
                 .message => |m| try ev.client.dispatch(m),
                 .err => std.debug.print("got err\n", .{}),

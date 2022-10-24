@@ -15,16 +15,17 @@ const Window = @import("window.zig").Window;
 const Buffer = @import("buffer.zig").Buffer;
 const Region = @import("region.zig").Region;
 const ShmPool = @import("shm_pool.zig").ShmPool;
+const Pool = @import("pool.zig").Pool;
 
 pub const Server = struct {
     alloc: mem.Allocator,
     server: std.net.StreamServer,
-    clients: std.TailQueue(Client),
     // resources:
-    windows: List(Window),
-    regions: List(Region),
-    buffers: List(Buffer),
-    shm_pools: List(ShmPool),
+    clients: Pool(Client, u8),
+    windows: Pool(Window, u16),
+    regions: Pool(Region, u16),
+    buffers: Pool(Buffer, u16),
+    shm_pools: Pool(ShmPool, u16),
 
     const ClientNode = std.TailQueue(Client).Node;
     const Self = @This();
@@ -46,45 +47,37 @@ pub const Server = struct {
         return Server{
             .alloc = alloc,
             .server = try socket(),
-            .clients = std.TailQueue(Client){},
-            .windows = List(Window).init(alloc),
-            .regions = List(Region).init(alloc),
-            .buffers = List(Buffer).init(alloc),
-            .shm_pools = List(ShmPool).init(alloc),
+            .clients = try Pool(Client, u8).init(alloc, 255),
+            .windows = try Pool(Window, u16).init(alloc, 1024),
+            .regions = try Pool(Region, u16).init(alloc, 1024),
+            .buffers = try Pool(Buffer, u16).init(alloc, 1024),
+            .shm_pools = try Pool(ShmPool, u16).init(alloc, 1024),
         };
     }
 
     pub fn deinit(self: *Self) void {
-        while (self.clients.pop()) |node| {
-            self.alloc.destroy(node);
-        }
+        self.server.close();
 
+        self.clients.deinit();
         self.windows.deinit();
         self.regions.deinit();
         self.buffers.deinit();
         self.shm_pools.deinit();
-
-        self.server.close();
     }
 
     pub fn addClient(self: *Self, conn: std.net.StreamServer.Connection) !*Client {
-        const node = try self.alloc.create(ClientNode);
-        const client: *Client = &node.data;
+        const client: *Client = try self.clients.createPtr();
         const wl_display = WlDisplay.init(1, &client.context, 0);
 
         client.* = Client.init(self.alloc, self, conn, wl_display);
 
         try client.context.register(WlObject{ .wl_display = wl_display });
 
-        self.clients.append(node);
-
         return client;
     }
 
-    pub fn removeClient(self: *Self, client: *Client) void {
-        const node: *ClientNode = @fieldParentPtr(ClientNode, "data", client);
-        self.clients.remove(node);
-        self.alloc.destroy(node);
+    pub fn removeClient(self: *Self, client: *Client) !void {
+        try self.clients.destroy(client);
     }
 
     pub fn iterator(self: *Server) SubsystemIterator {
@@ -128,45 +121,4 @@ fn socket() !std.net.StreamServer {
     try server.listen(addr);
 
     return server;
-}
-
-fn List(comptime T: type) type {
-    return struct {
-        alloc: mem.Allocator,
-        resources: std.TailQueue(T),
-
-        const Self = @This();
-
-        const Node = std.TailQueue(T).Node;
-
-        pub fn init(alloc: mem.Allocator) Self {
-            return Self{
-                .alloc = alloc,
-                .resources = std.TailQueue(T){},
-            };
-        }
-
-        pub fn add(self: *Self, resource: T) !*T {
-            const node = try self.alloc.create(Node);
-            var resource_ptr: *T = &node.data;
-
-            resource_ptr.* = resource;
-
-            self.resources.append(node);
-
-            return resource_ptr;
-        }
-
-        pub fn remove(self: *Self, resource_ptr: *T) void {
-            const node: *Node = @fieldParentPtr(Node, "data", resource_ptr);
-            self.resources.remove(node);
-            self.alloc.destroy(node);
-        }
-
-        pub fn deinit(self: *Self) void {
-            while (self.resources.pop()) |node| {
-                self.alloc.destroy(node);
-            }
-        }
-    };
 }
