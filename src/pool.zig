@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const mem = std.mem;
 
 pub fn Pool(comptime T: type, comptime U: type) type {
@@ -7,12 +8,14 @@ pub fn Pool(comptime T: type, comptime U: type) type {
         entities: []T,
         free_list: []?U,
         next_free: ?U,
+        in_use: []bool,
 
         const Self = @This();
 
         pub fn init(allocator: mem.Allocator, count: U) !Self {
             var entities = try allocator.alloc(T, count);
             var free_list = try allocator.alloc(?U, count);
+            var in_use: []bool = if (builtin.mode == .Debug) try allocator.alloc(bool, count) else undefined;
 
             std.log.info("Allocating []{}: {} bytes (unit size {} bytes)", .{
                 T,
@@ -30,17 +33,33 @@ pub fn Pool(comptime T: type, comptime U: type) type {
                 }
             }
 
+            if (builtin.mode == .Debug) {
+                for (in_use) |_, i| {
+                    in_use[i] = false;
+                }
+            }
+
             return Self{
                 .alloc = allocator,
                 .entities = entities,
                 .free_list = free_list,
                 .next_free = 0,
+                .in_use = in_use,
             };
         }
 
         pub fn deinit(self: *Self) void {
+            if (builtin.mode == .Debug) {
+                for (self.in_use) |in_use, i| {
+                    if (in_use) {
+                        std.debug.print("Pool: leaked item {} in [{}]{}\n", .{ i, self.entities.len, T });
+                    }
+                }
+            }
+
             self.alloc.free(self.entities);
             self.alloc.free(self.free_list);
+            if (builtin.mode == .Debug) self.alloc.free(self.in_use);
         }
 
         pub fn create(self: *Self, value: T) !*T {
@@ -55,14 +74,18 @@ pub fn Pool(comptime T: type, comptime U: type) type {
             if (self.next_free) |next_free| {
                 defer self.next_free = self.free_list[next_free];
 
+                if (builtin.mode == .Debug) self.in_use[next_free] = true;
+
                 return &self.entities[next_free];
             }
 
             return error.OutOfMemory;
         }
 
-        pub fn destroy(self: *Self, value_ptr: *T) !void {
-            const index = self.indexOf(value_ptr) orelse return error.InvalidPointer;
+        pub fn destroy(self: *Self, value_ptr: *T) void {
+            const index = self.indexOf(value_ptr) orelse return;
+
+            if (builtin.mode == .Debug) self.in_use[index] = false;
 
             self.free_list[index] = self.next_free;
             self.next_free = index;
@@ -96,21 +119,25 @@ test {
 
     try std.testing.expectError(error.OutOfMemory, p.create(101));
 
-    try p.destroy(last);
+    p.destroy(last);
 
     last = try p.create(21);
 
     try std.testing.expectError(error.OutOfMemory, p.create(102));
 
-    try p.destroy(middle);
+    p.destroy(middle);
     _ = try p.create(31); // middle
 
     try std.testing.expectError(error.OutOfMemory, p.create(103));
 
-    try p.destroy(first);
+    p.destroy(first);
     _ = try p.create(41); // first
 
     try std.testing.expectEqual(first.*, 41);
     try std.testing.expectEqual(middle.*, 31);
     try std.testing.expectEqual(last.*, 21);
+
+    p.destroy(first);
+    p.destroy(middle);
+    p.destroy(last);
 }
