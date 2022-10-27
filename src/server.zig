@@ -76,8 +76,8 @@ pub const Server = struct {
         return client;
     }
 
-    pub fn removeClient(self: *Self, client: *Client) !void {
-        try self.clients.destroy(client);
+    pub fn removeClient(self: *Self, client: *Client) void {
+        self.clients.destroy(client);
     }
 
     pub fn iterator(self: *Server) SubsystemIterator {

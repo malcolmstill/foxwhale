@@ -185,45 +185,53 @@ pub const Client = struct {
 
     pub fn addWindow(self: *Client, id: u32, window: Window) !void {
         const window_ptr = try self.server.windows.create(window);
+        errdefer self.server.windows.destroy(window_ptr);
+
         try self.windows.put(id, window_ptr);
     }
 
     pub fn addRegion(self: *Client, id: u32, region: Region) !void {
         const region_ptr = try self.server.regions.create(region);
+        errdefer self.server.regions.destroy(region_ptr);
+
         try self.regions.put(id, region_ptr);
     }
 
     pub fn addShmPool(self: *Client, id: u32, shm_pool: ShmPool) !void {
         const shm_pool_ptr = try self.server.shm_pools.create(shm_pool);
+        errdefer self.server.shm_pools.destroy(shm_pool_ptr);
+
         try self.shm_pools.put(id, shm_pool_ptr);
     }
 
     pub fn addBuffer(self: *Client, id: u32, buffer: Buffer) !void {
         const buffer_ptr = try self.server.buffers.create(buffer);
+        errdefer self.server.buffers.destroy(buffer_ptr);
+
         try self.buffers.put(id, buffer_ptr);
     }
 
     pub fn removeWindow(self: *Client, id: u32) RemoveError!void {
         const window = self.windows.get(id) orelse return error.NoSuchWindow;
-        try self.server.windows.destroy(window);
+        self.server.windows.destroy(window);
         _ = self.windows.remove(id);
     }
 
     pub fn removeRegion(self: *Client, id: u32) RemoveError!void {
         const region = self.regions.get(id) orelse return error.NoSuchRegion;
-        try self.server.regions.destroy(region);
+        self.server.regions.destroy(region);
         _ = self.regions.remove(id);
     }
 
     pub fn removeShmPool(self: *Client, id: u32) RemoveError!void {
         const shm_pool = self.shm_pools.get(id) orelse return error.NoSuchShmPool;
-        try self.server.shm_pools.destroy(shm_pool);
+        self.server.shm_pools.destroy(shm_pool);
         _ = self.shm_pools.remove(id);
     }
 
     pub fn removeBuffer(self: *Client, id: u32) RemoveError!void {
         const buffer = self.buffers.get(id) orelse return error.NoSuchBuffer;
-        try self.server.buffers.destroy(buffer);
+        self.server.buffers.destroy(buffer);
         _ = self.buffers.remove(id);
     }
 
