@@ -3,7 +3,6 @@ const fifo = std.fifo;
 const txrx = @import("txrx.zig");
 const Event = @import("../subsystem.zig").Event;
 const WlObject = @import("../protocols.zig").WlObject;
-const WlInterfaceType = @import("../protocols.zig").WlInterfaceType;
 const Client = @import("../client.zig").Client;
 const ClientEvent = Client.ClientEvent;
 const AutoHashMap = std.hash_map.AutoHashMap;
