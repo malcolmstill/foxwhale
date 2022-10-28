@@ -1,6 +1,6 @@
 const std = @import("std");
 const clients = @import("client.zig");
-const XdgPositioner = @import("protocols.zig").XdgPositioner;
+const XdgPositioner = @import("wl/protocols.zig").XdgPositioner;
 const Rectangle = @import("rectangle.zig").Rectangle;
 const Client = @import("client.zig").Client;
 

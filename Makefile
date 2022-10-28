@@ -1,7 +1,7 @@
 .PHONY: protocols
 protocols:
-	python generator/generate.py client.zig server /usr/share/wayland/wayland.xml /usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml /usr/share/wayland-protocols/unstable/linux-dmabuf/linux-dmabuf-unstable-v1.xml protocols/fw_control.xml > src/protocols.zig
-	zig fmt src/protocols.zig
+	python generator/generate.py client.zig server /usr/share/wayland/wayland.xml /usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml /usr/share/wayland-protocols/unstable/linux-dmabuf/linux-dmabuf-unstable-v1.xml protocols/fw_control.xml > src/wl/protocols.zig
+	zig fmt src/wl/protocols.zig
 
 foxwhalectl_protocols:
 	python generator/generate.py connection.zig client /usr/share/wayland/wayland.xml protocols/fw_control.xml > src/foxwhalectl/protocols.zig

@@ -1,6 +1,6 @@
 const std = @import("std");
 const math = std.math;
-const prot = @import("protocols.zig");
+const prot = @import("wl/protocols.zig");
 const Renderer = @import("renderer.zig").Renderer;
 const Client = @import("client.zig").Client;
 const Rectangle = @import("rectangle.zig").Rectangle;
@@ -12,10 +12,10 @@ const View = @import("view.zig").View;
 const Mat4x4 = @import("math.zig").Mat4x4;
 const Animatable = @import("animatable.zig").Animatable;
 const AnimatableType = @import("animatable.zig").AnimatableType;
-const WlSurface = @import("protocols.zig").WlSurface;
-const WlBuffer = @import("protocols.zig").WlBuffer;
-const XdgSurface = @import("protocols.zig").XdgSurface;
-const XdgToplevel = @import("protocols.zig").XdgToplevel;
+const WlSurface = @import("wl/protocols.zig").WlSurface;
+const WlBuffer = @import("wl/protocols.zig").WlBuffer;
+const XdgSurface = @import("wl/protocols.zig").XdgSurface;
+const XdgToplevel = @import("wl/protocols.zig").XdgToplevel;
 const RemoveError = @import("client.zig").RemoveError;
 const ease = @import("ease.zig");
 

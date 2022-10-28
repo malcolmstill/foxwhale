@@ -8,7 +8,7 @@ const Client = @import("client.zig").Client;
 const ShmPool = @import("shm_pool.zig").ShmPool;
 const buffer = @import("buffer.zig");
 const Buffer = buffer.Buffer;
-const WlBuffer = @import("protocols.zig").WlBuffer;
+const WlBuffer = @import("wl/protocols.zig").WlBuffer;
 
 pub const ShmBuffer = struct {
     client: *Client,

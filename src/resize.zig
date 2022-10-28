@@ -1,4 +1,4 @@
-const prot = @import("protocols.zig");
+const prot = @import("wl/protocols.zig");
 const Window = @import("window.zig").Window;
 const XdgConfiguration = @import("window.zig").XdgConfiguration;
 const edge = prot.xdg_toplevel_resize_edge;

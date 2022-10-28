@@ -1,5 +1,5 @@
 const std = @import("std");
-const Context = @import("wl/context.zig").Context;
+const Context = @import("context.zig").Context;
 
 // wl_display
 pub const WlDisplay = struct {

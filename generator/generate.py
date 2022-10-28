@@ -16,7 +16,7 @@ def generate(context, side, files):
         sendType = "request"
 
     print(f'const std = @import("std");')
-    print(f'const Context = @import("wl/context.zig").Context;')
+    print(f'const Context = @import("context.zig").Context;')
 
     msgs = []
     for file in files:

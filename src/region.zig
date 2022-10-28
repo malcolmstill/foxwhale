@@ -5,7 +5,7 @@ const Window = @import("window.zig").Window;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 const RectangleBuffer = LinearFifo(RectangleOp, LinearFifoBufferType{ .Static = 64 });
-const WlRegion = @import("protocols.zig").WlRegion;
+const WlRegion = @import("wl/protocols.zig").WlRegion;
 
 pub const Region = struct {
     client: *Client,

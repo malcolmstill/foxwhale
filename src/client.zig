@@ -5,20 +5,20 @@ const epoll = @import("epoll.zig");
 const Event = @import("subsystem.zig").Event;
 const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
 const Context = @import("wl/context.zig").Context;
-const WlObject = @import("protocols.zig").WlObject;
-const WlDisplay = @import("protocols.zig").WlDisplay;
-const WlRegistry = @import("protocols.zig").WlRegistry;
-const WlCompositor = @import("protocols.zig").WlCompositor;
-const WlShm = @import("protocols.zig").WlShm;
-const WlShmPool = @import("protocols.zig").WlShmPool;
-const WlSurface = @import("protocols.zig").WlSurface;
-const WlRegion = @import("protocols.zig").WlRegion;
-const WlBuffer = @import("protocols.zig").WlBuffer;
-const WlCallback = @import("protocols.zig").WlCallback;
-const XdgWmBase = @import("protocols.zig").XdgWmBase;
-const XdgSurface = @import("protocols.zig").XdgSurface;
-const XdgToplevel = @import("protocols.zig").XdgToplevel;
-const WlMessage = @import("protocols.zig").WlMessage;
+const WlObject = @import("wl/protocols.zig").WlObject;
+const WlDisplay = @import("wl/protocols.zig").WlDisplay;
+const WlRegistry = @import("wl/protocols.zig").WlRegistry;
+const WlCompositor = @import("wl/protocols.zig").WlCompositor;
+const WlShm = @import("wl/protocols.zig").WlShm;
+const WlShmPool = @import("wl/protocols.zig").WlShmPool;
+const WlSurface = @import("wl/protocols.zig").WlSurface;
+const WlRegion = @import("wl/protocols.zig").WlRegion;
+const WlBuffer = @import("wl/protocols.zig").WlBuffer;
+const WlCallback = @import("wl/protocols.zig").WlCallback;
+const XdgWmBase = @import("wl/protocols.zig").XdgWmBase;
+const XdgSurface = @import("wl/protocols.zig").XdgSurface;
+const XdgToplevel = @import("wl/protocols.zig").XdgToplevel;
+const WlMessage = @import("wl/protocols.zig").WlMessage;
 // const shm_pool = @import("shm_pool.zig");
 // const shm_buffer = @import("shm_buffer.zig");
 // const region = @import("region.zig");
@@ -156,7 +156,7 @@ pub const Client = struct {
                 self.state = .read_buffer;
             }
 
-            const event = self.client.context.readEvent(self.client) catch |err| {
+            const event = self.client.context.readEvent() catch |err| {
                 if (err == error.ClientSigbusd or builtin.mode != .Debug) {
                     return Event{
                         .client = Client.TargetEvent{
@@ -171,11 +171,17 @@ pub const Client = struct {
                 }
             };
 
-            if (event == null) {
+            if (event) |ev| {
+                return Event{
+                    .client = Client.TargetEvent{
+                        .client = self.client,
+                        .event = ClientEvent{ .message = ev },
+                    },
+                };
+            } else {
                 self.client.context.finishRead();
+                return null;
             }
-
-            return event;
         }
     };
 

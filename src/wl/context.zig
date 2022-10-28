@@ -1,10 +1,8 @@
 const std = @import("std");
 const fifo = std.fifo;
 const txrx = @import("txrx.zig");
-const Event = @import("../subsystem.zig").Event;
-const WlObject = @import("../protocols.zig").WlObject;
-const Client = @import("../client.zig").Client;
-const ClientEvent = Client.ClientEvent;
+const WlObject = @import("protocols.zig").WlObject;
+const WlMessage = @import("protocols.zig").WlMessage;
 const AutoHashMap = std.hash_map.AutoHashMap;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
@@ -58,7 +56,7 @@ pub const Context = struct {
         std.mem.copy(u8, self.rx_buf[0..self.write_offset], self.rx_buf[self.read_offset..self.n]);
     }
 
-    pub fn readEvent(self: *Self, client: *Client) anyerror!?Event {
+    pub fn readEvent(self: *Self) anyerror!?WlMessage {
         const remaining = self.n - self.read_offset;
 
         // We need to have read at least a header
@@ -74,14 +72,7 @@ pub const Context = struct {
         std.log.info("get header.id = {}", .{header.id});
         var object = self.objects.get(header.id) orelse return error.CouldntFindExpectedId;
 
-        const event = Event{
-            .client = Client.TargetEvent{
-                .client = client,
-                .event = ClientEvent{
-                    .message = try object.readMessage(header.opcode),
-                },
-            },
-        };
+        const event = try object.readMessage(header.opcode);
 
         if ((self.read_offset - message_start_offset) != header.length) {
             self.read_offset = 0;

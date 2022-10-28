@@ -2,7 +2,6 @@ const std = @import("std");
 const Server = @import("server.zig").Server;
 const Client = @import("client.zig").Client;
 const Backend = @import("backend/backend.zig").Backend;
-const WlMessage = @import("protocols.zig").WlMessage;
 
 pub const Subsystem = enum {
     server,
