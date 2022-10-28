@@ -17,7 +17,8 @@ pub fn Pool(comptime T: type, comptime U: type) type {
             var free_list = try allocator.alloc(?U, count);
             var in_use: []bool = if (builtin.mode == .Debug) try allocator.alloc(bool, count) else undefined;
 
-            std.log.info("Allocating []{}: {} bytes (unit size {} bytes)", .{
+            std.log.info("Allocating [{}]{}: {} bytes (unit size {} bytes)", .{
+                count,
                 T,
                 @sizeOf(T) * entities.len + @sizeOf(?U) * free_list.len + @sizeOf(?U) + @sizeOf(mem.Allocator),
                 @sizeOf(T),
