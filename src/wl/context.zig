@@ -59,9 +59,6 @@ pub const Context = struct {
     }
 
     pub fn readEvent(self: *Self, client: *Client) anyerror!?Event {
-        // TODO: we probably need to figure out how to do this later, because
-        // we are now returning and object. Alternative idea: mmap ring buffer
-
         const remaining = self.n - self.read_offset;
 
         // We need to have read at least a header
