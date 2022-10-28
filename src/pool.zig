@@ -25,19 +25,10 @@ pub fn Pool(comptime T: type, comptime U: type) type {
 
             // Make every free_list node point to the next node
             for (free_list) |_, index| {
-                const i = @intCast(U, index);
-                if (i == free_list.len - 1) {
-                    free_list[i] = null;
-                } else {
-                    free_list[i] = i + 1;
-                }
+                if (builtin.mode == .Debug) in_use[index] = false;
+                free_list[index] = @intCast(U, index) + 1;
             }
-
-            if (builtin.mode == .Debug) {
-                for (in_use) |_, i| {
-                    in_use[i] = false;
-                }
-            }
+            free_list[free_list.len - 1] = null;
 
             return Self{
                 .alloc = allocator,
