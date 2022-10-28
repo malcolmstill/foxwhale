@@ -8,7 +8,7 @@ pub fn Pool(comptime T: type, comptime U: type) type {
         entities: []T,
         free_list: []?U,
         next_free: ?U,
-        in_use: []bool,
+        in_use: if (builtin.mode == .Debug) []bool else void,
 
         const Self = @This();
 
