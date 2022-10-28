@@ -3,9 +3,9 @@ const Context = @import("wl/context.zig").Context;
 
 // wl_display
 pub const WlDisplay = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -106,9 +106,9 @@ pub const WlDisplay = struct {
 
 // wl_registry
 pub const WlRegistry = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -197,9 +197,9 @@ pub const WlRegistry = struct {
 
 // wl_callback
 pub const WlCallback = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -236,9 +236,9 @@ pub const WlCallback = struct {
 
 // wl_compositor
 pub const WlCompositor = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -302,9 +302,9 @@ pub const WlCompositor = struct {
 
 // wl_shm_pool
 pub const WlShmPool = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -397,9 +397,9 @@ pub const WlShmPool = struct {
 
 // wl_shm
 pub const WlShm = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -530,9 +530,9 @@ pub const WlShm = struct {
 
 // wl_buffer
 pub const WlBuffer = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -595,9 +595,9 @@ pub const WlBuffer = struct {
 
 // wl_data_offer
 pub const WlDataOffer = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -786,9 +786,9 @@ pub const WlDataOffer = struct {
 
 // wl_data_source
 pub const WlDataSource = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -984,9 +984,9 @@ pub const WlDataSource = struct {
 
 // wl_data_device
 pub const WlDataDevice = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -1186,9 +1186,9 @@ pub const WlDataDevice = struct {
 
 // wl_data_device_manager
 pub const WlDataDeviceManager = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -1265,9 +1265,9 @@ pub const WlDataDeviceManager = struct {
 
 // wl_shell
 pub const WlShell = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -1324,9 +1324,9 @@ pub const WlShell = struct {
 
 // wl_shell_surface
 pub const WlShellSurface = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -1653,9 +1653,9 @@ pub const WlShellSurface = struct {
 
 // wl_surface
 pub const WlSurface = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -1911,9 +1911,9 @@ pub const WlSurface = struct {
 
 // wl_seat
 pub const WlSeat = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -2057,9 +2057,9 @@ pub const WlSeat = struct {
 
 // wl_pointer
 pub const WlPointer = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -2380,9 +2380,9 @@ pub const WlPointer = struct {
 
 // wl_keyboard
 pub const WlKeyboard = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -2526,9 +2526,9 @@ pub const WlKeyboard = struct {
 
 // wl_touch
 pub const WlTouch = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -2709,9 +2709,9 @@ pub const WlTouch = struct {
 
 // wl_output
 pub const WlOutput = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -2880,9 +2880,9 @@ pub const WlOutput = struct {
 
 // wl_region
 pub const WlRegion = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -2978,9 +2978,9 @@ pub const WlRegion = struct {
 
 // wl_subcompositor
 pub const WlSubcompositor = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -3057,9 +3057,9 @@ pub const WlSubcompositor = struct {
 
 // wl_subsurface
 pub const WlSubsurface = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -3195,9 +3195,9 @@ pub const WlSubsurface = struct {
 
 // xdg_wm_base
 pub const XdgWmBase = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -3326,9 +3326,9 @@ pub const XdgWmBase = struct {
 
 // xdg_positioner
 pub const XdgPositioner = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -3527,9 +3527,9 @@ pub const XdgPositioner = struct {
 
 // xdg_surface
 pub const XdgSurface = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -3692,9 +3692,9 @@ pub const XdgSurface = struct {
 
 // xdg_toplevel
 pub const XdgToplevel = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -4053,9 +4053,9 @@ pub const XdgToplevel = struct {
 
 // xdg_popup
 pub const XdgPopup = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -4154,9 +4154,9 @@ pub const XdgPopup = struct {
 
 // zwp_linux_dmabuf_v1
 pub const ZwpLinuxDmabufV1 = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -4263,9 +4263,9 @@ pub const ZwpLinuxDmabufV1 = struct {
 
 // zwp_linux_buffer_params_v1
 pub const ZwpLinuxBufferParamsV1 = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -4439,9 +4439,9 @@ pub const ZwpLinuxBufferParamsV1 = struct {
 
 // fw_control
 pub const FwControl = struct {
-    id: u32,
     context: *Context,
-    version: usize,
+    id: u32,
+    version: u32,
 
     const Self = @This();
 
@@ -4586,7 +4586,7 @@ pub const FwControl = struct {
     };
 };
 
-pub const WlInterfaceType = enum {
+pub const WlInterfaceType = enum(u8) {
     wl_display,
     wl_registry,
     wl_callback,

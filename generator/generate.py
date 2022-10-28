@@ -39,9 +39,9 @@ def generate_protocol(protocol, sendType, receiveType, msgs):
 def generate_interface_struct(interface, receiveType, sendType):
     interfaceName = camelCase(interface.attrib['name'])
     print(f"pub const {interfaceName} = struct {{")
-    print(f"\t\tid: u32,")
     print(f"\t\tcontext: *Context,")
-    print(f"\t\tversion: usize,")
+    print(f"\t\tid: u32,")
+    print(f"\t\tversion: u32,")
     print(f"")
     print("const Self = @This();")
     print(f"")
@@ -65,7 +65,7 @@ def generate_interface_struct(interface, receiveType, sendType):
 def generate_message_union(msgs):
     # Enum
     print(f"")
-    print(f"pub const WlInterfaceType = enum {{")
+    print(f"pub const WlInterfaceType = enum(u8) {{")
     for m in msgs:
         print(f"{m},")
     print(f"}};")
