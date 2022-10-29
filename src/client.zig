@@ -40,7 +40,6 @@ const Resource = @import("server.zig").Resource;
 
 pub const Client = struct {
     server: *Server,
-    // compositor: *Compositor,
     alloc: mem.Allocator,
     conn: std.net.StreamServer.Connection,
     context: Context,
@@ -263,36 +262,11 @@ pub const Client = struct {
         std.log.warn("No id {}", .{id});
     }
 
-    // pub fn addRegion(self: *Client, id: u32, region: Region) !void {
-    //     const region_ptr = try self.server.regions.create(region);
-    //     errdefer self.server.regions.destroy(region_ptr);
-
-    //     try self.regions.put(id, region_ptr);
-    // }
-
-    // pub fn addShmPool(self: *Client, id: u32, shm_pool: ShmPool) !*ShmPool {
-    //     const shm_pool_ptr = try self.server.shm_pools.create(shm_pool);
-    //     errdefer self.server.shm_pools.destroy(shm_pool_ptr);
-
-    //     try self.shm_pools.put(id, shm_pool_ptr);
-
-    //     return shm_pool_ptr;
-    // }
-
-    // pub fn addBuffer(self: *Client, id: u32, buffer: Buffer) !*Buffer {
-    //     const buffer_ptr = try self.server.buffers.create(buffer);
-    //     errdefer self.server.buffers.destroy(buffer_ptr);
-
-    //     try self.buffers.put(id, buffer_ptr);
-
-    //     return buffer_ptr;
-    // }
-
-    // pub fn removeWindow(self: *Client, id: u32) RemoveError!void {
-    //     const window = self.windows.get(id) orelse return error.NoSuchWindow;
-    //     self.server.windows.destroy(window);
-    //     _ = self.windows.remove(id);
-    // }
+    pub fn removeWindow(self: *Client, id: u32) RemoveError!void {
+        const window = self.getWindow(id) orelse return error.NoSuchWindow;
+        self.windows.destroy(window);
+        self.unlink(id);
+    }
 
     pub fn removeRegion(self: *Client, id: u32) RemoveError!void {
         const region = self.getRegion(id) orelse return error.NoSuchRegion;
@@ -300,40 +274,40 @@ pub const Client = struct {
         self.unlink(id);
     }
 
-    // pub fn removeShmPool(self: *Client, id: u32) RemoveError!void {
-    //     const shm_pool = self.shm_pools.get(id) orelse return error.NoSuchShmPool;
-    //     self.server.shm_pools.destroy(shm_pool);
-    //     _ = self.shm_pools.remove(id);
-    // }
+    pub fn removeShmPool(self: *Client, id: u32) RemoveError!void {
+        const shm_pool = self.getShmPool(id) orelse return error.NoSuchShmPool;
+        self.shm_pools.destroy(shm_pool);
+        self.unlink(id);
+    }
 
-    // pub fn removeBuffer(self: *Client, id: u32) RemoveError!void {
-    //     const buffer = self.buffers.get(id) orelse return error.NoSuchBuffer;
-    //     self.server.buffers.destroy(buffer);
-    //     _ = self.buffers.remove(id);
-    // }
+    pub fn removeBuffer(self: *Client, id: u32) RemoveError!void {
+        const buffer = self.getBuffer(id) orelse return error.NoSuchBuffer;
+        self.buffers.destroy(buffer);
+        self.unlink(id);
+    }
 
-    pub fn dispatch(self: *Client, msg: WlMessage) !void {
-        switch (msg) {
-            .wl_display => |p| try self.handleWlDisplay(p),
-            .wl_registry => |p| try self.handleWlRegistry(p),
-            .wl_compositor => |p| try self.handleWlCompositor(p),
-            .wl_surface => |p| try self.handleWlSurface(p),
-            .wl_shm => |p| try self.handleWlShm(p),
-            .wl_shm_pool => |p| try self.handleWlShmPool(p),
-            .xdg_wm_base => |p| try self.handleXdgWmBase(p),
-            .xdg_surface => |p| try self.handleXdgSurface(p),
-            .xdg_toplevel => |p| try self.handleXdgToplevel(p),
+    pub fn dispatch(self: *Client, message: WlMessage) !void {
+        switch (message) {
+            .wl_display => |msg| try self.handleWlDisplay(msg),
+            .wl_registry => |msg| try self.handleWlRegistry(msg),
+            .wl_compositor => |msg| try self.handleWlCompositor(msg),
+            .wl_surface => |msg| try self.handleWlSurface(msg),
+            .wl_shm => |msg| try self.handleWlShm(msg),
+            .wl_shm_pool => |msg| try self.handleWlShmPool(msg),
+            .xdg_wm_base => |msg| try self.handleXdgWmBase(msg),
+            .xdg_surface => |msg| try self.handleXdgSurface(msg),
+            .xdg_toplevel => |msg| try self.handleXdgToplevel(msg),
             else => {
-                std.log.err("UNHANDLED = {}", .{msg});
+                std.log.err("UNHANDLED = {}", .{message});
                 return error.UnhandledMessage;
             },
         }
     }
 
-    pub fn handleWlDisplay(self: *Client, msg: WlDisplay.Message) !void {
-        switch (msg) {
-            .get_registry => |p| {
-                const wl_registry = WlRegistry.init(p.registry, &self.context, 0);
+    pub fn handleWlDisplay(self: *Client, message: WlDisplay.Message) !void {
+        switch (message) {
+            .get_registry => |msg| {
+                const wl_registry = WlRegistry.init(msg.registry, &self.context, 0);
                 try self.link(.{ .wl_registry = wl_registry }, .none);
 
                 self.wl_registry = wl_registry;
@@ -354,8 +328,8 @@ pub const Client = struct {
                 try wl_registry.sendGlobal(10, "zwp_linux_dmabuf_v1\x00", 3);
                 try wl_registry.sendGlobal(11, "fw_control\x00", 1);
             },
-            .sync => |p| {
-                const callback = WlCallback.init(p.callback, &self.context, 0);
+            .sync => |msg| {
+                const callback = WlCallback.init(msg.callback, &self.context, 0);
 
                 try callback.sendDone(self.nextSerial());
                 try self.wl_display.sendDeleteId(callback.id);
@@ -363,29 +337,29 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlRegistry(self: *Client, msg: WlRegistry.Message) !void {
-        switch (msg) {
-            .bind => |p| switch (p.name) {
+    pub fn handleWlRegistry(self: *Client, message: WlRegistry.Message) !void {
+        switch (message) {
+            .bind => |msg| switch (msg.name) {
                 1 => {
-                    if (!mem.eql(u8, p.name_string, "wl_compositor\x00")) return error.UnexpectedName;
-                    self.wl_compositor = WlCompositor.init(p.id, &self.context, p.version);
+                    if (!mem.eql(u8, msg.name_string, "wl_compositor\x00")) return error.UnexpectedName;
 
+                    self.wl_compositor = WlCompositor.init(msg.id, &self.context, msg.version);
                     try self.link(.{ .wl_compositor = self.wl_compositor.? }, .none);
                 },
                 4 => {
-                    if (!mem.eql(u8, p.name_string, "xdg_wm_base\x00")) return error.UnexpectedName;
-                    self.xdg_wm_base = XdgWmBase.init(p.id, &self.context, p.version);
+                    if (!mem.eql(u8, msg.name_string, "xdg_wm_base\x00")) return error.UnexpectedName;
 
+                    self.xdg_wm_base = XdgWmBase.init(msg.id, &self.context, msg.version);
                     try self.link(.{ .xdg_wm_base = self.xdg_wm_base.? }, .none);
                 },
                 8 => {
-                    if (!std.mem.eql(u8, p.name_string, "wl_shm\x00")) return error.UnexpectedName;
-                    self.wl_shm = WlShm.init(p.id, &self.context, p.version);
+                    if (!std.mem.eql(u8, msg.name_string, "wl_shm\x00")) return error.UnexpectedName;
+
+                    self.wl_shm = WlShm.init(msg.id, &self.context, msg.version);
+                    try self.link(.{ .wl_shm = self.wl_shm.? }, .none);
 
                     try self.wl_shm.?.sendFormat(WlShm.Format.argb8888);
                     try self.wl_shm.?.sendFormat(WlShm.Format.xrgb8888);
-
-                    try self.link(.{ .wl_shm = self.wl_shm.? }, .none);
                 },
 
                 else => return error.NoSuchGlobal,
@@ -393,30 +367,30 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlCompositor(self: *Client, msg: WlCompositor.Message) !void {
-        switch (msg) {
-            .create_surface => |p| {
-                const wl_surface = WlSurface.init(p.id, &self.context, 0);
+    pub fn handleWlCompositor(self: *Client, message: WlCompositor.Message) !void {
+        switch (message) {
+            .create_surface => |msg| {
+                const wl_surface = WlSurface.init(msg.id, &self.context, 0);
 
                 const window = try self.windows.create(Window.init(self, wl_surface));
                 errdefer self.windows.destroy(window);
                 try self.link(.{ .wl_surface = wl_surface }, .{ .window = window });
             },
-            .create_region => |p| {
-                const wl_region = WlRegion.init(p.id, &self.context, 0);
+            .create_region => |msg| {
+                const wl_region = WlRegion.init(msg.id, &self.context, 0);
 
                 const region = try self.regions.create(Region.init(self, wl_region));
                 errdefer self.regions.destroy(region);
 
-                try self.link(.{ .wl_region = wl_region }, .none);
+                try self.link(.{ .wl_region = wl_region }, .{ .region = region });
             },
         }
     }
 
-    pub fn handleWlSurface(self: *Client, msg: WlSurface.Message) !void {
-        switch (msg) {
-            .commit => |p| {
-                const window = self.getWindow(p.wl_surface.id) orelse return error.NoSuchWindow;
+    pub fn handleWlSurface(self: *Client, message: WlSurface.Message) !void {
+        switch (message) {
+            .commit => |msg| {
+                const window = self.getWindow(msg.wl_surface.id) orelse return error.NoSuchWindow;
 
                 // We may, without error, receive a .commit without an attached buffer.
                 // In that case we can make no further process so we just return
@@ -472,36 +446,36 @@ pub const Client = struct {
                 if (!window.synchronized) try window.flip();
             },
             .damage => |_| {},
-            .attach => |p| {
-                const window = self.getWindow(p.wl_surface.id) orelse return error.NoSuchObject;
+            .attach => |msg| {
+                const window = self.getWindow(msg.wl_surface.id) orelse return error.NoSuchWindow;
 
-                if (p.buffer) |wl_buffer| {
+                if (msg.buffer) |wl_buffer| {
                     window.wl_buffer = wl_buffer;
                 } else {
                     window.wl_buffer = null;
                 }
             },
-            .frame => |p| {
-                const window = self.getWindow(p.wl_surface.id) orelse return error.NoSuchObject;
+            .frame => |msg| {
+                const window = self.getWindow(msg.wl_surface.id) orelse return error.NoSuchWindow;
 
-                try window.callbacks.writeItem(p.callback);
+                try window.callbacks.writeItem(msg.callback);
 
-                const wl_callback = WlCallback.init(p.callback, &self.context, 0);
+                const wl_callback = WlCallback.init(msg.callback, &self.context, 0);
                 try self.link(.{ .wl_callback = wl_callback }, .none);
             },
             else => {
-                std.log.err("UNHANDLED = {}", .{msg});
+                std.log.err("UNHANDLED = {}", .{message});
                 return error.UnhandledMessage;
             },
         }
     }
 
-    pub fn handleXdgWmBase(self: *Client, msg: XdgWmBase.Message) !void {
-        switch (msg) {
-            .get_xdg_surface => |p| {
-                const window = self.getWindow(p.surface.id) orelse return error.NoSuchObject;
+    pub fn handleXdgWmBase(self: *Client, message: XdgWmBase.Message) !void {
+        switch (message) {
+            .get_xdg_surface => |msg| {
+                const window = self.getWindow(msg.surface.id) orelse return error.NoSuchWindow;
 
-                const xdg_surface = XdgSurface.init(p.id, &self.context, 0);
+                const xdg_surface = XdgSurface.init(msg.id, &self.context, 0);
                 try self.link(.{ .xdg_surface = xdg_surface }, .{ .window = window });
 
                 window.xdg_surface = xdg_surface;
@@ -510,11 +484,11 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleXdgSurface(self: *Client, msg: XdgSurface.Message) !void {
-        switch (msg) {
-            .get_toplevel => |p| {
-                const window = self.getWindow(p.xdg_surface.id) orelse return error.NoSuchObject;
-                const xdg_toplevel = XdgToplevel.init(p.id, &self.context, 0);
+    pub fn handleXdgSurface(self: *Client, message: XdgSurface.Message) !void {
+        switch (message) {
+            .get_toplevel => |msg| {
+                const window = self.getWindow(msg.xdg_surface.id) orelse return error.NoSuchWindow;
+                const xdg_toplevel = XdgToplevel.init(msg.id, &self.context, 0);
                 try self.link(.{ .xdg_toplevel = xdg_toplevel }, .{ .window = window });
 
                 window.xdg_toplevel = xdg_toplevel;
@@ -522,16 +496,13 @@ pub const Client = struct {
                 var array = [_]u32{};
                 const serial = self.nextSerial();
                 try xdg_toplevel.sendConfigure(0, 0, array[0..array.len]);
-                try p.xdg_surface.sendConfigure(serial);
+                try msg.xdg_surface.sendConfigure(serial);
             },
-            .ack_configure => |p| {
-                const window = switch (self.getResource(p.xdg_surface.id) orelse return error.NoSuchObject) {
-                    .window => |window| window,
-                    else => return error.ExpectedWindow,
-                };
+            .ack_configure => |msg| {
+                const window = self.getWindow(msg.xdg_surface.id) orelse return error.NoSuchWindow;
 
                 while (window.xdg_configurations.readItem()) |xdg_configuration| {
-                    if (p.serial == xdg_configuration.serial) {
+                    if (msg.serial == xdg_configuration.serial) {
                         switch (xdg_configuration.operation) {
                             .Maximize => {
                                 if (window.maximized == null) {
@@ -565,21 +536,19 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleXdgToplevel(_: *Client, msg: XdgToplevel.Message) !void {
-        switch (msg) {
+    pub fn handleXdgToplevel(_: *Client, message: XdgToplevel.Message) !void {
+        switch (message) {
             .set_title => |_| {},
             else => return error.XdgToplevelUnhandledMessage,
         }
     }
 
-    pub fn handleWlShm(self: *Client, msg: WlShm.Message) !void {
-        switch (msg) {
-            .create_pool => |p| {
-                const wl_shm_pool = WlShmPool.init(p.id, &self.context, 0);
+    pub fn handleWlShm(self: *Client, message: WlShm.Message) !void {
+        switch (message) {
+            .create_pool => |msg| {
+                const wl_shm_pool = WlShmPool.init(msg.id, &self.context, 0);
 
-                // const shm_pool = try self.addShmPool(wl_shm_pool.id, ShmPool.init(self, p.fd, wl_shm_pool));
-
-                const shm_pool = try self.shm_pools.create(ShmPool.init(self, p.fd, wl_shm_pool));
+                const shm_pool = try self.shm_pools.create(ShmPool.init(self, msg.fd, wl_shm_pool));
                 errdefer self.shm_pools.destroy(shm_pool);
 
                 try self.link(.{ .wl_shm_pool = wl_shm_pool }, .{ .shm_pool = shm_pool });
@@ -587,19 +556,19 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlShmPool(self: *Client, msg: WlShmPool.Message) !void {
-        switch (msg) {
-            .create_buffer => |p| {
-                const shm_pool = self.getShmPool(p.wl_shm_pool.id) orelse return error.NoSuchShmPool;
+    pub fn handleWlShmPool(self: *Client, message: WlShmPool.Message) !void {
+        switch (message) {
+            .create_buffer => |msg| {
+                const shm_pool = self.getShmPool(msg.wl_shm_pool.id) orelse return error.NoSuchShmPool;
 
-                const wl_buffer = WlBuffer.init(p.id, &self.context, 0);
+                const wl_buffer = WlBuffer.init(msg.id, &self.context, 0);
                 const buffer = try self.buffers.create(Buffer{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer) });
                 errdefer self.buffers.destroy(buffer);
 
                 try self.link(.{ .wl_buffer = wl_buffer }, .{ .buffer = buffer });
             },
-            .destroy => |p| {
-                const wl_shm_pool = p.wl_shm_pool;
+            .destroy => |msg| {
+                const wl_shm_pool = msg.wl_shm_pool;
                 const shm_pool = self.getShmPool(wl_shm_pool.id) orelse return error.NoSuchShmPool;
 
                 shm_pool.to_be_destroyed = true;
