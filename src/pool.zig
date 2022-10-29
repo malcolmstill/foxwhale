@@ -74,8 +74,8 @@ pub fn Pool(comptime T: type, comptime U: type) type {
             return error.OutOfMemory;
         }
 
-        pub fn destroy(self: *Self, value_ptr: *T) void {
-            const index = self.indexOf(value_ptr) orelse return;
+        pub fn destroy(self: *Self, ptr: *T) void {
+            const index = self.indexOf(ptr) orelse return;
 
             if (builtin.mode == .Debug) self.in_use[index] = false;
 
@@ -83,10 +83,10 @@ pub fn Pool(comptime T: type, comptime U: type) type {
             self.next_free = index;
         }
 
-        pub fn indexOf(self: *Self, value_ptr: *T) ?U {
+        pub fn indexOf(self: *Self, ptr: *T) ?U {
             const start = @ptrToInt(&self.entities[0]);
             const end = @ptrToInt(&self.entities[self.entities.len - 1]);
-            const v = @ptrToInt(value_ptr);
+            const v = @ptrToInt(ptr);
 
             if (v < start or v > end) return null;
 
