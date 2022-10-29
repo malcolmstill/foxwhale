@@ -6,7 +6,7 @@ pub fn Pool(comptime T: type, comptime U: type) type {
     return struct {
         alloc: mem.Allocator,
         entities: []T,
-        free_list: []?U,
+        free_stack: []?U,
         next_free: ?U,
         in_use: if (builtin.mode == .Debug) []bool else void,
 
@@ -14,27 +14,27 @@ pub fn Pool(comptime T: type, comptime U: type) type {
 
         pub fn init(allocator: mem.Allocator, count: U) !Self {
             var entities = try allocator.alloc(T, count);
-            var free_list = try allocator.alloc(?U, count);
+            var free_stack = try allocator.alloc(?U, count);
             var in_use: []bool = if (builtin.mode == .Debug) try allocator.alloc(bool, count) else undefined;
 
             std.log.info("Allocating [{}]{}: {} bytes (unit size {} bytes)", .{
                 count,
                 T,
-                @sizeOf(T) * entities.len + @sizeOf(?U) * free_list.len + @sizeOf(?U) + @sizeOf(mem.Allocator),
+                @sizeOf(T) * entities.len + @sizeOf(?U) * free_stack.len + @sizeOf(?U) + @sizeOf(mem.Allocator),
                 @sizeOf(T),
             });
 
-            // Make every free_list node point to the next node
-            for (free_list) |_, index| {
+            // Make every free_stack node point to the next node
+            for (free_stack) |_, index| {
                 if (builtin.mode == .Debug) in_use[index] = false;
-                free_list[index] = @intCast(U, index) + 1;
+                free_stack[index] = @intCast(U, index) + 1;
             }
-            free_list[free_list.len - 1] = null;
+            free_stack[free_stack.len - 1] = null;
 
             return Self{
                 .alloc = allocator,
                 .entities = entities,
-                .free_list = free_list,
+                .free_stack = free_stack,
                 .next_free = 0,
                 .in_use = in_use,
             };
@@ -50,7 +50,7 @@ pub fn Pool(comptime T: type, comptime U: type) type {
             }
 
             self.alloc.free(self.entities);
-            self.alloc.free(self.free_list);
+            self.alloc.free(self.free_stack);
             if (builtin.mode == .Debug) self.alloc.free(self.in_use);
         }
 
@@ -64,7 +64,7 @@ pub fn Pool(comptime T: type, comptime U: type) type {
 
         pub fn createPtr(self: *Self) !*T {
             if (self.next_free) |next_free| {
-                defer self.next_free = self.free_list[next_free];
+                defer self.next_free = self.free_stack[next_free];
 
                 if (builtin.mode == .Debug) self.in_use[next_free] = true;
 
@@ -79,7 +79,7 @@ pub fn Pool(comptime T: type, comptime U: type) type {
 
             if (builtin.mode == .Debug) self.in_use[index] = false;
 
-            self.free_list[index] = self.next_free;
+            self.free_stack[index] = self.next_free;
             self.next_free = index;
         }
 
