@@ -405,10 +405,8 @@ pub const Client = struct {
             .create_region => |p| {
                 const wl_region = WlRegion.init(p.id, &self.context, 0);
 
-                // const region = try reg.newRegion(context.client, new_id);
-                // const wl_region = prot.new_wl_region(new_id, context, @ptrToInt(region));
-
-                // try self.context.register(WlObject{ .wl_region = region });
+                const region = try self.regions.create(Region.init(self, wl_region));
+                errdefer self.regions.destroy(region);
 
                 try self.link(.{ .wl_region = wl_region }, .none);
             },
