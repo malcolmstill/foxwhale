@@ -101,6 +101,7 @@ pub const Server = struct {
     }
 
     pub fn removeClient(self: *Self, client: *Client) void {
+        client.deinit();
         self.clients.destroy(client);
     }
 

@@ -26,6 +26,14 @@ pub fn PoolIterable(comptime T: type, comptime U: type) type {
             pool_iterable: *Self,
             list: Tq,
 
+            pub fn deinit(self: *Iterable) void {
+                var it = self.iterator();
+
+                while (it.next()) |n| {
+                    self.destroy(n);
+                }
+            }
+
             pub fn create(self: *Iterable, value: T) !*T {
                 const ptr = try self.pool_iterable.pool.create(value);
                 const index = self.pool_iterable.pool.indexOf(ptr);
