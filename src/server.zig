@@ -43,9 +43,9 @@ pub const Server = struct {
     // resources:
     clients: Pool(Client, u8),
     windows: PoolIterable(Window, u16),
-    regions: Pool(Region, u16),
-    buffers: Pool(Buffer, u16),
-    shm_pools: Pool(ShmPool, u16),
+    regions: PoolIterable(Region, u16),
+    buffers: PoolIterable(Buffer, u16),
+    shm_pools: PoolIterable(ShmPool, u16),
     objects: PoolIterable(ResourceObject, u16),
 
     const ClientNode = std.TailQueue(Client).Node;
@@ -70,9 +70,9 @@ pub const Server = struct {
             .server = try socket(),
             .clients = try Pool(Client, u8).init(alloc, 255),
             .windows = try PoolIterable(Window, u16).init(alloc, 1024),
-            .regions = try Pool(Region, u16).init(alloc, 1024),
-            .buffers = try Pool(Buffer, u16).init(alloc, 1024),
-            .shm_pools = try Pool(ShmPool, u16).init(alloc, 1024),
+            .regions = try PoolIterable(Region, u16).init(alloc, 1024),
+            .buffers = try PoolIterable(Buffer, u16).init(alloc, 1024),
+            .shm_pools = try PoolIterable(ShmPool, u16).init(alloc, 1024),
             .objects = try PoolIterable(ResourceObject, u16).init(alloc, 16384),
         };
     }

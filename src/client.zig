@@ -48,9 +48,9 @@ pub const Client = struct {
     server_id: u32 = 0xFF00_0000 - 1,
 
     windows: PoolIterable(Window, u16).Iterable,
-    regions: std.AutoHashMap(u32, *Region),
-    buffers: std.AutoHashMap(u32, *Buffer),
-    shm_pools: std.AutoHashMap(u32, *ShmPool),
+    regions: PoolIterable(Region, u16).Iterable,
+    buffers: PoolIterable(Buffer, u16).Iterable,
+    shm_pools: PoolIterable(ShmPool, u16).Iterable,
     objects: PoolIterable(ResourceObject, u16).Iterable,
 
     wl_display: WlDisplay,
@@ -94,9 +94,9 @@ pub const Client = struct {
             .wl_display = wl_display,
             .context = Context.init(conn.stream.handle),
             .windows = server.windows.iterable(),
-            .regions = std.AutoHashMap(u32, *Region).init(alloc),
-            .buffers = std.AutoHashMap(u32, *Buffer).init(alloc),
-            .shm_pools = std.AutoHashMap(u32, *ShmPool).init(alloc),
+            .regions = server.regions.iterable(),
+            .buffers = server.buffers.iterable(),
+            .shm_pools = server.shm_pools.iterable(),
             .objects = server.objects.iterable(),
         };
     }
@@ -218,6 +218,34 @@ pub const Client = struct {
         return SubsystemIterator{ .client = Iterator.init(self) };
     }
 
+    pub fn getWindow(self: *Client, id: u32) ?*Window {
+        return switch (self.getResource(id) orelse return null) {
+            .window => |window| window,
+            else => null,
+        };
+    }
+
+    pub fn getRegion(self: *Client, id: u32) ?*Region {
+        return switch (self.getResource(id) orelse return null) {
+            .region => |region| region,
+            else => null,
+        };
+    }
+
+    pub fn getBuffer(self: *Client, id: u32) ?*Buffer {
+        return switch (self.getResource(id) orelse return null) {
+            .buffer => |buffer| buffer,
+            else => null,
+        };
+    }
+
+    pub fn getShmPool(self: *Client, id: u32) ?*ShmPool {
+        return switch (self.getResource(id) orelse return null) {
+            .shm_pool => |shm_pool| shm_pool,
+            else => null,
+        };
+    }
+
     pub fn link(self: *Client, object: WlObject, resource: Resource) !void {
         _ = try self.objects.create(ResourceObject{ .object = object, .resource = resource });
     }
@@ -228,58 +256,61 @@ pub const Client = struct {
         while (it.next()) |n| {
             if (n.object.id() == id) {
                 self.objects.destroy(n);
+                return;
             }
         }
+
+        std.log.warn("No id {}", .{id});
     }
 
-    pub fn addRegion(self: *Client, id: u32, region: Region) !void {
-        const region_ptr = try self.server.regions.create(region);
-        errdefer self.server.regions.destroy(region_ptr);
+    // pub fn addRegion(self: *Client, id: u32, region: Region) !void {
+    //     const region_ptr = try self.server.regions.create(region);
+    //     errdefer self.server.regions.destroy(region_ptr);
 
-        try self.regions.put(id, region_ptr);
-    }
+    //     try self.regions.put(id, region_ptr);
+    // }
 
-    pub fn addShmPool(self: *Client, id: u32, shm_pool: ShmPool) !*ShmPool {
-        const shm_pool_ptr = try self.server.shm_pools.create(shm_pool);
-        errdefer self.server.shm_pools.destroy(shm_pool_ptr);
+    // pub fn addShmPool(self: *Client, id: u32, shm_pool: ShmPool) !*ShmPool {
+    //     const shm_pool_ptr = try self.server.shm_pools.create(shm_pool);
+    //     errdefer self.server.shm_pools.destroy(shm_pool_ptr);
 
-        try self.shm_pools.put(id, shm_pool_ptr);
+    //     try self.shm_pools.put(id, shm_pool_ptr);
 
-        return shm_pool_ptr;
-    }
+    //     return shm_pool_ptr;
+    // }
 
-    pub fn addBuffer(self: *Client, id: u32, buffer: Buffer) !*Buffer {
-        const buffer_ptr = try self.server.buffers.create(buffer);
-        errdefer self.server.buffers.destroy(buffer_ptr);
+    // pub fn addBuffer(self: *Client, id: u32, buffer: Buffer) !*Buffer {
+    //     const buffer_ptr = try self.server.buffers.create(buffer);
+    //     errdefer self.server.buffers.destroy(buffer_ptr);
 
-        try self.buffers.put(id, buffer_ptr);
+    //     try self.buffers.put(id, buffer_ptr);
 
-        return buffer_ptr;
-    }
+    //     return buffer_ptr;
+    // }
 
-    pub fn removeWindow(self: *Client, id: u32) RemoveError!void {
-        const window = self.windows.get(id) orelse return error.NoSuchWindow;
-        self.server.windows.destroy(window);
-        _ = self.windows.remove(id);
-    }
+    // pub fn removeWindow(self: *Client, id: u32) RemoveError!void {
+    //     const window = self.windows.get(id) orelse return error.NoSuchWindow;
+    //     self.server.windows.destroy(window);
+    //     _ = self.windows.remove(id);
+    // }
 
     pub fn removeRegion(self: *Client, id: u32) RemoveError!void {
-        const region = self.regions.get(id) orelse return error.NoSuchRegion;
-        self.server.regions.destroy(region);
-        _ = self.regions.remove(id);
+        const region = self.getRegion(id) orelse return error.NoSuchRegion;
+        self.regions.destroy(region);
+        self.unlink(id);
     }
 
-    pub fn removeShmPool(self: *Client, id: u32) RemoveError!void {
-        const shm_pool = self.shm_pools.get(id) orelse return error.NoSuchShmPool;
-        self.server.shm_pools.destroy(shm_pool);
-        _ = self.shm_pools.remove(id);
-    }
+    // pub fn removeShmPool(self: *Client, id: u32) RemoveError!void {
+    //     const shm_pool = self.shm_pools.get(id) orelse return error.NoSuchShmPool;
+    //     self.server.shm_pools.destroy(shm_pool);
+    //     _ = self.shm_pools.remove(id);
+    // }
 
-    pub fn removeBuffer(self: *Client, id: u32) RemoveError!void {
-        const buffer = self.buffers.get(id) orelse return error.NoSuchBuffer;
-        self.server.buffers.destroy(buffer);
-        _ = self.buffers.remove(id);
-    }
+    // pub fn removeBuffer(self: *Client, id: u32) RemoveError!void {
+    //     const buffer = self.buffers.get(id) orelse return error.NoSuchBuffer;
+    //     self.server.buffers.destroy(buffer);
+    //     _ = self.buffers.remove(id);
+    // }
 
     pub fn dispatch(self: *Client, msg: WlMessage) !void {
         switch (msg) {
@@ -387,16 +418,13 @@ pub const Client = struct {
     pub fn handleWlSurface(self: *Client, msg: WlSurface.Message) !void {
         switch (msg) {
             .commit => |p| {
-                var window = switch (self.getResource(p.wl_surface.id) orelse return error.NoSuchObject) {
-                    .window => |window| window,
-                    else => return error.ExpectedWindow,
-                };
+                const window = self.getWindow(p.wl_surface.id) orelse return error.NoSuchWindow;
 
                 // We may, without error, receive a .commit without an attached buffer.
                 // In that case we can make no further process so we just return
                 const wl_buffer = window.wl_buffer orelse return;
 
-                const buffer = self.buffers.get(wl_buffer.id) orelse return error.NoSuchBuffer; // @intToPtr(*Buffer, wl_buffer.container);
+                const buffer = self.getBuffer(wl_buffer.id) orelse return error.NoSuchBuffer; // @intToPtr(*Buffer, wl_buffer.container);
                 buffer.beginAccess();
 
                 if (window.texture) |texture| {
@@ -447,10 +475,7 @@ pub const Client = struct {
             },
             .damage => |_| {},
             .attach => |p| {
-                var window = switch (self.getResource(p.wl_surface.id) orelse return error.NoSuchObject) {
-                    .window => |window| window,
-                    else => return error.ExpectedWindow,
-                };
+                const window = self.getWindow(p.wl_surface.id) orelse return error.NoSuchObject;
 
                 if (p.buffer) |wl_buffer| {
                     window.wl_buffer = wl_buffer;
@@ -459,10 +484,7 @@ pub const Client = struct {
                 }
             },
             .frame => |p| {
-                var window = switch (self.getResource(p.wl_surface.id) orelse return error.NoSuchObject) {
-                    .window => |window| window,
-                    else => return error.ExpectedWindow,
-                };
+                const window = self.getWindow(p.wl_surface.id) orelse return error.NoSuchObject;
 
                 try window.callbacks.writeItem(p.callback);
 
@@ -479,10 +501,8 @@ pub const Client = struct {
     pub fn handleXdgWmBase(self: *Client, msg: XdgWmBase.Message) !void {
         switch (msg) {
             .get_xdg_surface => |p| {
-                const window = switch (self.getResource(p.surface.id) orelse return error.NoSuchObject) {
-                    .window => |window| window,
-                    else => return error.ExpectedWindow,
-                };
+                const window = self.getWindow(p.surface.id) orelse return error.NoSuchObject;
+
                 const xdg_surface = XdgSurface.init(p.id, &self.context, 0);
                 try self.link(.{ .xdg_surface = xdg_surface }, .{ .window = window });
 
@@ -495,10 +515,7 @@ pub const Client = struct {
     pub fn handleXdgSurface(self: *Client, msg: XdgSurface.Message) !void {
         switch (msg) {
             .get_toplevel => |p| {
-                const window = switch (self.getResource(p.xdg_surface.id) orelse return error.NoSuchObject) {
-                    .window => |window| window,
-                    else => return error.ExpectedWindow,
-                };
+                const window = self.getWindow(p.xdg_surface.id) orelse return error.NoSuchObject;
                 const xdg_toplevel = XdgToplevel.init(p.id, &self.context, 0);
                 try self.link(.{ .xdg_toplevel = xdg_toplevel }, .{ .window = window });
 
@@ -562,7 +579,10 @@ pub const Client = struct {
             .create_pool => |p| {
                 const wl_shm_pool = WlShmPool.init(p.id, &self.context, 0);
 
-                const shm_pool = try self.addShmPool(wl_shm_pool.id, ShmPool.init(self, p.fd, wl_shm_pool));
+                // const shm_pool = try self.addShmPool(wl_shm_pool.id, ShmPool.init(self, p.fd, wl_shm_pool));
+
+                const shm_pool = try self.shm_pools.create(ShmPool.init(self, p.fd, wl_shm_pool));
+                errdefer self.shm_pools.destroy(shm_pool);
 
                 try self.link(.{ .wl_shm_pool = wl_shm_pool }, .{ .shm_pool = shm_pool });
             },
@@ -572,23 +592,22 @@ pub const Client = struct {
     pub fn handleWlShmPool(self: *Client, msg: WlShmPool.Message) !void {
         switch (msg) {
             .create_buffer => |p| {
-                const wl_shm_pool = p.wl_shm_pool;
+                const shm_pool = self.getShmPool(p.wl_shm_pool.id) orelse return error.NoSuchShmPool;
+
                 const wl_buffer = WlBuffer.init(p.id, &self.context, 0);
-
-                const shm_pool = self.shm_pools.get(wl_shm_pool.id) orelse return error.NoSuchShmPool;
-
-                const buffer = try self.addBuffer(wl_buffer.id, Buffer{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer) });
+                const buffer = try self.buffers.create(Buffer{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer) });
+                errdefer self.buffers.destroy(buffer);
 
                 try self.link(.{ .wl_buffer = wl_buffer }, .{ .buffer = buffer });
             },
             .destroy => |p| {
                 const wl_shm_pool = p.wl_shm_pool;
-                const shm_pool = self.shm_pools.get(wl_shm_pool.id) orelse return error.NoSuchShmPool;
+                const shm_pool = self.getShmPool(wl_shm_pool.id) orelse return error.NoSuchShmPool;
 
                 shm_pool.to_be_destroyed = true;
                 if (shm_pool.ref_count == 0) {
                     shm_pool.deinit();
-                    _ = self.shm_pools.remove(wl_shm_pool.id);
+                    _ = self.shm_pools.destroy(shm_pool);
                 }
 
                 try self.wl_display.sendDeleteId(wl_shm_pool.id);
