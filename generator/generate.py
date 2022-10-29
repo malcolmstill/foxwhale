@@ -82,10 +82,10 @@ def generate_message_union(msgs):
         print(f"{m}: {camelCase(m)},")
     print(f"")
     # 
-    print(f"pub fn readMessage(self: *WlObject, opcode: u16) !WlMessage {{")
+    print(f"pub fn readMessage(self: *WlObject, objects: anytype, comptime field: []const u8, opcode: u16) !WlMessage {{")
     print(f"return switch (self.*) {{")
     for m in msgs:
-        print(f".{m} => |*o| WlMessage{{ .{m} = try o.readMessage(opcode) }},")
+        print(f".{m} => |*o| WlMessage{{ .{m} = try o.readMessage(objects, field, opcode) }},")
     print(f"}};")
     print(f"}}")
     print(f"// end of dispatch")
@@ -116,7 +116,8 @@ def generate_enum(interface):
 # Generate Dispatch function
 def generate_dispatch_function(interface, receiveType):
     interfaceName = f"{camelCase(interface.attrib['name'])}"
-    print(f"pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {{")
+    print(f"pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {{")
+    print(f"std.log.info(\"{{any}}, {{s}}\", .{{&objects, &field}});")
     print(f"\tswitch(opcode) {{")
     i = 0
     for child in interface:
@@ -218,16 +219,16 @@ def generate_next(arg):
             if "interface" in arg.attrib:
                 object_interface = arg.attrib["interface"]
                 object_type = camelCase(arg.attrib["interface"])
-                print(f"\t\t\tconst {name}: ?{object_type} = if (self.context.objects.get(try self.context.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else null;")
+                print(f"\t\t\tconst {name}: ?{object_type} = if (@field(objects, field)(try self.context.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else null;")
             else:
-                print(f"\t\t\tconst {name}: ?WlObject = try self.context.objects.get(try self.context.next_u32());")
+                print(f"\t\t\tconst {name}: ?WlObject = try @field(objects, field)(try self.context.next_u32());")
         else:
             if "interface" in arg.attrib:
                 object_interface = arg.attrib["interface"]
                 object_type = camelCase(arg.attrib["interface"])
-                print(f"\t\t\tconst {name}: {object_type} = if (self.context.objects.get(try self.context.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else return error.ExpectedObject;")
+                print(f"\t\t\tconst {name}: {object_type} = if (@field(objects, field)(try self.context.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else return error.ExpectedObject;")
             else:
-                print(f"\t\t\tconst {name}: WlObject = try self.context.objects.get(try self.context.next_u32());")
+                print(f"\t\t\tconst {name}: WlObject = try @field(objects, field)(try self.context.next_u32());")
     else:    
         print(f"\t\t\t\tconst {name}: {atype} = try self.context.next{next_type(arg.attrib['type'])}();")
 

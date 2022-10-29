@@ -3,7 +3,6 @@ const fifo = std.fifo;
 const txrx = @import("txrx.zig");
 const WlObject = @import("protocols.zig").WlObject;
 const WlMessage = @import("protocols.zig").WlMessage;
-const AutoHashMap = std.hash_map.AutoHashMap;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 const FdBuffer = LinearFifo(i32, LinearFifoBufferType{ .Static = txrx.MAX_FDS });
@@ -16,7 +15,6 @@ pub const Context = struct {
     write_offset: usize = 0,
     rx_fds: FdBuffer,
     rx_buf: [BUFFER_SIZE]u8,
-    objects: AutoHashMap(u32, WlObject),
     tx_fds: FdBuffer,
     tx_buf: [BUFFER_SIZE]u8,
     tx_write_offset: usize = 0,
@@ -35,14 +33,10 @@ pub const Context = struct {
 
             .rx_buf = [_]u8{0} ** BUFFER_SIZE,
             .tx_buf = [_]u8{0} ** BUFFER_SIZE,
-
-            .objects = AutoHashMap(u32, WlObject).init(std.heap.page_allocator),
         };
     }
 
-    pub fn deinit(self: *Self) void {
-        self.objects.deinit();
-    }
+    pub fn deinit(_: *Self) void {}
 
     pub fn readIntoBuffer(self: *Self) !void {
         self.n = try txrx.recvMsg(self.fd, self.rx_buf[self.write_offset..self.rx_buf.len], &self.rx_fds);
@@ -56,7 +50,7 @@ pub const Context = struct {
         std.mem.copy(u8, self.rx_buf[0..self.write_offset], self.rx_buf[self.read_offset..self.n]);
     }
 
-    pub fn readEvent(self: *Self) anyerror!?WlMessage {
+    pub fn readEvent(self: *Self, objects: anytype, comptime field: []const u8) anyerror!?WlMessage {
         const remaining = self.n - self.read_offset;
 
         // We need to have read at least a header
@@ -70,9 +64,9 @@ pub const Context = struct {
 
         self.read_offset += @sizeOf(Header);
         std.log.info("get header.id = {}", .{header.id});
-        var object = self.objects.get(header.id) orelse return error.CouldntFindExpectedId;
+        var object = @field(objects, field)(header.id) orelse return error.CouldntFindExpectedId;
 
-        const event = try object.readMessage(header.opcode);
+        const event = try object.readMessage(objects, field, header.opcode);
 
         if ((self.read_offset - message_start_offset) != header.length) {
             self.read_offset = 0;
@@ -146,19 +140,6 @@ pub const Context = struct {
 
     pub fn nextFd(self: *Self) !i32 {
         return self.rx_fds.readItem() orelse return error.FdReadFailed;
-    }
-
-    pub fn get(self: *Self, id: u32) ?WlObject {
-        return self.objects.get(id);
-    }
-
-    pub fn register(self: *Self, object: WlObject) !void {
-        _ = try self.objects.put(object.id(), object);
-        return;
-    }
-
-    pub fn unregister(self: *Self, object: WlObject) !void {
-        _ = self.objects.remove(object.id());
     }
 
     pub fn startWrite(self: *Self) void {

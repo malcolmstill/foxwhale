@@ -12,6 +12,8 @@ pub fn Pool(comptime T: type, comptime U: type) type {
 
         const Self = @This();
 
+        pub const Handle = U;
+
         pub fn init(allocator: mem.Allocator, count: U) !Self {
             var entities = try allocator.alloc(T, count);
             var free_stack = try allocator.alloc(?U, count);

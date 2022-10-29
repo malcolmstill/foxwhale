@@ -13,6 +13,8 @@ pub fn PoolIterable(comptime T: type, comptime U: type) type {
 
         const Tq = std.TailQueue(void);
 
+        pub const Handle = U;
+
         pub fn iterable(self: *Self) Iterable {
             return Iterable{
                 .pool_iterable = self,
@@ -40,6 +42,10 @@ pub fn PoolIterable(comptime T: type, comptime U: type) type {
                 self.list.remove(&self.pool_iterable.nodes[index]);
 
                 self.pool_iterable.pool.destroy(ptr);
+            }
+
+            pub fn indexOf(self: *Iterable, ptr: *T) U {
+                return self.pool_iterable.pool.indexOf(ptr);
             }
 
             pub fn iterator(self: *Iterable) Iterator {

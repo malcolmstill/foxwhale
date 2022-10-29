@@ -17,7 +17,8 @@ pub const WlDisplay = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // sync
             0 => {
@@ -120,7 +121,8 @@ pub const WlRegistry = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // bind
             0 => {
@@ -211,7 +213,8 @@ pub const WlCallback = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             else => {
                 std.log.info("{}", .{self});
@@ -250,7 +253,8 @@ pub const WlCompositor = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // create_surface
             0 => {
@@ -316,7 +320,8 @@ pub const WlShmPool = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // create_buffer
             0 => {
@@ -411,7 +416,8 @@ pub const WlShm = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // create_pool
             0 => {
@@ -544,7 +550,8 @@ pub const WlBuffer = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -609,7 +616,8 @@ pub const WlDataOffer = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // accept
             0 => {
@@ -800,7 +808,8 @@ pub const WlDataSource = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // offer
             0 => {
@@ -998,19 +1007,20 @@ pub const WlDataDevice = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // start_drag
             0 => {
-                const source: ?WlDataSource = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const source: ?WlDataSource = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_data_source => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
-                const origin: WlSurface = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const origin: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                const icon: ?WlSurface = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const icon: ?WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1027,7 +1037,7 @@ pub const WlDataDevice = struct {
             },
             // set_selection
             1 => {
-                const source: ?WlDataSource = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const source: ?WlDataSource = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_data_source => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1200,7 +1210,8 @@ pub const WlDataDeviceManager = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // create_data_source
             0 => {
@@ -1215,7 +1226,7 @@ pub const WlDataDeviceManager = struct {
             // get_data_device
             1 => {
                 const id: u32 = try self.context.nextU32();
-                const seat: WlSeat = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -1279,12 +1290,13 @@ pub const WlShell = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // get_shell_surface
             0 => {
                 const id: u32 = try self.context.nextU32();
-                const surface: WlSurface = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const surface: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -1338,7 +1350,8 @@ pub const WlShellSurface = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // pong
             0 => {
@@ -1352,7 +1365,7 @@ pub const WlShellSurface = struct {
             },
             // move
             1 => {
-                const seat: WlSeat = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -1367,7 +1380,7 @@ pub const WlShellSurface = struct {
             },
             // resize
             2 => {
-                const seat: WlSeat = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -1392,7 +1405,7 @@ pub const WlShellSurface = struct {
             },
             // set_transient
             4 => {
-                const parent: WlSurface = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const parent: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -1413,7 +1426,7 @@ pub const WlShellSurface = struct {
             5 => {
                 const method: u32 = try self.context.nextU32();
                 const framerate: u32 = try self.context.nextU32();
-                const output: ?WlOutput = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const output: ?WlOutput = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_output => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1428,12 +1441,12 @@ pub const WlShellSurface = struct {
             },
             // set_popup
             6 => {
-                const seat: WlSeat = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
                 const serial: u32 = try self.context.nextU32();
-                const parent: WlSurface = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const parent: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -1454,7 +1467,7 @@ pub const WlShellSurface = struct {
             },
             // set_maximized
             7 => {
-                const output: ?WlOutput = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const output: ?WlOutput = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_output => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1667,7 +1680,8 @@ pub const WlSurface = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -1679,7 +1693,7 @@ pub const WlSurface = struct {
             },
             // attach
             1 => {
-                const buffer: ?WlBuffer = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const buffer: ?WlBuffer = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_buffer => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1722,7 +1736,7 @@ pub const WlSurface = struct {
             },
             // set_opaque_region
             4 => {
-                const region: ?WlRegion = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const region: ?WlRegion = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_region => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1735,7 +1749,7 @@ pub const WlSurface = struct {
             },
             // set_input_region
             5 => {
-                const region: ?WlRegion = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const region: ?WlRegion = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_region => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1925,7 +1939,8 @@ pub const WlSeat = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // get_pointer
             0 => {
@@ -2071,12 +2086,13 @@ pub const WlPointer = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // set_cursor
             0 => {
                 const serial: u32 = try self.context.nextU32();
-                const surface: ?WlSurface = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const surface: ?WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -2394,7 +2410,8 @@ pub const WlKeyboard = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // release
             0 => {
@@ -2540,7 +2557,8 @@ pub const WlTouch = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // release
             0 => {
@@ -2723,7 +2741,8 @@ pub const WlOutput = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // release
             0 => {
@@ -2894,7 +2913,8 @@ pub const WlRegion = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -2992,7 +3012,8 @@ pub const WlSubcompositor = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -3005,11 +3026,11 @@ pub const WlSubcompositor = struct {
             // get_subsurface
             1 => {
                 const id: u32 = try self.context.nextU32();
-                const surface: WlSurface = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const surface: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                const parent: WlSurface = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const parent: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3071,7 +3092,8 @@ pub const WlSubsurface = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -3095,7 +3117,7 @@ pub const WlSubsurface = struct {
             },
             // place_above
             2 => {
-                const sibling: WlSurface = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const sibling: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3108,7 +3130,7 @@ pub const WlSubsurface = struct {
             },
             // place_below
             3 => {
-                const sibling: WlSurface = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const sibling: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3209,7 +3231,8 @@ pub const XdgWmBase = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -3232,7 +3255,7 @@ pub const XdgWmBase = struct {
             // get_xdg_surface
             2 => {
                 const id: u32 = try self.context.nextU32();
-                const surface: WlSurface = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const surface: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3340,7 +3363,8 @@ pub const XdgPositioner = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -3541,7 +3565,8 @@ pub const XdgSurface = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -3564,11 +3589,11 @@ pub const XdgSurface = struct {
             // get_popup
             2 => {
                 const id: u32 = try self.context.nextU32();
-                const parent: ?XdgSurface = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const parent: ?XdgSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .xdg_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
-                const positioner: XdgPositioner = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const positioner: XdgPositioner = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .xdg_positioner => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3706,7 +3731,8 @@ pub const XdgToplevel = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -3718,7 +3744,7 @@ pub const XdgToplevel = struct {
             },
             // set_parent
             1 => {
-                const parent: ?XdgToplevel = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const parent: ?XdgToplevel = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .xdg_toplevel => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -3751,7 +3777,7 @@ pub const XdgToplevel = struct {
             },
             // show_window_menu
             4 => {
-                const seat: WlSeat = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3770,7 +3796,7 @@ pub const XdgToplevel = struct {
             },
             // move
             5 => {
-                const seat: WlSeat = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3785,7 +3811,7 @@ pub const XdgToplevel = struct {
             },
             // resize
             6 => {
-                const seat: WlSeat = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3842,7 +3868,7 @@ pub const XdgToplevel = struct {
             },
             // set_fullscreen
             11 => {
-                const output: ?WlOutput = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const output: ?WlOutput = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_output => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -4067,7 +4093,8 @@ pub const XdgPopup = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -4079,7 +4106,7 @@ pub const XdgPopup = struct {
             },
             // grab
             1 => {
-                const seat: WlSeat = if (self.context.objects.get(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -4168,7 +4195,8 @@ pub const ZwpLinuxDmabufV1 = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -4277,7 +4305,8 @@ pub const ZwpLinuxBufferParamsV1 = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -4453,7 +4482,8 @@ pub const FwControl = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, opcode: u16) anyerror!Message {
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // get_clients
             0 => {
@@ -4684,38 +4714,38 @@ pub const WlObject = union(WlInterfaceType) {
     zwp_linux_buffer_params_v1: ZwpLinuxBufferParamsV1,
     fw_control: FwControl,
 
-    pub fn readMessage(self: *WlObject, opcode: u16) !WlMessage {
+    pub fn readMessage(self: *WlObject, objects: anytype, comptime field: []const u8, opcode: u16) !WlMessage {
         return switch (self.*) {
-            .wl_display => |*o| WlMessage{ .wl_display = try o.readMessage(opcode) },
-            .wl_registry => |*o| WlMessage{ .wl_registry = try o.readMessage(opcode) },
-            .wl_callback => |*o| WlMessage{ .wl_callback = try o.readMessage(opcode) },
-            .wl_compositor => |*o| WlMessage{ .wl_compositor = try o.readMessage(opcode) },
-            .wl_shm_pool => |*o| WlMessage{ .wl_shm_pool = try o.readMessage(opcode) },
-            .wl_shm => |*o| WlMessage{ .wl_shm = try o.readMessage(opcode) },
-            .wl_buffer => |*o| WlMessage{ .wl_buffer = try o.readMessage(opcode) },
-            .wl_data_offer => |*o| WlMessage{ .wl_data_offer = try o.readMessage(opcode) },
-            .wl_data_source => |*o| WlMessage{ .wl_data_source = try o.readMessage(opcode) },
-            .wl_data_device => |*o| WlMessage{ .wl_data_device = try o.readMessage(opcode) },
-            .wl_data_device_manager => |*o| WlMessage{ .wl_data_device_manager = try o.readMessage(opcode) },
-            .wl_shell => |*o| WlMessage{ .wl_shell = try o.readMessage(opcode) },
-            .wl_shell_surface => |*o| WlMessage{ .wl_shell_surface = try o.readMessage(opcode) },
-            .wl_surface => |*o| WlMessage{ .wl_surface = try o.readMessage(opcode) },
-            .wl_seat => |*o| WlMessage{ .wl_seat = try o.readMessage(opcode) },
-            .wl_pointer => |*o| WlMessage{ .wl_pointer = try o.readMessage(opcode) },
-            .wl_keyboard => |*o| WlMessage{ .wl_keyboard = try o.readMessage(opcode) },
-            .wl_touch => |*o| WlMessage{ .wl_touch = try o.readMessage(opcode) },
-            .wl_output => |*o| WlMessage{ .wl_output = try o.readMessage(opcode) },
-            .wl_region => |*o| WlMessage{ .wl_region = try o.readMessage(opcode) },
-            .wl_subcompositor => |*o| WlMessage{ .wl_subcompositor = try o.readMessage(opcode) },
-            .wl_subsurface => |*o| WlMessage{ .wl_subsurface = try o.readMessage(opcode) },
-            .xdg_wm_base => |*o| WlMessage{ .xdg_wm_base = try o.readMessage(opcode) },
-            .xdg_positioner => |*o| WlMessage{ .xdg_positioner = try o.readMessage(opcode) },
-            .xdg_surface => |*o| WlMessage{ .xdg_surface = try o.readMessage(opcode) },
-            .xdg_toplevel => |*o| WlMessage{ .xdg_toplevel = try o.readMessage(opcode) },
-            .xdg_popup => |*o| WlMessage{ .xdg_popup = try o.readMessage(opcode) },
-            .zwp_linux_dmabuf_v1 => |*o| WlMessage{ .zwp_linux_dmabuf_v1 = try o.readMessage(opcode) },
-            .zwp_linux_buffer_params_v1 => |*o| WlMessage{ .zwp_linux_buffer_params_v1 = try o.readMessage(opcode) },
-            .fw_control => |*o| WlMessage{ .fw_control = try o.readMessage(opcode) },
+            .wl_display => |*o| WlMessage{ .wl_display = try o.readMessage(objects, field, opcode) },
+            .wl_registry => |*o| WlMessage{ .wl_registry = try o.readMessage(objects, field, opcode) },
+            .wl_callback => |*o| WlMessage{ .wl_callback = try o.readMessage(objects, field, opcode) },
+            .wl_compositor => |*o| WlMessage{ .wl_compositor = try o.readMessage(objects, field, opcode) },
+            .wl_shm_pool => |*o| WlMessage{ .wl_shm_pool = try o.readMessage(objects, field, opcode) },
+            .wl_shm => |*o| WlMessage{ .wl_shm = try o.readMessage(objects, field, opcode) },
+            .wl_buffer => |*o| WlMessage{ .wl_buffer = try o.readMessage(objects, field, opcode) },
+            .wl_data_offer => |*o| WlMessage{ .wl_data_offer = try o.readMessage(objects, field, opcode) },
+            .wl_data_source => |*o| WlMessage{ .wl_data_source = try o.readMessage(objects, field, opcode) },
+            .wl_data_device => |*o| WlMessage{ .wl_data_device = try o.readMessage(objects, field, opcode) },
+            .wl_data_device_manager => |*o| WlMessage{ .wl_data_device_manager = try o.readMessage(objects, field, opcode) },
+            .wl_shell => |*o| WlMessage{ .wl_shell = try o.readMessage(objects, field, opcode) },
+            .wl_shell_surface => |*o| WlMessage{ .wl_shell_surface = try o.readMessage(objects, field, opcode) },
+            .wl_surface => |*o| WlMessage{ .wl_surface = try o.readMessage(objects, field, opcode) },
+            .wl_seat => |*o| WlMessage{ .wl_seat = try o.readMessage(objects, field, opcode) },
+            .wl_pointer => |*o| WlMessage{ .wl_pointer = try o.readMessage(objects, field, opcode) },
+            .wl_keyboard => |*o| WlMessage{ .wl_keyboard = try o.readMessage(objects, field, opcode) },
+            .wl_touch => |*o| WlMessage{ .wl_touch = try o.readMessage(objects, field, opcode) },
+            .wl_output => |*o| WlMessage{ .wl_output = try o.readMessage(objects, field, opcode) },
+            .wl_region => |*o| WlMessage{ .wl_region = try o.readMessage(objects, field, opcode) },
+            .wl_subcompositor => |*o| WlMessage{ .wl_subcompositor = try o.readMessage(objects, field, opcode) },
+            .wl_subsurface => |*o| WlMessage{ .wl_subsurface = try o.readMessage(objects, field, opcode) },
+            .xdg_wm_base => |*o| WlMessage{ .xdg_wm_base = try o.readMessage(objects, field, opcode) },
+            .xdg_positioner => |*o| WlMessage{ .xdg_positioner = try o.readMessage(objects, field, opcode) },
+            .xdg_surface => |*o| WlMessage{ .xdg_surface = try o.readMessage(objects, field, opcode) },
+            .xdg_toplevel => |*o| WlMessage{ .xdg_toplevel = try o.readMessage(objects, field, opcode) },
+            .xdg_popup => |*o| WlMessage{ .xdg_popup = try o.readMessage(objects, field, opcode) },
+            .zwp_linux_dmabuf_v1 => |*o| WlMessage{ .zwp_linux_dmabuf_v1 = try o.readMessage(objects, field, opcode) },
+            .zwp_linux_buffer_params_v1 => |*o| WlMessage{ .zwp_linux_buffer_params_v1 = try o.readMessage(objects, field, opcode) },
+            .fw_control => |*o| WlMessage{ .fw_control = try o.readMessage(objects, field, opcode) },
         };
     }
     // end of dispatch

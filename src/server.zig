@@ -14,16 +14,39 @@ const Buffer = @import("buffer.zig").Buffer;
 const Region = @import("region.zig").Region;
 const ShmPool = @import("shm_pool.zig").ShmPool;
 const Pool = @import("pool.zig").Pool;
+const PoolIterable = @import("pool_iterable.zig").PoolIterable;
+
+pub const ResourceType = enum(u8) {
+    window,
+    region,
+    buffer,
+    shm_pool,
+    none,
+};
+
+pub const Resource = union(ResourceType) {
+    window: *Window,
+    region: *Region,
+    buffer: *Buffer,
+    shm_pool: *ShmPool,
+    none: void,
+};
+
+pub const ResourceObject = struct {
+    object: WlObject,
+    resource: Resource,
+};
 
 pub const Server = struct {
     alloc: mem.Allocator,
     server: std.net.StreamServer,
     // resources:
     clients: Pool(Client, u8),
-    windows: Pool(Window, u16),
+    windows: PoolIterable(Window, u16),
     regions: Pool(Region, u16),
     buffers: Pool(Buffer, u16),
     shm_pools: Pool(ShmPool, u16),
+    objects: PoolIterable(ResourceObject, u16),
 
     const ClientNode = std.TailQueue(Client).Node;
     const Self = @This();
@@ -46,10 +69,11 @@ pub const Server = struct {
             .alloc = alloc,
             .server = try socket(),
             .clients = try Pool(Client, u8).init(alloc, 255),
-            .windows = try Pool(Window, u16).init(alloc, 1024),
+            .windows = try PoolIterable(Window, u16).init(alloc, 1024),
             .regions = try Pool(Region, u16).init(alloc, 1024),
             .buffers = try Pool(Buffer, u16).init(alloc, 1024),
             .shm_pools = try Pool(ShmPool, u16).init(alloc, 1024),
+            .objects = try PoolIterable(ResourceObject, u16).init(alloc, 16384),
         };
     }
 
@@ -61,15 +85,17 @@ pub const Server = struct {
         self.regions.deinit();
         self.buffers.deinit();
         self.shm_pools.deinit();
+
+        self.objects.deinit();
     }
 
     pub fn addClient(self: *Self, conn: std.net.StreamServer.Connection) !*Client {
-        const client: *Client = try self.clients.createPtr();
+        var client = try self.clients.createPtr();
+        errdefer self.clients.destroy(client);
+
         const wl_display = WlDisplay.init(1, &client.context, 0);
-
         client.* = Client.init(self.alloc, self, conn, wl_display);
-
-        try client.context.register(WlObject{ .wl_display = wl_display });
+        try client.link(.{ .wl_display = wl_display }, .none);
 
         return client;
     }
