@@ -7,82 +7,94 @@ pub fn PoolIterable(comptime T: type, comptime U: type) type {
     return struct {
         alloc: mem.Allocator,
         pool: Pool(T, U),
-        list: []Tq.Node,
+        nodes: []Tq.Node,
 
         const Self = @This();
 
         const Tq = std.TailQueue(void);
 
-        pub fn iterator(self: *Self, list: *Tq) Iterator {
-            return Iterator{
+        pub fn iterable(self: *Self) Iterable {
+            return Iterable{
                 .pool_iterable = self,
-                .node = list.first,
+                .list = Tq{},
             };
         }
 
-        pub const Iterator = struct {
+        pub const Iterable = struct {
             pool_iterable: *Self,
-            node: ?*Tq.Node,
+            list: Tq,
 
-            pub fn next(self: *Iterator) ?*T {
-                if (self.node) |node| {
-                    defer self.node = node.next;
+            pub fn create(self: *Iterable, value: T) !*T {
+                const ptr = try self.pool_iterable.pool.create(value);
+                const index = self.pool_iterable.pool.indexOf(ptr);
 
-                    const index = self.indexOf(node);
-                    const ptr = &self.pool_iterable.pool.entities[index];
+                std.debug.assert(index != null);
+                defer self.list.append(&self.pool_iterable.nodes[index.?]);
 
-                    return ptr;
+                return ptr;
+            }
+
+            pub fn destroy(self: *Iterable, ptr: *T) void {
+                const index = self.pool_iterable.pool.indexOf(ptr) orelse return;
+
+                self.list.remove(&self.pool_iterable.nodes[index]);
+
+                self.pool_iterable.pool.destroy(ptr);
+            }
+
+            pub fn iterator(self: *Iterable) Iterator {
+                return Iterator{
+                    .iterable = self,
+                    .node = self.list.first,
+                };
+            }
+
+            pub const Iterator = struct {
+                iterable: *Iterable,
+                node: ?*Tq.Node,
+
+                pub fn next(self: *Iterator) ?*T {
+                    if (self.node) |node| {
+                        defer self.node = node.next;
+
+                        const index = self.indexOf(node);
+                        const ptr = &self.iterable.pool_iterable.pool.entities[index];
+
+                        return ptr;
+                    }
+
+                    return null;
                 }
 
-                return null;
-            }
+                fn indexOf(self: *Iterator, ptr: *Tq.Node) U {
+                    const start = @ptrToInt(&self.iterable.pool_iterable.nodes[0]);
+                    const end = @ptrToInt(&self.iterable.pool_iterable.nodes[self.iterable.pool_iterable.nodes.len - 1]);
+                    const v = @ptrToInt(ptr);
 
-            fn indexOf(self: *Iterator, ptr: *Tq.Node) U {
-                const start = @ptrToInt(&self.pool_iterable.list[0]);
-                const end = @ptrToInt(&self.pool_iterable.list[self.pool_iterable.list.len - 1]);
-                const v = @ptrToInt(ptr);
+                    std.debug.assert(v >= start or v <= end);
 
-                std.debug.assert(v >= start or v <= end);
+                    const index = @intCast(U, (v - start) / @sizeOf(Tq.Node));
 
-                const index = @intCast(U, (v - start) / @sizeOf(Tq.Node));
-
-                return index;
-            }
+                    return index;
+                }
+            };
         };
 
         pub fn init(allocator: mem.Allocator, count: U) !Self {
             var pool = try Pool(T, U).init(allocator, count);
             errdefer pool.deinit();
-            var list = try allocator.alloc(Tq.Node, count);
+            var nodes = try allocator.alloc(Tq.Node, count);
 
             return Self{
                 .alloc = allocator,
                 .pool = pool,
-                .list = list,
+                .nodes = nodes,
             };
         }
 
         pub fn deinit(self: *Self) void {
-            self.alloc.free(self.list);
+            self.alloc.free(self.nodes);
             self.pool.deinit();
-        }
-
-        pub fn create(self: *Self, list: *Tq, value: T) !*T {
-            const ptr = try self.pool.create(value);
-            const index = self.pool.indexOf(ptr);
-
-            std.debug.assert(index != null);
-            defer list.append(&self.list[index.?]);
-
-            return ptr;
-        }
-
-        pub fn destroy(self: *Self, list: *Tq, ptr: *T) void {
-            const index = self.pool.indexOf(ptr) orelse return;
-
-            list.remove(&self.list[index]);
-
-            self.pool.destroy(ptr);
         }
     };
 }
@@ -91,22 +103,22 @@ test {
     var p = try PoolIterable(i32, u2).init(std.testing.allocator, 3);
     defer p.deinit();
 
-    var list = PoolIterable(i32, u2).Tq{};
+    var list = p.iterable();
 
-    var first = try p.create(&list, 38);
-    defer p.destroy(&list, first);
-    var middle = try p.create(&list, 39);
-    defer p.destroy(&list, middle);
+    var first = try list.create(38);
+    defer list.destroy(first);
+    var middle = try list.create(39);
+    defer list.destroy(middle);
 
-    var it = p.iterator(&list);
+    var it = list.iterator();
     try std.testing.expectEqual(it.next(), first);
     try std.testing.expectEqual(it.next(), middle);
     try std.testing.expectEqual(it.next(), null);
 
-    var last = try p.create(&list, 40);
-    defer p.destroy(&list, last);
+    var last = try list.create(40);
+    defer list.destroy(last);
 
-    it = p.iterator(&list);
+    it = list.iterator();
     try std.testing.expectEqual(it.next(), first);
     try std.testing.expectEqual(it.next(), middle);
     try std.testing.expectEqual(it.next(), last);
