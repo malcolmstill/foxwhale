@@ -6,7 +6,7 @@ const StringHashMap = std.hash_map.StringHashMap;
 const fragment_shader_source = @embedFile("shaders/fragment.glsl");
 const windows = @import("resource/window.zig");
 const Window = @import("resource/window.zig").Window;
-const Output = @import("output.zig").Output;
+const Output = @import("resource/output.zig").Output;
 const main = @import("main.zig");
 const c = @cImport({
     @cInclude("GLES3/gl3.h");

@@ -14,7 +14,7 @@ const Buffer = @import("resource/buffer.zig").Buffer;
 const Region = @import("resource/region.zig").Region;
 const ShmPool = @import("resource/shm_pool.zig").ShmPool;
 const Pool = @import("pool.zig").Pool;
-const Output = @import("output.zig").Output;
+const Output = @import("resource/output.zig").Output;
 const PoolIterable = @import("pool_iterable.zig").PoolIterable;
 
 pub const ResourceType = enum(u8) {
@@ -22,6 +22,7 @@ pub const ResourceType = enum(u8) {
     region,
     buffer,
     shm_pool,
+    output,
     none,
 };
 
@@ -30,6 +31,7 @@ pub const Resource = union(ResourceType) {
     region: *Region,
     buffer: *Buffer,
     shm_pool: *ShmPool,
+    output: *Output,
     none: void,
 };
 
@@ -49,6 +51,8 @@ pub const Server = struct {
     shm_pools: PoolIterable(ShmPool, u16),
     outputs: PoolIterable(Output, u5),
     objects: PoolIterable(ResourceObject, u16),
+
+    output_base: u32 = 1000,
 
     const ClientNode = std.TailQueue(Client).Node;
     const Self = @This();
