@@ -1,14 +1,14 @@
 const std = @import("std");
 const linux = std.os.linux;
 const os = std.os;
-const Renderer = @import("renderer.zig").Renderer;
-const Object = @import("client.zig").Object;
-const Context = @import("client.zig").Context;
-const Client = @import("client.zig").Client;
+const Renderer = @import("../renderer.zig").Renderer;
+const Object = @import("../client.zig").Object;
+const Context = @import("../client.zig").Context;
+const Client = @import("../client.zig").Client;
 const ShmPool = @import("shm_pool.zig").ShmPool;
 const buffer = @import("buffer.zig");
 const Buffer = buffer.Buffer;
-const WlBuffer = @import("wl/protocols.zig").WlBuffer;
+const WlBuffer = @import("../wl/protocols.zig").WlBuffer;
 
 pub const ShmBuffer = struct {
     client: *Client,

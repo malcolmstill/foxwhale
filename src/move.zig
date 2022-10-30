@@ -1,7 +1,7 @@
 // Move Zig! Move Zig! Move Zig! Move Zig! You know what you doing?
 // Take off every Zig!
 
-const Window = @import("window.zig").Window;
+const Window = @import("resource/window.zig").Window;
 
 pub const Move = struct {
     window: *Window,

@@ -9,11 +9,12 @@ const Context = @import("wl/context.zig").Context;
 const WlObject = @import("wl/protocols.zig").WlObject;
 const WlDisplay = @import("wl/protocols.zig").WlDisplay;
 const StaticArray = @import("stalloc.zig").StaticArray;
-const Window = @import("window.zig").Window;
-const Buffer = @import("buffer.zig").Buffer;
-const Region = @import("region.zig").Region;
-const ShmPool = @import("shm_pool.zig").ShmPool;
+const Window = @import("resource/window.zig").Window;
+const Buffer = @import("resource/buffer.zig").Buffer;
+const Region = @import("resource/region.zig").Region;
+const ShmPool = @import("resource/shm_pool.zig").ShmPool;
 const Pool = @import("pool.zig").Pool;
+const Output = @import("output.zig").Output;
 const PoolIterable = @import("pool_iterable.zig").PoolIterable;
 
 pub const ResourceType = enum(u8) {
@@ -46,6 +47,7 @@ pub const Server = struct {
     regions: PoolIterable(Region, u16),
     buffers: PoolIterable(Buffer, u16),
     shm_pools: PoolIterable(ShmPool, u16),
+    outputs: PoolIterable(Output, u5),
     objects: PoolIterable(ResourceObject, u16),
 
     const ClientNode = std.TailQueue(Client).Node;
@@ -73,6 +75,7 @@ pub const Server = struct {
             .regions = try PoolIterable(Region, u16).init(alloc, 1024),
             .buffers = try PoolIterable(Buffer, u16).init(alloc, 1024),
             .shm_pools = try PoolIterable(ShmPool, u16).init(alloc, 1024),
+            .outputs = try PoolIterable(Output, u5).init(alloc, 31),
             .objects = try PoolIterable(ResourceObject, u16).init(alloc, 16384),
         };
     }

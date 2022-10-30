@@ -1,9 +1,9 @@
 const std = @import("std");
 const linux = std.os.linux;
-const Renderer = @import("renderer.zig").Renderer;
-const Object = @import("client.zig").Object;
-const Context = @import("client.zig").Context;
-const Client = @import("client.zig").Client;
+const Renderer = @import("../renderer.zig").Renderer;
+const Object = @import("../client.zig").Object;
+const Context = @import("../client.zig").Context;
+const Client = @import("../client.zig").Client;
 const buffer = @import("buffer.zig");
 const Buffer = buffer.Buffer;
 

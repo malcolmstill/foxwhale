@@ -2,7 +2,7 @@ const std = @import("std");
 const prot = @import("wl/protocols.zig");
 const Focus = @import("focus.zig").Focus;
 const Output = @import("output.zig").Output;
-const Window = @import("window.zig").Window;
+const Window = @import("resource/window.zig").Window;
 const compositor = @import("compositor.zig");
 
 // pub var CURRENT_VIEW: *View = undefined;

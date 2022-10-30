@@ -1,6 +1,6 @@
 const std = @import("std");
-const Client = @import("client.zig").Client;
-const WlShmPool = @import("wl/protocols.zig").WlShmPool;
+const Client = @import("../client.zig").Client;
+const WlShmPool = @import("../wl/protocols.zig").WlShmPool;
 
 pub const ShmPool = struct {
     client: *Client,

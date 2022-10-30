@@ -3,7 +3,7 @@ const mem = std.mem;
 const animation = @import("animation.zig");
 const ArrayList = std.ArrayList;
 const Animation = @import("animation.zig").Animation;
-const Window = @import("window.zig").Window;
+const Window = @import("resource/window.zig").Window;
 
 const AnimatableTypeTag = enum {
     window,

@@ -6,16 +6,6 @@
 //
 const ShmBuffer = @import("shm_buffer.zig").ShmBuffer;
 const DmaBuffer = @import("dmabuf.zig").DmaBuffer;
-const Client = @import("client.zig").Client;
-const Stalloc = @import("stalloc.zig").Stalloc;
-
-// const MAX_BUFFERS = 2048;
-// pub var BUFFERS: Stalloc(Client, Buffer, 2048) = undefined;
-//
-// pub fn newBuffer(client: *Client) !*Buffer {
-//     var buffer = try BUFFERS.new(client);
-//     return buffer;
-// }
 
 pub const Buffer = union(enum) {
     shm: ShmBuffer,

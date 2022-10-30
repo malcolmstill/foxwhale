@@ -1,6 +1,6 @@
 const prot = @import("wl/protocols.zig");
-const Window = @import("window.zig").Window;
-const XdgConfiguration = @import("window.zig").XdgConfiguration;
+const Window = @import("resource/window.zig").Window;
+const XdgConfiguration = @import("resource/window.zig").XdgConfiguration;
 const edge = prot.xdg_toplevel_resize_edge;
 
 pub const Resize = struct {
