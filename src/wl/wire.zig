@@ -14,13 +14,13 @@ const BUFFER_SIZE = 4096;
 
 pub const Wire = struct {
     fd: i32 = -1,
-    write_offset: usize = 0,
     rx: io.FixedBufferStream([]u8) = undefined,
     tx: io.FixedBufferStream([]u8) = undefined,
     rx_buf: [BUFFER_SIZE]u8,
     tx_buf: [BUFFER_SIZE]u8,
     rx_fds: FdBuffer,
     tx_fds: FdBuffer,
+    rx_write_offset: usize = 0,
     tx_write_offset: usize = 0,
     n: usize = 0,
 
@@ -29,7 +29,6 @@ pub const Wire = struct {
     pub fn init(fd: i32) Self {
         return Self{
             .fd = fd,
-            .write_offset = 0,
 
             .rx_fds = FdBuffer.init(),
             .tx_fds = FdBuffer.init(),
@@ -48,24 +47,30 @@ pub const Wire = struct {
     };
 
     pub fn startRead(self: *Self) !void {
-        self.n = try txrx.recvMsg(self.fd, self.rx_buf[self.write_offset..self.rx_buf.len], &self.rx_fds);
-        self.n = self.write_offset + self.n;
+        const n = try txrx.recvMsg(self.fd, self.rx_buf[self.rx_write_offset..], &self.rx_fds);
 
-        self.rx = io.fixedBufferStream(self.rx_buf[self.write_offset..self.n]);
+        // defer std.log.info("read: {any}", .{self.rx_buf[0 .. self.rx_write_offset + n]});
+
+        self.rx = io.fixedBufferStream(self.rx_buf[0 .. self.rx_write_offset + n]);
     }
 
     pub fn finishRead(self: *Self) !void {
         const read_offset = try self.rx.getPos();
-        self.write_offset = self.n - read_offset;
-        mem.copy(u8, self.rx_buf[0..self.write_offset], self.rx_buf[read_offset..self.n]);
+        const buffer_end = try self.rx.getEndPos();
+
+        const n = buffer_end - read_offset;
+
+        self.rx_write_offset = n;
+
+        mem.copy(u8, self.rx_buf[0..n], self.rx_buf[read_offset .. read_offset + n]);
     }
 
     pub fn readEvent(self: *Self, objects: anytype, comptime field: []const u8) anyerror!?WlMessage {
         const rdr = self.rx.reader();
 
         // We need to have read at least a header
-        const remaining_before_header = (try self.rx.getEndPos()) - (try self.rx.getPos());
-        if (remaining_before_header < @sizeOf(u32) + @sizeOf(u16) + @sizeOf(u16)) return null;
+        const remaining = (try self.rx.getEndPos()) - (try self.rx.getPos());
+        if (remaining < @sizeOf(u32) + @sizeOf(u16) + @sizeOf(u16)) return null;
 
         const start = try self.rx.getPos();
 
@@ -76,15 +81,13 @@ pub const Wire = struct {
         };
 
         // We need to have read a full message
-        const remaining_before_body = (try self.rx.getEndPos()) - (try self.rx.getPos());
-        if (remaining_before_body < header.length) return null;
+        if (remaining < header.length) return null;
 
         var object = @field(objects, field)(header.id) orelse return error.CouldntFindExpectedId;
 
         const event = try object.readMessage(objects, field, header.opcode);
 
         const actual_length = (try self.rx.getPos()) - start;
-        std.log.info("actual_length = {}, header.length = {}", .{ actual_length, header.length });
         if (actual_length != header.length) return error.MessageWrongLength;
 
         return event;
@@ -115,7 +118,6 @@ pub const Wire = struct {
         s.ptr = @ptrCast([*]u8, &self.rx_buf[start]);
         s.len = length;
 
-        std.log.info("nextString = {s}", .{s});
         return s;
     }
 
