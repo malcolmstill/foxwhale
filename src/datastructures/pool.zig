@@ -17,7 +17,7 @@ pub fn Pool(comptime T: type, comptime U: type) type {
         pub fn init(allocator: mem.Allocator, count: U) !Self {
             var entities = try allocator.alloc(T, count);
             var free_stack = try allocator.alloc(?U, count);
-            var in_use: []bool = if (builtin.mode == .Debug) try allocator.alloc(bool, count) else undefined;
+            var in_use: (if (builtin.mode == .Debug) []bool else void) = if (builtin.mode == .Debug) try allocator.alloc(bool, count) else undefined;
 
             std.log.info("Allocating [{}]{}: {} bytes (unit size {} bytes)", .{
                 count,

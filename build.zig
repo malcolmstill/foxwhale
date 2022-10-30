@@ -28,7 +28,6 @@ pub fn build(b: *Builder) void {
     exe.linkSystemLibrary("xcb");
     exe.linkSystemLibrary("X11");
     exe.linkSystemLibrary("X11-xcb");
-    // exe.use_stage1 = true;
     exe.single_threaded = true;
     exe.install();
 
