@@ -533,6 +533,7 @@ pub const Client = struct {
                     // flipped, we need to deinit the origin pending region
                     if (window.pending().opaque_region) |old_pending_region| {
                         if (old_pending_region != region and old_pending_region != window.current().opaque_region) {
+                            // FIXME: this removes the region from the pool allocator...but what about the linkage
                             self.regions.destroy(old_pending_region);
                         }
                     }
@@ -541,13 +542,41 @@ pub const Client = struct {
                 } else {
                     if (window.pending().opaque_region) |old_pending_region| {
                         if (old_pending_region != window.current().opaque_region) {
+                            // FIXME: this removes the region from the pool allocator...but what about the linkage
                             self.regions.destroy(old_pending_region);
                         }
                     }
                     window.pending().opaque_region = null;
                 }
             },
-            .set_input_region => |_| return error.WlSurfaceSetInputRegionNotImplemented,
+            .set_input_region => |msg| {
+                const window = self.getWindow(msg.wl_surface.id) orelse return error.NoSuchWindow;
+
+                if (msg.region) |wl_region| {
+                    const region = self.getRegion(wl_region.id) orelse return error.NoSuchRegion;
+                    region.window = window;
+
+                    // If we set a second pending input region before the first pending input region has been
+                    // flipped, we need to deinit the original pending region
+                    if (window.pending().input_region) |old_pending_region| {
+                        if (old_pending_region != region and old_pending_region != window.current().input_region) {
+                            // FIXME: this removes the region from the pool allocator...but what about the linkage
+                            self.regions.destroy(old_pending_region);
+                        }
+                    }
+
+                    window.pending().input_region = region;
+                } else {
+                    if (window.pending().input_region) |old_pending_region| {
+                        if (old_pending_region != window.current().input_region) {
+                            // FIXME: this removes the region from the pool allocator...but what about the linkage
+                            self.regions.destroy(old_pending_region);
+                        }
+                    }
+
+                    window.pending().input_region = null;
+                }
+            },
             .set_buffer_transform => |_| return error.WlSurfaceSetBufferTransformNotImplemented,
             .set_buffer_scale => |_| return error.WlSurfaceSetBufferScaleNotImplemented,
             .damage_buffer => |_| return error.WlSurfaceDamageBufferNotImplemented,
