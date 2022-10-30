@@ -253,7 +253,7 @@ def put_type_arg(type):
         "new_id": "u32",
         "fd": "i32",
         "string": "[]const u8",
-        "array": "[]u32",
+        "array": "[]u8",
         "object": "u32",
         "fixed": "f32"
     }
@@ -316,13 +316,13 @@ def generate_send(interface, sentType):
                     else:
                         print(f", {arg.attrib['name']}: {put_type_arg(arg.attrib['type'])}", end = '')
             print(f") anyerror!void {{")
-            print(f"\tself.wire.startWrite();")
+            print(f"\ttry self.wire.startWrite();")
             for arg in child:
                 if arg.tag == "arg":
                     if "enum" in arg.attrib:
-                        print(f"\tself.wire.put{put_type(arg.attrib['type'])}(@enumToInt({arg.attrib['name']}));")
+                        print(f"\ttry self.wire.put{put_type(arg.attrib['type'])}(@enumToInt({arg.attrib['name']}));")
                     else:
-                        print(f"\tself.wire.put{put_type(arg.attrib['type'])}({arg.attrib['name']});")
+                        print(f"\ttry self.wire.put{put_type(arg.attrib['type'])}({arg.attrib['name']});")
             print(f"\ttry self.wire.finishWrite(self.id, {i});")
             print(f"}}")
             i = i + 1
@@ -349,7 +349,7 @@ def lookup_type(type, arg):
             "new_id": "u32",
             "fd": "i32",
             "string": "[]u8",
-            "array": "[]u32",
+            "array": "[]u8",
             "fixed": "f32"
         }
         return types[type]

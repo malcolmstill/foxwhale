@@ -78,10 +78,10 @@ pub const WlDisplay = struct {
     // of the error, for (debugging) convenience.
     //
     pub fn sendError(self: Self, object_id: u32, code: u32, message: []const u8) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(object_id);
-        self.wire.putU32(code);
-        self.wire.putString(message);
+        try self.wire.startWrite();
+        try self.wire.putU32(object_id);
+        try self.wire.putU32(code);
+        try self.wire.putString(message);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -93,8 +93,8 @@ pub const WlDisplay = struct {
     // safely reuse the object ID.
     //
     pub fn sendDeleteId(self: Self, id: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(id);
+        try self.wire.startWrite();
+        try self.wire.putU32(id);
         try self.wire.finishWrite(self.id, 1);
     }
 
@@ -172,10 +172,10 @@ pub const WlRegistry = struct {
     // given version of the given interface.
     //
     pub fn sendGlobal(self: Self, name: u32, interface: []const u8, version: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(name);
-        self.wire.putString(interface);
-        self.wire.putU32(version);
+        try self.wire.startWrite();
+        try self.wire.putU32(name);
+        try self.wire.putString(interface);
+        try self.wire.putU32(version);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -192,8 +192,8 @@ pub const WlRegistry = struct {
     // the global going away and a client sending a request to it.
     //
     pub fn sendGlobalRemove(self: Self, name: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(name);
+        try self.wire.startWrite();
+        try self.wire.putU32(name);
         try self.wire.finishWrite(self.id, 1);
     }
 };
@@ -232,8 +232,8 @@ pub const WlCallback = struct {
     // Notify the client when the related request is done.
     //
     pub fn sendDone(self: Self, callback_data: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(callback_data);
+        try self.wire.startWrite();
+        try self.wire.putU32(callback_data);
         try self.wire.finishWrite(self.id, 0);
     }
 };
@@ -462,8 +462,8 @@ pub const WlShm = struct {
     // argb8888 and xrgb8888.
     //
     pub fn sendFormat(self: Self, format: Format) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(@enumToInt(format));
+        try self.wire.startWrite();
+        try self.wire.putU32(@enumToInt(format));
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -596,7 +596,7 @@ pub const WlBuffer = struct {
     // optimization for GL(ES) compositors with wl_shm clients.
     //
     pub fn sendRelease(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 0);
     }
 };
@@ -726,8 +726,8 @@ pub const WlDataOffer = struct {
     // event per offered mime type.
     //
     pub fn sendOffer(self: Self, mime_type: []const u8) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putString(mime_type);
+        try self.wire.startWrite();
+        try self.wire.putString(mime_type);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -737,8 +737,8 @@ pub const WlDataOffer = struct {
     // side changes its offered actions through wl_data_source.set_actions.
     //
     pub fn sendSourceActions(self: Self, source_actions: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(source_actions);
+        try self.wire.startWrite();
+        try self.wire.putU32(source_actions);
         try self.wire.finishWrite(self.id, 1);
     }
 
@@ -780,8 +780,8 @@ pub const WlDataOffer = struct {
     // must happen before the call to wl_data_offer.finish.
     //
     pub fn sendAction(self: Self, dnd_action: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(dnd_action);
+        try self.wire.startWrite();
+        try self.wire.putU32(dnd_action);
         try self.wire.finishWrite(self.id, 2);
     }
 
@@ -880,8 +880,8 @@ pub const WlDataSource = struct {
     // Used for feedback during drag-and-drop.
     //
     pub fn sendTarget(self: Self, mime_type: []const u8) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putString(mime_type);
+        try self.wire.startWrite();
+        try self.wire.putString(mime_type);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -891,9 +891,9 @@ pub const WlDataSource = struct {
     // close it.
     //
     pub fn sendSend(self: Self, mime_type: []const u8, fd: i32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putString(mime_type);
-        self.wire.putFd(fd);
+        try self.wire.startWrite();
+        try self.wire.putString(mime_type);
+        try self.wire.putFd(fd);
         try self.wire.finishWrite(self.id, 1);
     }
 
@@ -920,7 +920,7 @@ pub const WlDataSource = struct {
     // source.
     //
     pub fn sendCancelled(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 2);
     }
 
@@ -936,7 +936,7 @@ pub const WlDataSource = struct {
     // not be destroyed here.
     //
     pub fn sendDndDropPerformed(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 3);
     }
 
@@ -949,7 +949,7 @@ pub const WlDataSource = struct {
     // source can now delete the transferred data.
     //
     pub fn sendDndFinished(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 4);
     }
 
@@ -981,8 +981,8 @@ pub const WlDataSource = struct {
     // they reflect the current action.
     //
     pub fn sendAction(self: Self, dnd_action: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(dnd_action);
+        try self.wire.startWrite();
+        try self.wire.putU32(dnd_action);
         try self.wire.finishWrite(self.id, 5);
     }
 
@@ -1106,8 +1106,8 @@ pub const WlDataDevice = struct {
     // mime types it offers.
     //
     pub fn sendDataOffer(self: Self, id: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(id);
+        try self.wire.startWrite();
+        try self.wire.putU32(id);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -1118,12 +1118,12 @@ pub const WlDataDevice = struct {
     // coordinates.
     //
     pub fn sendEnter(self: Self, serial: u32, surface: u32, x: f32, y: f32, id: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(serial);
-        self.wire.putU32(surface);
-        self.wire.putFixed(x);
-        self.wire.putFixed(y);
-        self.wire.putU32(id);
+        try self.wire.startWrite();
+        try self.wire.putU32(serial);
+        try self.wire.putU32(surface);
+        try self.wire.putFixed(x);
+        try self.wire.putFixed(y);
+        try self.wire.putU32(id);
         try self.wire.finishWrite(self.id, 1);
     }
 
@@ -1133,7 +1133,7 @@ pub const WlDataDevice = struct {
     // wl_data_offer introduced at enter time at this point.
     //
     pub fn sendLeave(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 2);
     }
 
@@ -1144,10 +1144,10 @@ pub const WlDataDevice = struct {
     // coordinates.
     //
     pub fn sendMotion(self: Self, time: u32, x: f32, y: f32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(time);
-        self.wire.putFixed(x);
-        self.wire.putFixed(y);
+        try self.wire.startWrite();
+        try self.wire.putU32(time);
+        try self.wire.putFixed(x);
+        try self.wire.putFixed(y);
         try self.wire.finishWrite(self.id, 3);
     }
 
@@ -1167,7 +1167,7 @@ pub const WlDataDevice = struct {
     // to cancel the operation.
     //
     pub fn sendDrop(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 4);
     }
 
@@ -1185,8 +1185,8 @@ pub const WlDataDevice = struct {
     // this event.
     //
     pub fn sendSelection(self: Self, id: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(id);
+        try self.wire.startWrite();
+        try self.wire.putU32(id);
         try self.wire.finishWrite(self.id, 5);
     }
 
@@ -1599,8 +1599,8 @@ pub const WlShellSurface = struct {
     // requests. A client is expected to reply with a pong request.
     //
     pub fn sendPing(self: Self, serial: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(serial);
+        try self.wire.startWrite();
+        try self.wire.putU32(serial);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -1624,10 +1624,10 @@ pub const WlShellSurface = struct {
     // in surface-local coordinates.
     //
     pub fn sendConfigure(self: Self, edges: Resize, width: i32, height: i32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(@enumToInt(edges));
-        self.wire.putI32(width);
-        self.wire.putI32(height);
+        try self.wire.startWrite();
+        try self.wire.putU32(@enumToInt(edges));
+        try self.wire.putI32(width);
+        try self.wire.putI32(height);
         try self.wire.finishWrite(self.id, 1);
     }
 
@@ -1637,7 +1637,7 @@ pub const WlShellSurface = struct {
     // to the client owning the popup surface.
     //
     pub fn sendPopupDone(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 2);
     }
 
@@ -1902,8 +1902,8 @@ pub const WlSurface = struct {
     // Note that a surface may be overlapping with zero or more outputs.
     //
     pub fn sendEnter(self: Self, output: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(output);
+        try self.wire.startWrite();
+        try self.wire.putU32(output);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -1913,8 +1913,8 @@ pub const WlSurface = struct {
     // of an output.
     //
     pub fn sendLeave(self: Self, output: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(output);
+        try self.wire.startWrite();
+        try self.wire.putU32(output);
         try self.wire.finishWrite(self.id, 1);
     }
 
@@ -2048,8 +2048,8 @@ pub const WlSeat = struct {
     // keyboard and touch capabilities, respectively.
     //
     pub fn sendCapabilities(self: Self, capabilities: Capability) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(@enumToInt(capabilities));
+        try self.wire.startWrite();
+        try self.wire.putU32(@enumToInt(capabilities));
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -2059,8 +2059,8 @@ pub const WlSeat = struct {
     // the seat configuration used by the compositor.
     //
     pub fn sendName(self: Self, name: []const u8) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putString(name);
+        try self.wire.startWrite();
+        try self.wire.putString(name);
         try self.wire.finishWrite(self.id, 1);
     }
 
@@ -2155,11 +2155,11 @@ pub const WlPointer = struct {
     // an appropriate pointer image with the set_cursor request.
     //
     pub fn sendEnter(self: Self, serial: u32, surface: u32, surface_x: f32, surface_y: f32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(serial);
-        self.wire.putU32(surface);
-        self.wire.putFixed(surface_x);
-        self.wire.putFixed(surface_y);
+        try self.wire.startWrite();
+        try self.wire.putU32(serial);
+        try self.wire.putU32(surface);
+        try self.wire.putFixed(surface_x);
+        try self.wire.putFixed(surface_y);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -2171,9 +2171,9 @@ pub const WlPointer = struct {
     // for the new focus.
     //
     pub fn sendLeave(self: Self, serial: u32, surface: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(serial);
-        self.wire.putU32(surface);
+        try self.wire.startWrite();
+        try self.wire.putU32(serial);
+        try self.wire.putU32(surface);
         try self.wire.finishWrite(self.id, 1);
     }
 
@@ -2183,10 +2183,10 @@ pub const WlPointer = struct {
     // focused surface.
     //
     pub fn sendMotion(self: Self, time: u32, surface_x: f32, surface_y: f32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(time);
-        self.wire.putFixed(surface_x);
-        self.wire.putFixed(surface_y);
+        try self.wire.startWrite();
+        try self.wire.putU32(time);
+        try self.wire.putFixed(surface_x);
+        try self.wire.putFixed(surface_y);
         try self.wire.finishWrite(self.id, 2);
     }
 
@@ -2207,11 +2207,11 @@ pub const WlPointer = struct {
     // protocol.
     //
     pub fn sendButton(self: Self, serial: u32, time: u32, button: u32, state: ButtonState) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(serial);
-        self.wire.putU32(time);
-        self.wire.putU32(button);
-        self.wire.putU32(@enumToInt(state));
+        try self.wire.startWrite();
+        try self.wire.putU32(serial);
+        try self.wire.putU32(time);
+        try self.wire.putU32(button);
+        try self.wire.putU32(@enumToInt(state));
         try self.wire.finishWrite(self.id, 3);
     }
 
@@ -2234,10 +2234,10 @@ pub const WlPointer = struct {
     // scroll distance.
     //
     pub fn sendAxis(self: Self, time: u32, axis: Axis, value: f32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(time);
-        self.wire.putU32(@enumToInt(axis));
-        self.wire.putFixed(value);
+        try self.wire.startWrite();
+        try self.wire.putU32(time);
+        try self.wire.putU32(@enumToInt(axis));
+        try self.wire.putFixed(value);
         try self.wire.finishWrite(self.id, 4);
     }
 
@@ -2278,7 +2278,7 @@ pub const WlPointer = struct {
     // groups.
     //
     pub fn sendFrame(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 5);
     }
 
@@ -2310,8 +2310,8 @@ pub const WlPointer = struct {
     // not guaranteed.
     //
     pub fn sendAxisSource(self: Self, axis_source: AxisSource) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(@enumToInt(axis_source));
+        try self.wire.startWrite();
+        try self.wire.putU32(@enumToInt(axis_source));
         try self.wire.finishWrite(self.id, 6);
     }
 
@@ -2332,9 +2332,9 @@ pub const WlPointer = struct {
     // preceding wl_pointer.axis event.
     //
     pub fn sendAxisStop(self: Self, time: u32, axis: Axis) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(time);
-        self.wire.putU32(@enumToInt(axis));
+        try self.wire.startWrite();
+        try self.wire.putU32(time);
+        try self.wire.putU32(@enumToInt(axis));
         try self.wire.finishWrite(self.id, 7);
     }
 
@@ -2367,9 +2367,9 @@ pub const WlPointer = struct {
     // not guaranteed.
     //
     pub fn sendAxisDiscrete(self: Self, axis: Axis, discrete: i32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(@enumToInt(axis));
-        self.wire.putI32(discrete);
+        try self.wire.startWrite();
+        try self.wire.putU32(@enumToInt(axis));
+        try self.wire.putI32(discrete);
         try self.wire.finishWrite(self.id, 8);
     }
 
@@ -2449,10 +2449,10 @@ pub const WlKeyboard = struct {
     // the recipient, as MAP_SHARED may fail.
     //
     pub fn sendKeymap(self: Self, format: KeymapFormat, fd: i32, size: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(@enumToInt(format));
-        self.wire.putFd(fd);
-        self.wire.putU32(size);
+        try self.wire.startWrite();
+        try self.wire.putU32(@enumToInt(format));
+        try self.wire.putFd(fd);
+        try self.wire.putU32(size);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -2460,11 +2460,11 @@ pub const WlKeyboard = struct {
     // Notification that this seat's keyboard focus is on a certain
     // surface.
     //
-    pub fn sendEnter(self: Self, serial: u32, surface: u32, keys: []u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(serial);
-        self.wire.putU32(surface);
-        self.wire.putArray(keys);
+    pub fn sendEnter(self: Self, serial: u32, surface: u32, keys: []u8) anyerror!void {
+        try self.wire.startWrite();
+        try self.wire.putU32(serial);
+        try self.wire.putU32(surface);
+        try self.wire.putArray(keys);
         try self.wire.finishWrite(self.id, 1);
     }
 
@@ -2476,9 +2476,9 @@ pub const WlKeyboard = struct {
     // for the new focus.
     //
     pub fn sendLeave(self: Self, serial: u32, surface: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(serial);
-        self.wire.putU32(surface);
+        try self.wire.startWrite();
+        try self.wire.putU32(serial);
+        try self.wire.putU32(surface);
         try self.wire.finishWrite(self.id, 2);
     }
 
@@ -2488,11 +2488,11 @@ pub const WlKeyboard = struct {
     // granularity, with an undefined base.
     //
     pub fn sendKey(self: Self, serial: u32, time: u32, key: u32, state: KeyState) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(serial);
-        self.wire.putU32(time);
-        self.wire.putU32(key);
-        self.wire.putU32(@enumToInt(state));
+        try self.wire.startWrite();
+        try self.wire.putU32(serial);
+        try self.wire.putU32(time);
+        try self.wire.putU32(key);
+        try self.wire.putU32(@enumToInt(state));
         try self.wire.finishWrite(self.id, 3);
     }
 
@@ -2501,12 +2501,12 @@ pub const WlKeyboard = struct {
     // changed, and it should update its local state.
     //
     pub fn sendModifiers(self: Self, serial: u32, mods_depressed: u32, mods_latched: u32, mods_locked: u32, group: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(serial);
-        self.wire.putU32(mods_depressed);
-        self.wire.putU32(mods_latched);
-        self.wire.putU32(mods_locked);
-        self.wire.putU32(group);
+        try self.wire.startWrite();
+        try self.wire.putU32(serial);
+        try self.wire.putU32(mods_depressed);
+        try self.wire.putU32(mods_latched);
+        try self.wire.putU32(mods_locked);
+        try self.wire.putU32(group);
         try self.wire.finishWrite(self.id, 4);
     }
 
@@ -2525,9 +2525,9 @@ pub const WlKeyboard = struct {
     // of wl_keyboard.
     //
     pub fn sendRepeatInfo(self: Self, rate: i32, delay: i32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putI32(rate);
-        self.wire.putI32(delay);
+        try self.wire.startWrite();
+        try self.wire.putI32(rate);
+        try self.wire.putI32(delay);
         try self.wire.finishWrite(self.id, 5);
     }
 
@@ -2595,13 +2595,13 @@ pub const WlTouch = struct {
     // reused in the future.
     //
     pub fn sendDown(self: Self, serial: u32, time: u32, surface: u32, id: i32, x: f32, y: f32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(serial);
-        self.wire.putU32(time);
-        self.wire.putU32(surface);
-        self.wire.putI32(id);
-        self.wire.putFixed(x);
-        self.wire.putFixed(y);
+        try self.wire.startWrite();
+        try self.wire.putU32(serial);
+        try self.wire.putU32(time);
+        try self.wire.putU32(surface);
+        try self.wire.putI32(id);
+        try self.wire.putFixed(x);
+        try self.wire.putFixed(y);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -2611,10 +2611,10 @@ pub const WlTouch = struct {
     // reused in a future touch down event.
     //
     pub fn sendUp(self: Self, serial: u32, time: u32, id: i32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(serial);
-        self.wire.putU32(time);
-        self.wire.putI32(id);
+        try self.wire.startWrite();
+        try self.wire.putU32(serial);
+        try self.wire.putU32(time);
+        try self.wire.putI32(id);
         try self.wire.finishWrite(self.id, 1);
     }
 
@@ -2622,11 +2622,11 @@ pub const WlTouch = struct {
     // A touch point has changed coordinates.
     //
     pub fn sendMotion(self: Self, time: u32, id: i32, x: f32, y: f32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(time);
-        self.wire.putI32(id);
-        self.wire.putFixed(x);
-        self.wire.putFixed(y);
+        try self.wire.startWrite();
+        try self.wire.putU32(time);
+        try self.wire.putI32(id);
+        try self.wire.putFixed(x);
+        try self.wire.putFixed(y);
         try self.wire.finishWrite(self.id, 2);
     }
 
@@ -2641,7 +2641,7 @@ pub const WlTouch = struct {
     // previously known state.
     //
     pub fn sendFrame(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 3);
     }
 
@@ -2654,7 +2654,7 @@ pub const WlTouch = struct {
     // this surface may reuse the touch point ID.
     //
     pub fn sendCancel(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 4);
     }
 
@@ -2686,10 +2686,10 @@ pub const WlTouch = struct {
     // shape if it did not receive this event.
     //
     pub fn sendShape(self: Self, id: i32, major: f32, minor: f32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putI32(id);
-        self.wire.putFixed(major);
-        self.wire.putFixed(minor);
+        try self.wire.startWrite();
+        try self.wire.putI32(id);
+        try self.wire.putFixed(major);
+        try self.wire.putFixed(minor);
         try self.wire.finishWrite(self.id, 5);
     }
 
@@ -2719,9 +2719,9 @@ pub const WlTouch = struct {
     // orientation reports.
     //
     pub fn sendOrientation(self: Self, id: i32, orientation: f32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putI32(id);
-        self.wire.putFixed(orientation);
+        try self.wire.startWrite();
+        try self.wire.putI32(id);
+        try self.wire.putFixed(orientation);
         try self.wire.finishWrite(self.id, 6);
     }
 };
@@ -2788,15 +2788,15 @@ pub const WlOutput = struct {
     // clients should use xdg_output.name and xdg_output.description.
     //
     pub fn sendGeometry(self: Self, x: i32, y: i32, physical_width: i32, physical_height: i32, subpixel: Subpixel, make: []const u8, model: []const u8, transform: Transform) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putI32(x);
-        self.wire.putI32(y);
-        self.wire.putI32(physical_width);
-        self.wire.putI32(physical_height);
-        self.wire.putI32(@enumToInt(subpixel));
-        self.wire.putString(make);
-        self.wire.putString(model);
-        self.wire.putI32(@enumToInt(transform));
+        try self.wire.startWrite();
+        try self.wire.putI32(x);
+        try self.wire.putI32(y);
+        try self.wire.putI32(physical_width);
+        try self.wire.putI32(physical_height);
+        try self.wire.putI32(@enumToInt(subpixel));
+        try self.wire.putString(make);
+        try self.wire.putString(model);
+        try self.wire.putI32(@enumToInt(transform));
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -2826,11 +2826,11 @@ pub const WlOutput = struct {
     // refresh rate or the size.
     //
     pub fn sendMode(self: Self, flags: Mode, width: i32, height: i32, refresh: i32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(@enumToInt(flags));
-        self.wire.putI32(width);
-        self.wire.putI32(height);
-        self.wire.putI32(refresh);
+        try self.wire.startWrite();
+        try self.wire.putU32(@enumToInt(flags));
+        try self.wire.putI32(width);
+        try self.wire.putI32(height);
+        try self.wire.putI32(refresh);
         try self.wire.finishWrite(self.id, 1);
     }
 
@@ -2842,7 +2842,7 @@ pub const WlOutput = struct {
     // atomic, even if they happen via multiple events.
     //
     pub fn sendDone(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 2);
     }
 
@@ -2867,8 +2867,8 @@ pub const WlOutput = struct {
     // a higher detail image.
     //
     pub fn sendScale(self: Self, factor: i32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putI32(factor);
+        try self.wire.startWrite();
+        try self.wire.putI32(factor);
         try self.wire.finishWrite(self.id, 3);
     }
 
@@ -3333,8 +3333,8 @@ pub const XdgWmBase = struct {
     // always respond to any xdg_wm_base object it created.
     //
     pub fn sendPing(self: Self, serial: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(serial);
+        try self.wire.startWrite();
+        try self.wire.putU32(serial);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -3704,8 +3704,8 @@ pub const XdgSurface = struct {
     // to one, it is free to discard all but the last event it received.
     //
     pub fn sendConfigure(self: Self, serial: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(serial);
+        try self.wire.startWrite();
+        try self.wire.putU32(serial);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -4031,11 +4031,11 @@ pub const XdgToplevel = struct {
     // Clients must send an ack_configure in response to this event. See
     // xdg_surface.configure and xdg_surface.ack_configure for details.
     //
-    pub fn sendConfigure(self: Self, width: i32, height: i32, states: []u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putI32(width);
-        self.wire.putI32(height);
-        self.wire.putArray(states);
+    pub fn sendConfigure(self: Self, width: i32, height: i32, states: []u8) anyerror!void {
+        try self.wire.startWrite();
+        try self.wire.putI32(width);
+        try self.wire.putI32(height);
+        try self.wire.putArray(states);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -4050,7 +4050,7 @@ pub const XdgToplevel = struct {
     // a dialog to ask the user to save their data, etc.
     //
     pub fn sendClose(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 1);
     }
 
@@ -4157,11 +4157,11 @@ pub const XdgPopup = struct {
     // window geometry of the parent surface.
     //
     pub fn sendConfigure(self: Self, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putI32(x);
-        self.wire.putI32(y);
-        self.wire.putI32(width);
-        self.wire.putI32(height);
+        try self.wire.startWrite();
+        try self.wire.putI32(x);
+        try self.wire.putI32(y);
+        try self.wire.putI32(width);
+        try self.wire.putI32(height);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -4171,7 +4171,7 @@ pub const XdgPopup = struct {
     // point.
     //
     pub fn sendPopupDone(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 1);
     }
 
@@ -4258,8 +4258,8 @@ pub const ZwpLinuxDmabufV1 = struct {
     //         received from this event.
     //
     pub fn sendFormat(self: Self, format: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(format);
+        try self.wire.startWrite();
+        try self.wire.putU32(format);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -4282,10 +4282,10 @@ pub const ZwpLinuxDmabufV1 = struct {
     //         requests.
     //
     pub fn sendModifier(self: Self, format: u32, modifier_hi: u32, modifier_lo: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(format);
-        self.wire.putU32(modifier_hi);
-        self.wire.putU32(modifier_lo);
+        try self.wire.startWrite();
+        try self.wire.putU32(format);
+        try self.wire.putU32(modifier_hi);
+        try self.wire.putU32(modifier_lo);
         try self.wire.finishWrite(self.id, 1);
     }
 };
@@ -4431,8 +4431,8 @@ pub const ZwpLinuxBufferParamsV1 = struct {
     //         zlinux_dmabuf_params object.
     //
     pub fn sendCreated(self: Self, buffer: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(buffer);
+        try self.wire.startWrite();
+        try self.wire.putU32(buffer);
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -4445,7 +4445,7 @@ pub const ZwpLinuxBufferParamsV1 = struct {
     //         zlinux_buffer_params object.
     //
     pub fn sendFailed(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 1);
     }
 
@@ -4556,56 +4556,56 @@ pub const FwControl = struct {
     };
 
     pub fn sendClient(self: Self, index: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(index);
+        try self.wire.startWrite();
+        try self.wire.putU32(index);
         try self.wire.finishWrite(self.id, 0);
     }
 
     pub fn sendWindow(self: Self, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, sibling_prev: i32, sibling_next: i32, children_prev: i32, children_next: i32, input_region_id: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(index);
-        self.wire.putI32(parent);
-        self.wire.putU32(wl_surface_id);
-        self.wire.putU32(surface_type);
-        self.wire.putI32(x);
-        self.wire.putI32(y);
-        self.wire.putI32(width);
-        self.wire.putI32(height);
-        self.wire.putI32(sibling_prev);
-        self.wire.putI32(sibling_next);
-        self.wire.putI32(children_prev);
-        self.wire.putI32(children_next);
-        self.wire.putU32(input_region_id);
+        try self.wire.startWrite();
+        try self.wire.putU32(index);
+        try self.wire.putI32(parent);
+        try self.wire.putU32(wl_surface_id);
+        try self.wire.putU32(surface_type);
+        try self.wire.putI32(x);
+        try self.wire.putI32(y);
+        try self.wire.putI32(width);
+        try self.wire.putI32(height);
+        try self.wire.putI32(sibling_prev);
+        try self.wire.putI32(sibling_next);
+        try self.wire.putI32(children_prev);
+        try self.wire.putI32(children_next);
+        try self.wire.putU32(input_region_id);
         try self.wire.finishWrite(self.id, 1);
     }
 
     pub fn sendToplevelWindow(self: Self, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(index);
-        self.wire.putI32(parent);
-        self.wire.putU32(wl_surface_id);
-        self.wire.putU32(surface_type);
-        self.wire.putI32(x);
-        self.wire.putI32(y);
-        self.wire.putI32(width);
-        self.wire.putI32(height);
-        self.wire.putU32(input_region_id);
+        try self.wire.startWrite();
+        try self.wire.putU32(index);
+        try self.wire.putI32(parent);
+        try self.wire.putU32(wl_surface_id);
+        try self.wire.putU32(surface_type);
+        try self.wire.putI32(x);
+        try self.wire.putI32(y);
+        try self.wire.putI32(width);
+        try self.wire.putI32(height);
+        try self.wire.putU32(input_region_id);
         try self.wire.finishWrite(self.id, 2);
     }
 
     pub fn sendRegionRect(self: Self, index: u32, x: i32, y: i32, width: i32, height: i32, op: i32) anyerror!void {
-        self.wire.startWrite();
-        self.wire.putU32(index);
-        self.wire.putI32(x);
-        self.wire.putI32(y);
-        self.wire.putI32(width);
-        self.wire.putI32(height);
-        self.wire.putI32(op);
+        try self.wire.startWrite();
+        try self.wire.putU32(index);
+        try self.wire.putI32(x);
+        try self.wire.putI32(y);
+        try self.wire.putI32(width);
+        try self.wire.putI32(height);
+        try self.wire.putI32(op);
         try self.wire.finishWrite(self.id, 3);
     }
 
     pub fn sendDone(self: Self) anyerror!void {
-        self.wire.startWrite();
+        try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 4);
     }
 

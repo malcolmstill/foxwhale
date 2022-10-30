@@ -183,7 +183,7 @@ pub const Client = struct {
             }
 
             if (self.state == .begin) {
-                try self.client.context.readIntoBuffer();
+                try self.client.context.startRead();
                 self.state = .read_buffer;
             }
 
@@ -210,7 +210,7 @@ pub const Client = struct {
                     },
                 };
             } else {
-                self.client.context.finishRead();
+                try self.client.context.finishRead();
                 return null;
             }
         }
@@ -494,9 +494,9 @@ pub const Client = struct {
 
                 window.xdg_toplevel = xdg_toplevel;
 
-                var array = [_]u32{};
+                var array = [_]u8{};
                 const serial = self.nextSerial();
-                try xdg_toplevel.sendConfigure(0, 0, array[0..array.len]);
+                try xdg_toplevel.sendConfigure(0, 0, array[0..]);
                 try msg.xdg_surface.sendConfigure(serial);
             },
             .ack_configure => |msg| {
