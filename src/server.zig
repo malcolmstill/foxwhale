@@ -14,7 +14,7 @@ const Buffer = @import("resource/buffer.zig").Buffer;
 const Region = @import("resource/region.zig").Region;
 const ShmPool = @import("resource/shm_pool.zig").ShmPool;
 const Output = @import("resource/output.zig").Output;
-const IterablePool = @import("datastructures/pool_iterable.zig").IterablePool;
+const IterablePool = @import("datastructures/iterable_pool.zig").IterablePool;
 const SubsetPool = @import("datastructures/subset_pool.zig").SubsetPool;
 const BackendOutput = @import("backend/backend.zig").BackendOutput;
 
