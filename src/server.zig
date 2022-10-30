@@ -101,7 +101,7 @@ pub const Server = struct {
         var client = try self.clients.createPtr();
         errdefer self.clients.destroy(client);
 
-        const wl_display = WlDisplay.init(1, &client.context, 0);
+        const wl_display = WlDisplay.init(1, &client.wire, 0);
         client.* = Client.init(self.alloc, self, conn, wl_display);
         try client.link(.{ .wl_display = wl_display }, .none);
 

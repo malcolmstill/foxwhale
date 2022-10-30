@@ -43,7 +43,7 @@ pub const Client = struct {
     tombstone: bool = false,
     alloc: mem.Allocator,
     conn: std.net.StreamServer.Connection,
-    context: Wire,
+    wire: Wire,
     serial: u32 = 0,
     server_id: u32 = 0xFF00_0000 - 1,
 
@@ -92,7 +92,7 @@ pub const Client = struct {
             .server = server,
             .conn = conn,
             .wl_display = wl_display,
-            .context = Wire.init(conn.stream.handle),
+            .wire = Wire.init(conn.stream.handle),
             .windows = server.windows.subset(),
             .regions = server.regions.subset(),
             .buffers = server.buffers.subset(),
@@ -102,7 +102,7 @@ pub const Client = struct {
     }
 
     pub fn deinit(self: *Self) void {
-        self.context.deinit();
+        self.wire.deinit();
 
         std.os.close(self.conn.stream.handle);
 
@@ -183,11 +183,11 @@ pub const Client = struct {
             }
 
             if (self.state == .begin) {
-                try self.client.context.startRead();
+                try self.client.wire.startRead();
                 self.state = .read_buffer;
             }
 
-            const event = self.client.context.readEvent(self.client, "getObject") catch |err| {
+            const event = self.client.wire.readEvent(self.client, "getObject") catch |err| {
                 if (err == error.ClientSigbusd or builtin.mode != .Debug) {
                     return Event{
                         .client = Client.TargetEvent{
@@ -210,7 +210,7 @@ pub const Client = struct {
                     },
                 };
             } else {
-                try self.client.context.finishRead();
+                try self.client.wire.finishRead();
                 return null;
             }
         }
@@ -310,7 +310,7 @@ pub const Client = struct {
     pub fn handleWlDisplay(self: *Client, message: WlDisplay.Message) !void {
         switch (message) {
             .get_registry => |msg| {
-                const wl_registry = WlRegistry.init(msg.registry, &self.context, 0);
+                const wl_registry = WlRegistry.init(msg.registry, &self.wire, 0);
                 try self.link(.{ .wl_registry = wl_registry }, .none);
 
                 self.wl_registry = wl_registry;
@@ -331,7 +331,7 @@ pub const Client = struct {
                 try wl_registry.sendGlobal(11, "fw_control\x00", 1);
             },
             .sync => |msg| {
-                const callback = WlCallback.init(msg.callback, &self.context, 0);
+                const callback = WlCallback.init(msg.callback, &self.wire, 0);
 
                 try callback.sendDone(self.nextSerial());
                 try self.wl_display.sendDeleteId(callback.id);
@@ -345,19 +345,19 @@ pub const Client = struct {
                 1 => {
                     if (!mem.eql(u8, msg.name_string, "wl_compositor\x00")) return error.UnexpectedName;
 
-                    self.wl_compositor = WlCompositor.init(msg.id, &self.context, msg.version);
+                    self.wl_compositor = WlCompositor.init(msg.id, &self.wire, msg.version);
                     try self.link(.{ .wl_compositor = self.wl_compositor.? }, .none);
                 },
                 4 => {
                     if (!mem.eql(u8, msg.name_string, "xdg_wm_base\x00")) return error.UnexpectedName;
 
-                    self.xdg_wm_base = XdgWmBase.init(msg.id, &self.context, msg.version);
+                    self.xdg_wm_base = XdgWmBase.init(msg.id, &self.wire, msg.version);
                     try self.link(.{ .xdg_wm_base = self.xdg_wm_base.? }, .none);
                 },
                 8 => {
                     if (!std.mem.eql(u8, msg.name_string, "wl_shm\x00")) return error.UnexpectedName;
 
-                    self.wl_shm = WlShm.init(msg.id, &self.context, msg.version);
+                    self.wl_shm = WlShm.init(msg.id, &self.wire, msg.version);
                     try self.link(.{ .wl_shm = self.wl_shm.? }, .none);
 
                     try self.wl_shm.?.sendFormat(WlShm.Format.argb8888);
@@ -372,14 +372,14 @@ pub const Client = struct {
     pub fn handleWlCompositor(self: *Client, message: WlCompositor.Message) !void {
         switch (message) {
             .create_surface => |msg| {
-                const wl_surface = WlSurface.init(msg.id, &self.context, 0);
+                const wl_surface = WlSurface.init(msg.id, &self.wire, 0);
 
                 const window = try self.windows.create(Window.init(self, wl_surface));
                 errdefer self.windows.destroy(window);
                 try self.link(.{ .wl_surface = wl_surface }, .{ .window = window });
             },
             .create_region => |msg| {
-                const wl_region = WlRegion.init(msg.id, &self.context, 0);
+                const wl_region = WlRegion.init(msg.id, &self.wire, 0);
 
                 const region = try self.regions.create(Region.init(self, wl_region));
                 errdefer self.regions.destroy(region);
@@ -459,7 +459,7 @@ pub const Client = struct {
             .frame => |msg| {
                 const window = self.getWindow(msg.wl_surface.id) orelse return error.NoSuchWindow;
 
-                const wl_callback = WlCallback.init(msg.callback, &self.context, 0);
+                const wl_callback = WlCallback.init(msg.callback, &self.wire, 0);
                 try window.callbacks.writeItem(wl_callback);
 
                 try self.link(.{ .wl_callback = wl_callback }, .none);
@@ -476,7 +476,7 @@ pub const Client = struct {
             .get_xdg_surface => |msg| {
                 const window = self.getWindow(msg.surface.id) orelse return error.NoSuchWindow;
 
-                const xdg_surface = XdgSurface.init(msg.id, &self.context, 0);
+                const xdg_surface = XdgSurface.init(msg.id, &self.wire, 0);
                 try self.link(.{ .xdg_surface = xdg_surface }, .{ .window = window });
 
                 window.xdg_surface = xdg_surface;
@@ -489,7 +489,7 @@ pub const Client = struct {
         switch (message) {
             .get_toplevel => |msg| {
                 const window = self.getWindow(msg.xdg_surface.id) orelse return error.NoSuchWindow;
-                const xdg_toplevel = XdgToplevel.init(msg.id, &self.context, 0);
+                const xdg_toplevel = XdgToplevel.init(msg.id, &self.wire, 0);
                 try self.link(.{ .xdg_toplevel = xdg_toplevel }, .{ .window = window });
 
                 window.xdg_toplevel = xdg_toplevel;
@@ -547,7 +547,7 @@ pub const Client = struct {
     pub fn handleWlShm(self: *Client, message: WlShm.Message) !void {
         switch (message) {
             .create_pool => |msg| {
-                const wl_shm_pool = WlShmPool.init(msg.id, &self.context, 0);
+                const wl_shm_pool = WlShmPool.init(msg.id, &self.wire, 0);
 
                 const shm_pool = try self.shm_pools.create(try ShmPool.init(self, msg.fd, wl_shm_pool, msg.size));
                 errdefer self.shm_pools.destroy(shm_pool);
@@ -567,7 +567,7 @@ pub const Client = struct {
                 const stride = msg.stride;
                 const format = msg.format;
 
-                const wl_buffer = WlBuffer.init(msg.id, &self.context, 0);
+                const wl_buffer = WlBuffer.init(msg.id, &self.wire, 0);
                 const buffer = try self.buffers.create(.{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer, offset, width, height, stride, format) });
                 errdefer self.buffers.destroy(buffer);
 
