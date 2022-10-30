@@ -16,6 +16,8 @@ const Output = @import("resource/output.zig").Output;
 const IterablePool = @import("datastructures/iterable_pool.zig").IterablePool;
 const SubsetPool = @import("datastructures/subset_pool.zig").SubsetPool;
 const BackendOutput = @import("backend/backend.zig").BackendOutput;
+const Move = @import("move.zig").Move;
+const Resize = @import("resize.zig").Resize;
 
 pub const ResourceType = enum(u8) {
     window,

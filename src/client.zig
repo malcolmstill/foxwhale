@@ -463,10 +463,12 @@ pub const Client = struct {
 
                 try self.link(.{ .wl_callback = wl_callback }, .none);
             },
-            else => {
-                std.log.err("UNHANDLED = {}", .{message});
-                return error.UnhandledMessage;
-            },
+            .destroy => |_| return error.WlSurfaceDestroyNotImplemented,
+            .set_opaque_region => |_| return error.WlSurfaceSetOpaqueRegionNotImplemented,
+            .set_input_region => |_| return error.WlSurfaceSetInputRegionNotImplemented,
+            .set_buffer_transform => |_| return error.WlSurfaceSetBufferTransformNotImplemented,
+            .set_buffer_scale => |_| return error.WlSurfaceSetBufferScaleNotImplemented,
+            .damage_buffer => |_| return error.WlSurfaceDamageBufferNotImplemented,
         }
     }
 
