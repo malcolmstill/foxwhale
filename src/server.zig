@@ -8,7 +8,6 @@ const Client = @import("client.zig").Client;
 const Context = @import("wl/context.zig").Context;
 const WlObject = @import("wl/protocols.zig").WlObject;
 const WlDisplay = @import("wl/protocols.zig").WlDisplay;
-const StaticArray = @import("stalloc.zig").StaticArray;
 const Window = @import("resource/window.zig").Window;
 const Buffer = @import("resource/buffer.zig").Buffer;
 const Region = @import("resource/region.zig").Region;
