@@ -106,7 +106,7 @@ pub const X11 = struct {
             &valwin,
         );
 
-        const egl = try setupEgl(c.EGL_OPENGL_ES_API, self.display, window);
+        const egl = try setupEgl(c.EGL_OPENGL_API, self.display, window);
 
         const title = "Blit.kit: X11";
         _ = c.xcb_change_property(
@@ -209,22 +209,22 @@ const egl_config_attribs = [_]c.EGLint{
     c.EGL_BLUE_SIZE,         8,
     c.EGL_ALPHA_SIZE,        8,
 
-    c.EGL_DEPTH_SIZE,        24,
-    c.EGL_STENCIL_SIZE,      8,
+    c.EGL_DEPTH_SIZE,        c.EGL_DONT_CARE,
+    c.EGL_STENCIL_SIZE,      c.EGL_DONT_CARE,
 
     c.EGL_SAMPLE_BUFFERS,    0,
     c.EGL_SAMPLES,           0,
 
     c.EGL_SURFACE_TYPE,      c.EGL_WINDOW_BIT,
-    c.EGL_RENDERABLE_TYPE,   c.EGL_OPENGL_ES2_BIT,
+    c.EGL_RENDERABLE_TYPE,   c.EGL_OPENGL_BIT,
 
     c.EGL_NONE,
 };
 
 const egl_context_attribs = [_]c.EGLint{
-    // c.EGL_CONTEXT_MAJOR_VERSION, 3,
-    // c.EGL_CONTEXT_MINOR_VERSION, 3,
-    c.EGL_CONTEXT_CLIENT_VERSION, 2,
+    c.EGL_CONTEXT_MAJOR_VERSION, 3,
+    c.EGL_CONTEXT_MINOR_VERSION, 3,
+    // c.EGL_CONTEXT_CLIENT_VERSION, 3,
     c.EGL_NONE,
 };
 
