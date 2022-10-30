@@ -4,7 +4,6 @@ const mem = std.mem;
 const fifo = std.fifo;
 const math = std.math;
 const txrx = @import("txrx.zig");
-const WlObject = @import("protocols.zig").WlObject;
 const WlMessage = @import("protocols.zig").WlMessage;
 const LinearFifo = fifo.LinearFifo;
 const LinearFifoBufferType = fifo.LinearFifoBufferType;
@@ -16,31 +15,24 @@ pub const Wire = struct {
     fd: i32 = -1,
     rx: io.FixedBufferStream([]u8) = undefined,
     tx: io.FixedBufferStream([]u8) = undefined,
-    rx_buf: [BUFFER_SIZE]u8,
-    tx_buf: [BUFFER_SIZE]u8,
-    rx_fds: FdBuffer,
-    tx_fds: FdBuffer,
+    rx_buf: [BUFFER_SIZE]u8 = [_]u8{0} ** BUFFER_SIZE,
+    tx_buf: [BUFFER_SIZE]u8 = [_]u8{0} ** BUFFER_SIZE,
+    rx_fds: FdBuffer = FdBuffer.init(),
+    tx_fds: FdBuffer = FdBuffer.init(),
     rx_write_offset: usize = 0,
     tx_write_offset: usize = 0,
-    n: usize = 0,
 
     const Self = @This();
 
     pub fn init(fd: i32) Self {
         return Self{
             .fd = fd,
-
-            .rx_fds = FdBuffer.init(),
-            .tx_fds = FdBuffer.init(),
-
-            .rx_buf = [_]u8{0} ** BUFFER_SIZE,
-            .tx_buf = [_]u8{0} ** BUFFER_SIZE,
         };
     }
 
     pub fn deinit(_: *Self) void {}
 
-    pub const Header = struct {
+    const Header = struct {
         id: u32,
         opcode: u16,
         length: u16,
