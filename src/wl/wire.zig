@@ -67,13 +67,13 @@ pub const Wire = struct {
         const remaining_before_header = (try self.rx.getEndPos()) - (try self.rx.getPos());
         if (remaining_before_header < @sizeOf(u32) + @sizeOf(u16) + @sizeOf(u16)) return null;
 
+        const start = try self.rx.getPos();
+
         const header = Header{
             .id = try rdr.readIntNative(u32),
             .opcode = try rdr.readIntNative(u16),
             .length = try rdr.readIntNative(u16),
         };
-
-        const pos_before_message_body = try self.rx.getPos();
 
         // We need to have read a full message
         const remaining_before_body = (try self.rx.getEndPos()) - (try self.rx.getPos());
@@ -83,7 +83,8 @@ pub const Wire = struct {
 
         const event = try object.readMessage(objects, field, header.opcode);
 
-        const actual_length = (try self.rx.getPos()) - pos_before_message_body;
+        const actual_length = (try self.rx.getPos()) - start;
+        std.log.info("actual_length = {}, header.length = {}", .{ actual_length, header.length });
         if (actual_length != header.length) return error.MessageWrongLength;
 
         return event;
@@ -113,6 +114,8 @@ pub const Wire = struct {
         var s: []u8 = undefined;
         s.ptr = @ptrCast([*]u8, &self.rx_buf[start]);
         s.len = length;
+
+        std.log.info("nextString = {s}", .{s});
         return s;
     }
 
@@ -197,7 +200,6 @@ pub const Wire = struct {
 
         std.mem.copy(u8, self.tx_buf[start .. start + length], string);
     }
-    // };
 };
 
 fn doubleToFixed(f: f64) i32 {
