@@ -53,6 +53,9 @@ pub const Server = struct {
     shm_pools: SubsetPool(ShmPool, u16),
     objects: SubsetPool(ResourceObject, u16),
 
+    move: ?Move = null,
+    resize: ?Resize = null,
+
     output_base: u32 = 1000,
 
     const ClientNode = std.TailQueue(Client).Node;

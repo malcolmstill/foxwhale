@@ -398,7 +398,7 @@ pub const Client = struct {
                 // In that case we can make no further process so we just return
                 const wl_buffer = window.wl_buffer orelse return;
 
-                const buffer = self.getBuffer(wl_buffer.id) orelse return error.NoSuchBuffer; // @intToPtr(*Buffer, wl_buffer.container);
+                const buffer = self.getBuffer(wl_buffer.id) orelse return error.NoSuchBuffer;
                 buffer.beginAccess();
 
                 if (window.texture) |texture| {
@@ -408,13 +408,12 @@ pub const Client = struct {
 
                 // We need to set pending here (rather than in ack_configure) because
                 // we need to know the width and height of the new buffer
-                // TODO: reinstate
-                // if (compositor.COMPOSITOR.resize) |resize| {
-                //     if (resize.window == window) {
-                //         window.pending().x += resize.offsetX(window.width, buffer.width());
-                //         window.pending().y += resize.offsetY(window.height, buffer.height());
-                //     }
-                // }
+                if (self.server.resize) |resize| {
+                    if (resize.window == window) {
+                        window.pending().x += resize.offsetX(window.width, buffer.width());
+                        window.pending().y += resize.offsetY(window.height, buffer.height());
+                    }
+                }
 
                 window.width = buffer.width();
                 window.height = buffer.height();
