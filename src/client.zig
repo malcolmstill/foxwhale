@@ -526,7 +526,31 @@ pub const Client = struct {
                 try self.link(.{ .wl_callback = wl_callback }, .none);
             },
             .destroy => |_| return error.WlSurfaceDestroyNotImplemented,
-            .set_opaque_region => |_| return error.WlSurfaceSetOpaqueRegionNotImplemented,
+            .set_opaque_region => |msg| {
+                const window = self.getWindow(msg.wl_surface.id) orelse return error.NoSuchWindow;
+
+                if (msg.region) |wl_region| {
+                    const region = self.getRegion(wl_region.id) orelse return error.NoSuchRegion;
+                    region.window = window;
+
+                    // If we set a second pending input region before the first pending input region has been
+                    // flipped, we need to deinit the origin pending region
+                    if (window.pending().opaque_region) |old_pending_region| {
+                        if (old_pending_region != region and old_pending_region != window.current().opaque_region) {
+                            self.regions.destroy(old_pending_region);
+                        }
+                    }
+
+                    window.pending().opaque_region = region;
+                } else {
+                    if (window.pending().opaque_region) |old_pending_region| {
+                        if (old_pending_region != window.current().opaque_region) {
+                            self.regions.destroy(old_pending_region);
+                        }
+                    }
+                    window.pending().opaque_region = null;
+                }
+            },
             .set_input_region => |_| return error.WlSurfaceSetInputRegionNotImplemented,
             .set_buffer_transform => |_| return error.WlSurfaceSetBufferTransformNotImplemented,
             .set_buffer_scale => |_| return error.WlSurfaceSetBufferScaleNotImplemented,
@@ -600,7 +624,11 @@ pub const Client = struct {
             },
             .destroy => |_| return error.NotImplemented,
             .get_popup => |_| return error.NotImplemented,
-            .set_window_geometry => |_| return error.NotImplemented,
+            .set_window_geometry => |msg| {
+                const window = self.getWindow(msg.xdg_surface.id) orelse return error.NoSuchWindow;
+
+                window.window_geometry = Rectangle.init(msg.x, msg.y, msg.width, msg.height);
+            },
         }
     }
 
@@ -666,8 +694,7 @@ pub const Client = struct {
                 self.unlink(wl_shm_pool.id);
             },
             .resize => |msg| {
-                const wl_shm_pool = msg.wl_shm_pool;
-                const shm_pool = self.getShmPool(wl_shm_pool.id) orelse return error.NoSuchShmPool;
+                const shm_pool = self.getShmPool(msg.wl_shm_pool.id) orelse return error.NoSuchShmPool;
                 try shm_pool.resize(msg.size);
             },
         }
