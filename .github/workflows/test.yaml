@@ -12,7 +12,7 @@ jobs:
         with:
           version: master
       - run: sudo apt-get update
-      - run: sudo apt-get install libxcb1-dev libsystemd-dev libudev-dev libinput-dev libdrm-dev libxkbcommon-dev
+      - run: sudo apt-get install libx11-dev libxcb1-dev libsystemd-dev libudev-dev libinput-dev libdrm-dev libxkbcommon-dev
       - run: zig build
   lint:
     runs-on: ubuntu-latest
