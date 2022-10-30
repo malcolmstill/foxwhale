@@ -320,7 +320,7 @@ def generate_send(interface, sentType):
             for arg in child:
                 if arg.tag == "arg":
                     if "enum" in arg.attrib:
-                        print(f"\ttry self.wire.put{put_type(arg.attrib['type'])}(@enumToInt({arg.attrib['name']}));")
+                        print(f"\ttry self.wire.putU32(@enumToInt({arg.attrib['name']}));")
                     else:
                         print(f"\ttry self.wire.put{put_type(arg.attrib['type'])}({arg.attrib['name']});")
             print(f"\ttry self.wire.finishWrite(self.id, {i});")

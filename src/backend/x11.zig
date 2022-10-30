@@ -133,6 +133,8 @@ pub const X11 = struct {
             .backend = self,
             .display = egl.display,
             .surface = egl.surface,
+            .width = w,
+            .height = h,
         };
     }
 };
@@ -142,6 +144,16 @@ pub const X11Output = struct {
     backend: *X11,
     display: c.EGLDisplay,
     surface: c.EGLSurface,
+    width: i32,
+    height: i32,
+
+    pub fn getWidth(self: *X11Output) i32 {
+        return self.width;
+    }
+
+    pub fn getHeight(self: *X11Output) i32 {
+        return self.height;
+    }
 
     pub fn swap(self: *X11Output) !void {
         _ = c.eglSwapBuffers(self.display, self.surface);

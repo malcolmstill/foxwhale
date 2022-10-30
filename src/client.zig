@@ -9,12 +9,16 @@ const WlObject = @import("wl/protocols.zig").WlObject;
 const WlDisplay = @import("wl/protocols.zig").WlDisplay;
 const WlRegistry = @import("wl/protocols.zig").WlRegistry;
 const WlCompositor = @import("wl/protocols.zig").WlCompositor;
+const WlSubcompositor = @import("wl/protocols.zig").WlSubcompositor;
 const WlShm = @import("wl/protocols.zig").WlShm;
+const WlSeat = @import("wl/protocols.zig").WlSeat;
 const WlShmPool = @import("wl/protocols.zig").WlShmPool;
 const WlSurface = @import("wl/protocols.zig").WlSurface;
+const WlDataDeviceManager = @import("wl/protocols.zig").WlDataDeviceManager;
 const WlRegion = @import("wl/protocols.zig").WlRegion;
 const WlBuffer = @import("wl/protocols.zig").WlBuffer;
 const WlCallback = @import("wl/protocols.zig").WlCallback;
+const WlOutput = @import("wl/protocols.zig").WlOutput;
 const XdgWmBase = @import("wl/protocols.zig").XdgWmBase;
 const XdgSurface = @import("wl/protocols.zig").XdgSurface;
 const XdgToplevel = @import("wl/protocols.zig").XdgToplevel;
@@ -58,12 +62,11 @@ pub const Client = struct {
     wl_compositor: ?WlCompositor = null,
     xdg_wm_base: ?XdgWmBase = null,
     wl_shm: ?WlShm = null,
-    // wl_data_device_manager_id: ?u32 = null,
+    wl_data_device_manager: ?WlDataDeviceManager = null,
     // wl_keyboard_id: ?u32 = null,
-    // wl_output_id: ?u32 = null,
     // wl_pointer_id: ?u32 = null,
-    // wl_seat_id: ?u32 = null,
-    // wl_subcompositor_id: ?u32 = null,
+    wl_seat: ?WlSeat = null,
+    wl_subcompositor: ?WlSubcompositor = null,
     // fw_control_id: ?u32 = null,
     // zwp_linux_dmabuf_id: ?u32 = null,
 
@@ -342,7 +345,7 @@ pub const Client = struct {
                     try wl_registry.sendGlobal(output.id, "wl_output\x00", 2);
                 }
 
-                try wl_registry.sendGlobal(6, "wl_data_device_manager\x00", 3);
+                // try wl_registry.sendGlobal(6, "wl_data_device_manager\x00", 3);
                 try wl_registry.sendGlobal(8, "wl_shm\x00", 1);
                 try wl_registry.sendGlobal(10, "zwp_linux_dmabuf_v1\x00", 3);
                 try wl_registry.sendGlobal(11, "fw_control\x00", 1);
@@ -358,30 +361,72 @@ pub const Client = struct {
 
     pub fn handleWlRegistry(self: *Client, message: WlRegistry.Message) !void {
         switch (message) {
-            .bind => |msg| switch (msg.name) {
-                1 => {
-                    if (!mem.eql(u8, msg.name_string, "wl_compositor\x00")) return error.UnexpectedName;
+            .bind => |msg| {
+                std.log.info("Client requested iterface {s}", .{msg.name_string});
+                switch (msg.name) {
+                    1 => {
+                        if (!mem.eql(u8, msg.name_string, "wl_compositor\x00")) return error.UnexpectedName;
 
-                    self.wl_compositor = WlCompositor.init(msg.id, &self.wire, msg.version);
-                    try self.link(.{ .wl_compositor = self.wl_compositor.? }, .none);
-                },
-                4 => {
-                    if (!mem.eql(u8, msg.name_string, "xdg_wm_base\x00")) return error.UnexpectedName;
+                        self.wl_compositor = WlCompositor.init(msg.id, &self.wire, msg.version);
+                        try self.link(.{ .wl_compositor = self.wl_compositor.? }, .none);
+                    },
+                    2 => {
+                        if (!mem.eql(u8, msg.name_string, "wl_subcompositor\x00")) return error.UnexpectedName;
 
-                    self.xdg_wm_base = XdgWmBase.init(msg.id, &self.wire, msg.version);
-                    try self.link(.{ .xdg_wm_base = self.xdg_wm_base.? }, .none);
-                },
-                8 => {
-                    if (!std.mem.eql(u8, msg.name_string, "wl_shm\x00")) return error.UnexpectedName;
+                        self.wl_subcompositor = WlSubcompositor.init(msg.id, &self.wire, msg.version);
+                        try self.link(.{ .wl_subcompositor = self.wl_subcompositor.? }, .none);
+                    },
+                    3 => {
+                        if (!mem.eql(u8, msg.name_string, "wl_seat\x00")) return error.UnexpectedName;
 
-                    self.wl_shm = WlShm.init(msg.id, &self.wire, msg.version);
-                    try self.link(.{ .wl_shm = self.wl_shm.? }, .none);
+                        self.wl_seat = WlSeat.init(msg.id, &self.wire, msg.version);
+                        try self.link(.{ .wl_seat = self.wl_seat.? }, .none);
+                    },
+                    4 => {
+                        if (!mem.eql(u8, msg.name_string, "xdg_wm_base\x00")) return error.UnexpectedName;
 
-                    try self.wl_shm.?.sendFormat(WlShm.Format.argb8888);
-                    try self.wl_shm.?.sendFormat(WlShm.Format.xrgb8888);
-                },
+                        self.xdg_wm_base = XdgWmBase.init(msg.id, &self.wire, msg.version);
+                        try self.link(.{ .xdg_wm_base = self.xdg_wm_base.? }, .none);
+                    },
+                    6 => {
+                        if (!mem.eql(u8, msg.name_string, "wl_data_device_manager\x00")) return error.UnexpectedName;
 
-                else => return error.NoSuchGlobal,
+                        self.wl_data_device_manager = WlDataDeviceManager.init(msg.id, &self.wire, msg.version);
+                        try self.link(.{ .wl_data_device_manager = self.wl_data_device_manager.? }, .none);
+                    },
+                    8 => {
+                        if (!std.mem.eql(u8, msg.name_string, "wl_shm\x00")) return error.UnexpectedName;
+
+                        self.wl_shm = WlShm.init(msg.id, &self.wire, msg.version);
+                        try self.link(.{ .wl_shm = self.wl_shm.? }, .none);
+
+                        try self.wl_shm.?.sendFormat(WlShm.Format.argb8888);
+                        try self.wl_shm.?.sendFormat(WlShm.Format.xrgb8888);
+                    },
+
+                    else => |id| {
+                        if (id >= 1000) {
+                            if (!mem.eql(u8, msg.name_string, "wl_output\x00")) return error.UnexpectedName;
+                            var it = self.server.outputs.iterator();
+                            while (it.next()) |output| {
+                                if (id != output.id) continue;
+
+                                const wl_output = WlOutput.init(msg.id, &self.wire, msg.version);
+                                try self.link(.{ .wl_output = wl_output }, .{ .output = output });
+
+                                try wl_output.sendGeometry(0, 0, 267, 200, .none, "unknown\x00", "unknown\x00", .normal);
+                                try wl_output.sendMode(.current, output.getWidth(), output.getHeight(), 60000);
+                                try wl_output.sendScale(1);
+                                try wl_output.sendDone();
+
+                                return;
+                            }
+                        }
+
+                        std.log.warn("No such global {}", .{id});
+                        return error.NoSuchGlobal;
+                    },
+                }
             },
         }
     }
@@ -499,7 +544,9 @@ pub const Client = struct {
 
                 window.xdg_surface = xdg_surface;
             },
-            else => return error.XdgWmBaseUnhandledMessage,
+            .destroy => |_| return error.NotImplemented,
+            .create_positioner => |_| return error.NotImplemented,
+            .pong => |_| return error.NotImplemented,
         }
     }
 
@@ -551,14 +598,28 @@ pub const Client = struct {
 
                 if (window.first_configure == false) window.first_configure = true;
             },
-            else => return error.XdgSurfaceUnhandledMessage,
+            .destroy => |_| return error.NotImplemented,
+            .get_popup => |_| return error.NotImplemented,
+            .set_window_geometry => |_| return error.NotImplemented,
         }
     }
 
     pub fn handleXdgToplevel(_: *Client, message: XdgToplevel.Message) !void {
         switch (message) {
             .set_title => |_| {},
-            else => return error.XdgToplevelUnhandledMessage,
+            .destroy => |_| return error.NotImplemented,
+            .set_parent => |_| return error.NotImplemented,
+            .set_app_id => |_| return error.NotImplemented,
+            .show_window_menu => |_| return error.NotImplemented,
+            .move => |_| return error.NotImplemented,
+            .resize => |_| return error.NotImplemented,
+            .set_max_size => |_| return error.NotImplemented,
+            .set_min_size => |_| return error.NotImplemented,
+            .set_maximized => |_| return error.NotImplemented,
+            .unset_maximized => |_| return error.NotImplemented,
+            .set_fullscreen => |_| return error.NotImplemented,
+            .unset_fullscreen => |_| return error.NotImplemented,
+            .set_minimized => |_| return error.NotImplemented,
         }
     }
 
@@ -604,7 +665,11 @@ pub const Client = struct {
                 try self.wl_display.sendDeleteId(wl_shm_pool.id);
                 self.unlink(wl_shm_pool.id);
             },
-            else => return error.UnhandledWlShmPool,
+            .resize => |msg| {
+                const wl_shm_pool = msg.wl_shm_pool;
+                const shm_pool = self.getShmPool(wl_shm_pool.id) orelse return error.NoSuchShmPool;
+                try shm_pool.resize(msg.size);
+            },
         }
     }
 };

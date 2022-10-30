@@ -2793,10 +2793,10 @@ pub const WlOutput = struct {
         try self.wire.putI32(y);
         try self.wire.putI32(physical_width);
         try self.wire.putI32(physical_height);
-        try self.wire.putI32(@enumToInt(subpixel));
+        try self.wire.putU32(@enumToInt(subpixel));
         try self.wire.putString(make);
         try self.wire.putString(model);
-        try self.wire.putI32(@enumToInt(transform));
+        try self.wire.putU32(@enumToInt(transform));
         try self.wire.finishWrite(self.id, 0);
     }
 

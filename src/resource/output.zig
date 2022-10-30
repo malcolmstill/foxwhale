@@ -34,6 +34,14 @@ pub const Output = struct {
         };
     }
 
+    pub fn getWidth(self: *Output) i32 {
+        return self.backend_output.getWidth();
+    }
+
+    pub fn getHeight(self: *Output) i32 {
+        return self.backend_output.getHeight();
+    }
+
     pub fn deinit(self: *Output) !void {
         var it = self.server.clients.iterator();
         while (it.next()) |client| {
