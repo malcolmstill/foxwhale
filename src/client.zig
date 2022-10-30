@@ -34,7 +34,7 @@ const ShmBuffer = @import("resource/shm_buffer.zig").ShmBuffer;
 const Renderer = @import("renderer.zig").Renderer;
 const Rectangle = @import("resource/rectangle.zig").Rectangle;
 const XdgConfigurations = @import("resource/window.zig").XdgConfigurations;
-const SubsetPool = @import("subset_pool.zig").SubsetPool;
+const SubsetPool = @import("datastructures/subset_pool.zig").SubsetPool;
 const ResourceObject = @import("server.zig").ResourceObject;
 const Resource = @import("server.zig").Resource;
 
