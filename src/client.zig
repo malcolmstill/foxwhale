@@ -23,14 +23,10 @@ const XdgWmBase = @import("wl/protocols.zig").XdgWmBase;
 const XdgSurface = @import("wl/protocols.zig").XdgSurface;
 const XdgToplevel = @import("wl/protocols.zig").XdgToplevel;
 const WlMessage = @import("wl/protocols.zig").WlMessage;
-// const shm_pool = @import("shm_pool.zig");
-// const shm_buffer = @import("shm_buffer.zig");
-// const region = @import("region.zig");
-// const positioner = @import("positioner.zig");
-// const buffer = @import("buffer.zig");
-// const Stalloc = @import("stalloc.zig").Stalloc;
 const Window = @import("resource/window.zig").Window;
 const Region = @import("resource/region.zig").Region;
+const RegionOp = @import("resource/region.zig").RegionOp;
+const RectangleOp = @import("resource/region.zig").RectangleOp;
 const Server = @import("server.zig").Server;
 const ShmPool = @import("resource/shm_pool.zig").ShmPool;
 const Buffer = @import("resource/buffer.zig").Buffer;
@@ -303,6 +299,7 @@ pub const Client = struct {
             .xdg_wm_base => |msg| try self.handleXdgWmBase(msg),
             .xdg_surface => |msg| try self.handleXdgSurface(msg),
             .xdg_toplevel => |msg| try self.handleXdgToplevel(msg),
+            .wl_region => |msg| try self.handleWlRegion(msg),
             .wl_callback => |_| return error.NotImplemented,
             .wl_buffer => |_| return error.NotImplemented,
             .wl_data_offer => |_| return error.NotImplemented,
@@ -316,7 +313,6 @@ pub const Client = struct {
             .wl_keyboard => |_| return error.NotImplemented,
             .wl_touch => |_| return error.NotImplemented,
             .wl_output => |_| return error.NotImplemented,
-            .wl_region => |_| return error.NotImplemented,
             .wl_subcompositor => |_| return error.NotImplemented,
             .wl_subsurface => |_| return error.NotImplemented,
             .xdg_positioner => |_| return error.NotImplemented,
@@ -555,6 +551,43 @@ pub const Client = struct {
             .set_buffer_transform => |_| return error.WlSurfaceSetBufferTransformNotImplemented,
             .set_buffer_scale => |_| return error.WlSurfaceSetBufferScaleNotImplemented,
             .damage_buffer => |_| return error.WlSurfaceDamageBufferNotImplemented,
+        }
+    }
+
+    pub fn handleWlRegion(self: *Client, message: WlRegion.Message) !void {
+        switch (message) {
+            .destroy => |msg| {
+                const wl_region = msg.wl_region;
+                const region = self.getRegion(wl_region.id) orelse return error.NoSuchRegion;
+
+                if (region.window == null) {
+                    // TODO: What do we actually need to do here?
+                    self.regions.destroy(region);
+                }
+
+                try self.wl_display.sendDeleteId(wl_region.id);
+                self.unlink(wl_region.id);
+            },
+            .add => |msg| {
+                const region = self.getRegion(msg.wl_region.id) orelse return error.NoSuchRegion;
+
+                const rect = RectangleOp{
+                    .rectangle = Rectangle.init(msg.x, msg.y, msg.width, msg.height),
+                    .op = RegionOp.Add,
+                };
+
+                try region.rectangles.writeItem(rect);
+            },
+            .subtract => |msg| {
+                const region = self.getRegion(msg.wl_region.id) orelse return error.NoSuchRegion;
+
+                const rect = RectangleOp{
+                    .rectangle = Rectangle.init(msg.x, msg.y, msg.width, msg.height),
+                    .op = RegionOp.Subtract,
+                };
+
+                try region.rectangles.writeItem(rect);
+            },
         }
     }
 
