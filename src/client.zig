@@ -300,10 +300,27 @@ pub const Client = struct {
             .xdg_wm_base => |msg| try self.handleXdgWmBase(msg),
             .xdg_surface => |msg| try self.handleXdgSurface(msg),
             .xdg_toplevel => |msg| try self.handleXdgToplevel(msg),
-            else => {
-                std.log.err("UNHANDLED = {}", .{message});
-                return error.UnhandledMessage;
-            },
+            .wl_callback => |_| return error.NotImplemented,
+            .wl_buffer => |_| return error.NotImplemented,
+            .wl_data_offer => |_| return error.NotImplemented,
+            .wl_data_source => |_| return error.NotImplemented,
+            .wl_data_device => |_| return error.NotImplemented,
+            .wl_data_device_manager => |_| return error.NotImplemented,
+            .wl_shell => |_| return error.NotImplemented,
+            .wl_shell_surface => |_| return error.NotImplemented,
+            .wl_seat => |_| return error.NotImplemented,
+            .wl_pointer => |_| return error.NotImplemented,
+            .wl_keyboard => |_| return error.NotImplemented,
+            .wl_touch => |_| return error.NotImplemented,
+            .wl_output => |_| return error.NotImplemented,
+            .wl_region => |_| return error.NotImplemented,
+            .wl_subcompositor => |_| return error.NotImplemented,
+            .wl_subsurface => |_| return error.NotImplemented,
+            .xdg_positioner => |_| return error.NotImplemented,
+            .xdg_popup => |_| return error.NotImplemented,
+            .zwp_linux_dmabuf_v1 => |_| return error.NotImplemented,
+            .zwp_linux_buffer_params_v1 => |_| return error.NotImplemented,
+            .fw_control => |_| return error.NotImplemented,
         }
     }
 
