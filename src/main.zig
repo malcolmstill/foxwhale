@@ -60,6 +60,23 @@ pub fn main() !void {
                     c.glClearColor(1.0, 0.0, 0.3, 1.0);
                     c.glClear(c.GL_COLOR_BUFFER_BIT);
                     try output.swap();
+
+                    {
+                        var win_it = server.windows.iterator();
+
+                        while (win_it.next()) |window| {
+                            window.ready_for_callback = true;
+                        }
+                    }
+
+                    {
+                        var win_it = server.windows.iterator();
+
+                        while (win_it.next()) |window| {
+                            std.log.info("window = {}\n", .{window.client.wl_display.id});
+                            try window.frameCallback();
+                        }
+                    }
                 },
             },
         };

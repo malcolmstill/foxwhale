@@ -46,11 +46,11 @@ pub const Client = struct {
     serial: u32 = 0,
     server_id: u32 = 0xFF00_0000 - 1,
 
-    windows: PoolIterable(Window, u16).Iterable,
-    regions: PoolIterable(Region, u16).Iterable,
-    buffers: PoolIterable(Buffer, u16).Iterable,
-    shm_pools: PoolIterable(ShmPool, u16).Iterable,
-    objects: PoolIterable(ResourceObject, u16).Iterable,
+    windows: PoolIterable(Window, u16).Subset,
+    regions: PoolIterable(Region, u16).Subset,
+    buffers: PoolIterable(Buffer, u16).Subset,
+    shm_pools: PoolIterable(ShmPool, u16).Subset,
+    objects: PoolIterable(ResourceObject, u16).Subset,
 
     wl_display: WlDisplay,
     wl_registry: ?WlRegistry = null,
@@ -92,11 +92,11 @@ pub const Client = struct {
             .conn = conn,
             .wl_display = wl_display,
             .context = Context.init(conn.stream.handle),
-            .windows = server.windows.iterable(),
-            .regions = server.regions.iterable(),
-            .buffers = server.buffers.iterable(),
-            .shm_pools = server.shm_pools.iterable(),
-            .objects = server.objects.iterable(),
+            .windows = server.windows.subset(),
+            .regions = server.regions.subset(),
+            .buffers = server.buffers.subset(),
+            .shm_pools = server.shm_pools.subset(),
+            .objects = server.objects.subset(),
         };
     }
 
@@ -458,9 +458,9 @@ pub const Client = struct {
             .frame => |msg| {
                 const window = self.getWindow(msg.wl_surface.id) orelse return error.NoSuchWindow;
 
-                try window.callbacks.writeItem(msg.callback);
-
                 const wl_callback = WlCallback.init(msg.callback, &self.context, 0);
+                try window.callbacks.writeItem(wl_callback);
+
                 try self.link(.{ .wl_callback = wl_callback }, .none);
             },
             else => {

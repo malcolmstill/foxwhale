@@ -13,6 +13,7 @@ const Mat4x4 = @import("math.zig").Mat4x4;
 const Animatable = @import("animatable.zig").Animatable;
 const AnimatableType = @import("animatable.zig").AnimatableType;
 const WlSurface = @import("wl/protocols.zig").WlSurface;
+const WlCallback = @import("wl/protocols.zig").WlCallback;
 const WlBuffer = @import("wl/protocols.zig").WlBuffer;
 const XdgSurface = @import("wl/protocols.zig").XdgSurface;
 const XdgToplevel = @import("wl/protocols.zig").XdgToplevel;
@@ -20,7 +21,7 @@ const RemoveError = @import("client.zig").RemoveError;
 const ease = @import("ease.zig");
 
 pub const XdgConfigurations = LinearFifo(XdgConfiguration, LinearFifoBufferType{ .Static = 32 });
-const Callbacks = LinearFifo(u32, LinearFifoBufferType{ .Static = 32 });
+const Callbacks = LinearFifo(WlCallback, LinearFifoBufferType{ .Static = 32 });
 
 pub const Window = struct {
     client: *Client,
@@ -242,18 +243,15 @@ pub const Window = struct {
     }
 
     pub fn frameCallback(self: *Self) !void {
-        if (self.ready_for_callback == false) {
-            return;
-        }
+        std.log.info("ready_for_callback = {}", .{self.ready_for_callback});
+        if (self.ready_for_callback == false) return;
+        defer self.ready_for_callback = false;
 
-        while (self.callbacks.readItem()) |wl_callback_id| {
-            const wl_callback = self.client.context.get(wl_callback_id) orelse return error.CallbackIdNotFound;
-            try prot.wl_callback_send_done(wl_callback, @truncate(u32, @intCast(u64, std.time.milliTimestamp())));
-            try self.client.context.unregister(wl_callback);
-            try prot.wl_display_send_delete_id(self.client.context.client.wl_display, wl_callback_id);
+        while (self.callbacks.readItem()) |wl_callback| {
+            try wl_callback.sendDone(@truncate(u32, @intCast(u64, std.time.milliTimestamp())));
+            try self.client.wl_display.sendDeleteId(wl_callback.id);
+            self.client.unlink(wl_callback.id);
         }
-
-        self.ready_for_callback = false;
     }
 
     pub fn root(self: *Window) *Window {
