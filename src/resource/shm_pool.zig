@@ -1,4 +1,6 @@
 const std = @import("std");
+const os = std.os;
+const linux = os.linux;
 const Client = @import("../client.zig").Client;
 const WlShmPool = @import("../wl/protocols.zig").WlShmPool;
 
@@ -12,24 +14,27 @@ pub const ShmPool = struct {
 
     const Self = @This();
 
-    pub fn init(client: *Client, fd: i32, wl_shm_pool: WlShmPool) ShmPool {
+    pub fn init(client: *Client, fd: i32, wl_shm_pool: WlShmPool, size: i32) !ShmPool {
+        const data = try os.mmap(null, @intCast(usize, size), linux.PROT.READ | linux.PROT.WRITE, linux.MAP.SHARED, fd, 0);
+
         return ShmPool{
             .client = client,
             .fd = fd,
             .wl_shm_pool = wl_shm_pool,
+            .data = data,
         };
     }
 
     pub fn deinit(self: *Self) void {
-        std.os.munmap(self.data);
-        std.os.close(self.fd);
+        os.munmap(self.data);
+        os.close(self.fd);
 
         self.fd = -1;
     }
 
     pub fn resize(self: *Self, size: i32) !void {
-        std.os.munmap(self.data);
-        self.data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT.READ | std.os.linux.PROT.WRITE, std.os.linux.MAP.SHARED, self.fd, 0);
+        os.munmap(self.data);
+        self.data = try os.mmap(null, @intCast(usize, size), linux.PROT.READ | linux.PROT.WRITE, linux.MAP.SHARED, self.fd, 0);
     }
 
     pub fn incrementRefCount(self: *Self) void {
@@ -45,32 +50,6 @@ pub const ShmPool = struct {
         }
     }
 };
-
-// pub fn newShmPool(client: *Client, fd: i32, wl_shm_pool_id: u32, size: i32) !*ShmPool {
-//     var i: usize = 0;
-//     while (i < MAX_SHM_POOLS) {
-//         var shm_pool: *ShmPool = &SHM_POOLS[i];
-//         if (shm_pool.in_use == false) {
-//             shm_pool.index = i;
-//             shm_pool.in_use = true;
-//             shm_pool.to_be_destroyed = false;
-//             shm_pool.client = client;
-//             shm_pool.fd = fd;
-//             shm_pool.ref_count = 0;
-//             shm_pool.wl_shm_pool_id = wl_shm_pool_id;
-//             shm_pool.data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT.READ | std.os.linux.PROT.WRITE, std.os.linux.MAP.SHARED, fd, 0);
-
-//             // std.log.warn("data length: {}\n", .{shm_pool.data.len});
-
-//             return shm_pool;
-//         } else {
-//             i = i + 1;
-//             continue;
-//         }
-//     }
-
-//     return ShmPoolsError.ShmPoolsExhausted;
-// }
 
 const ShmPoolsError = error{
     ShmPoolsExhausted,

@@ -418,9 +418,7 @@ pub const Client = struct {
 
                 window.width = buffer.width();
                 window.height = buffer.height();
-                std.log.info("About to make texture", .{});
                 window.texture = try buffer.makeTexture();
-                std.log.info("window.texture = {?}", .{window.texture});
 
                 if (window.first_buffer == false) {
                     window.first_buffer = true;
@@ -551,7 +549,7 @@ pub const Client = struct {
             .create_pool => |msg| {
                 const wl_shm_pool = WlShmPool.init(msg.id, &self.context, 0);
 
-                const shm_pool = try self.shm_pools.create(ShmPool.init(self, msg.fd, wl_shm_pool));
+                const shm_pool = try self.shm_pools.create(try ShmPool.init(self, msg.fd, wl_shm_pool, msg.size));
                 errdefer self.shm_pools.destroy(shm_pool);
 
                 try self.link(.{ .wl_shm_pool = wl_shm_pool }, .{ .shm_pool = shm_pool });
@@ -563,7 +561,6 @@ pub const Client = struct {
         switch (message) {
             .create_buffer => |msg| {
                 const shm_pool = self.getShmPool(msg.wl_shm_pool.id) orelse return error.NoSuchShmPool;
-                std.log.info(".create_buffer msg = {}", .{msg});
                 const offset = msg.offset;
                 const width = msg.width;
                 const height = msg.height;
@@ -571,7 +568,7 @@ pub const Client = struct {
                 const format = msg.format;
 
                 const wl_buffer = WlBuffer.init(msg.id, &self.context, 0);
-                const buffer = try self.buffers.create(Buffer{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer, offset, width, height, stride, format) });
+                const buffer = try self.buffers.create(.{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer, offset, width, height, stride, format) });
                 errdefer self.buffers.destroy(buffer);
 
                 try self.link(.{ .wl_buffer = wl_buffer }, .{ .buffer = buffer });
