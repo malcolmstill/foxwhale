@@ -50,8 +50,6 @@ pub const Renderer = struct {
     pub fn useProgram(self: *Renderer, name: []const u8) !c_uint {
         const program = self.shaders.get(name) orelse return error.NoSuchProgram;
 
-        std.log.info("useProgram = {}", .{program});
-
         c.glUseProgram(program);
         try checkGLError();
 
@@ -231,7 +229,6 @@ pub const Renderer = struct {
         _: u32, // format
         data: []const u8,
     ) !u32 {
-        std.log.info("Renderer.makeTexture: width = {}, height = {}, stride = {}, data.len = {}", .{ width, height, stride, data.len });
         if (stride * height > data.len) {
             return error.NotEnoughTextureDataForDimensions;
         }
@@ -314,17 +311,11 @@ pub const Renderer = struct {
 };
 
 fn createProgram(vertex_source: []const u8, fragment_source: []const u8) !c_uint {
-    std.log.info("vertex source = {s}", .{vertex_source});
-    std.log.info("fragment source = {s}", .{fragment_source});
     var vertex_shader = try compileShader(vertex_source, c.GL_VERTEX_SHADER);
     var fragment_shader = try compileShader(fragment_source, c.GL_FRAGMENT_SHADER);
 
-    std.log.info("vertex shader = {}, fragment shader = {}", .{ vertex_shader, fragment_shader });
-
     var program = c.glCreateProgram();
     try checkGLError();
-
-    std.log.info("program = {}", .{program});
 
     c.glAttachShader(program, vertex_shader);
     try checkGLError();
@@ -369,7 +360,6 @@ fn compileShader(source: []const u8, shader_type: c_uint) !c_uint {
 
     var status: i32 = c.GL_TRUE;
     c.glGetShaderiv(shader, c.GL_COMPILE_STATUS, &status);
-    std.log.info("GL_COMPILE_STATUS good = {}", .{status == c.GL_TRUE});
     if (status == c.GL_FALSE) {
         var log_length: c_int = 0;
         c.glGetShaderiv(shader, c.GL_INFO_LOG_LENGTH, &log_length);

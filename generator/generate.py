@@ -16,6 +16,7 @@ def generate(context, side, files):
         sendType = "request"
 
     print(f'const std = @import("std");')
+    print(f'const builtin = @import("builtin");')
     print(f'const Context = @import("context.zig").Context;')
 
     msgs = []
@@ -117,7 +118,7 @@ def generate_enum(interface):
 def generate_dispatch_function(interface, receiveType):
     interfaceName = f"{camelCase(interface.attrib['name'])}"
     print(f"pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {{")
-    print(f"std.log.info(\"{{any}}, {{s}}\", .{{&objects, &field}});")
+    print(f"if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info(\"{{any}}, {{s}}\", .{{&objects, &field}});")
     print(f"\tswitch(opcode) {{")
     i = 0
     for child in interface:

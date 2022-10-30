@@ -59,7 +59,6 @@ pub fn main() !void {
                 },
                 .message => |m| ev.client.dispatch(m) catch |err| switch (err) {
                     error.BrokenPipe => {
-                        std.log.info("client error = {}", .{err});
                         try epoll.removeFd(ev.client.conn.stream.handle);
                         server.removeClient(ev.client);
                     },
@@ -90,7 +89,6 @@ pub fn main() !void {
                         var win_it = server.windows.iterator();
 
                         while (win_it.next()) |window| {
-                            std.log.info("window = {}\n", .{window.client.wl_display.id});
                             try window.frameCallback();
                         }
                     }

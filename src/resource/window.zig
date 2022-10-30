@@ -137,7 +137,6 @@ pub const Window = struct {
                 const win_y = window.current().y;
                 const abs_x = @intToFloat(f32, window.absoluteX() + x);
                 const abs_y = @intToFloat(f32, window.absoluteY() + y);
-                std.log.info("win_x = {}, win_y = {}, abs_x = {}, abs_y = {}, width = {}, height = {}", .{ win_x, win_y, abs_x, abs_y, window.width, window.height });
 
                 if (window.parent) |parent| {
                     try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ parent.scaleX, parent.scaleY, 1.0, 1.0 }).data);

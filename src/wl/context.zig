@@ -63,7 +63,6 @@ pub const Context = struct {
         if (remaining < header.length) return null;
 
         self.read_offset += @sizeOf(Header);
-        std.log.info("get header.id = {}", .{header.id});
         var object = @field(objects, field)(header.id) orelse return error.CouldntFindExpectedId;
 
         const event = try object.readMessage(objects, field, header.opcode);

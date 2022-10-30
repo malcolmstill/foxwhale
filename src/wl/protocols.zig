@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const Context = @import("context.zig").Context;
 
 // wl_display
@@ -18,7 +19,7 @@ pub const WlDisplay = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // sync
             0 => {
@@ -122,7 +123,7 @@ pub const WlRegistry = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // bind
             0 => {
@@ -214,7 +215,7 @@ pub const WlCallback = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             else => {
                 std.log.info("{}", .{self});
@@ -254,7 +255,7 @@ pub const WlCompositor = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // create_surface
             0 => {
@@ -321,7 +322,7 @@ pub const WlShmPool = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // create_buffer
             0 => {
@@ -417,7 +418,7 @@ pub const WlShm = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // create_pool
             0 => {
@@ -551,7 +552,7 @@ pub const WlBuffer = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -617,7 +618,7 @@ pub const WlDataOffer = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // accept
             0 => {
@@ -809,7 +810,7 @@ pub const WlDataSource = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // offer
             0 => {
@@ -1008,7 +1009,7 @@ pub const WlDataDevice = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // start_drag
             0 => {
@@ -1211,7 +1212,7 @@ pub const WlDataDeviceManager = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // create_data_source
             0 => {
@@ -1291,7 +1292,7 @@ pub const WlShell = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // get_shell_surface
             0 => {
@@ -1351,7 +1352,7 @@ pub const WlShellSurface = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // pong
             0 => {
@@ -1681,7 +1682,7 @@ pub const WlSurface = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -1940,7 +1941,7 @@ pub const WlSeat = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // get_pointer
             0 => {
@@ -2087,7 +2088,7 @@ pub const WlPointer = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // set_cursor
             0 => {
@@ -2411,7 +2412,7 @@ pub const WlKeyboard = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // release
             0 => {
@@ -2558,7 +2559,7 @@ pub const WlTouch = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // release
             0 => {
@@ -2742,7 +2743,7 @@ pub const WlOutput = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // release
             0 => {
@@ -2914,7 +2915,7 @@ pub const WlRegion = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -3013,7 +3014,7 @@ pub const WlSubcompositor = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -3093,7 +3094,7 @@ pub const WlSubsurface = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -3232,7 +3233,7 @@ pub const XdgWmBase = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -3364,7 +3365,7 @@ pub const XdgPositioner = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -3566,7 +3567,7 @@ pub const XdgSurface = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -3732,7 +3733,7 @@ pub const XdgToplevel = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -4094,7 +4095,7 @@ pub const XdgPopup = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -4196,7 +4197,7 @@ pub const ZwpLinuxDmabufV1 = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -4306,7 +4307,7 @@ pub const ZwpLinuxBufferParamsV1 = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // destroy
             0 => {
@@ -4483,7 +4484,7 @@ pub const FwControl = struct {
     }
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        std.log.info("{any}, {s}", .{ &objects, &field });
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
             // get_clients
             0 => {
