@@ -25,15 +25,19 @@ pub const Renderer = struct {
     }
 
     pub fn initShaders(self: *Renderer) !void {
-        try self.shaders.put("window", try createProgram(
+        const window_program = try createProgram(
             @embedFile("shaders/window/vertex.glsl"),
             @embedFile("shaders/window/fragment.glsl"),
-        ));
+        );
+        try checkGLError();
+        try self.shaders.put("window", window_program);
 
-        try self.shaders.put("checker", try createProgram(
+        const checker_program = try createProgram(
             @embedFile("shaders/checker/vertex.glsl"),
             @embedFile("shaders/checker/fragment.glsl"),
-        ));
+        );
+        try checkGLError();
+        try self.shaders.put("checker", checker_program);
     }
 
     pub fn deinit(self: *Renderer) void {
@@ -45,6 +49,8 @@ pub const Renderer = struct {
 
     pub fn useProgram(self: *Renderer, name: []const u8) !c_uint {
         const program = self.shaders.get(name) orelse return error.NoSuchProgram;
+
+        std.log.info("useProgram = {}", .{program});
 
         c.glUseProgram(program);
         try checkGLError();
@@ -60,7 +66,7 @@ pub const Renderer = struct {
         try checkGLError();
     }
 
-    pub fn render(_: *Renderer, _: *Output) !void {
+    pub fn render(_: *Renderer) !void {
         // var width = output.backend.getWidth();
         // var height = output.backend.getHeight();
 
@@ -307,11 +313,17 @@ pub const Renderer = struct {
 };
 
 fn createProgram(vertex_source: []const u8, fragment_source: []const u8) !c_uint {
+    std.log.info("vertex source = {s}", .{vertex_source});
+    std.log.info("fragment source = {s}", .{fragment_source});
     var vertex_shader = try compileShader(vertex_source, c.GL_VERTEX_SHADER);
     var fragment_shader = try compileShader(fragment_source, c.GL_FRAGMENT_SHADER);
 
+    std.log.info("vertex shader = {}, fragment shader = {}", .{ vertex_shader, fragment_shader });
+
     var program = c.glCreateProgram();
     try checkGLError();
+
+    std.log.info("program = {}", .{program});
 
     c.glAttachShader(program, vertex_shader);
     try checkGLError();
@@ -321,6 +333,20 @@ fn createProgram(vertex_source: []const u8, fragment_source: []const u8) !c_uint
 
     c.glLinkProgram(program);
     try checkGLError();
+    var status: i32 = c.GL_TRUE;
+    c.glGetProgramiv(program, c.GL_LINK_STATUS, &status);
+    if (status == c.GL_FALSE) {
+        var log: [256]u8 = undefined;
+        var log_length: c_int = 0;
+        c.glGetProgramiv(program, c.GL_INFO_LOG_LENGTH, &log_length);
+        try checkGLError();
+        c.glGetProgramInfoLog(program, log_length, null, log[0..]);
+        try checkGLError();
+
+        std.log.warn("log: {s}\n", .{log[0..std.math.min(log.len, @intCast(usize, log_length))]});
+
+        return error.FailedToCompileShader;
+    }
 
     c.glDeleteShader(vertex_shader);
     try checkGLError();
@@ -342,6 +368,7 @@ fn compileShader(source: []const u8, shader_type: c_uint) !c_uint {
 
     var status: i32 = c.GL_TRUE;
     c.glGetShaderiv(shader, c.GL_COMPILE_STATUS, &status);
+    std.log.info("GL_COMPILE_STATUS good = {}", .{status == c.GL_TRUE});
     if (status == c.GL_FALSE) {
         var log_length: c_int = 0;
         c.glGetShaderiv(shader, c.GL_INFO_LOG_LENGTH, &log_length);

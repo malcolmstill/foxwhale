@@ -6,6 +6,7 @@ const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
 const Event = @import("subsystem.zig").Event;
 const Target = @import("subsystem.zig").Target;
 const Backend = @import("backend/backend.zig").Backend;
+const Renderer = @import("renderer.zig").Renderer;
 const c = @cImport({
     @cInclude("GLES3/gl3.h");
 });
@@ -29,6 +30,10 @@ pub fn main() !void {
     try epoll.addFd(backend.getFd(), Target{ .backend = &backend });
 
     var output = try backend.newOutput(400, 300);
+
+    var renderer = Renderer.init(allocator);
+    defer renderer.deinit();
+    try renderer.initShaders();
 
     var counter = FrameCounter.init();
 
@@ -59,15 +64,17 @@ pub fn main() !void {
                     counter.update();
                     c.glClearColor(1.0, 0.0, 0.3, 1.0);
                     c.glClear(c.GL_COLOR_BUFFER_BIT);
-                    try output.swap();
+                    try renderer.render();
 
                     {
                         var win_it = server.windows.iterator();
 
                         while (win_it.next()) |window| {
-                            window.ready_for_callback = true;
+                            try window.render(400, 300, &renderer, 0, 0);
                         }
                     }
+
+                    try output.swap();
 
                     {
                         var win_it = server.windows.iterator();
