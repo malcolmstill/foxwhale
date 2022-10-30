@@ -53,10 +53,18 @@ pub fn main() !void {
             // 2. Handle wayland events per client
             .client => |ev| switch (ev.event) {
                 .hangup => {
+                    std.log.info("hangup removing client", .{});
                     try epoll.removeFd(ev.client.conn.stream.handle);
                     server.removeClient(ev.client);
                 },
-                .message => |m| try ev.client.dispatch(m),
+                .message => |m| ev.client.dispatch(m) catch |err| switch (err) {
+                    error.BrokenPipe => {
+                        std.log.info("client error = {}", .{err});
+                        try epoll.removeFd(ev.client.conn.stream.handle);
+                        server.removeClient(ev.client);
+                    },
+                    else => return err,
+                },
                 .err => std.debug.print("got err\n", .{}),
             },
             .backend => |ev| switch (ev.event) {

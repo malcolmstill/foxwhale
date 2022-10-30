@@ -40,6 +40,7 @@ const Resource = @import("server.zig").Resource;
 
 pub const Client = struct {
     server: *Server,
+    tombstone: bool = false,
     alloc: mem.Allocator,
     conn: std.net.StreamServer.Connection,
     context: Context,
@@ -105,6 +106,8 @@ pub const Client = struct {
 
         std.os.close(self.conn.stream.handle);
 
+        self.tombstone = true;
+
         self.windows.deinit();
         self.regions.deinit();
         self.buffers.deinit();
@@ -165,7 +168,7 @@ pub const Client = struct {
         }
 
         pub fn next(self: *Iterator, event_type: u32) !?Event {
-            if (self.state == .done) return null;
+            if (self.state == .done or self.client.tombstone == true) return null;
 
             if (event_type & std.os.linux.EPOLL.HUP > 0) {
                 self.state = .done;
@@ -317,11 +320,10 @@ pub const Client = struct {
                 try wl_registry.sendGlobal(3, "wl_seat\x00", 4);
                 try wl_registry.sendGlobal(4, "xdg_wm_base\x00", 1);
 
-                // var output_base: u32 = out.OUTPUT_BASE;
-                // for (context.client.compositor.outputs.items) |_| {
-                //     try prot.wl_registry_send_global(wl_registry, output_base, "wl_output\x00", 2);
-                //     output_base += 1;
-                // }
+                var it = self.server.outputs.iterator();
+                while (it.next()) |output| {
+                    try wl_registry.sendGlobal(output.id, "wl_output\x00", 2);
+                }
 
                 try wl_registry.sendGlobal(6, "wl_data_device_manager\x00", 3);
                 try wl_registry.sendGlobal(8, "wl_shm\x00", 1);
