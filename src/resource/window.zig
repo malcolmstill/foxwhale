@@ -137,6 +137,7 @@ pub const Window = struct {
                 const win_y = window.current().y;
                 const abs_x = @intToFloat(f32, window.absoluteX() + x);
                 const abs_y = @intToFloat(f32, window.absoluteY() + y);
+                std.log.info("win_x = {}, win_y = {}, abs_x = {}, abs_y = {}, width = {}, height = {}", .{ win_x, win_y, abs_x, abs_y, window.width, window.height });
 
                 if (window.parent) |parent| {
                     try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ parent.scaleX, parent.scaleY, 1.0, 1.0 }).data);
@@ -163,11 +164,11 @@ pub const Window = struct {
         }
     }
 
-    pub fn firstCommit(self: *Self) !void {
-        self.originX = @intToFloat(f32, self.width) / 2.0;
-        self.originY = @intToFloat(f32, self.height) / 2.0;
-        self.scaleX = 0.0;
-        self.scaleY = 6.0 / @intToFloat(f32, self.height);
+    pub fn firstCommit(_: *Self) !void {
+        // self.originX = @intToFloat(f32, self.width) / 2.0;
+        // self.originY = @intToFloat(f32, self.height) / 2.0;
+        // self.scaleX = 0.0;
+        // self.scaleY = 6.0 / @intToFloat(f32, self.height);
 
         // TODO: reinstate
         // const seq = try compositor.COMPOSITOR.animations.addSequential();
@@ -243,7 +244,6 @@ pub const Window = struct {
     }
 
     pub fn frameCallback(self: *Self) !void {
-        std.log.info("ready_for_callback = {}", .{self.ready_for_callback});
         if (self.ready_for_callback == false) return;
         defer self.ready_for_callback = false;
 

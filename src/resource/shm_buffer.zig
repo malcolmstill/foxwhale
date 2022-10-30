@@ -14,20 +14,25 @@ pub const ShmBuffer = struct {
     client: *Client,
     wl_buffer: WlBuffer,
     shm_pool: *ShmPool,
-    offset: i32 = 0,
-    width: i32 = 0,
-    height: i32 = 0,
-    stride: i32 = 0,
-    format: u32 = 0,
+    offset: i32,
+    width: i32,
+    height: i32,
+    stride: i32,
+    format: u32,
 
     const Self = @This();
 
-    pub fn init(client: *Client, shm_pool: *ShmPool, wl_buffer: WlBuffer) ShmBuffer {
+    pub fn init(client: *Client, shm_pool: *ShmPool, wl_buffer: WlBuffer, offset: i32, width: i32, height: i32, stride: i32, format: u32) ShmBuffer {
         shm_pool.incrementRefCount();
         return ShmBuffer{
             .client = client,
             .shm_pool = shm_pool,
             .wl_buffer = wl_buffer,
+            .offset = offset,
+            .width = width,
+            .height = height,
+            .stride = stride,
+            .format = format,
         };
     }
 

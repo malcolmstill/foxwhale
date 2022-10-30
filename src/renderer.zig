@@ -231,6 +231,7 @@ pub const Renderer = struct {
         _: u32, // format
         data: []const u8,
     ) !u32 {
+        std.log.info("Renderer.makeTexture: width = {}, height = {}, stride = {}, data.len = {}", .{ width, height, stride, data.len });
         if (stride * height > data.len) {
             return error.NotEnoughTextureDataForDimensions;
         }

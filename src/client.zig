@@ -418,6 +418,7 @@ pub const Client = struct {
 
                 window.width = buffer.width();
                 window.height = buffer.height();
+                std.log.info("About to make texture", .{});
                 window.texture = try buffer.makeTexture();
                 std.log.info("window.texture = {?}", .{window.texture});
 
@@ -562,9 +563,15 @@ pub const Client = struct {
         switch (message) {
             .create_buffer => |msg| {
                 const shm_pool = self.getShmPool(msg.wl_shm_pool.id) orelse return error.NoSuchShmPool;
+                std.log.info(".create_buffer msg = {}", .{msg});
+                const offset = msg.offset;
+                const width = msg.width;
+                const height = msg.height;
+                const stride = msg.stride;
+                const format = msg.format;
 
                 const wl_buffer = WlBuffer.init(msg.id, &self.context, 0);
-                const buffer = try self.buffers.create(Buffer{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer) });
+                const buffer = try self.buffers.create(Buffer{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer, offset, width, height, stride, format) });
                 errdefer self.buffers.destroy(buffer);
 
                 try self.link(.{ .wl_buffer = wl_buffer }, .{ .buffer = buffer });
