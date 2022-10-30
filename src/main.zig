@@ -31,6 +31,8 @@ pub fn main() !void {
 
     var output = try backend.newOutput(400, 300);
 
+    _ = try server.addOutput(&output);
+
     var renderer = Renderer.init(allocator);
     defer renderer.deinit();
     try renderer.initShaders();

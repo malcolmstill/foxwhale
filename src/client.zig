@@ -34,7 +34,7 @@ const ShmBuffer = @import("resource/shm_buffer.zig").ShmBuffer;
 const Renderer = @import("renderer.zig").Renderer;
 const Rectangle = @import("resource/rectangle.zig").Rectangle;
 const XdgConfigurations = @import("resource/window.zig").XdgConfigurations;
-const PoolIterable = @import("pool_iterable.zig").PoolIterable;
+const SubsetPool = @import("subset_pool.zig").SubsetPool;
 const ResourceObject = @import("server.zig").ResourceObject;
 const Resource = @import("server.zig").Resource;
 
@@ -46,11 +46,11 @@ pub const Client = struct {
     serial: u32 = 0,
     server_id: u32 = 0xFF00_0000 - 1,
 
-    windows: PoolIterable(Window, u16).Subset,
-    regions: PoolIterable(Region, u16).Subset,
-    buffers: PoolIterable(Buffer, u16).Subset,
-    shm_pools: PoolIterable(ShmPool, u16).Subset,
-    objects: PoolIterable(ResourceObject, u16).Subset,
+    windows: SubsetPool(Window, u16).Subset,
+    regions: SubsetPool(Region, u16).Subset,
+    buffers: SubsetPool(Buffer, u16).Subset,
+    shm_pools: SubsetPool(ShmPool, u16).Subset,
+    objects: SubsetPool(ResourceObject, u16).Subset,
 
     wl_display: WlDisplay,
     wl_registry: ?WlRegistry = null,

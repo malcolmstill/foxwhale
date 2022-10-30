@@ -1,20 +1,24 @@
 const std = @import("std");
 const prot = @import("wl/protocols.zig");
 const Focus = @import("focus.zig").Focus;
-const Output = @import("resource/output.zig").Output;
 const Window = @import("resource/window.zig").Window;
-const compositor = @import("compositor.zig");
-
-// pub var CURRENT_VIEW: *View = undefined;
 
 pub const View = struct {
-    output: ?*Output,
     top: ?*Window,
     pointer_window: ?*Window,
     active_window: ?*Window,
     focus: Focus,
 
     const Self = @This();
+
+    pub fn init() View {
+        return View{
+            .top = null,
+            .pointer_window = null,
+            .active_window = null,
+            .focus = Focus.Click,
+        };
+    }
 
     pub fn visible(_: *Self) bool {
         return true;
@@ -144,7 +148,8 @@ pub const View = struct {
                 }
             } else {
                 std.log.warn("new pointer_window: null\n", .{});
-                compositor.COMPOSITOR.client_cursor = null;
+                // FIXME: reinstate
+                // compositor.COMPOSITOR.client_cursor = null;
             }
         }
 
@@ -171,13 +176,3 @@ pub const View = struct {
         // self.* = makeView(self.output);
     }
 };
-
-pub fn makeView(output: ?*Output) View {
-    return View{
-        .output = output,
-        .top = null,
-        .pointer_window = null,
-        .active_window = null,
-        .focus = Focus.Click,
-    };
-}

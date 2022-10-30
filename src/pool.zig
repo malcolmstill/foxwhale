@@ -26,6 +26,8 @@ pub fn Pool(comptime T: type, comptime U: type) type {
                 @sizeOf(T),
             });
 
+            std.log.info("in_use len = {}", .{in_use.len});
+
             // Make every free_stack node point to the next node
             for (free_stack) |_, index| {
                 if (builtin.mode == .Debug) in_use[index] = false;
@@ -68,6 +70,8 @@ pub fn Pool(comptime T: type, comptime U: type) type {
             if (self.next_free) |next_free| {
                 defer self.next_free = self.free_stack[next_free];
 
+                std.log.info("in_use.len 2 = {}", .{self.in_use.len});
+                std.log.info("new index = {}", .{next_free});
                 if (builtin.mode == .Debug) self.in_use[next_free] = true;
 
                 return &self.entities[next_free];

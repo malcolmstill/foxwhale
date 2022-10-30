@@ -15,7 +15,9 @@ const Region = @import("resource/region.zig").Region;
 const ShmPool = @import("resource/shm_pool.zig").ShmPool;
 const Pool = @import("pool.zig").Pool;
 const Output = @import("resource/output.zig").Output;
-const PoolIterable = @import("pool_iterable.zig").PoolIterable;
+const IterablePool = @import("pool_iterable.zig").IterablePool;
+const SubsetPool = @import("subset_pool.zig").SubsetPool;
+const BackendOutput = @import("backend/backend.zig").BackendOutput;
 
 pub const ResourceType = enum(u8) {
     window,
@@ -43,14 +45,15 @@ pub const ResourceObject = struct {
 pub const Server = struct {
     alloc: mem.Allocator,
     server: std.net.StreamServer,
-    // resources:
-    clients: Pool(Client, u8),
-    windows: PoolIterable(Window, u16),
-    regions: PoolIterable(Region, u16),
-    buffers: PoolIterable(Buffer, u16),
-    shm_pools: PoolIterable(ShmPool, u16),
-    outputs: PoolIterable(Output, u5),
-    objects: PoolIterable(ResourceObject, u16),
+    // per-server resources:
+    clients: IterablePool(Client, u8),
+    outputs: IterablePool(Output, u5),
+    // per-client resources:
+    windows: SubsetPool(Window, u16),
+    regions: SubsetPool(Region, u16),
+    buffers: SubsetPool(Buffer, u16),
+    shm_pools: SubsetPool(ShmPool, u16),
+    objects: SubsetPool(ResourceObject, u16),
 
     output_base: u32 = 1000,
 
@@ -74,13 +77,13 @@ pub const Server = struct {
         return Server{
             .alloc = alloc,
             .server = try socket(),
-            .clients = try Pool(Client, u8).init(alloc, 255),
-            .windows = try PoolIterable(Window, u16).init(alloc, 1024),
-            .regions = try PoolIterable(Region, u16).init(alloc, 1024),
-            .buffers = try PoolIterable(Buffer, u16).init(alloc, 1024),
-            .shm_pools = try PoolIterable(ShmPool, u16).init(alloc, 1024),
-            .outputs = try PoolIterable(Output, u5).init(alloc, 31),
-            .objects = try PoolIterable(ResourceObject, u16).init(alloc, 16384),
+            .clients = try IterablePool(Client, u8).init(alloc, 255),
+            .outputs = try IterablePool(Output, u5).init(alloc, 31),
+            .windows = try SubsetPool(Window, u16).init(alloc, 1024),
+            .regions = try SubsetPool(Region, u16).init(alloc, 1024),
+            .buffers = try SubsetPool(Buffer, u16).init(alloc, 1024),
+            .shm_pools = try SubsetPool(ShmPool, u16).init(alloc, 1024),
+            .objects = try SubsetPool(ResourceObject, u16).init(alloc, 16384),
         };
     }
 
@@ -110,6 +113,10 @@ pub const Server = struct {
     pub fn removeClient(self: *Self, client: *Client) void {
         client.deinit();
         self.clients.destroy(client);
+    }
+
+    pub fn addOutput(self: *Self, backend_output: *BackendOutput) !*Output {
+        return self.outputs.create(try Output.init(self, backend_output));
     }
 
     pub fn iterator(self: *Server) SubsystemIterator {
