@@ -4,7 +4,7 @@ const mem = std.mem;
 const epoll = @import("epoll.zig");
 const Event = @import("subsystem.zig").Event;
 const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
-const Context = @import("wl/context.zig").Context;
+const Wire = @import("wl/wire.zig").Wire;
 const WlObject = @import("wl/protocols.zig").WlObject;
 const WlDisplay = @import("wl/protocols.zig").WlDisplay;
 const WlRegistry = @import("wl/protocols.zig").WlRegistry;
@@ -43,7 +43,7 @@ pub const Client = struct {
     tombstone: bool = false,
     alloc: mem.Allocator,
     conn: std.net.StreamServer.Connection,
-    context: Context,
+    context: Wire,
     serial: u32 = 0,
     server_id: u32 = 0xFF00_0000 - 1,
 
@@ -92,7 +92,7 @@ pub const Client = struct {
             .server = server,
             .conn = conn,
             .wl_display = wl_display,
-            .context = Context.init(conn.stream.handle),
+            .context = Wire.init(conn.stream.handle),
             .windows = server.windows.subset(),
             .regions = server.regions.subset(),
             .buffers = server.buffers.subset(),

@@ -9,7 +9,7 @@ const FdBuffer = LinearFifo(i32, LinearFifoBufferType{ .Static = txrx.MAX_FDS })
 
 const BUFFER_SIZE = 4096;
 
-pub const Context = struct {
+pub const Wire = struct {
     fd: i32 = -1,
     read_offset: usize = 0,
     write_offset: usize = 0,

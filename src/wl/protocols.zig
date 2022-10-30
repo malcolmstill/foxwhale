@@ -1,19 +1,19 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const Context = @import("context.zig").Context;
+const Wire = @import("wire.zig").Wire;
 
 // wl_display
 pub const WlDisplay = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -23,7 +23,7 @@ pub const WlDisplay = struct {
         switch (opcode) {
             // sync
             0 => {
-                const callback: u32 = try self.context.nextU32();
+                const callback: u32 = try self.wire.nextU32();
                 return Message{
                     .sync = SyncMessage{
                         .wl_display = self.*,
@@ -33,7 +33,7 @@ pub const WlDisplay = struct {
             },
             // get_registry
             1 => {
-                const registry: u32 = try self.context.nextU32();
+                const registry: u32 = try self.wire.nextU32();
                 return Message{
                     .get_registry = GetRegistryMessage{
                         .wl_display = self.*,
@@ -78,11 +78,11 @@ pub const WlDisplay = struct {
     // of the error, for (debugging) convenience.
     //
     pub fn sendError(self: Self, object_id: u32, code: u32, message: []const u8) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(object_id);
-        self.context.putU32(code);
-        self.context.putString(message);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(object_id);
+        self.wire.putU32(code);
+        self.wire.putString(message);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -93,9 +93,9 @@ pub const WlDisplay = struct {
     // safely reuse the object ID.
     //
     pub fn sendDeleteId(self: Self, id: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(id);
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        self.wire.putU32(id);
+        try self.wire.finishWrite(self.id, 1);
     }
 
     pub const Error = enum(u32) {
@@ -108,16 +108,16 @@ pub const WlDisplay = struct {
 
 // wl_registry
 pub const WlRegistry = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -127,10 +127,10 @@ pub const WlRegistry = struct {
         switch (opcode) {
             // bind
             0 => {
-                const name: u32 = try self.context.nextU32();
-                const name_string: []u8 = try self.context.nextString();
-                const version: u32 = try self.context.nextU32();
-                const id: u32 = try self.context.nextU32();
+                const name: u32 = try self.wire.nextU32();
+                const name_string: []u8 = try self.wire.nextString();
+                const version: u32 = try self.wire.nextU32();
+                const id: u32 = try self.wire.nextU32();
                 return Message{
                     .bind = BindMessage{
                         .wl_registry = self.*,
@@ -172,11 +172,11 @@ pub const WlRegistry = struct {
     // given version of the given interface.
     //
     pub fn sendGlobal(self: Self, name: u32, interface: []const u8, version: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(name);
-        self.context.putString(interface);
-        self.context.putU32(version);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(name);
+        self.wire.putString(interface);
+        self.wire.putU32(version);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -192,24 +192,24 @@ pub const WlRegistry = struct {
     // the global going away and a client sending a request to it.
     //
     pub fn sendGlobalRemove(self: Self, name: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(name);
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        self.wire.putU32(name);
+        try self.wire.finishWrite(self.id, 1);
     }
 };
 
 // wl_callback
 pub const WlCallback = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -232,24 +232,24 @@ pub const WlCallback = struct {
     // Notify the client when the related request is done.
     //
     pub fn sendDone(self: Self, callback_data: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(callback_data);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(callback_data);
+        try self.wire.finishWrite(self.id, 0);
     }
 };
 
 // wl_compositor
 pub const WlCompositor = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -259,7 +259,7 @@ pub const WlCompositor = struct {
         switch (opcode) {
             // create_surface
             0 => {
-                const id: u32 = try self.context.nextU32();
+                const id: u32 = try self.wire.nextU32();
                 return Message{
                     .create_surface = CreateSurfaceMessage{
                         .wl_compositor = self.*,
@@ -269,7 +269,7 @@ pub const WlCompositor = struct {
             },
             // create_region
             1 => {
-                const id: u32 = try self.context.nextU32();
+                const id: u32 = try self.wire.nextU32();
                 return Message{
                     .create_region = CreateRegionMessage{
                         .wl_compositor = self.*,
@@ -307,16 +307,16 @@ pub const WlCompositor = struct {
 
 // wl_shm_pool
 pub const WlShmPool = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -326,12 +326,12 @@ pub const WlShmPool = struct {
         switch (opcode) {
             // create_buffer
             0 => {
-                const id: u32 = try self.context.nextU32();
-                const offset: i32 = try self.context.nextI32();
-                const width: i32 = try self.context.nextI32();
-                const height: i32 = try self.context.nextI32();
-                const stride: i32 = try self.context.nextI32();
-                const format: u32 = try self.context.nextU32();
+                const id: u32 = try self.wire.nextU32();
+                const offset: i32 = try self.wire.nextI32();
+                const width: i32 = try self.wire.nextI32();
+                const height: i32 = try self.wire.nextI32();
+                const stride: i32 = try self.wire.nextI32();
+                const format: u32 = try self.wire.nextU32();
                 return Message{
                     .create_buffer = CreateBufferMessage{
                         .wl_shm_pool = self.*,
@@ -354,7 +354,7 @@ pub const WlShmPool = struct {
             },
             // resize
             2 => {
-                const size: i32 = try self.context.nextI32();
+                const size: i32 = try self.wire.nextI32();
                 return Message{
                     .resize = ResizeMessage{
                         .wl_shm_pool = self.*,
@@ -403,16 +403,16 @@ pub const WlShmPool = struct {
 
 // wl_shm
 pub const WlShm = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -422,9 +422,9 @@ pub const WlShm = struct {
         switch (opcode) {
             // create_pool
             0 => {
-                const id: u32 = try self.context.nextU32();
-                const fd: i32 = try self.context.nextFd();
-                const size: i32 = try self.context.nextI32();
+                const id: u32 = try self.wire.nextU32();
+                const fd: i32 = try self.wire.nextFd();
+                const size: i32 = try self.wire.nextI32();
                 return Message{
                     .create_pool = CreatePoolMessage{
                         .wl_shm = self.*,
@@ -462,9 +462,9 @@ pub const WlShm = struct {
     // argb8888 and xrgb8888.
     //
     pub fn sendFormat(self: Self, format: Format) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(@enumToInt(format));
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(@enumToInt(format));
+        try self.wire.finishWrite(self.id, 0);
     }
 
     pub const Error = enum(u32) {
@@ -537,16 +537,16 @@ pub const WlShm = struct {
 
 // wl_buffer
 pub const WlBuffer = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -596,23 +596,23 @@ pub const WlBuffer = struct {
     // optimization for GL(ES) compositors with wl_shm clients.
     //
     pub fn sendRelease(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 0);
     }
 };
 
 // wl_data_offer
 pub const WlDataOffer = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -622,8 +622,8 @@ pub const WlDataOffer = struct {
         switch (opcode) {
             // accept
             0 => {
-                const serial: u32 = try self.context.nextU32();
-                const mime_type: []u8 = try self.context.nextString();
+                const serial: u32 = try self.wire.nextU32();
+                const mime_type: []u8 = try self.wire.nextString();
                 return Message{
                     .accept = AcceptMessage{
                         .wl_data_offer = self.*,
@@ -634,8 +634,8 @@ pub const WlDataOffer = struct {
             },
             // receive
             1 => {
-                const mime_type: []u8 = try self.context.nextString();
-                const fd: i32 = try self.context.nextFd();
+                const mime_type: []u8 = try self.wire.nextString();
+                const fd: i32 = try self.wire.nextFd();
                 return Message{
                     .receive = ReceiveMessage{
                         .wl_data_offer = self.*,
@@ -662,8 +662,8 @@ pub const WlDataOffer = struct {
             },
             // set_actions
             4 => {
-                const dnd_actions: u32 = try self.context.nextU32();
-                const preferred_action: u32 = try self.context.nextU32();
+                const dnd_actions: u32 = try self.wire.nextU32();
+                const preferred_action: u32 = try self.wire.nextU32();
                 return Message{
                     .set_actions = SetActionsMessage{
                         .wl_data_offer = self.*,
@@ -726,9 +726,9 @@ pub const WlDataOffer = struct {
     // event per offered mime type.
     //
     pub fn sendOffer(self: Self, mime_type: []const u8) anyerror!void {
-        self.context.startWrite();
-        self.context.putString(mime_type);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putString(mime_type);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -737,9 +737,9 @@ pub const WlDataOffer = struct {
     // side changes its offered actions through wl_data_source.set_actions.
     //
     pub fn sendSourceActions(self: Self, source_actions: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(source_actions);
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        self.wire.putU32(source_actions);
+        try self.wire.finishWrite(self.id, 1);
     }
 
     //
@@ -780,9 +780,9 @@ pub const WlDataOffer = struct {
     // must happen before the call to wl_data_offer.finish.
     //
     pub fn sendAction(self: Self, dnd_action: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(dnd_action);
-        try self.context.finishWrite(self.id, 2);
+        self.wire.startWrite();
+        self.wire.putU32(dnd_action);
+        try self.wire.finishWrite(self.id, 2);
     }
 
     pub const Error = enum(u32) {
@@ -795,16 +795,16 @@ pub const WlDataOffer = struct {
 
 // wl_data_source
 pub const WlDataSource = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -814,7 +814,7 @@ pub const WlDataSource = struct {
         switch (opcode) {
             // offer
             0 => {
-                const mime_type: []u8 = try self.context.nextString();
+                const mime_type: []u8 = try self.wire.nextString();
                 return Message{
                     .offer = OfferMessage{
                         .wl_data_source = self.*,
@@ -832,7 +832,7 @@ pub const WlDataSource = struct {
             },
             // set_actions
             2 => {
-                const dnd_actions: u32 = try self.context.nextU32();
+                const dnd_actions: u32 = try self.wire.nextU32();
                 return Message{
                     .set_actions = SetActionsMessage{
                         .wl_data_source = self.*,
@@ -880,9 +880,9 @@ pub const WlDataSource = struct {
     // Used for feedback during drag-and-drop.
     //
     pub fn sendTarget(self: Self, mime_type: []const u8) anyerror!void {
-        self.context.startWrite();
-        self.context.putString(mime_type);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putString(mime_type);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -891,10 +891,10 @@ pub const WlDataSource = struct {
     // close it.
     //
     pub fn sendSend(self: Self, mime_type: []const u8, fd: i32) anyerror!void {
-        self.context.startWrite();
-        self.context.putString(mime_type);
-        self.context.putFd(fd);
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        self.wire.putString(mime_type);
+        self.wire.putFd(fd);
+        try self.wire.finishWrite(self.id, 1);
     }
 
     //
@@ -920,8 +920,8 @@ pub const WlDataSource = struct {
     // source.
     //
     pub fn sendCancelled(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 2);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 2);
     }
 
     //
@@ -936,8 +936,8 @@ pub const WlDataSource = struct {
     // not be destroyed here.
     //
     pub fn sendDndDropPerformed(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 3);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 3);
     }
 
     //
@@ -949,8 +949,8 @@ pub const WlDataSource = struct {
     // source can now delete the transferred data.
     //
     pub fn sendDndFinished(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 4);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 4);
     }
 
     //
@@ -981,9 +981,9 @@ pub const WlDataSource = struct {
     // they reflect the current action.
     //
     pub fn sendAction(self: Self, dnd_action: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(dnd_action);
-        try self.context.finishWrite(self.id, 5);
+        self.wire.startWrite();
+        self.wire.putU32(dnd_action);
+        try self.wire.finishWrite(self.id, 5);
     }
 
     pub const Error = enum(u32) {
@@ -994,16 +994,16 @@ pub const WlDataSource = struct {
 
 // wl_data_device
 pub const WlDataDevice = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -1013,19 +1013,19 @@ pub const WlDataDevice = struct {
         switch (opcode) {
             // start_drag
             0 => {
-                const source: ?WlDataSource = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const source: ?WlDataSource = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_data_source => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
-                const origin: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const origin: WlSurface = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                const icon: ?WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const icon: ?WlSurface = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
-                const serial: u32 = try self.context.nextU32();
+                const serial: u32 = try self.wire.nextU32();
                 return Message{
                     .start_drag = StartDragMessage{
                         .wl_data_device = self.*,
@@ -1038,11 +1038,11 @@ pub const WlDataDevice = struct {
             },
             // set_selection
             1 => {
-                const source: ?WlDataSource = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const source: ?WlDataSource = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_data_source => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
-                const serial: u32 = try self.context.nextU32();
+                const serial: u32 = try self.wire.nextU32();
                 return Message{
                     .set_selection = SetSelectionMessage{
                         .wl_data_device = self.*,
@@ -1106,9 +1106,9 @@ pub const WlDataDevice = struct {
     // mime types it offers.
     //
     pub fn sendDataOffer(self: Self, id: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(id);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(id);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -1118,13 +1118,13 @@ pub const WlDataDevice = struct {
     // coordinates.
     //
     pub fn sendEnter(self: Self, serial: u32, surface: u32, x: f32, y: f32, id: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(serial);
-        self.context.putU32(surface);
-        self.context.putFixed(x);
-        self.context.putFixed(y);
-        self.context.putU32(id);
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        self.wire.putU32(serial);
+        self.wire.putU32(surface);
+        self.wire.putFixed(x);
+        self.wire.putFixed(y);
+        self.wire.putU32(id);
+        try self.wire.finishWrite(self.id, 1);
     }
 
     //
@@ -1133,8 +1133,8 @@ pub const WlDataDevice = struct {
     // wl_data_offer introduced at enter time at this point.
     //
     pub fn sendLeave(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 2);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 2);
     }
 
     //
@@ -1144,11 +1144,11 @@ pub const WlDataDevice = struct {
     // coordinates.
     //
     pub fn sendMotion(self: Self, time: u32, x: f32, y: f32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(time);
-        self.context.putFixed(x);
-        self.context.putFixed(y);
-        try self.context.finishWrite(self.id, 3);
+        self.wire.startWrite();
+        self.wire.putU32(time);
+        self.wire.putFixed(x);
+        self.wire.putFixed(y);
+        try self.wire.finishWrite(self.id, 3);
     }
 
     //
@@ -1167,8 +1167,8 @@ pub const WlDataDevice = struct {
     // to cancel the operation.
     //
     pub fn sendDrop(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 4);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 4);
     }
 
     //
@@ -1185,9 +1185,9 @@ pub const WlDataDevice = struct {
     // this event.
     //
     pub fn sendSelection(self: Self, id: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(id);
-        try self.context.finishWrite(self.id, 5);
+        self.wire.startWrite();
+        self.wire.putU32(id);
+        try self.wire.finishWrite(self.id, 5);
     }
 
     pub const Error = enum(u32) {
@@ -1197,16 +1197,16 @@ pub const WlDataDevice = struct {
 
 // wl_data_device_manager
 pub const WlDataDeviceManager = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -1216,7 +1216,7 @@ pub const WlDataDeviceManager = struct {
         switch (opcode) {
             // create_data_source
             0 => {
-                const id: u32 = try self.context.nextU32();
+                const id: u32 = try self.wire.nextU32();
                 return Message{
                     .create_data_source = CreateDataSourceMessage{
                         .wl_data_device_manager = self.*,
@@ -1226,8 +1226,8 @@ pub const WlDataDeviceManager = struct {
             },
             // get_data_device
             1 => {
-                const id: u32 = try self.context.nextU32();
-                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const id: u32 = try self.wire.nextU32();
+                const seat: WlSeat = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -1277,16 +1277,16 @@ pub const WlDataDeviceManager = struct {
 
 // wl_shell
 pub const WlShell = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -1296,8 +1296,8 @@ pub const WlShell = struct {
         switch (opcode) {
             // get_shell_surface
             0 => {
-                const id: u32 = try self.context.nextU32();
-                const surface: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const id: u32 = try self.wire.nextU32();
+                const surface: WlSurface = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -1337,16 +1337,16 @@ pub const WlShell = struct {
 
 // wl_shell_surface
 pub const WlShellSurface = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -1356,7 +1356,7 @@ pub const WlShellSurface = struct {
         switch (opcode) {
             // pong
             0 => {
-                const serial: u32 = try self.context.nextU32();
+                const serial: u32 = try self.wire.nextU32();
                 return Message{
                     .pong = PongMessage{
                         .wl_shell_surface = self.*,
@@ -1366,11 +1366,11 @@ pub const WlShellSurface = struct {
             },
             // move
             1 => {
-                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                const serial: u32 = try self.context.nextU32();
+                const serial: u32 = try self.wire.nextU32();
                 return Message{
                     .move = MoveMessage{
                         .wl_shell_surface = self.*,
@@ -1381,12 +1381,12 @@ pub const WlShellSurface = struct {
             },
             // resize
             2 => {
-                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                const serial: u32 = try self.context.nextU32();
-                const edges: u32 = try self.context.nextU32();
+                const serial: u32 = try self.wire.nextU32();
+                const edges: u32 = try self.wire.nextU32();
                 return Message{
                     .resize = ResizeMessage{
                         .wl_shell_surface = self.*,
@@ -1406,13 +1406,13 @@ pub const WlShellSurface = struct {
             },
             // set_transient
             4 => {
-                const parent: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const parent: WlSurface = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                const x: i32 = try self.context.nextI32();
-                const y: i32 = try self.context.nextI32();
-                const flags: u32 = try self.context.nextU32();
+                const x: i32 = try self.wire.nextI32();
+                const y: i32 = try self.wire.nextI32();
+                const flags: u32 = try self.wire.nextU32();
                 return Message{
                     .set_transient = SetTransientMessage{
                         .wl_shell_surface = self.*,
@@ -1425,9 +1425,9 @@ pub const WlShellSurface = struct {
             },
             // set_fullscreen
             5 => {
-                const method: u32 = try self.context.nextU32();
-                const framerate: u32 = try self.context.nextU32();
-                const output: ?WlOutput = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const method: u32 = try self.wire.nextU32();
+                const framerate: u32 = try self.wire.nextU32();
+                const output: ?WlOutput = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_output => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1442,18 +1442,18 @@ pub const WlShellSurface = struct {
             },
             // set_popup
             6 => {
-                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                const serial: u32 = try self.context.nextU32();
-                const parent: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const serial: u32 = try self.wire.nextU32();
+                const parent: WlSurface = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                const x: i32 = try self.context.nextI32();
-                const y: i32 = try self.context.nextI32();
-                const flags: u32 = try self.context.nextU32();
+                const x: i32 = try self.wire.nextI32();
+                const y: i32 = try self.wire.nextI32();
+                const flags: u32 = try self.wire.nextU32();
                 return Message{
                     .set_popup = SetPopupMessage{
                         .wl_shell_surface = self.*,
@@ -1468,7 +1468,7 @@ pub const WlShellSurface = struct {
             },
             // set_maximized
             7 => {
-                const output: ?WlOutput = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const output: ?WlOutput = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_output => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1481,7 +1481,7 @@ pub const WlShellSurface = struct {
             },
             // set_title
             8 => {
-                const title: []u8 = try self.context.nextString();
+                const title: []u8 = try self.wire.nextString();
                 return Message{
                     .set_title = SetTitleMessage{
                         .wl_shell_surface = self.*,
@@ -1491,7 +1491,7 @@ pub const WlShellSurface = struct {
             },
             // set_class
             9 => {
-                const class_: []u8 = try self.context.nextString();
+                const class_: []u8 = try self.wire.nextString();
                 return Message{
                     .set_class = SetClassMessage{
                         .wl_shell_surface = self.*,
@@ -1599,9 +1599,9 @@ pub const WlShellSurface = struct {
     // requests. A client is expected to reply with a pong request.
     //
     pub fn sendPing(self: Self, serial: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(serial);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(serial);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -1624,11 +1624,11 @@ pub const WlShellSurface = struct {
     // in surface-local coordinates.
     //
     pub fn sendConfigure(self: Self, edges: Resize, width: i32, height: i32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(@enumToInt(edges));
-        self.context.putI32(width);
-        self.context.putI32(height);
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        self.wire.putU32(@enumToInt(edges));
+        self.wire.putI32(width);
+        self.wire.putI32(height);
+        try self.wire.finishWrite(self.id, 1);
     }
 
     //
@@ -1637,8 +1637,8 @@ pub const WlShellSurface = struct {
     // to the client owning the popup surface.
     //
     pub fn sendPopupDone(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 2);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 2);
     }
 
     pub const Resize = enum(u32) {
@@ -1667,16 +1667,16 @@ pub const WlShellSurface = struct {
 
 // wl_surface
 pub const WlSurface = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -1694,12 +1694,12 @@ pub const WlSurface = struct {
             },
             // attach
             1 => {
-                const buffer: ?WlBuffer = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const buffer: ?WlBuffer = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_buffer => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
-                const x: i32 = try self.context.nextI32();
-                const y: i32 = try self.context.nextI32();
+                const x: i32 = try self.wire.nextI32();
+                const y: i32 = try self.wire.nextI32();
                 return Message{
                     .attach = AttachMessage{
                         .wl_surface = self.*,
@@ -1711,10 +1711,10 @@ pub const WlSurface = struct {
             },
             // damage
             2 => {
-                const x: i32 = try self.context.nextI32();
-                const y: i32 = try self.context.nextI32();
-                const width: i32 = try self.context.nextI32();
-                const height: i32 = try self.context.nextI32();
+                const x: i32 = try self.wire.nextI32();
+                const y: i32 = try self.wire.nextI32();
+                const width: i32 = try self.wire.nextI32();
+                const height: i32 = try self.wire.nextI32();
                 return Message{
                     .damage = DamageMessage{
                         .wl_surface = self.*,
@@ -1727,7 +1727,7 @@ pub const WlSurface = struct {
             },
             // frame
             3 => {
-                const callback: u32 = try self.context.nextU32();
+                const callback: u32 = try self.wire.nextU32();
                 return Message{
                     .frame = FrameMessage{
                         .wl_surface = self.*,
@@ -1737,7 +1737,7 @@ pub const WlSurface = struct {
             },
             // set_opaque_region
             4 => {
-                const region: ?WlRegion = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const region: ?WlRegion = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_region => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1750,7 +1750,7 @@ pub const WlSurface = struct {
             },
             // set_input_region
             5 => {
-                const region: ?WlRegion = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const region: ?WlRegion = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_region => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -1771,7 +1771,7 @@ pub const WlSurface = struct {
             },
             // set_buffer_transform
             7 => {
-                const transform: i32 = try self.context.nextI32();
+                const transform: i32 = try self.wire.nextI32();
                 return Message{
                     .set_buffer_transform = SetBufferTransformMessage{
                         .wl_surface = self.*,
@@ -1781,7 +1781,7 @@ pub const WlSurface = struct {
             },
             // set_buffer_scale
             8 => {
-                const scale: i32 = try self.context.nextI32();
+                const scale: i32 = try self.wire.nextI32();
                 return Message{
                     .set_buffer_scale = SetBufferScaleMessage{
                         .wl_surface = self.*,
@@ -1791,10 +1791,10 @@ pub const WlSurface = struct {
             },
             // damage_buffer
             9 => {
-                const x: i32 = try self.context.nextI32();
-                const y: i32 = try self.context.nextI32();
-                const width: i32 = try self.context.nextI32();
-                const height: i32 = try self.context.nextI32();
+                const x: i32 = try self.wire.nextI32();
+                const y: i32 = try self.wire.nextI32();
+                const width: i32 = try self.wire.nextI32();
+                const height: i32 = try self.wire.nextI32();
                 return Message{
                     .damage_buffer = DamageBufferMessage{
                         .wl_surface = self.*,
@@ -1902,9 +1902,9 @@ pub const WlSurface = struct {
     // Note that a surface may be overlapping with zero or more outputs.
     //
     pub fn sendEnter(self: Self, output: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(output);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(output);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -1913,9 +1913,9 @@ pub const WlSurface = struct {
     // of an output.
     //
     pub fn sendLeave(self: Self, output: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(output);
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        self.wire.putU32(output);
+        try self.wire.finishWrite(self.id, 1);
     }
 
     pub const Error = enum(u32) {
@@ -1926,16 +1926,16 @@ pub const WlSurface = struct {
 
 // wl_seat
 pub const WlSeat = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -1945,7 +1945,7 @@ pub const WlSeat = struct {
         switch (opcode) {
             // get_pointer
             0 => {
-                const id: u32 = try self.context.nextU32();
+                const id: u32 = try self.wire.nextU32();
                 return Message{
                     .get_pointer = GetPointerMessage{
                         .wl_seat = self.*,
@@ -1955,7 +1955,7 @@ pub const WlSeat = struct {
             },
             // get_keyboard
             1 => {
-                const id: u32 = try self.context.nextU32();
+                const id: u32 = try self.wire.nextU32();
                 return Message{
                     .get_keyboard = GetKeyboardMessage{
                         .wl_seat = self.*,
@@ -1965,7 +1965,7 @@ pub const WlSeat = struct {
             },
             // get_touch
             2 => {
-                const id: u32 = try self.context.nextU32();
+                const id: u32 = try self.wire.nextU32();
                 return Message{
                     .get_touch = GetTouchMessage{
                         .wl_seat = self.*,
@@ -2048,9 +2048,9 @@ pub const WlSeat = struct {
     // keyboard and touch capabilities, respectively.
     //
     pub fn sendCapabilities(self: Self, capabilities: Capability) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(@enumToInt(capabilities));
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(@enumToInt(capabilities));
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -2059,9 +2059,9 @@ pub const WlSeat = struct {
     // the seat configuration used by the compositor.
     //
     pub fn sendName(self: Self, name: []const u8) anyerror!void {
-        self.context.startWrite();
-        self.context.putString(name);
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        self.wire.putString(name);
+        try self.wire.finishWrite(self.id, 1);
     }
 
     pub const Capability = enum(u32) {
@@ -2073,16 +2073,16 @@ pub const WlSeat = struct {
 
 // wl_pointer
 pub const WlPointer = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -2092,13 +2092,13 @@ pub const WlPointer = struct {
         switch (opcode) {
             // set_cursor
             0 => {
-                const serial: u32 = try self.context.nextU32();
-                const surface: ?WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const serial: u32 = try self.wire.nextU32();
+                const surface: ?WlSurface = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
-                const hotspot_x: i32 = try self.context.nextI32();
-                const hotspot_y: i32 = try self.context.nextI32();
+                const hotspot_x: i32 = try self.wire.nextI32();
+                const hotspot_y: i32 = try self.wire.nextI32();
                 return Message{
                     .set_cursor = SetCursorMessage{
                         .wl_pointer = self.*,
@@ -2155,12 +2155,12 @@ pub const WlPointer = struct {
     // an appropriate pointer image with the set_cursor request.
     //
     pub fn sendEnter(self: Self, serial: u32, surface: u32, surface_x: f32, surface_y: f32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(serial);
-        self.context.putU32(surface);
-        self.context.putFixed(surface_x);
-        self.context.putFixed(surface_y);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(serial);
+        self.wire.putU32(surface);
+        self.wire.putFixed(surface_x);
+        self.wire.putFixed(surface_y);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -2171,10 +2171,10 @@ pub const WlPointer = struct {
     // for the new focus.
     //
     pub fn sendLeave(self: Self, serial: u32, surface: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(serial);
-        self.context.putU32(surface);
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        self.wire.putU32(serial);
+        self.wire.putU32(surface);
+        try self.wire.finishWrite(self.id, 1);
     }
 
     //
@@ -2183,11 +2183,11 @@ pub const WlPointer = struct {
     // focused surface.
     //
     pub fn sendMotion(self: Self, time: u32, surface_x: f32, surface_y: f32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(time);
-        self.context.putFixed(surface_x);
-        self.context.putFixed(surface_y);
-        try self.context.finishWrite(self.id, 2);
+        self.wire.startWrite();
+        self.wire.putU32(time);
+        self.wire.putFixed(surface_x);
+        self.wire.putFixed(surface_y);
+        try self.wire.finishWrite(self.id, 2);
     }
 
     //
@@ -2207,12 +2207,12 @@ pub const WlPointer = struct {
     // protocol.
     //
     pub fn sendButton(self: Self, serial: u32, time: u32, button: u32, state: ButtonState) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(serial);
-        self.context.putU32(time);
-        self.context.putU32(button);
-        self.context.putU32(@enumToInt(state));
-        try self.context.finishWrite(self.id, 3);
+        self.wire.startWrite();
+        self.wire.putU32(serial);
+        self.wire.putU32(time);
+        self.wire.putU32(button);
+        self.wire.putU32(@enumToInt(state));
+        try self.wire.finishWrite(self.id, 3);
     }
 
     //
@@ -2234,11 +2234,11 @@ pub const WlPointer = struct {
     // scroll distance.
     //
     pub fn sendAxis(self: Self, time: u32, axis: Axis, value: f32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(time);
-        self.context.putU32(@enumToInt(axis));
-        self.context.putFixed(value);
-        try self.context.finishWrite(self.id, 4);
+        self.wire.startWrite();
+        self.wire.putU32(time);
+        self.wire.putU32(@enumToInt(axis));
+        self.wire.putFixed(value);
+        try self.wire.finishWrite(self.id, 4);
     }
 
     //
@@ -2278,8 +2278,8 @@ pub const WlPointer = struct {
     // groups.
     //
     pub fn sendFrame(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 5);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 5);
     }
 
     //
@@ -2310,9 +2310,9 @@ pub const WlPointer = struct {
     // not guaranteed.
     //
     pub fn sendAxisSource(self: Self, axis_source: AxisSource) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(@enumToInt(axis_source));
-        try self.context.finishWrite(self.id, 6);
+        self.wire.startWrite();
+        self.wire.putU32(@enumToInt(axis_source));
+        try self.wire.finishWrite(self.id, 6);
     }
 
     //
@@ -2332,10 +2332,10 @@ pub const WlPointer = struct {
     // preceding wl_pointer.axis event.
     //
     pub fn sendAxisStop(self: Self, time: u32, axis: Axis) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(time);
-        self.context.putU32(@enumToInt(axis));
-        try self.context.finishWrite(self.id, 7);
+        self.wire.startWrite();
+        self.wire.putU32(time);
+        self.wire.putU32(@enumToInt(axis));
+        try self.wire.finishWrite(self.id, 7);
     }
 
     //
@@ -2367,10 +2367,10 @@ pub const WlPointer = struct {
     // not guaranteed.
     //
     pub fn sendAxisDiscrete(self: Self, axis: Axis, discrete: i32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(@enumToInt(axis));
-        self.context.putI32(discrete);
-        try self.context.finishWrite(self.id, 8);
+        self.wire.startWrite();
+        self.wire.putU32(@enumToInt(axis));
+        self.wire.putI32(discrete);
+        try self.wire.finishWrite(self.id, 8);
     }
 
     pub const Error = enum(u32) {
@@ -2397,16 +2397,16 @@ pub const WlPointer = struct {
 
 // wl_keyboard
 pub const WlKeyboard = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -2449,11 +2449,11 @@ pub const WlKeyboard = struct {
     // the recipient, as MAP_SHARED may fail.
     //
     pub fn sendKeymap(self: Self, format: KeymapFormat, fd: i32, size: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(@enumToInt(format));
-        self.context.putFd(fd);
-        self.context.putU32(size);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(@enumToInt(format));
+        self.wire.putFd(fd);
+        self.wire.putU32(size);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -2461,11 +2461,11 @@ pub const WlKeyboard = struct {
     // surface.
     //
     pub fn sendEnter(self: Self, serial: u32, surface: u32, keys: []u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(serial);
-        self.context.putU32(surface);
-        self.context.putArray(keys);
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        self.wire.putU32(serial);
+        self.wire.putU32(surface);
+        self.wire.putArray(keys);
+        try self.wire.finishWrite(self.id, 1);
     }
 
     //
@@ -2476,10 +2476,10 @@ pub const WlKeyboard = struct {
     // for the new focus.
     //
     pub fn sendLeave(self: Self, serial: u32, surface: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(serial);
-        self.context.putU32(surface);
-        try self.context.finishWrite(self.id, 2);
+        self.wire.startWrite();
+        self.wire.putU32(serial);
+        self.wire.putU32(surface);
+        try self.wire.finishWrite(self.id, 2);
     }
 
     //
@@ -2488,12 +2488,12 @@ pub const WlKeyboard = struct {
     // granularity, with an undefined base.
     //
     pub fn sendKey(self: Self, serial: u32, time: u32, key: u32, state: KeyState) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(serial);
-        self.context.putU32(time);
-        self.context.putU32(key);
-        self.context.putU32(@enumToInt(state));
-        try self.context.finishWrite(self.id, 3);
+        self.wire.startWrite();
+        self.wire.putU32(serial);
+        self.wire.putU32(time);
+        self.wire.putU32(key);
+        self.wire.putU32(@enumToInt(state));
+        try self.wire.finishWrite(self.id, 3);
     }
 
     //
@@ -2501,13 +2501,13 @@ pub const WlKeyboard = struct {
     // changed, and it should update its local state.
     //
     pub fn sendModifiers(self: Self, serial: u32, mods_depressed: u32, mods_latched: u32, mods_locked: u32, group: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(serial);
-        self.context.putU32(mods_depressed);
-        self.context.putU32(mods_latched);
-        self.context.putU32(mods_locked);
-        self.context.putU32(group);
-        try self.context.finishWrite(self.id, 4);
+        self.wire.startWrite();
+        self.wire.putU32(serial);
+        self.wire.putU32(mods_depressed);
+        self.wire.putU32(mods_latched);
+        self.wire.putU32(mods_locked);
+        self.wire.putU32(group);
+        try self.wire.finishWrite(self.id, 4);
     }
 
     //
@@ -2525,10 +2525,10 @@ pub const WlKeyboard = struct {
     // of wl_keyboard.
     //
     pub fn sendRepeatInfo(self: Self, rate: i32, delay: i32) anyerror!void {
-        self.context.startWrite();
-        self.context.putI32(rate);
-        self.context.putI32(delay);
-        try self.context.finishWrite(self.id, 5);
+        self.wire.startWrite();
+        self.wire.putI32(rate);
+        self.wire.putI32(delay);
+        try self.wire.finishWrite(self.id, 5);
     }
 
     pub const KeymapFormat = enum(u32) {
@@ -2544,16 +2544,16 @@ pub const WlKeyboard = struct {
 
 // wl_touch
 pub const WlTouch = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -2595,14 +2595,14 @@ pub const WlTouch = struct {
     // reused in the future.
     //
     pub fn sendDown(self: Self, serial: u32, time: u32, surface: u32, id: i32, x: f32, y: f32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(serial);
-        self.context.putU32(time);
-        self.context.putU32(surface);
-        self.context.putI32(id);
-        self.context.putFixed(x);
-        self.context.putFixed(y);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(serial);
+        self.wire.putU32(time);
+        self.wire.putU32(surface);
+        self.wire.putI32(id);
+        self.wire.putFixed(x);
+        self.wire.putFixed(y);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -2611,23 +2611,23 @@ pub const WlTouch = struct {
     // reused in a future touch down event.
     //
     pub fn sendUp(self: Self, serial: u32, time: u32, id: i32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(serial);
-        self.context.putU32(time);
-        self.context.putI32(id);
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        self.wire.putU32(serial);
+        self.wire.putU32(time);
+        self.wire.putI32(id);
+        try self.wire.finishWrite(self.id, 1);
     }
 
     //
     // A touch point has changed coordinates.
     //
     pub fn sendMotion(self: Self, time: u32, id: i32, x: f32, y: f32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(time);
-        self.context.putI32(id);
-        self.context.putFixed(x);
-        self.context.putFixed(y);
-        try self.context.finishWrite(self.id, 2);
+        self.wire.startWrite();
+        self.wire.putU32(time);
+        self.wire.putI32(id);
+        self.wire.putFixed(x);
+        self.wire.putFixed(y);
+        try self.wire.finishWrite(self.id, 2);
     }
 
     //
@@ -2641,8 +2641,8 @@ pub const WlTouch = struct {
     // previously known state.
     //
     pub fn sendFrame(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 3);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 3);
     }
 
     //
@@ -2654,8 +2654,8 @@ pub const WlTouch = struct {
     // this surface may reuse the touch point ID.
     //
     pub fn sendCancel(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 4);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 4);
     }
 
     //
@@ -2686,11 +2686,11 @@ pub const WlTouch = struct {
     // shape if it did not receive this event.
     //
     pub fn sendShape(self: Self, id: i32, major: f32, minor: f32) anyerror!void {
-        self.context.startWrite();
-        self.context.putI32(id);
-        self.context.putFixed(major);
-        self.context.putFixed(minor);
-        try self.context.finishWrite(self.id, 5);
+        self.wire.startWrite();
+        self.wire.putI32(id);
+        self.wire.putFixed(major);
+        self.wire.putFixed(minor);
+        try self.wire.finishWrite(self.id, 5);
     }
 
     //
@@ -2719,25 +2719,25 @@ pub const WlTouch = struct {
     // orientation reports.
     //
     pub fn sendOrientation(self: Self, id: i32, orientation: f32) anyerror!void {
-        self.context.startWrite();
-        self.context.putI32(id);
-        self.context.putFixed(orientation);
-        try self.context.finishWrite(self.id, 6);
+        self.wire.startWrite();
+        self.wire.putI32(id);
+        self.wire.putFixed(orientation);
+        try self.wire.finishWrite(self.id, 6);
     }
 };
 
 // wl_output
 pub const WlOutput = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -2788,16 +2788,16 @@ pub const WlOutput = struct {
     // clients should use xdg_output.name and xdg_output.description.
     //
     pub fn sendGeometry(self: Self, x: i32, y: i32, physical_width: i32, physical_height: i32, subpixel: Subpixel, make: []const u8, model: []const u8, transform: Transform) anyerror!void {
-        self.context.startWrite();
-        self.context.putI32(x);
-        self.context.putI32(y);
-        self.context.putI32(physical_width);
-        self.context.putI32(physical_height);
-        self.context.putI32(@enumToInt(subpixel));
-        self.context.putString(make);
-        self.context.putString(model);
-        self.context.putI32(@enumToInt(transform));
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putI32(x);
+        self.wire.putI32(y);
+        self.wire.putI32(physical_width);
+        self.wire.putI32(physical_height);
+        self.wire.putI32(@enumToInt(subpixel));
+        self.wire.putString(make);
+        self.wire.putString(model);
+        self.wire.putI32(@enumToInt(transform));
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -2826,12 +2826,12 @@ pub const WlOutput = struct {
     // refresh rate or the size.
     //
     pub fn sendMode(self: Self, flags: Mode, width: i32, height: i32, refresh: i32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(@enumToInt(flags));
-        self.context.putI32(width);
-        self.context.putI32(height);
-        self.context.putI32(refresh);
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        self.wire.putU32(@enumToInt(flags));
+        self.wire.putI32(width);
+        self.wire.putI32(height);
+        self.wire.putI32(refresh);
+        try self.wire.finishWrite(self.id, 1);
     }
 
     //
@@ -2842,8 +2842,8 @@ pub const WlOutput = struct {
     // atomic, even if they happen via multiple events.
     //
     pub fn sendDone(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 2);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 2);
     }
 
     //
@@ -2867,9 +2867,9 @@ pub const WlOutput = struct {
     // a higher detail image.
     //
     pub fn sendScale(self: Self, factor: i32) anyerror!void {
-        self.context.startWrite();
-        self.context.putI32(factor);
-        try self.context.finishWrite(self.id, 3);
+        self.wire.startWrite();
+        self.wire.putI32(factor);
+        try self.wire.finishWrite(self.id, 3);
     }
 
     pub const Subpixel = enum(u32) {
@@ -2900,16 +2900,16 @@ pub const WlOutput = struct {
 
 // wl_region
 pub const WlRegion = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -2927,10 +2927,10 @@ pub const WlRegion = struct {
             },
             // add
             1 => {
-                const x: i32 = try self.context.nextI32();
-                const y: i32 = try self.context.nextI32();
-                const width: i32 = try self.context.nextI32();
-                const height: i32 = try self.context.nextI32();
+                const x: i32 = try self.wire.nextI32();
+                const y: i32 = try self.wire.nextI32();
+                const width: i32 = try self.wire.nextI32();
+                const height: i32 = try self.wire.nextI32();
                 return Message{
                     .add = AddMessage{
                         .wl_region = self.*,
@@ -2943,10 +2943,10 @@ pub const WlRegion = struct {
             },
             // subtract
             2 => {
-                const x: i32 = try self.context.nextI32();
-                const y: i32 = try self.context.nextI32();
-                const width: i32 = try self.context.nextI32();
-                const height: i32 = try self.context.nextI32();
+                const x: i32 = try self.wire.nextI32();
+                const y: i32 = try self.wire.nextI32();
+                const width: i32 = try self.wire.nextI32();
+                const height: i32 = try self.wire.nextI32();
                 return Message{
                     .subtract = SubtractMessage{
                         .wl_region = self.*,
@@ -2999,16 +2999,16 @@ pub const WlRegion = struct {
 
 // wl_subcompositor
 pub const WlSubcompositor = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -3026,12 +3026,12 @@ pub const WlSubcompositor = struct {
             },
             // get_subsurface
             1 => {
-                const id: u32 = try self.context.nextU32();
-                const surface: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const id: u32 = try self.wire.nextU32();
+                const surface: WlSurface = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                const parent: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const parent: WlSurface = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3079,16 +3079,16 @@ pub const WlSubcompositor = struct {
 
 // wl_subsurface
 pub const WlSubsurface = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -3106,8 +3106,8 @@ pub const WlSubsurface = struct {
             },
             // set_position
             1 => {
-                const x: i32 = try self.context.nextI32();
-                const y: i32 = try self.context.nextI32();
+                const x: i32 = try self.wire.nextI32();
+                const y: i32 = try self.wire.nextI32();
                 return Message{
                     .set_position = SetPositionMessage{
                         .wl_subsurface = self.*,
@@ -3118,7 +3118,7 @@ pub const WlSubsurface = struct {
             },
             // place_above
             2 => {
-                const sibling: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const sibling: WlSurface = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3131,7 +3131,7 @@ pub const WlSubsurface = struct {
             },
             // place_below
             3 => {
-                const sibling: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const sibling: WlSurface = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3218,16 +3218,16 @@ pub const WlSubsurface = struct {
 
 // xdg_wm_base
 pub const XdgWmBase = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -3245,7 +3245,7 @@ pub const XdgWmBase = struct {
             },
             // create_positioner
             1 => {
-                const id: u32 = try self.context.nextU32();
+                const id: u32 = try self.wire.nextU32();
                 return Message{
                     .create_positioner = CreatePositionerMessage{
                         .xdg_wm_base = self.*,
@@ -3255,8 +3255,8 @@ pub const XdgWmBase = struct {
             },
             // get_xdg_surface
             2 => {
-                const id: u32 = try self.context.nextU32();
-                const surface: WlSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const id: u32 = try self.wire.nextU32();
+                const surface: WlSurface = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3270,7 +3270,7 @@ pub const XdgWmBase = struct {
             },
             // pong
             3 => {
-                const serial: u32 = try self.context.nextU32();
+                const serial: u32 = try self.wire.nextU32();
                 return Message{
                     .pong = PongMessage{
                         .xdg_wm_base = self.*,
@@ -3333,9 +3333,9 @@ pub const XdgWmBase = struct {
     // always respond to any xdg_wm_base object it created.
     //
     pub fn sendPing(self: Self, serial: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(serial);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(serial);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     pub const Error = enum(u32) {
@@ -3350,16 +3350,16 @@ pub const XdgWmBase = struct {
 
 // xdg_positioner
 pub const XdgPositioner = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -3377,8 +3377,8 @@ pub const XdgPositioner = struct {
             },
             // set_size
             1 => {
-                const width: i32 = try self.context.nextI32();
-                const height: i32 = try self.context.nextI32();
+                const width: i32 = try self.wire.nextI32();
+                const height: i32 = try self.wire.nextI32();
                 return Message{
                     .set_size = SetSizeMessage{
                         .xdg_positioner = self.*,
@@ -3389,10 +3389,10 @@ pub const XdgPositioner = struct {
             },
             // set_anchor_rect
             2 => {
-                const x: i32 = try self.context.nextI32();
-                const y: i32 = try self.context.nextI32();
-                const width: i32 = try self.context.nextI32();
-                const height: i32 = try self.context.nextI32();
+                const x: i32 = try self.wire.nextI32();
+                const y: i32 = try self.wire.nextI32();
+                const width: i32 = try self.wire.nextI32();
+                const height: i32 = try self.wire.nextI32();
                 return Message{
                     .set_anchor_rect = SetAnchorRectMessage{
                         .xdg_positioner = self.*,
@@ -3405,7 +3405,7 @@ pub const XdgPositioner = struct {
             },
             // set_anchor
             3 => {
-                const anchor: u32 = try self.context.nextU32();
+                const anchor: u32 = try self.wire.nextU32();
                 return Message{
                     .set_anchor = SetAnchorMessage{
                         .xdg_positioner = self.*,
@@ -3415,7 +3415,7 @@ pub const XdgPositioner = struct {
             },
             // set_gravity
             4 => {
-                const gravity: u32 = try self.context.nextU32();
+                const gravity: u32 = try self.wire.nextU32();
                 return Message{
                     .set_gravity = SetGravityMessage{
                         .xdg_positioner = self.*,
@@ -3425,7 +3425,7 @@ pub const XdgPositioner = struct {
             },
             // set_constraint_adjustment
             5 => {
-                const constraint_adjustment: u32 = try self.context.nextU32();
+                const constraint_adjustment: u32 = try self.wire.nextU32();
                 return Message{
                     .set_constraint_adjustment = SetConstraintAdjustmentMessage{
                         .xdg_positioner = self.*,
@@ -3435,8 +3435,8 @@ pub const XdgPositioner = struct {
             },
             // set_offset
             6 => {
-                const x: i32 = try self.context.nextI32();
-                const y: i32 = try self.context.nextI32();
+                const x: i32 = try self.wire.nextI32();
+                const y: i32 = try self.wire.nextI32();
                 return Message{
                     .set_offset = SetOffsetMessage{
                         .xdg_positioner = self.*,
@@ -3552,16 +3552,16 @@ pub const XdgPositioner = struct {
 
 // xdg_surface
 pub const XdgSurface = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -3579,7 +3579,7 @@ pub const XdgSurface = struct {
             },
             // get_toplevel
             1 => {
-                const id: u32 = try self.context.nextU32();
+                const id: u32 = try self.wire.nextU32();
                 return Message{
                     .get_toplevel = GetToplevelMessage{
                         .xdg_surface = self.*,
@@ -3589,12 +3589,12 @@ pub const XdgSurface = struct {
             },
             // get_popup
             2 => {
-                const id: u32 = try self.context.nextU32();
-                const parent: ?XdgSurface = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const id: u32 = try self.wire.nextU32();
+                const parent: ?XdgSurface = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .xdg_surface => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
-                const positioner: XdgPositioner = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const positioner: XdgPositioner = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .xdg_positioner => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
@@ -3609,10 +3609,10 @@ pub const XdgSurface = struct {
             },
             // set_window_geometry
             3 => {
-                const x: i32 = try self.context.nextI32();
-                const y: i32 = try self.context.nextI32();
-                const width: i32 = try self.context.nextI32();
-                const height: i32 = try self.context.nextI32();
+                const x: i32 = try self.wire.nextI32();
+                const y: i32 = try self.wire.nextI32();
+                const width: i32 = try self.wire.nextI32();
+                const height: i32 = try self.wire.nextI32();
                 return Message{
                     .set_window_geometry = SetWindowGeometryMessage{
                         .xdg_surface = self.*,
@@ -3625,7 +3625,7 @@ pub const XdgSurface = struct {
             },
             // ack_configure
             4 => {
-                const serial: u32 = try self.context.nextU32();
+                const serial: u32 = try self.wire.nextU32();
                 return Message{
                     .ack_configure = AckConfigureMessage{
                         .xdg_surface = self.*,
@@ -3704,9 +3704,9 @@ pub const XdgSurface = struct {
     // to one, it is free to discard all but the last event it received.
     //
     pub fn sendConfigure(self: Self, serial: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(serial);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(serial);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     pub const Error = enum(u32) {
@@ -3718,16 +3718,16 @@ pub const XdgSurface = struct {
 
 // xdg_toplevel
 pub const XdgToplevel = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -3745,7 +3745,7 @@ pub const XdgToplevel = struct {
             },
             // set_parent
             1 => {
-                const parent: ?XdgToplevel = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const parent: ?XdgToplevel = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .xdg_toplevel => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -3758,7 +3758,7 @@ pub const XdgToplevel = struct {
             },
             // set_title
             2 => {
-                const title: []u8 = try self.context.nextString();
+                const title: []u8 = try self.wire.nextString();
                 return Message{
                     .set_title = SetTitleMessage{
                         .xdg_toplevel = self.*,
@@ -3768,7 +3768,7 @@ pub const XdgToplevel = struct {
             },
             // set_app_id
             3 => {
-                const app_id: []u8 = try self.context.nextString();
+                const app_id: []u8 = try self.wire.nextString();
                 return Message{
                     .set_app_id = SetAppIdMessage{
                         .xdg_toplevel = self.*,
@@ -3778,13 +3778,13 @@ pub const XdgToplevel = struct {
             },
             // show_window_menu
             4 => {
-                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                const serial: u32 = try self.context.nextU32();
-                const x: i32 = try self.context.nextI32();
-                const y: i32 = try self.context.nextI32();
+                const serial: u32 = try self.wire.nextU32();
+                const x: i32 = try self.wire.nextI32();
+                const y: i32 = try self.wire.nextI32();
                 return Message{
                     .show_window_menu = ShowWindowMenuMessage{
                         .xdg_toplevel = self.*,
@@ -3797,11 +3797,11 @@ pub const XdgToplevel = struct {
             },
             // move
             5 => {
-                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                const serial: u32 = try self.context.nextU32();
+                const serial: u32 = try self.wire.nextU32();
                 return Message{
                     .move = MoveMessage{
                         .xdg_toplevel = self.*,
@@ -3812,12 +3812,12 @@ pub const XdgToplevel = struct {
             },
             // resize
             6 => {
-                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                const serial: u32 = try self.context.nextU32();
-                const edges: u32 = try self.context.nextU32();
+                const serial: u32 = try self.wire.nextU32();
+                const edges: u32 = try self.wire.nextU32();
                 return Message{
                     .resize = ResizeMessage{
                         .xdg_toplevel = self.*,
@@ -3829,8 +3829,8 @@ pub const XdgToplevel = struct {
             },
             // set_max_size
             7 => {
-                const width: i32 = try self.context.nextI32();
-                const height: i32 = try self.context.nextI32();
+                const width: i32 = try self.wire.nextI32();
+                const height: i32 = try self.wire.nextI32();
                 return Message{
                     .set_max_size = SetMaxSizeMessage{
                         .xdg_toplevel = self.*,
@@ -3841,8 +3841,8 @@ pub const XdgToplevel = struct {
             },
             // set_min_size
             8 => {
-                const width: i32 = try self.context.nextI32();
-                const height: i32 = try self.context.nextI32();
+                const width: i32 = try self.wire.nextI32();
+                const height: i32 = try self.wire.nextI32();
                 return Message{
                     .set_min_size = SetMinSizeMessage{
                         .xdg_toplevel = self.*,
@@ -3869,7 +3869,7 @@ pub const XdgToplevel = struct {
             },
             // set_fullscreen
             11 => {
-                const output: ?WlOutput = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const output: ?WlOutput = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_output => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else null;
@@ -4032,11 +4032,11 @@ pub const XdgToplevel = struct {
     // xdg_surface.configure and xdg_surface.ack_configure for details.
     //
     pub fn sendConfigure(self: Self, width: i32, height: i32, states: []u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putI32(width);
-        self.context.putI32(height);
-        self.context.putArray(states);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putI32(width);
+        self.wire.putI32(height);
+        self.wire.putArray(states);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -4050,8 +4050,8 @@ pub const XdgToplevel = struct {
     // a dialog to ask the user to save their data, etc.
     //
     pub fn sendClose(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 1);
     }
 
     pub const ResizeEdge = enum(u32) {
@@ -4080,16 +4080,16 @@ pub const XdgToplevel = struct {
 
 // xdg_popup
 pub const XdgPopup = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -4107,11 +4107,11 @@ pub const XdgPopup = struct {
             },
             // grab
             1 => {
-                const seat: WlSeat = if (@field(objects, field)(try self.context.nextU32())) |obj| switch (obj) {
+                const seat: WlSeat = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_seat => |o| o,
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
-                const serial: u32 = try self.context.nextU32();
+                const serial: u32 = try self.wire.nextU32();
                 return Message{
                     .grab = GrabMessage{
                         .xdg_popup = self.*,
@@ -4157,12 +4157,12 @@ pub const XdgPopup = struct {
     // window geometry of the parent surface.
     //
     pub fn sendConfigure(self: Self, x: i32, y: i32, width: i32, height: i32) anyerror!void {
-        self.context.startWrite();
-        self.context.putI32(x);
-        self.context.putI32(y);
-        self.context.putI32(width);
-        self.context.putI32(height);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putI32(x);
+        self.wire.putI32(y);
+        self.wire.putI32(width);
+        self.wire.putI32(height);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -4171,8 +4171,8 @@ pub const XdgPopup = struct {
     // point.
     //
     pub fn sendPopupDone(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 1);
     }
 
     pub const Error = enum(u32) {
@@ -4182,16 +4182,16 @@ pub const XdgPopup = struct {
 
 // zwp_linux_dmabuf_v1
 pub const ZwpLinuxDmabufV1 = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -4209,7 +4209,7 @@ pub const ZwpLinuxDmabufV1 = struct {
             },
             // create_params
             1 => {
-                const params_id: u32 = try self.context.nextU32();
+                const params_id: u32 = try self.wire.nextU32();
                 return Message{
                     .create_params = CreateParamsMessage{
                         .zwp_linux_dmabuf_v1 = self.*,
@@ -4258,9 +4258,9 @@ pub const ZwpLinuxDmabufV1 = struct {
     //         received from this event.
     //
     pub fn sendFormat(self: Self, format: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(format);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(format);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -4282,26 +4282,26 @@ pub const ZwpLinuxDmabufV1 = struct {
     //         requests.
     //
     pub fn sendModifier(self: Self, format: u32, modifier_hi: u32, modifier_lo: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(format);
-        self.context.putU32(modifier_hi);
-        self.context.putU32(modifier_lo);
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        self.wire.putU32(format);
+        self.wire.putU32(modifier_hi);
+        self.wire.putU32(modifier_lo);
+        try self.wire.finishWrite(self.id, 1);
     }
 };
 
 // zwp_linux_buffer_params_v1
 pub const ZwpLinuxBufferParamsV1 = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -4319,12 +4319,12 @@ pub const ZwpLinuxBufferParamsV1 = struct {
             },
             // add
             1 => {
-                const fd: i32 = try self.context.nextFd();
-                const plane_idx: u32 = try self.context.nextU32();
-                const offset: u32 = try self.context.nextU32();
-                const stride: u32 = try self.context.nextU32();
-                const modifier_hi: u32 = try self.context.nextU32();
-                const modifier_lo: u32 = try self.context.nextU32();
+                const fd: i32 = try self.wire.nextFd();
+                const plane_idx: u32 = try self.wire.nextU32();
+                const offset: u32 = try self.wire.nextU32();
+                const stride: u32 = try self.wire.nextU32();
+                const modifier_hi: u32 = try self.wire.nextU32();
+                const modifier_lo: u32 = try self.wire.nextU32();
                 return Message{
                     .add = AddMessage{
                         .zwp_linux_buffer_params_v1 = self.*,
@@ -4339,10 +4339,10 @@ pub const ZwpLinuxBufferParamsV1 = struct {
             },
             // create
             2 => {
-                const width: i32 = try self.context.nextI32();
-                const height: i32 = try self.context.nextI32();
-                const format: u32 = try self.context.nextU32();
-                const flags: u32 = try self.context.nextU32();
+                const width: i32 = try self.wire.nextI32();
+                const height: i32 = try self.wire.nextI32();
+                const format: u32 = try self.wire.nextU32();
+                const flags: u32 = try self.wire.nextU32();
                 return Message{
                     .create = CreateMessage{
                         .zwp_linux_buffer_params_v1 = self.*,
@@ -4355,11 +4355,11 @@ pub const ZwpLinuxBufferParamsV1 = struct {
             },
             // create_immed
             3 => {
-                const buffer_id: u32 = try self.context.nextU32();
-                const width: i32 = try self.context.nextI32();
-                const height: i32 = try self.context.nextI32();
-                const format: u32 = try self.context.nextU32();
-                const flags: u32 = try self.context.nextU32();
+                const buffer_id: u32 = try self.wire.nextU32();
+                const width: i32 = try self.wire.nextI32();
+                const height: i32 = try self.wire.nextI32();
+                const format: u32 = try self.wire.nextU32();
+                const flags: u32 = try self.wire.nextU32();
                 return Message{
                     .create_immed = CreateImmedMessage{
                         .zwp_linux_buffer_params_v1 = self.*,
@@ -4431,9 +4431,9 @@ pub const ZwpLinuxBufferParamsV1 = struct {
     //         zlinux_dmabuf_params object.
     //
     pub fn sendCreated(self: Self, buffer: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(buffer);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(buffer);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     //
@@ -4445,8 +4445,8 @@ pub const ZwpLinuxBufferParamsV1 = struct {
     //         zlinux_buffer_params object.
     //
     pub fn sendFailed(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 1);
     }
 
     pub const Error = enum(u32) {
@@ -4469,16 +4469,16 @@ pub const ZwpLinuxBufferParamsV1 = struct {
 
 // fw_control
 pub const FwControl = struct {
-    context: *Context,
+    wire: *Wire,
     id: u32,
     version: u32,
 
     const Self = @This();
 
-    pub fn init(id: u32, context: *Context, version: u32) Self {
+    pub fn init(id: u32, wire: *Wire, version: u32) Self {
         return Self{
             .id = id,
-            .context = context,
+            .wire = wire,
             .version = version,
         };
     }
@@ -4556,57 +4556,57 @@ pub const FwControl = struct {
     };
 
     pub fn sendClient(self: Self, index: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(index);
-        try self.context.finishWrite(self.id, 0);
+        self.wire.startWrite();
+        self.wire.putU32(index);
+        try self.wire.finishWrite(self.id, 0);
     }
 
     pub fn sendWindow(self: Self, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, sibling_prev: i32, sibling_next: i32, children_prev: i32, children_next: i32, input_region_id: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(index);
-        self.context.putI32(parent);
-        self.context.putU32(wl_surface_id);
-        self.context.putU32(surface_type);
-        self.context.putI32(x);
-        self.context.putI32(y);
-        self.context.putI32(width);
-        self.context.putI32(height);
-        self.context.putI32(sibling_prev);
-        self.context.putI32(sibling_next);
-        self.context.putI32(children_prev);
-        self.context.putI32(children_next);
-        self.context.putU32(input_region_id);
-        try self.context.finishWrite(self.id, 1);
+        self.wire.startWrite();
+        self.wire.putU32(index);
+        self.wire.putI32(parent);
+        self.wire.putU32(wl_surface_id);
+        self.wire.putU32(surface_type);
+        self.wire.putI32(x);
+        self.wire.putI32(y);
+        self.wire.putI32(width);
+        self.wire.putI32(height);
+        self.wire.putI32(sibling_prev);
+        self.wire.putI32(sibling_next);
+        self.wire.putI32(children_prev);
+        self.wire.putI32(children_next);
+        self.wire.putU32(input_region_id);
+        try self.wire.finishWrite(self.id, 1);
     }
 
     pub fn sendToplevelWindow(self: Self, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(index);
-        self.context.putI32(parent);
-        self.context.putU32(wl_surface_id);
-        self.context.putU32(surface_type);
-        self.context.putI32(x);
-        self.context.putI32(y);
-        self.context.putI32(width);
-        self.context.putI32(height);
-        self.context.putU32(input_region_id);
-        try self.context.finishWrite(self.id, 2);
+        self.wire.startWrite();
+        self.wire.putU32(index);
+        self.wire.putI32(parent);
+        self.wire.putU32(wl_surface_id);
+        self.wire.putU32(surface_type);
+        self.wire.putI32(x);
+        self.wire.putI32(y);
+        self.wire.putI32(width);
+        self.wire.putI32(height);
+        self.wire.putU32(input_region_id);
+        try self.wire.finishWrite(self.id, 2);
     }
 
     pub fn sendRegionRect(self: Self, index: u32, x: i32, y: i32, width: i32, height: i32, op: i32) anyerror!void {
-        self.context.startWrite();
-        self.context.putU32(index);
-        self.context.putI32(x);
-        self.context.putI32(y);
-        self.context.putI32(width);
-        self.context.putI32(height);
-        self.context.putI32(op);
-        try self.context.finishWrite(self.id, 3);
+        self.wire.startWrite();
+        self.wire.putU32(index);
+        self.wire.putI32(x);
+        self.wire.putI32(y);
+        self.wire.putI32(width);
+        self.wire.putI32(height);
+        self.wire.putI32(op);
+        try self.wire.finishWrite(self.id, 3);
     }
 
     pub fn sendDone(self: Self) anyerror!void {
-        self.context.startWrite();
-        try self.context.finishWrite(self.id, 4);
+        self.wire.startWrite();
+        try self.wire.finishWrite(self.id, 4);
     }
 
     pub const SurfaceType = enum(u32) {
