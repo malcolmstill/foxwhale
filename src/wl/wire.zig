@@ -49,8 +49,6 @@ pub const Wire = struct {
     pub fn startRead(self: *Self) !void {
         const n = try txrx.recvMsg(self.fd, self.rx_buf[self.rx_write_offset..], &self.rx_fds);
 
-        // defer std.log.info("read: {any}", .{self.rx_buf[0 .. self.rx_write_offset + n]});
-
         self.rx = io.fixedBufferStream(self.rx_buf[0 .. self.rx_write_offset + n]);
     }
 

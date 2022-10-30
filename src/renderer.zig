@@ -218,7 +218,7 @@ pub const Renderer = struct {
         }
         c.glEnableVertexAttribArray(@intCast(c_uint, attribute));
         try checkGLError();
-        c.glVertexAttribPointer(@intCast(c_uint, attribute), 2, c.GL_FLOAT, c.GL_FALSE, 16, @intToPtr(*allowzero c_uint, offset));
+        c.glVertexAttribPointer(@intCast(c_uint, attribute), 2, c.GL_FLOAT, c.GL_FALSE, 16, @intToPtr(?*c_uint, offset));
         try checkGLError();
     }
 
