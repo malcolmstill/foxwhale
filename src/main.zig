@@ -57,13 +57,7 @@ pub fn main() !void {
                     try epoll.removeFd(ev.client.conn.stream.handle);
                     server.removeClient(ev.client);
                 },
-                .message => |m| ev.client.dispatch(m) catch |err| switch (err) {
-                    error.BrokenPipe => {
-                        try epoll.removeFd(ev.client.conn.stream.handle);
-                        server.removeClient(ev.client);
-                    },
-                    else => return err,
-                },
+                .message => |m| try ev.client.dispatch(m),
                 .err => std.debug.print("got err\n", .{}),
             },
             .backend => |ev| switch (ev.event) {

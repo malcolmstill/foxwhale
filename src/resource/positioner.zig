@@ -23,4 +23,6 @@ pub const Positioner = struct {
             .xdg_positioner = xdg_positioner,
         };
     }
+
+    pub fn deinit(_: *Positioner) void {}
 };

@@ -149,7 +149,10 @@ pub const Wire = struct {
         try self.tx.writer().writeIntNative(u16, opcode);
         try self.tx.writer().writeIntNative(u16, end_pos);
 
-        _ = try txrx.sendMsg(self.fd, self.tx_buf[0..end_pos], &self.tx_fds);
+        _ = txrx.sendMsg(self.fd, self.tx_buf[0..end_pos], &self.tx_fds) catch |err| switch (err) {
+            error.BrokenPipe => return,
+            else => return err,
+        };
     }
 
     pub fn putU32(self: *Self, value: u32) !void {

@@ -636,10 +636,7 @@ pub const Window = struct {
         // );
     }
 
-    pub fn deinit(self: *Self) !void {
-        std.log.warn("release window {}\n", .{self.index});
-        self.in_use = false;
-
+    pub fn deinit(self: *Self) void {
         // Before doing anything else, such as deiniting the parent
         // detach this surface from its siblings
         self.detach(); // maybe we also need to detach current, i.e. self.detachCurrent()?
@@ -649,24 +646,10 @@ pub const Window = struct {
                 parent.popup = null;
             }
         }
-        self.parent = null;
-        self.popup = null;
-
-        self.wl_buffer_id = null;
-        self.xdg_surface_id = null;
-        self.xdg_toplevel_id = null;
-        self.xdg_popup_id = null;
-        self.wl_subsurface_id = null;
 
         if (self.positioner) |positioner| {
-            try positioner.deinit();
+            positioner.deinit();
         }
-        self.positioner = null;
-        self.window_geometry = null;
-
-        self.ready_for_callback = false;
-
-        self.synchronized = false;
 
         if (self.view) |view| {
             view.remove(self);
@@ -677,8 +660,6 @@ pub const Window = struct {
                 view.pointer_window = null;
             }
         }
-        self.view = null;
-        self.mapped = false;
 
         self.state[0].deinit();
         self.state[1].deinit();
@@ -688,7 +669,7 @@ pub const Window = struct {
             // Note that while this can fail, we're doing
             // the bits that can fail after deinitialising
             // enough so that this window could be reused
-            try Renderer.releaseTexture(texture);
+            _ = Renderer.releaseTexture(texture) catch {};
         }
     }
 };

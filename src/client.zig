@@ -44,7 +44,6 @@ const Resize = @import("resize.zig").Resize;
 
 pub const Client = struct {
     server: *Server,
-    tombstone: bool = false,
     alloc: mem.Allocator,
     conn: std.net.StreamServer.Connection,
     wire: Wire,
@@ -109,8 +108,6 @@ pub const Client = struct {
 
         std.os.close(self.conn.stream.handle);
 
-        self.tombstone = true;
-
         self.windows.deinit();
         self.regions.deinit();
         self.buffers.deinit();
@@ -171,7 +168,7 @@ pub const Client = struct {
         }
 
         pub fn next(self: *Iterator, event_type: u32) !?Event {
-            if (self.state == .done or self.client.tombstone == true) return null;
+            if (self.state == .done) return null;
 
             if (event_type & std.os.linux.EPOLL.HUP > 0) {
                 self.state = .done;
@@ -306,8 +303,8 @@ pub const Client = struct {
             .wl_region => |msg| try self.handleWlRegion(msg),
             .wl_subcompositor => |msg| try self.handleWlSubcompositor(msg),
             .wl_subsurface => |msg| try self.handleWlSubsurface(msg),
+            .wl_buffer => |msg| try self.handleWlBuffer(msg),
             .wl_callback => |_| return error.NotImplemented,
-            .wl_buffer => |_| return error.NotImplemented,
             .wl_data_offer => |_| return error.NotImplemented,
             .wl_data_source => |_| return error.NotImplemented,
             .wl_data_device => |_| return error.NotImplemented,
@@ -525,7 +522,14 @@ pub const Client = struct {
 
                 try self.link(.{ .wl_callback = wl_callback }, .none);
             },
-            .destroy => |_| return error.WlSurfaceDestroyNotImplemented,
+            .destroy => |msg| {
+                const window = self.getWindow(msg.wl_surface.id) orelse return error.NoSuchWindow;
+                // TODO: what about subsurfaces / popups?
+                window.deinit();
+
+                try self.wl_display.sendDeleteId(msg.wl_surface.id);
+                self.unlink(msg.wl_surface.id);
+            },
             .set_opaque_region => |msg| {
                 const window = self.getWindow(msg.wl_surface.id) orelse return error.NoSuchWindow;
 
@@ -698,7 +702,10 @@ pub const Client = struct {
 
                 window.xdg_surface = xdg_surface;
             },
-            .destroy => |_| return error.NotImplemented,
+            .destroy => |msg| {
+                try self.wl_display.sendDeleteId(msg.xdg_wm_base.id);
+                self.unlink(msg.xdg_wm_base.id);
+            },
             .create_positioner => |_| return error.NotImplemented,
             .pong => |_| return error.NotImplemented,
         }
@@ -752,7 +759,13 @@ pub const Client = struct {
 
                 if (window.first_configure == false) window.first_configure = true;
             },
-            .destroy => |_| return error.NotImplemented,
+            .destroy => |msg| {
+                const window = self.getWindow(msg.xdg_surface.id) orelse return error.NoSuchWindow;
+                window.xdg_surface = null;
+
+                try self.wl_display.sendDeleteId(msg.xdg_surface.id);
+                self.unlink(msg.xdg_surface.id);
+            },
             .get_popup => |_| return error.NotImplemented,
             .set_window_geometry => |msg| {
                 const window = self.getWindow(msg.xdg_surface.id) orelse return error.NoSuchWindow;
@@ -769,7 +782,13 @@ pub const Client = struct {
                 const length = math.min(window.title.len, msg.title.len);
                 mem.copy(u8, window.title[0..length], msg.title[0..length]);
             },
-            .destroy => |_| return error.NotImplemented,
+            .destroy => |msg| {
+                const window = self.getWindow(msg.xdg_toplevel.id) orelse return error.NoSuchWindow;
+                window.xdg_toplevel = null;
+
+                try self.wl_display.sendDeleteId(msg.xdg_toplevel.id);
+                self.unlink(msg.xdg_toplevel.id);
+            },
             .set_parent => |msg| {
                 const window = self.getWindow(msg.xdg_toplevel.id) orelse return error.NoSuchWindow;
                 window.parent = if (msg.parent) |p| self.getWindow(p.id) orelse return error.NoSuchWindow else null;
@@ -864,6 +883,23 @@ pub const Client = struct {
             .resize => |msg| {
                 const shm_pool = self.getShmPool(msg.wl_shm_pool.id) orelse return error.NoSuchShmPool;
                 try shm_pool.resize(msg.size);
+            },
+        }
+    }
+
+    pub fn handleWlBuffer(self: *Client, message: WlBuffer.Message) !void {
+        switch (message) {
+            .destroy => |msg| {
+                const buffer = self.getBuffer(msg.wl_buffer.id) orelse return error.NoSuchBuffer;
+                switch (buffer.*) {
+                    .shm => |*shmbuf| shmbuf.shm_pool.decrementRefCount(),
+                    else => {},
+                }
+                try buffer.deinit();
+
+                // We still want to do this
+                try self.wl_display.sendDeleteId(msg.wl_buffer.id);
+                self.unlink(msg.wl_buffer.id);
             },
         }
     }
