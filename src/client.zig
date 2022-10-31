@@ -96,8 +96,6 @@ pub const Client = struct {
     }
 
     pub fn deinit(self: *Self) void {
-        self.wire.deinit();
-
         std.os.close(self.conn.stream.handle);
 
         self.windows.deinit();

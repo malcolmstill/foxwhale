@@ -28,8 +28,6 @@ pub fn Wire(comptime WlMessage: type) type {
             };
         }
 
-        pub fn deinit(_: *Self) void {}
-
         const Header = struct {
             id: u32,
             opcode: u16,
