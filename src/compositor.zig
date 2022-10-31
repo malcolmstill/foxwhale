@@ -99,15 +99,11 @@ pub const Compositor = struct {
 
     pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
         if (self.move) |_| {
-            if (action == 0) {
-                self.move = null;
-            }
+            if (action == 0) self.move = null;
         }
 
         if (self.resize) |_| {
-            if (action == 0) {
-                self.resize = null;
-            }
+            if (action == 0) self.resize = null;
         }
 
         const view = self.current_view orelse return;
