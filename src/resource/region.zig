@@ -5,17 +5,18 @@ const Window = @import("window.zig").Window;
 const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 const RectangleBuffer = LinearFifo(RectangleOp, LinearFifoBufferType{ .Static = 64 });
-const WlRegion = @import("../wl/protocols.zig").WlRegion;
+
+const wl = @import("../client.zig").wl;
 
 pub const Region = struct {
     client: *Client,
-    wl_region: WlRegion,
+    wl_region: wl.WlRegion,
     rectangles: RectangleBuffer = RectangleBuffer.init(),
     window: ?*Window = null,
 
     const Self = @This();
 
-    pub fn init(client: *Client, wl_region: WlRegion) Region {
+    pub fn init(client: *Client, wl_region: wl.WlRegion) Region {
         return Region{
             .client = client,
             .wl_region = wl_region,

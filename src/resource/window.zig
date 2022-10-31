@@ -1,6 +1,5 @@
 const std = @import("std");
 const math = std.math;
-const prot = @import("../wl/protocols.zig");
 const Renderer = @import("../renderer.zig").Renderer;
 const Client = @import("../client.zig").Client;
 const Rectangle = @import("rectangle.zig").Rectangle;
@@ -12,17 +11,13 @@ const View = @import("../view.zig").View;
 const Mat4x4 = @import("../math.zig").Mat4x4;
 const Animatable = @import("../animatable.zig").Animatable;
 const AnimatableType = @import("../animatable.zig").AnimatableType;
-const WlSurface = @import("../wl/protocols.zig").WlSurface;
-const WlSubsurface = @import("../wl/protocols.zig").WlSubsurface;
-const WlCallback = @import("../wl/protocols.zig").WlCallback;
-const WlBuffer = @import("../wl/protocols.zig").WlBuffer;
-const XdgSurface = @import("../wl/protocols.zig").XdgSurface;
-const XdgToplevel = @import("../wl/protocols.zig").XdgToplevel;
 const RemoveError = @import("../client.zig").RemoveError;
 const ease = @import("../ease.zig");
 
+const wl = @import("../client.zig").wl;
+
 pub const XdgConfigurations = LinearFifo(XdgConfiguration, LinearFifoBufferType{ .Static = 32 });
-const Callbacks = LinearFifo(WlCallback, LinearFifoBufferType{ .Static = 32 });
+const Callbacks = LinearFifo(wl.WlCallback, LinearFifoBufferType{ .Static = 32 });
 
 pub const Window = struct {
     client: *Client,
@@ -50,12 +45,12 @@ pub const Window = struct {
     first_configure: bool = false,
     first_buffer: bool = false,
 
-    wl_surface: WlSurface,
-    wl_buffer: ?WlBuffer = null,
-    xdg_surface: ?XdgSurface = null,
-    xdg_toplevel: ?XdgToplevel = null,
+    wl_surface: wl.WlSurface,
+    wl_buffer: ?wl.WlBuffer = null,
+    xdg_surface: ?wl.XdgSurface = null,
+    xdg_toplevel: ?wl.XdgToplevel = null,
     xdg_popup_id: ?u32 = null,
-    wl_subsurface: ?WlSubsurface = null,
+    wl_subsurface: ?wl.WlSubsurface = null,
 
     positioner: ?*Positioner = null,
 
@@ -75,7 +70,7 @@ pub const Window = struct {
 
     const Self = @This();
 
-    pub fn init(client: *Client, wl_surface: WlSurface) Window {
+    pub fn init(client: *Client, wl_surface: wl.WlSurface) Window {
         return Window{
             .client = client,
             .wl_surface = wl_surface,
@@ -83,20 +78,20 @@ pub const Window = struct {
     }
 
     // flip double-buffered state
-    pub fn flip(self: *Self) RemoveError!void {
+    pub fn flip(self: *Self) void {
         // std.log.warn("flipping: {}\n", .{self.index});
         self.stateIndex +%= 1;
         if (self.current().input_region != self.pending().input_region) {
             if (self.pending().input_region) |input_region| {
                 // try input_region.deinit();
-                try self.client.removeRegion(input_region.wl_region.id);
+                self.client.removeRegion(input_region);
             }
         }
 
         if (self.current().opaque_region != self.pending().opaque_region) {
             if (self.pending().opaque_region) |opaque_region| {
                 // try opaque_region.deinit();
-                try self.client.removeRegion(opaque_region.wl_region.id);
+                self.client.removeRegion(opaque_region);
             }
         }
         self.pending().* = self.current().*;
@@ -105,7 +100,7 @@ pub const Window = struct {
         var forward_it = self.subwindowIterator();
         while (forward_it.nextPending()) |subwindow| {
             if (subwindow != self and subwindow.synchronized) {
-                try subwindow.flip();
+                subwindow.flip();
             }
         }
 
@@ -113,7 +108,7 @@ pub const Window = struct {
         var backward_it = self.subwindowIterator();
         while (backward_it.prevPending()) |subwindow| {
             if (subwindow != self and subwindow.synchronized) {
-                try subwindow.flip();
+                subwindow.flip();
             }
         }
     }
@@ -250,7 +245,7 @@ pub const Window = struct {
         while (self.callbacks.readItem()) |wl_callback| {
             try wl_callback.sendDone(@truncate(u32, @intCast(u64, std.time.milliTimestamp())));
             try self.client.wl_display.sendDeleteId(wl_callback.id);
-            self.client.unlink(wl_callback.id);
+            self.client.unregister(wl_callback.id);
         }
     }
 
@@ -329,11 +324,10 @@ pub const Window = struct {
 
     pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
         const client = self.client;
-        const wl_pointer_id = client.wl_pointer_id orelse return;
-        const wl_pointer = client.context.get(wl_pointer_id) orelse return;
+        const wl_pointer = client.wl_pointer orelse return;
 
         const now = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
-        try prot.wl_pointer_send_button(wl_pointer, client.nextSerial(), now, button, action);
+        try wl_pointer.sendButton(client.nextSerial(), now, button, action);
     }
 
     pub const SubwindowIterator = struct {
@@ -523,25 +517,21 @@ pub const Window = struct {
         var client = self.client;
 
         config: {
-            const xdg_surface_id = self.xdg_surface_id orelse break :config;
-            const xdg_surface = client.context.get(xdg_surface_id) orelse break :config;
-            const xdg_toplevel_id = self.xdg_toplevel_id orelse break :config;
-            const xdg_toplevel = client.context.get(xdg_toplevel_id) orelse break :config;
+            const xdg_surface = self.xdg_surface orelse break :config;
+            const xdg_toplevel = self.xdg_toplevel orelse break :config;
 
-            var state: [1]u32 = [_]u32{@enumToInt(prot.xdg_toplevel_state.activated)};
+            var state: [1]u32 = [_]u32{@enumToInt(.XdgToplevelState.activated)};
             if (self.window_geometry) |window_geometry| {
-                try prot.xdg_toplevel_send_configure(xdg_toplevel, window_geometry.width, window_geometry.height, &state);
+                try xdg_toplevel.sendConfigure(window_geometry.width, window_geometry.height, &state);
             } else {
-                try prot.xdg_toplevel_send_configure(xdg_toplevel, self.width, self.height, &state);
+                try xdg_toplevel.sendConfigure(self.width, self.height, &state);
             }
-            try prot.xdg_surface_send_configure(xdg_surface, client.nextSerial());
+            try xdg_surface.sendConfigure(client.nextSerial());
         }
 
         keyboard: {
-            const wl_keyboard_id = client.wl_keyboard_id orelse break :keyboard;
-            const wl_keyboard = client.context.get(wl_keyboard_id) orelse break :keyboard;
-
-            try prot.wl_keyboard_send_enter(wl_keyboard, client.nextSerial(), self.wl_surface_id, &[_]u32{});
+            const wl_keyboard = client.wl_keyboard orelse break :keyboard;
+            try wl_keyboard.sendEnter(client.nextSerial(), self.wl_surface_id, &[_]u32{});
         }
     }
 
@@ -549,42 +539,35 @@ pub const Window = struct {
         var client = self.client;
 
         config: {
-            const xdg_surface_id = self.xdg_surface_id orelse break :config;
-            const xdg_surface = client.context.get(xdg_surface_id) orelse break :config;
-            const xdg_toplevel_id = self.xdg_toplevel_id orelse break :config;
-            const xdg_toplevel = client.context.get(xdg_toplevel_id) orelse break :config;
+            const xdg_surface = self.xdg_surface orelse break :config;
+            const xdg_toplevel = self.xdg_toplevel orelse break :config;
 
             if (self.window_geometry) |window_geometry| {
-                try prot.xdg_toplevel_send_configure(xdg_toplevel, window_geometry.width, window_geometry.height, &[_]u32{});
+                try xdg_toplevel.sendConfigure(xdg_toplevel, window_geometry.width, window_geometry.height, &[_]u32{});
             } else {
-                try prot.xdg_toplevel_send_configure(xdg_toplevel, self.width, self.height, &[_]u32{});
+                try xdg_toplevel.sendConfigure(xdg_toplevel, self.width, self.height, &[_]u32{});
             }
-            try prot.xdg_surface_send_configure(xdg_surface, client.nextSerial());
+            try xdg_surface.sendConfigure(xdg_surface, client.nextSerial());
         }
 
         keyboard: {
-            const wl_keyboard_id = client.wl_keyboard_id orelse break :keyboard;
-            const wl_keyboard = client.context.get(wl_keyboard_id) orelse break :keyboard;
-
-            try prot.wl_keyboard_send_leave(wl_keyboard, client.nextSerial(), self.wl_surface_id);
+            const wl_keyboard = client.wl_keyboard_ orelse break :keyboard;
+            try wl_keyboard.sendLeave(client.nextSerial(), self.wl_surface_id);
         }
     }
 
     pub fn pointerEnter(self: *Self, pointer_x: f64, pointer_y: f64) !void {
         const client = self.client;
-        const wl_pointer_id = client.wl_pointer_id orelse return;
-        const wl_pointer = client.context.get(wl_pointer_id) orelse return;
+        const wl_pointer = client.wl_pointer orelse return;
 
-        try prot.wl_pointer_send_enter(wl_pointer, client.nextSerial(), self.wl_surface_id, @floatCast(f32, pointer_x - @intToFloat(f64, self.current().x)), @floatCast(f32, pointer_y - @intToFloat(f64, self.current().y)));
+        try wl_pointer.sendEnter(client.nextSerial(), self.wl_surface_id, @floatCast(f32, pointer_x - @intToFloat(f64, self.current().x)), @floatCast(f32, pointer_y - @intToFloat(f64, self.current().y)));
     }
 
     pub fn pointerMotion(self: *Self, pointer_x: f64, pointer_y: f64) !void {
         const client = self.client;
-        const wl_pointer_id = client.wl_pointer_id orelse return;
-        const wl_pointer = client.context.get(wl_pointer_id) orelse return;
+        const wl_pointer = client.wl_pointer orelse return;
 
-        try prot.wl_pointer_send_motion(
-            wl_pointer,
+        try wl_pointer.sendMotion(
             @truncate(u32, @intCast(u64, std.time.milliTimestamp())),
             @floatCast(f32, pointer_x - @intToFloat(f64, self.absoluteX())),
             @floatCast(f32, pointer_y - @intToFloat(f64, self.absoluteY())),
@@ -593,32 +576,24 @@ pub const Window = struct {
 
     pub fn pointerLeave(self: *Self) !void {
         const client = self.client;
-        const wl_pointer_id = client.wl_pointer_id orelse return;
-        const wl_pointer = client.context.get(wl_pointer_id) orelse return;
+        const wl_pointer = client.wl_pointer orelse return;
 
-        try prot.wl_pointer_send_leave(
-            wl_pointer,
-            client.nextSerial(),
-            self.wl_surface_id,
-        );
+        try wl_pointer.sendLeave(client.nextSerial(), self.wl_surface_id);
     }
 
     pub fn mouseAxis(self: *Self, time: u32, axis: u32, value: f64) !void {
         const client = self.client;
-        const wl_pointer_id = client.wl_pointer_id orelse return;
-        const wl_pointer = client.context.get(wl_pointer_id) orelse return;
+        const wl_pointer = client.wl_pointer orelse return;
 
         // const now = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
-        try prot.wl_pointer_send_axis(wl_pointer, time, axis, @floatCast(f32, value));
+        try wl_pointer.sendAxis(time, axis, @floatCast(f32, value));
     }
 
     pub fn keyboardKey(self: *Self, time: u32, button: u32, action: u32) !void {
         const client = self.client;
-        const wl_keyboard_id = client.wl_keyboard_id orelse return;
-        const wl_keyboard = client.context.get(wl_keyboard_id) orelse return;
+        const wl_keyboard = client.wl_keyboard orelse return;
 
-        try prot.wl_keyboard_send_key(
-            wl_keyboard,
+        try wl_keyboard.sendKey(
             client.nextSerial(),
             time,
             button,

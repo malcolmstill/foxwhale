@@ -2,19 +2,19 @@ const std = @import("std");
 const os = std.os;
 const linux = os.linux;
 const Client = @import("../client.zig").Client;
-const WlShmPool = @import("../wl/protocols.zig").WlShmPool;
+const wl = @import("../client.zig").wl;
 
 pub const ShmPool = struct {
     client: *Client,
     fd: i32,
     data: []align(4096) u8 = undefined,
-    wl_shm_pool: WlShmPool,
+    wl_shm_pool: wl.WlShmPool,
     ref_count: usize = 0,
     to_be_destroyed: bool = false,
 
     const Self = @This();
 
-    pub fn init(client: *Client, fd: i32, wl_shm_pool: WlShmPool, size: i32) !ShmPool {
+    pub fn init(client: *Client, fd: i32, wl_shm_pool: wl.WlShmPool, size: i32) !ShmPool {
         const data = try os.mmap(null, @intCast(usize, size), linux.PROT.READ | linux.PROT.WRITE, linux.MAP.SHARED, fd, 0);
 
         return ShmPool{

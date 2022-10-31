@@ -6,8 +6,9 @@ const Event = @import("subsystem.zig").Event;
 const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
 const Client = @import("client.zig").Client;
 const Wire = @import("wl/wire.zig").Wire;
-const WlObject = @import("wl/protocols.zig").WlObject;
-const WlDisplay = @import("wl/protocols.zig").WlDisplay;
+
+const wl = @import("client.zig").wl;
+
 const Window = @import("resource/window.zig").Window;
 const Buffer = @import("resource/buffer.zig").Buffer;
 const Region = @import("resource/region.zig").Region;
@@ -21,28 +22,28 @@ const Resize = @import("resize.zig").Resize;
 const xkbcommon = @import("xkb.zig");
 const Xkb = @import("xkb.zig").Xkb;
 
-pub const ResourceType = enum(u8) {
-    window,
-    region,
-    buffer,
-    shm_pool,
-    output,
-    none,
-};
+// pub const ResourceType = enum(u8) {
+//     window,
+//     region,
+//     buffer,
+//     shm_pool,
+//     output,
+//     none,
+// };
 
-pub const Resource = union(ResourceType) {
-    window: *Window,
-    region: *Region,
-    buffer: *Buffer,
-    shm_pool: *ShmPool,
-    output: *Output,
-    none: void,
-};
+// pub const Resource = union(ResourceType) {
+//     window: *Window,
+//     region: *Region,
+//     buffer: *Buffer,
+//     shm_pool: *ShmPool,
+//     output: *Output,
+//     none: void,
+// };
 
-pub const ResourceObject = struct {
-    object: WlObject,
-    resource: Resource,
-};
+// pub const ResourceObject = struct {
+//     object: wl.WlObject,
+//     resource: Resource,
+// };
 
 pub const Server = struct {
     alloc: mem.Allocator,
@@ -55,7 +56,7 @@ pub const Server = struct {
     regions: SubsetPool(Region, u16),
     buffers: SubsetPool(Buffer, u16),
     shm_pools: SubsetPool(ShmPool, u16),
-    objects: SubsetPool(ResourceObject, u16),
+    objects: SubsetPool(wl.WlObject, u16),
 
     move: ?Move = null,
     resize: ?Resize = null,
@@ -93,7 +94,7 @@ pub const Server = struct {
             .regions = try SubsetPool(Region, u16).init(alloc, 1024),
             .buffers = try SubsetPool(Buffer, u16).init(alloc, 1024),
             .shm_pools = try SubsetPool(ShmPool, u16).init(alloc, 1024),
-            .objects = try SubsetPool(ResourceObject, u16).init(alloc, 16384),
+            .objects = try SubsetPool(wl.WlObject, u16).init(alloc, 16384),
 
             .xkb = try xkbcommon.init(),
         };
@@ -127,9 +128,9 @@ pub const Server = struct {
         var client = try self.clients.createPtr();
         errdefer self.clients.destroy(client);
 
-        const wl_display = WlDisplay.init(1, &client.wire, 0);
+        const wl_display = wl.WlDisplay.init(1, &client.wire, 0, null);
         client.* = Client.init(self.alloc, self, conn, wl_display);
-        try client.link(.{ .wl_display = wl_display }, .none);
+        try client.register(.{ .wl_display = wl_display });
 
         return client;
     }

@@ -8,22 +8,22 @@ const Client = @import("../client.zig").Client;
 const ShmPool = @import("shm_pool.zig").ShmPool;
 const buffer = @import("buffer.zig");
 const Buffer = buffer.Buffer;
-const WlBuffer = @import("../wl/protocols.zig").WlBuffer;
-const WlShm = @import("../wl/protocols.zig").WlShm;
+
+const wl = @import("../client.zig").wl;
 
 pub const ShmBuffer = struct {
     client: *Client,
-    wl_buffer: WlBuffer,
+    wl_buffer: wl.WlBuffer,
     shm_pool: *ShmPool,
     offset: i32,
     width: i32,
     height: i32,
     stride: i32,
-    format: WlShm.Format,
+    format: wl.WlShm.Format,
 
     const Self = @This();
 
-    pub fn init(client: *Client, shm_pool: *ShmPool, wl_buffer: WlBuffer, offset: i32, width: i32, height: i32, stride: i32, format: WlShm.Format) ShmBuffer {
+    pub fn init(client: *Client, shm_pool: *ShmPool, wl_buffer: wl.WlBuffer, offset: i32, width: i32, height: i32, stride: i32, format: wl.WlShm.Format) ShmBuffer {
         shm_pool.incrementRefCount();
         return ShmBuffer{
             .client = client,

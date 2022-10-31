@@ -20,20 +20,44 @@ def generate(context, side, files):
 
     print(f'const std = @import("std");')
     print(f'const builtin = @import("builtin");')
-    print(f'const Wire = @import("wire.zig").Wire;')
+    print(f'const WireFn = @import("wire.zig").Wire;')
+
+    interfacesMap = {}
+    for file in files:
+        tree = Tree.parse(file)
+        protocol = tree.getroot()
+        if protocol.tag == "protocol":
+            generate_interface_map(protocol, interfacesMap)
+
+    print(f'')
+    print(f'pub fn Wayland(comptime ResourceMap: struct {{')
+    for key in interfacesMap:
+        print(f'{key}: type = ?void,')
+    print(f'}}) type {{')
+    print(f" return struct {{")
+    print(f'pub const Wire = WireFn(WlMessage);')
 
     msgs = []
     for file in files:
         tree = Tree.parse(file)
         protocol = tree.getroot()
         if protocol.tag == "protocol":
-            generate_protocol(protocol, sendType, receiveType, msgs)
+            generate_protocol(protocol, sendType, receiveType, msgs, interfacesMap)
 
     # msgs.reverse()
     generate_message_union(msgs)
 
+    print(f'}};')
+    print(f'}}')
 
-def generate_protocol(protocol, sendType, receiveType, msgs):
+
+def generate_interface_map(protocol, interfacesMap):
+    for interface in protocol:
+        if interface.tag == "interface":
+            interfacesMap[interface.attrib["name"]] = camelCase(interface.attrib["name"])
+
+
+def generate_protocol(protocol, sendType, receiveType, msgs, interfacesMap):
     global_enum_map = {}
     for child in protocol:
         if child.tag == "interface":
@@ -44,6 +68,7 @@ def generate_protocol(protocol, sendType, receiveType, msgs):
             print(f"\n// {child.attrib['name']}")
             generate_interface_struct(child, receiveType, sendType, global_enum_map)
             msgs.append(child.attrib['name'])
+
 
 def make_enum_map(interface, global_enum_map):
     for child in interface:
@@ -56,18 +81,21 @@ def make_enum_map(interface, global_enum_map):
 
 def generate_interface_struct(interface, receiveType, sendType, global_enum_map):
     interfaceName = camelCase(interface.attrib['name'])
+    resourceType = f'ResourceMap.{interface.attrib["name"]}'
     print(f"pub const {interfaceName} = struct {{")
     print(f"\t\twire: *Wire,")
     print(f"\t\tid: u32,")
     print(f"\t\tversion: u32,")
+    print(f'resource: {resourceType},')
     print(f"")
     print("const Self = @This();")
     print(f"")
-    print(f"pub fn init(id: u32, wire: *Wire, version: u32) Self {{")
+    print(f"pub fn init(id: u32, wire: *Wire, version: u32, resource: {resourceType}) Self {{")
     print(f"\treturn Self {{")
     print(f"\t\t.id = id,")
     print(f"\t\t.wire = wire,")
     print(f"\t\t.version = version,")
+    print(f"\t\t.resource = resource,")
     print(f"\t}};")
     print(f"}}")
 

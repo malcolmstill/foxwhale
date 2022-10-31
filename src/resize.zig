@@ -1,4 +1,4 @@
-const XdgToplevel = @import("wl/protocols.zig").XdgToplevel;
+const wl = @import("client.zig").wl;
 const Window = @import("resource/window.zig").Window;
 const XdgConfiguration = @import("resource/window.zig").XdgConfiguration;
 
@@ -10,9 +10,9 @@ pub const Resize = struct {
     pointer_y: f64,
     width: i32,
     height: i32,
-    direction: XdgToplevel.ResizeEdge,
+    direction: wl.XdgToplevel.ResizeEdge,
 
-    pub fn init(window: *Window, window_x: i32, window_y: i32, pointer_x: f64, pointer_y: f64, width: i32, height: i32, direction: XdgToplevel.ResizeEdge) Resize {
+    pub fn init(window: *Window, window_x: i32, window_y: i32, pointer_x: f64, pointer_y: f64, width: i32, height: i32, direction: wl.XdgToplevel.ResizeEdge) Resize {
         return Resize{
             .window = window,
             .window_x = window_x,
@@ -32,7 +32,7 @@ pub const Resize = struct {
         const xdg_surface = window.xdg_surface_id orelse return;
         const xdg_toplevel = window.xdg_toplevel orelse return;
 
-        const state = [_]XdgToplevel.ResizeEdge{
+        const state = [_]wl.XdgToplevel.ResizeEdge{
             .activated,
             .resizing,
         };
