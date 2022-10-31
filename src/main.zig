@@ -64,7 +64,7 @@ pub fn main() !void {
                 .button_press => |bp| std.log.info("button press = {}", .{bp}),
                 .sync => {
                     // For the moment we will draw but we'll want to trigger a timer instead
-                    counter.update();
+                    counter.update(&server);
                     c.glClearColor(1.0, 0.0, 0.3, 1.0);
                     c.glClear(c.GL_COLOR_BUFFER_BIT);
                     try renderer.render();
@@ -102,12 +102,13 @@ const FrameCounter = struct {
         };
     }
 
-    pub fn update(self: *FrameCounter) void {
+    pub fn update(self: *FrameCounter, server: *Server) void {
         self.frames += 1;
         const now = std.time.milliTimestamp();
 
         if ((now - self.then) > 5000) {
             std.log.info("fps = {}", .{self.frames / 5});
+            server.usage();
             self.then = now;
             self.frames = 0;
         }

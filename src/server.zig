@@ -105,6 +105,18 @@ pub const Server = struct {
         self.objects.deinit();
     }
 
+    pub fn usage(self: *Self) void {
+        std.debug.print("\n- Usage -------\n", .{});
+        std.debug.print("  clients: {}   \n", .{self.clients.pool.count});
+        std.debug.print("  outputs: {}   \n", .{self.outputs.pool.count});
+        std.debug.print("  windows: {}   \n", .{self.windows.pool.count});
+        std.debug.print("  regions: {}   \n", .{self.regions.pool.count});
+        std.debug.print("  buffers: {}   \n", .{self.buffers.pool.count});
+        std.debug.print("  shm_pools: {} \n", .{self.shm_pools.pool.count});
+        std.debug.print("  objects: {}   \n", .{self.objects.pool.count});
+        std.debug.print("---------------\n", .{});
+    }
+
     pub fn addClient(self: *Self, conn: std.net.StreamServer.Connection) !*Client {
         var client = try self.clients.createPtr();
         errdefer self.clients.destroy(client);

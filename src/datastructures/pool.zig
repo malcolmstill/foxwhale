@@ -8,6 +8,7 @@ pub fn Pool(comptime T: type, comptime U: type) type {
         entities: []T,
         free_stack: []?U,
         next_free: ?U,
+        count: usize = 0,
         in_use: if (builtin.mode == .Debug) []bool else void,
 
         const Self = @This();
@@ -69,7 +70,7 @@ pub fn Pool(comptime T: type, comptime U: type) type {
                 defer self.next_free = self.free_stack[next_free];
 
                 if (builtin.mode == .Debug) self.in_use[next_free] = true;
-
+                self.count += 1;
                 return &self.entities[next_free];
             }
 
@@ -79,6 +80,7 @@ pub fn Pool(comptime T: type, comptime U: type) type {
         pub fn destroy(self: *Self, ptr: *T) void {
             const index = self.indexOf(ptr) orelse return;
 
+            self.count -= 1;
             if (builtin.mode == .Debug) self.in_use[index] = false;
 
             self.free_stack[index] = self.next_free;
