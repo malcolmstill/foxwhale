@@ -407,20 +407,13 @@ pub const Client = struct {
     pub fn handleWlShmPool(self: *Client, message: wl.WlShmPool.Message) !void {
         switch (message) {
             .create_buffer => |msg| {
-                const shm_pool = msg.wl_shm_pool.resource;
-                const offset = msg.offset;
-                const width = msg.width;
-                const height = msg.height;
-                const stride = msg.stride;
-                const format = msg.format;
-
                 const buffer = try self.buffers.createPtr();
                 errdefer self.buffers.destroy(buffer);
 
                 const wl_buffer = wl.WlBuffer.init(msg.id, &self.wire, 0, buffer);
                 try self.register(.{ .wl_buffer = wl_buffer });
 
-                buffer.* = .{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer, offset, width, height, stride, format) };
+                buffer.* = .{ .shm = ShmBuffer.init(self, msg.wl_shm_pool.resource, wl_buffer, msg.offset, msg.width, msg.height, msg.stride, msg.format) };
             },
             .destroy => |msg| {
                 const wl_shm_pool = msg.wl_shm_pool;
