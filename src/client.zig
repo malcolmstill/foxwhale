@@ -15,6 +15,7 @@ const WlShm = @import("wl/protocols.zig").WlShm;
 const WlSeat = @import("wl/protocols.zig").WlSeat;
 const WlShmPool = @import("wl/protocols.zig").WlShmPool;
 const WlSurface = @import("wl/protocols.zig").WlSurface;
+const WlSubsurface = @import("wl/protocols.zig").WlSubsurface;
 const WlDataDeviceManager = @import("wl/protocols.zig").WlDataDeviceManager;
 const WlRegion = @import("wl/protocols.zig").WlRegion;
 const WlBuffer = @import("wl/protocols.zig").WlBuffer;
@@ -303,6 +304,8 @@ pub const Client = struct {
             .xdg_surface => |msg| try self.handleXdgSurface(msg),
             .xdg_toplevel => |msg| try self.handleXdgToplevel(msg),
             .wl_region => |msg| try self.handleWlRegion(msg),
+            .wl_subcompositor => |msg| try self.handleWlSubcompositor(msg),
+            .wl_subsurface => |_| return error.NotImplemented,
             .wl_callback => |_| return error.NotImplemented,
             .wl_buffer => |_| return error.NotImplemented,
             .wl_data_offer => |_| return error.NotImplemented,
@@ -316,8 +319,6 @@ pub const Client = struct {
             .wl_keyboard => |_| return error.NotImplemented,
             .wl_touch => |_| return error.NotImplemented,
             .wl_output => |_| return error.NotImplemented,
-            .wl_subcompositor => |_| return error.NotImplemented,
-            .wl_subsurface => |_| return error.NotImplemented,
             .xdg_positioner => |_| return error.NotImplemented,
             .xdg_popup => |_| return error.NotImplemented,
             .zwp_linux_dmabuf_v1 => |_| return error.NotImplemented,
@@ -346,7 +347,7 @@ pub const Client = struct {
 
                 // try wl_registry.sendGlobal(6, "wl_data_device_manager\x00", 3);
                 try wl_registry.sendGlobal(8, "wl_shm\x00", 1);
-                try wl_registry.sendGlobal(10, "zwp_linux_dmabuf_v1\x00", 3);
+                // try wl_registry.sendGlobal(10, "zwp_linux_dmabuf_v1\x00", 3);
                 try wl_registry.sendGlobal(11, "fw_control\x00", 1);
             },
             .sync => |msg| {
@@ -619,6 +620,31 @@ pub const Client = struct {
                 };
 
                 try region.rectangles.writeItem(rect);
+            },
+        }
+    }
+
+    pub fn handleWlSubcompositor(self: *Client, message: WlSubcompositor.Message) !void {
+        switch (message) {
+            .destroy => |msg| {
+                self.wl_subcompositor = null;
+                try self.wl_display.sendDeleteId(msg.wl_subcompositor.id);
+                self.unlink(msg.wl_subcompositor.id);
+            },
+            .get_subsurface => |msg| {
+                const wl_subsurface = WlSubsurface.init(msg.id, &self.wire, 0);
+
+                const child = self.getWindow(msg.surface.id) orelse return error.NoSuchWindow;
+                const parent = self.getWindow(msg.parent.id) orelse return error.NoSuchWindow;
+
+                child.wl_subsurface = wl_subsurface;
+                child.parent = parent;
+                child.synchronized = true;
+
+                child.detach();
+                child.placeAbove(parent);
+
+                try self.link(.{ .wl_subsurface = wl_subsurface }, .{ .window = child });
             },
         }
     }

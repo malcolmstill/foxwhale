@@ -13,6 +13,7 @@ const Mat4x4 = @import("../math.zig").Mat4x4;
 const Animatable = @import("../animatable.zig").Animatable;
 const AnimatableType = @import("../animatable.zig").AnimatableType;
 const WlSurface = @import("../wl/protocols.zig").WlSurface;
+const WlSubsurface = @import("../wl/protocols.zig").WlSubsurface;
 const WlCallback = @import("../wl/protocols.zig").WlCallback;
 const WlBuffer = @import("../wl/protocols.zig").WlBuffer;
 const XdgSurface = @import("../wl/protocols.zig").XdgSurface;
@@ -54,7 +55,7 @@ pub const Window = struct {
     xdg_surface: ?XdgSurface = null,
     xdg_toplevel: ?XdgToplevel = null,
     xdg_popup_id: ?u32 = null,
-    wl_subsurface_id: ?u32 = null,
+    wl_subsurface: ?WlSubsurface = null,
 
     positioner: ?*Positioner = null,
 
