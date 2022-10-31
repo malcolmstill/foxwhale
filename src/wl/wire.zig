@@ -4,9 +4,7 @@ const mem = std.mem;
 const fifo = std.fifo;
 const math = std.math;
 const txrx = @import("txrx.zig");
-const LinearFifo = fifo.LinearFifo;
-const LinearFifoBufferType = fifo.LinearFifoBufferType;
-const FdBuffer = LinearFifo(i32, LinearFifoBufferType{ .Static = txrx.MAX_FDS });
+const FdBuffer = fifo.LinearFifo(i32, fifo.LinearFifoBufferType{ .Static = txrx.MAX_FDS });
 
 const BUFFER_SIZE = 4096;
 
