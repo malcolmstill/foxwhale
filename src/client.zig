@@ -18,6 +18,8 @@ const WlSurface = @import("wl/protocols.zig").WlSurface;
 const WlSubsurface = @import("wl/protocols.zig").WlSubsurface;
 const WlDataDeviceManager = @import("wl/protocols.zig").WlDataDeviceManager;
 const WlRegion = @import("wl/protocols.zig").WlRegion;
+const WlPointer = @import("wl/protocols.zig").WlPointer;
+const WlKeyboard = @import("wl/protocols.zig").WlKeyboard;
 const WlBuffer = @import("wl/protocols.zig").WlBuffer;
 const WlCallback = @import("wl/protocols.zig").WlCallback;
 const WlOutput = @import("wl/protocols.zig").WlOutput;
@@ -62,8 +64,8 @@ pub const Client = struct {
     xdg_wm_base: ?XdgWmBase = null,
     wl_shm: ?WlShm = null,
     wl_data_device_manager: ?WlDataDeviceManager = null,
-    // wl_keyboard_id: ?u32 = null,
-    // wl_pointer_id: ?u32 = null,
+    wl_keyboard: ?WlKeyboard = null,
+    wl_pointer: ?WlPointer = null,
     wl_seat: ?WlSeat = null,
     wl_subcompositor: ?WlSubcompositor = null,
     // fw_control_id: ?u32 = null,
@@ -448,6 +450,72 @@ pub const Client = struct {
         }
     }
 
+    pub fn handleWlShmPool(self: *Client, message: WlShmPool.Message) !void {
+        switch (message) {
+            .create_buffer => |msg| {
+                const shm_pool = self.getShmPool(msg.wl_shm_pool.id) orelse return error.NoSuchShmPool;
+                const offset = msg.offset;
+                const width = msg.width;
+                const height = msg.height;
+                const stride = msg.stride;
+                const format = msg.format;
+
+                const wl_buffer = WlBuffer.init(msg.id, &self.wire, 0);
+                const buffer = try self.buffers.create(.{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer, offset, width, height, stride, format) });
+                errdefer self.buffers.destroy(buffer);
+
+                try self.link(.{ .wl_buffer = wl_buffer }, .{ .buffer = buffer });
+            },
+            .destroy => |msg| {
+                const wl_shm_pool = msg.wl_shm_pool;
+                const shm_pool = self.getShmPool(wl_shm_pool.id) orelse return error.NoSuchShmPool;
+
+                shm_pool.to_be_destroyed = true;
+                if (shm_pool.ref_count == 0) {
+                    shm_pool.deinit();
+                    _ = self.shm_pools.destroy(shm_pool);
+                }
+
+                try self.wl_display.sendDeleteId(wl_shm_pool.id);
+                self.unlink(wl_shm_pool.id);
+            },
+            .resize => |msg| {
+                const shm_pool = self.getShmPool(msg.wl_shm_pool.id) orelse return error.NoSuchShmPool;
+                try shm_pool.resize(msg.size);
+            },
+        }
+    }
+
+    pub fn handleWlShm(self: *Client, message: WlShm.Message) !void {
+        switch (message) {
+            .create_pool => |msg| {
+                const wl_shm_pool = WlShmPool.init(msg.id, &self.wire, 0);
+
+                const shm_pool = try self.shm_pools.create(try ShmPool.init(self, msg.fd, wl_shm_pool, msg.size));
+                errdefer self.shm_pools.destroy(shm_pool);
+
+                try self.link(.{ .wl_shm_pool = wl_shm_pool }, .{ .shm_pool = shm_pool });
+            },
+        }
+    }
+
+    pub fn handleWlBuffer(self: *Client, message: WlBuffer.Message) !void {
+        switch (message) {
+            .destroy => |msg| {
+                const buffer = self.getBuffer(msg.wl_buffer.id) orelse return error.NoSuchBuffer;
+                switch (buffer.*) {
+                    .shm => |*shmbuf| shmbuf.shm_pool.decrementRefCount(),
+                    else => {},
+                }
+                try buffer.deinit();
+
+                // We still want to do this
+                try self.wl_display.sendDeleteId(msg.wl_buffer.id);
+                self.unlink(msg.wl_buffer.id);
+            },
+        }
+    }
+
     pub fn handleWlSurface(self: *Client, message: WlSurface.Message) !void {
         switch (message) {
             .commit => |msg| {
@@ -588,6 +656,34 @@ pub const Client = struct {
             .set_buffer_transform => |_| return error.WlSurfaceSetBufferTransformNotImplemented,
             .set_buffer_scale => |_| return error.WlSurfaceSetBufferScaleNotImplemented,
             .damage_buffer => |_| return error.WlSurfaceDamageBufferNotImplemented,
+        }
+    }
+
+    // wl_seat
+    pub fn handleWlSeat(self: *Client, message: WlSeat.Message) !void {
+        switch (message) {
+            .get_pointer => |msg| {
+                const wl_pointer = WlPointer.init(msg.id, &self.wire, 0);
+                self.wl_pointer = wl_pointer;
+
+                try self.link(.{ .wl_pointer = wl_pointer }, .none);
+            },
+            .get_keyboard => |msg| {
+                const wl_keyboard = WlKeyboard.init(msg.id, &self.wire, 0);
+                if (self.wl_seat != null) self.wl_keyboard = wl_keyboard;
+
+                if (self.server.xkb) |*xkb| {
+                    const fd_size = try xkb.getKeymap();
+
+                    try wl_keyboard.sendKeymap(.xkb_v1, fd_size.fd, @intCast(u32, fd_size.size));
+
+                    if (msg.wl_seat.version >= 4) try wl_keyboard.sendRepeatInfo(1, 2000);
+                }
+
+                try self.link(.{ .wl_keyboard = wl_keyboard }, .none);
+            },
+            .get_touch => |_| return error.NotImplement,
+            .release => |_| return error.NotImplement,
         }
     }
 
@@ -835,72 +931,6 @@ pub const Client = struct {
             .set_fullscreen => |_| return error.NotImplemented,
             .unset_fullscreen => |_| return error.NotImplemented,
             .set_minimized => |_| return error.NotImplemented,
-        }
-    }
-
-    pub fn handleWlShm(self: *Client, message: WlShm.Message) !void {
-        switch (message) {
-            .create_pool => |msg| {
-                const wl_shm_pool = WlShmPool.init(msg.id, &self.wire, 0);
-
-                const shm_pool = try self.shm_pools.create(try ShmPool.init(self, msg.fd, wl_shm_pool, msg.size));
-                errdefer self.shm_pools.destroy(shm_pool);
-
-                try self.link(.{ .wl_shm_pool = wl_shm_pool }, .{ .shm_pool = shm_pool });
-            },
-        }
-    }
-
-    pub fn handleWlShmPool(self: *Client, message: WlShmPool.Message) !void {
-        switch (message) {
-            .create_buffer => |msg| {
-                const shm_pool = self.getShmPool(msg.wl_shm_pool.id) orelse return error.NoSuchShmPool;
-                const offset = msg.offset;
-                const width = msg.width;
-                const height = msg.height;
-                const stride = msg.stride;
-                const format = msg.format;
-
-                const wl_buffer = WlBuffer.init(msg.id, &self.wire, 0);
-                const buffer = try self.buffers.create(.{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer, offset, width, height, stride, format) });
-                errdefer self.buffers.destroy(buffer);
-
-                try self.link(.{ .wl_buffer = wl_buffer }, .{ .buffer = buffer });
-            },
-            .destroy => |msg| {
-                const wl_shm_pool = msg.wl_shm_pool;
-                const shm_pool = self.getShmPool(wl_shm_pool.id) orelse return error.NoSuchShmPool;
-
-                shm_pool.to_be_destroyed = true;
-                if (shm_pool.ref_count == 0) {
-                    shm_pool.deinit();
-                    _ = self.shm_pools.destroy(shm_pool);
-                }
-
-                try self.wl_display.sendDeleteId(wl_shm_pool.id);
-                self.unlink(wl_shm_pool.id);
-            },
-            .resize => |msg| {
-                const shm_pool = self.getShmPool(msg.wl_shm_pool.id) orelse return error.NoSuchShmPool;
-                try shm_pool.resize(msg.size);
-            },
-        }
-    }
-
-    pub fn handleWlBuffer(self: *Client, message: WlBuffer.Message) !void {
-        switch (message) {
-            .destroy => |msg| {
-                const buffer = self.getBuffer(msg.wl_buffer.id) orelse return error.NoSuchBuffer;
-                switch (buffer.*) {
-                    .shm => |*shmbuf| shmbuf.shm_pool.decrementRefCount(),
-                    else => {},
-                }
-                try buffer.deinit();
-
-                // We still want to do this
-                try self.wl_display.sendDeleteId(msg.wl_buffer.id);
-                self.unlink(msg.wl_buffer.id);
-            },
         }
     }
 };

@@ -18,6 +18,8 @@ const SubsetPool = @import("datastructures/subset_pool.zig").SubsetPool;
 const BackendOutput = @import("backend/backend.zig").BackendOutput;
 const Move = @import("move.zig").Move;
 const Resize = @import("resize.zig").Resize;
+const xkbcommon = @import("xkb.zig");
+const Xkb = @import("xkb.zig").Xkb;
 
 pub const ResourceType = enum(u8) {
     window,
@@ -63,6 +65,8 @@ pub const Server = struct {
 
     output_base: u32 = 1000,
 
+    xkb: ?Xkb = null,
+
     const ClientNode = std.TailQueue(Client).Node;
     const Self = @This();
 
@@ -90,6 +94,8 @@ pub const Server = struct {
             .buffers = try SubsetPool(Buffer, u16).init(alloc, 1024),
             .shm_pools = try SubsetPool(ShmPool, u16).init(alloc, 1024),
             .objects = try SubsetPool(ResourceObject, u16).init(alloc, 16384),
+
+            .xkb = try xkbcommon.init(),
         };
     }
 
