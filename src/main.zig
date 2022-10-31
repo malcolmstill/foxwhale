@@ -7,9 +7,6 @@ const Event = @import("subsystem.zig").Event;
 const Target = @import("subsystem.zig").Target;
 const Backend = @import("backend/backend.zig").Backend;
 const Renderer = @import("renderer.zig").Renderer;
-const c = @cImport({
-    @cInclude("GLES3/gl3.h");
-});
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 
 pub fn main() !void {
@@ -65,8 +62,6 @@ pub fn main() !void {
                 .sync => {
                     // For the moment we will draw but we'll want to trigger a timer instead
                     counter.update(&server);
-                    c.glClearColor(1.0, 0.0, 0.3, 1.0);
-                    c.glClear(c.GL_COLOR_BUFFER_BIT);
                     try renderer.render();
 
                     {

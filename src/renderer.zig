@@ -65,6 +65,8 @@ pub const Renderer = struct {
     }
 
     pub fn render(_: *Renderer) !void {
+        c.glClearColor(1.0, 0.0, 0.3, 1.0);
+        c.glClear(c.GL_COLOR_BUFFER_BIT);
         // var width = output.backend.getWidth();
         // var height = output.backend.getHeight();
 
