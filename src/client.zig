@@ -728,9 +728,7 @@ pub const Client = struct {
                 const window = msg.wl_subsurface.resource;
                 window.synchronized = false;
                 if (window.parent) |parent| {
-                    if (!parent.synchronized) {
-                        window.flip();
-                    }
+                    if (!parent.synchronized) window.flip();
                 }
             },
         }
