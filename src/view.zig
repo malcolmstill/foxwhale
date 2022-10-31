@@ -4,20 +4,15 @@ const Focus = @import("focus.zig").Focus;
 const Window = @import("resource/window.zig").Window;
 
 pub const View = struct {
-    top: ?*Window,
-    pointer_window: ?*Window,
-    active_window: ?*Window,
-    focus: Focus,
+    top: ?*Window = null,
+    pointer_window: ?*Window = null,
+    active_window: ?*Window = null,
+    focus: Focus = .Click,
 
     const Self = @This();
 
     pub fn init() View {
-        return View{
-            .top = null,
-            .pointer_window = null,
-            .active_window = null,
-            .focus = Focus.Click,
-        };
+        return View{};
     }
 
     pub fn visible(_: *Self) bool {
@@ -136,7 +131,6 @@ pub const View = struct {
             }
 
             if (new_pointer_window) |window| {
-                std.log.warn("new pointer_window: {}\n", .{window.index});
                 try window.pointerEnter(x, y);
                 if (self.focus == Focus.FollowsMouse) {
                     try window.activate();
@@ -164,9 +158,5 @@ pub const View = struct {
     pub fn mouseAxis(self: *Self, time: u32, axis: u32, value: f64) !void {
         const pointer_window = self.pointer_window orelse return;
         try pointer_window.mouseAxis(time, axis, value);
-    }
-
-    pub fn deinit(_: *Self) void {
-        // self.* = makeView(self.output);
     }
 };
