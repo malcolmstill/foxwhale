@@ -121,7 +121,7 @@ pub const Window = struct {
         return &self.state[self.stateIndex +% 1];
     }
 
-    pub fn render(self: *Self, output_width: i32, output_height: i32, renderer: *Renderer, x: i32, y: i32) anyerror!void {
+    pub fn render(self: *Self, output_width: i32, output_height: i32, renderer: *Renderer, x: i32, y: i32) !void {
         var it = self.forwardIterator();
         while (it.next()) |window| {
             window.ready_for_callback = true;

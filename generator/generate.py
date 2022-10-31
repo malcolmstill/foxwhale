@@ -184,7 +184,7 @@ def generate_enum(interface):
 # Generate Dispatch function
 def generate_dispatch_function(interface, receiveType, local_enum_map, global_enum_map):
     interfaceName = f"{camelCase(interface.attrib['name'])}"
-    print(f"pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {{")
+    print(f"pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) !Message {{")
     print(f"if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info(\"{{any}}, {{s}}\", .{{&objects, &field}});")
     print(f"\tswitch(opcode) {{")
     i = 0
@@ -390,7 +390,7 @@ def generate_send(interface, sentType, local_enum_map, global_enum_map):
                         print(f", {arg.attrib['name']}: {camelCase(arg.attrib['enum'])}", end = '')
                     else:
                         print(f", {arg.attrib['name']}: {put_type_arg(arg.attrib['type'])}", end = '')
-            print(f") anyerror!void {{")
+            print(f") !void {{")
             print(f"\ttry self.wire.startWrite();")
             for arg in child:
                 if arg.tag == "arg":

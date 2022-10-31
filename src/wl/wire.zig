@@ -51,7 +51,7 @@ pub fn Wire(comptime WlMessage: type) type {
             mem.copy(u8, self.rx_buf[0..n], self.rx_buf[read_offset .. read_offset + n]);
         }
 
-        pub fn readEvent(self: *Self, objects: anytype, comptime field: []const u8) anyerror!?WlMessage {
+        pub fn readEvent(self: *Self, objects: anytype, comptime field: []const u8) !?WlMessage {
             const rdr = self.rx.reader();
 
             // We need to have read at least a header

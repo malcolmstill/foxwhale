@@ -34,7 +34,7 @@ pub const Buffer = union(enum) {
         };
     }
 
-    pub fn makeTexture(buffer: *Buffer) anyerror!u32 {
+    pub fn makeTexture(buffer: *Buffer) !u32 {
         return switch (buffer.*) {
             .shm => |*shm_buffer| shm_buffer.makeTexture(),
             .dma => |*dmabuf| dmabuf.makeTexture(),
