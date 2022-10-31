@@ -2,6 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const mem = std.mem;
 const math = std.math;
+const net = std.net;
 const epoll = @import("epoll.zig");
 const Event = @import("subsystem.zig").Event;
 const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
@@ -36,7 +37,7 @@ pub const wl = @import("wl/protocols.zig").Wayland(.{
 pub const Client = struct {
     server: *Server,
     alloc: mem.Allocator,
-    conn: std.net.StreamServer.Connection,
+    conn: net.StreamServer.Connection,
     wire: wl.Wire,
     serial: u32 = 0,
     server_id: u32 = 0xFF00_0000 - 1,
@@ -79,7 +80,7 @@ pub const Client = struct {
 
     const Self = @This();
 
-    pub fn init(alloc: mem.Allocator, server: *Server, conn: std.net.StreamServer.Connection, wl_display: wl.WlDisplay) Client {
+    pub fn init(alloc: mem.Allocator, server: *Server, conn: net.StreamServer.Connection, wl_display: wl.WlDisplay) Client {
         return Client{
             .alloc = alloc,
             .server = server,
@@ -384,20 +385,21 @@ pub const Client = struct {
         switch (message) {
             .create_surface => |msg| {
                 const window = try self.windows.createPtr();
-                const wl_surface = wl.WlSurface.init(msg.id, &self.wire, 0, window);
-                window.* = Window.init(self, wl_surface);
-
                 errdefer self.windows.destroy(window);
+
+                const wl_surface = wl.WlSurface.init(msg.id, &self.wire, 0, window);
                 try self.register(.{ .wl_surface = wl_surface });
+
+                window.* = Window.init(self, wl_surface);
             },
             .create_region => |msg| {
                 const region = try self.regions.createPtr();
-                const wl_region = wl.WlRegion.init(msg.id, &self.wire, 0, region);
-
-                region.* = Region.init(self, wl_region);
                 errdefer self.regions.destroy(region);
 
+                const wl_region = wl.WlRegion.init(msg.id, &self.wire, 0, region);
                 try self.register(.{ .wl_region = wl_region });
+
+                region.* = Region.init(self, wl_region);
             },
         }
     }
@@ -413,11 +415,12 @@ pub const Client = struct {
                 const format = msg.format;
 
                 const buffer = try self.buffers.createPtr();
-                const wl_buffer = wl.WlBuffer.init(msg.id, &self.wire, 0, buffer);
-                buffer.* = .{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer, offset, width, height, stride, format) };
                 errdefer self.buffers.destroy(buffer);
 
+                const wl_buffer = wl.WlBuffer.init(msg.id, &self.wire, 0, buffer);
                 try self.register(.{ .wl_buffer = wl_buffer });
+
+                buffer.* = .{ .shm = ShmBuffer.init(self, shm_pool, wl_buffer, offset, width, height, stride, format) };
             },
             .destroy => |msg| {
                 const wl_shm_pool = msg.wl_shm_pool;
@@ -446,10 +449,10 @@ pub const Client = struct {
                 errdefer self.shm_pools.destroy(shm_pool);
 
                 const wl_shm_pool = wl.WlShmPool.init(msg.id, &self.wire, 0, shm_pool);
-                shm_pool.* = try ShmPool.init(self, msg.fd, wl_shm_pool, msg.size);
-                errdefer shm_pool.deinit();
-
                 try self.register(.{ .wl_shm_pool = wl_shm_pool });
+                errdefer self.unregister(wl_shm_pool.id);
+
+                shm_pool.* = try ShmPool.init(self, msg.fd, wl_shm_pool, msg.size);
             },
         }
     }
@@ -619,12 +622,14 @@ pub const Client = struct {
         switch (message) {
             .get_pointer => |msg| {
                 const wl_pointer = wl.WlPointer.init(msg.id, &self.wire, 0, null);
-                self.wl_pointer = wl_pointer;
-
                 try self.register(.{ .wl_pointer = wl_pointer });
+
+                self.wl_pointer = wl_pointer;
             },
             .get_keyboard => |msg| {
                 const wl_keyboard = wl.WlKeyboard.init(msg.id, &self.wire, 0, null);
+                try self.register(.{ .wl_keyboard = wl_keyboard });
+
                 if (self.wl_seat != null) self.wl_keyboard = wl_keyboard;
 
                 if (self.server.xkb) |*xkb| {
@@ -634,8 +639,6 @@ pub const Client = struct {
 
                     if (msg.wl_seat.version >= 4) try wl_keyboard.sendRepeatInfo(1, 2000);
                 }
-
-                try self.register(.{ .wl_keyboard = wl_keyboard });
             },
             .get_touch => |_| return error.NotImplement,
             .release => |_| return error.NotImplement,
