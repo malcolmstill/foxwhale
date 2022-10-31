@@ -694,7 +694,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleXdgToplevel(_: *Client, message: XdgToplevel.Message) !void {
+    pub fn handleXdgToplevel(self: *Client, message: XdgToplevel.Message) !void {
         switch (message) {
             .set_title => |_| {},
             .destroy => |_| return error.NotImplemented,
@@ -703,8 +703,18 @@ pub const Client = struct {
             .show_window_menu => |_| return error.NotImplemented,
             .move => |_| return error.NotImplemented,
             .resize => |_| return error.NotImplemented,
-            .set_max_size => |_| return error.NotImplemented,
-            .set_min_size => |_| return error.NotImplemented,
+            .set_max_size => |msg| {
+                const window = self.getWindow(msg.xdg_toplevel.id) orelse return error.NoSuchWindow;
+
+                window.pending().max_width = if (msg.width <= 0) null else msg.width;
+                window.pending().max_height = if (msg.height <= 0) null else msg.height;
+            },
+            .set_min_size => |msg| {
+                const window = self.getWindow(msg.xdg_toplevel.id) orelse return error.NoSuchWindow;
+
+                window.pending().min_width = if (msg.width <= 0) null else msg.width;
+                window.pending().min_height = if (msg.height <= 0) null else msg.height;
+            },
             .set_maximized => |_| return error.NotImplemented,
             .unset_maximized => |_| return error.NotImplemented,
             .set_fullscreen => |_| return error.NotImplemented,
