@@ -378,7 +378,12 @@ pub const Client = struct {
                     3 => {
                         if (!mem.eql(u8, msg.name_string, "wl_seat\x00")) return error.UnexpectedName;
 
-                        self.wl_seat = WlSeat.init(msg.id, &self.wire, msg.version);
+                        if (self.wl_seat == null) {
+                            self.wl_seat = WlSeat.init(msg.id, &self.wire, msg.version);
+                        }
+
+                        try self.wl_seat.?.sendCapabilities(.{ .pointer = true, .keyboard = true });
+
                         try self.link(.{ .wl_seat = self.wl_seat.? }, .none);
                     },
                     4 => {
@@ -414,7 +419,7 @@ pub const Client = struct {
                                 try self.link(.{ .wl_output = wl_output }, .{ .output = output });
 
                                 try wl_output.sendGeometry(0, 0, 267, 200, .none, "unknown\x00", "unknown\x00", .normal);
-                                try wl_output.sendMode(.current, output.getWidth(), output.getHeight(), 60000);
+                                try wl_output.sendMode(.{ .current = true }, output.getWidth(), output.getHeight(), 60000);
                                 try wl_output.sendScale(1);
                                 try wl_output.sendDone();
 

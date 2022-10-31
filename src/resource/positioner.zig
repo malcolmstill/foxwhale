@@ -11,7 +11,7 @@ pub const Positioner = struct {
     anchor_rect: Rectangle = Rectangle{ .x = 0, .y = 0, .width = 0, .height = 0 },
     anchor: XdgPositioner.Anchor = .none,
     gravity: XdgPositioner.Gravity = .none,
-    constraint_adjustment: XdgPositioner.ConstraintAdjustment = .none,
+    constraint_adjustment: XdgPositioner.ConstraintAdjustment = .{},
     x: i32 = 0,
     y: i32 = 0,
 

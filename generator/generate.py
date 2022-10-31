@@ -3,6 +3,9 @@ import sys
 
 wl_registry_fixed = False
 
+def power_of_two(n):
+    return (n != 0) and (n & (n-1) == 0)
+
 def generate(context, side, files):
     receiveType = None
     sendType = None
@@ -31,13 +34,27 @@ def generate(context, side, files):
 
 
 def generate_protocol(protocol, sendType, receiveType, msgs):
+    global_enum_map = {}
+    for child in protocol:
+        if child.tag == "interface":
+            make_enum_map(child, global_enum_map)
+
     for child in protocol:
         if child.tag == "interface":
             print(f"\n// {child.attrib['name']}")
-            generate_interface_struct(child, receiveType, sendType)
+            generate_interface_struct(child, receiveType, sendType, global_enum_map)
             msgs.append(child.attrib['name'])
 
-def generate_interface_struct(interface, receiveType, sendType):
+def make_enum_map(interface, global_enum_map):
+    for child in interface:
+        if child.tag == "enum":
+            enum_name = child.attrib['name']
+            if "bitfield" in child.attrib:
+                global_enum_map[interface.attrib["name"] + "." + enum_name] = "bitfield"
+            else:
+                global_enum_map[interface.attrib["name"] + "." + enum_name] = "enum"
+
+def generate_interface_struct(interface, receiveType, sendType, global_enum_map):
     interfaceName = camelCase(interface.attrib['name'])
     print(f"pub const {interfaceName} = struct {{")
     print(f"\t\twire: *Wire,")
@@ -55,11 +72,13 @@ def generate_interface_struct(interface, receiveType, sendType):
     print(f"}}")
 
     print(f"")
-    generate_dispatch_function(interface, receiveType)
-    generate_send(interface, sendType)
-
-
-    generate_enum(interface)
+    local_enum_map = generate_enum(interface)
+    for key in local_enum_map:
+        global_enum_map[interface.attrib['name'] + "." + key] = local_enum_map[key]
+    print(f"")
+    generate_dispatch_function(interface, receiveType, local_enum_map, global_enum_map)
+    # print(f"// {local_enum_map}")
+    generate_send(interface, sendType, local_enum_map, global_enum_map)
 
     print(f"}};\n")
 
@@ -103,19 +122,39 @@ def generate_message_union(msgs):
 
 # Generate enum
 def generate_enum(interface):
+    local_map = {}
     for child in interface:
         if child.tag == "enum":
-            print(f"\npub const {camelCase(child.attrib['name'])} = enum(u32) {{")
-            for value in child:
-                if value.tag == "entry":
-                    if value.attrib['name'].isdigit():
-                        print(f"\t@\"{value.attrib['name']}\" = {value.attrib['value']},")
-                    else:
-                        print(f"\t{value.attrib['name']} = {value.attrib['value']},")
-            print(f"}};")
+            enum_name = child.attrib['name']
+            if "bitfield" in child.attrib:
+                local_map[enum_name] = 'bitfield'
+                print(f"\npub const {camelCase(enum_name)} = packed struct(u32) {{ // bitfield ")
+                i = 0
+                for value in child:
+                    if value.tag == "entry":
+                        field_value = int(value.attrib['value'], 0)
+                        if  power_of_two(field_value):
+                            i += 1
+                            print(f"\t{value.attrib['name']}: bool = false, // {field_value}")
+                        else:
+                            print(f"// {value.attrib['name']} {field_value} (removed from bitfield) ")
+
+                print(f"_padding: u{32-i} = 0,")
+                print(f"}};")
+            else:
+                local_map[enum_name] = 'enum'
+                print(f"\npub const {camelCase(enum_name)} = enum(u32) {{")
+                for value in child:
+                    if value.tag == "entry":
+                        if value.attrib['name'].isdigit():
+                            print(f"\t@\"{value.attrib['name']}\" = {value.attrib['value']},")
+                        else:
+                            print(f"\t{value.attrib['name']} = {value.attrib['value']},")
+                print(f"}};")
+    return local_map
 
 # Generate Dispatch function
-def generate_dispatch_function(interface, receiveType):
+def generate_dispatch_function(interface, receiveType, local_enum_map, global_enum_map):
     interfaceName = f"{camelCase(interface.attrib['name'])}"
     print(f"pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {{")
     print(f"if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info(\"{{any}}, {{s}}\", .{{&objects, &field}});")
@@ -124,7 +163,7 @@ def generate_dispatch_function(interface, receiveType):
     for child in interface:
         if child.tag == receiveType:
             fix_wl_registry(interface, child)
-            generate_receive_dispatch(i, child, interface)
+            generate_receive_dispatch(i, child, interface, local_enum_map, global_enum_map)
             i = i + 1
     print(f"\t\telse => {{std.log.info(\"{{}}\", .{{self}}); return error.UnknownOpcode;}},")
     print(f"\t}}")
@@ -194,13 +233,13 @@ def fix_wl_registry(interface, request):
         request.insert(3, c)
         wl_registry_fixed = True
 
-def generate_receive_dispatch(index, receive, interface):
+def generate_receive_dispatch(index, receive, interface, local_enum_map, global_enum_map):
     name = escapename(receive.attrib['name'])
     print(f"// {receive.attrib['name']}")
     print(f"{index} => {{")
     for arg in receive:
         if arg.tag == "arg":
-            generate_next(arg)
+            generate_next(arg, local_enum_map, global_enum_map)
 
     messageName = f"{camelCase(receive.attrib['name'])}Message"
     print(f"return Message{{ .{receive.attrib['name']} = {messageName}{{")
@@ -212,7 +251,7 @@ def generate_receive_dispatch(index, receive, interface):
     print(f"}}, }};")
     print(f"\t\t\t}},")
 
-def generate_next(arg):
+def generate_next(arg, local_enum_map, global_enum_map):
     name = arg.attrib["name"]
     atype = lookup_type(arg.attrib["type"], arg)
     if arg.attrib["type"] == "object":
@@ -232,7 +271,12 @@ def generate_next(arg):
                 print(f"\t\t\tconst {name}: WlObject = try @field(objects, field)(try self.wire.next_u32());")
     else:
         if "enum" in arg.attrib:
-            print(f"\t\t\t\tconst {name}: {atype} = @intToEnum({camelCase(arg.attrib['enum'])}, try self.wire.next{next_type(arg.attrib['type'])}()); // enum")
+            enum_name = arg.attrib["enum"]
+            enum_type = local_enum_map.get(enum_name, global_enum_map.get(enum_name, None))
+            if enum_type == "bitfield":
+                print(f"\t\t\t\tconst {name}: {atype} = @bitCast({camelCase(arg.attrib['enum'])}, try self.wire.next{next_type(arg.attrib['type'])}()); // {enum_type}")
+            else:
+                print(f"\t\t\t\tconst {name}: {atype} = @intToEnum({camelCase(arg.attrib['enum'])}, try self.wire.next{next_type(arg.attrib['type'])}()); // {enum_type}")
         else:   
             print(f"\t\t\t\tconst {name}: {atype} = try self.wire.next{next_type(arg.attrib['type'])}();")
 
@@ -296,7 +340,7 @@ def generate_receive_arg(arg, first):
 
 
 # Generate send
-def generate_send(interface, sentType):
+def generate_send(interface, sentType, local_enum_map, global_enum_map):
     i = 0
     for child in interface:
         if child.tag == sentType:
@@ -323,7 +367,13 @@ def generate_send(interface, sentType):
             for arg in child:
                 if arg.tag == "arg":
                     if "enum" in arg.attrib:
-                        print(f"\ttry self.wire.putU32(@enumToInt({arg.attrib['name']}));")
+                        enum_name = arg.attrib['enum']
+                        # print(f"// {enum_name} {local_enum_map}, {global_enum_map}")
+                        enum_type = local_enum_map.get(enum_name, global_enum_map.get(enum_name, None))
+                        if enum_type ==  "bitfield":
+                            print(f"\ttry self.wire.putU32(@bitCast(u32, {arg.attrib['name']})); // {enum_type}")
+                        else:
+                            print(f"\ttry self.wire.putU32(@enumToInt({arg.attrib['name']})); // {enum_type}")
                     else:
                         print(f"\ttry self.wire.put{put_type(arg.attrib['type'])}({arg.attrib['name']});")
             print(f"\ttry self.wire.finishWrite(self.id, {i});")

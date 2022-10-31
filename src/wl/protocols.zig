@@ -18,6 +18,13 @@ pub const WlDisplay = struct {
         };
     }
 
+    pub const Error = enum(u32) {
+        invalid_object = 0,
+        invalid_method = 1,
+        no_memory = 2,
+        implementation = 3,
+    };
+
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
@@ -97,13 +104,6 @@ pub const WlDisplay = struct {
         try self.wire.putU32(id);
         try self.wire.finishWrite(self.id, 1);
     }
-
-    pub const Error = enum(u32) {
-        invalid_object = 0,
-        invalid_method = 1,
-        no_memory = 2,
-        implementation = 3,
-    };
 };
 
 // wl_registry
@@ -417,56 +417,6 @@ pub const WlShm = struct {
         };
     }
 
-    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
-        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
-        switch (opcode) {
-            // create_pool
-            0 => {
-                const id: u32 = try self.wire.nextU32();
-                const fd: i32 = try self.wire.nextFd();
-                const size: i32 = try self.wire.nextI32();
-                return Message{
-                    .create_pool = CreatePoolMessage{
-                        .wl_shm = self.*,
-                        .id = id,
-                        .fd = fd,
-                        .size = size,
-                    },
-                };
-            },
-            else => {
-                std.log.info("{}", .{self});
-                return error.UnknownOpcode;
-            },
-        }
-    }
-
-    const MessageType = enum(u8) {
-        create_pool,
-    };
-
-    pub const Message = union(MessageType) {
-        create_pool: CreatePoolMessage,
-    };
-
-    const CreatePoolMessage = struct {
-        wl_shm: WlShm,
-        id: u32,
-        fd: i32,
-        size: i32,
-    };
-
-    //
-    // Informs the client about a valid pixel format that
-    // can be used for buffers. Known formats include
-    // argb8888 and xrgb8888.
-    //
-    pub fn sendFormat(self: Self, format: Format) anyerror!void {
-        try self.wire.startWrite();
-        try self.wire.putU32(@enumToInt(format));
-        try self.wire.finishWrite(self.id, 0);
-    }
-
     pub const Error = enum(u32) {
         invalid_format = 0,
         invalid_stride = 1,
@@ -533,6 +483,56 @@ pub const WlShm = struct {
         yuv444 = 0x34325559,
         yvu444 = 0x34325659,
     };
+
+    pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
+        if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
+        switch (opcode) {
+            // create_pool
+            0 => {
+                const id: u32 = try self.wire.nextU32();
+                const fd: i32 = try self.wire.nextFd();
+                const size: i32 = try self.wire.nextI32();
+                return Message{
+                    .create_pool = CreatePoolMessage{
+                        .wl_shm = self.*,
+                        .id = id,
+                        .fd = fd,
+                        .size = size,
+                    },
+                };
+            },
+            else => {
+                std.log.info("{}", .{self});
+                return error.UnknownOpcode;
+            },
+        }
+    }
+
+    const MessageType = enum(u8) {
+        create_pool,
+    };
+
+    pub const Message = union(MessageType) {
+        create_pool: CreatePoolMessage,
+    };
+
+    const CreatePoolMessage = struct {
+        wl_shm: WlShm,
+        id: u32,
+        fd: i32,
+        size: i32,
+    };
+
+    //
+    // Informs the client about a valid pixel format that
+    // can be used for buffers. Known formats include
+    // argb8888 and xrgb8888.
+    //
+    pub fn sendFormat(self: Self, format: Format) anyerror!void {
+        try self.wire.startWrite();
+        try self.wire.putU32(@enumToInt(format)); // enum
+        try self.wire.finishWrite(self.id, 0);
+    }
 };
 
 // wl_buffer
@@ -616,6 +616,13 @@ pub const WlDataOffer = struct {
             .version = version,
         };
     }
+
+    pub const Error = enum(u32) {
+        invalid_finish = 0,
+        invalid_action_mask = 1,
+        invalid_action = 2,
+        invalid_offer = 3,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -784,13 +791,6 @@ pub const WlDataOffer = struct {
         try self.wire.putU32(dnd_action);
         try self.wire.finishWrite(self.id, 2);
     }
-
-    pub const Error = enum(u32) {
-        invalid_finish = 0,
-        invalid_action_mask = 1,
-        invalid_action = 2,
-        invalid_offer = 3,
-    };
 };
 
 // wl_data_source
@@ -808,6 +808,11 @@ pub const WlDataSource = struct {
             .version = version,
         };
     }
+
+    pub const Error = enum(u32) {
+        invalid_action_mask = 0,
+        invalid_source = 1,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -985,11 +990,6 @@ pub const WlDataSource = struct {
         try self.wire.putU32(dnd_action);
         try self.wire.finishWrite(self.id, 5);
     }
-
-    pub const Error = enum(u32) {
-        invalid_action_mask = 0,
-        invalid_source = 1,
-    };
 };
 
 // wl_data_device
@@ -1007,6 +1007,10 @@ pub const WlDataDevice = struct {
             .version = version,
         };
     }
+
+    pub const Error = enum(u32) {
+        role = 0,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -1189,10 +1193,6 @@ pub const WlDataDevice = struct {
         try self.wire.putU32(id);
         try self.wire.finishWrite(self.id, 5);
     }
-
-    pub const Error = enum(u32) {
-        role = 0,
-    };
 };
 
 // wl_data_device_manager
@@ -1210,6 +1210,14 @@ pub const WlDataDeviceManager = struct {
             .version = version,
         };
     }
+
+    pub const DndAction = packed struct(u32) { // bitfield
+        // none 0 (removed from bitfield)
+        copy: bool = false, // 1
+        move: bool = false, // 2
+        ask: bool = false, // 4
+        _padding: u29 = 0,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -1266,13 +1274,6 @@ pub const WlDataDeviceManager = struct {
         id: u32,
         seat: WlSeat,
     };
-
-    pub const DndAction = enum(u32) {
-        none = 0,
-        copy = 1,
-        move = 2,
-        ask = 4,
-    };
 };
 
 // wl_shell
@@ -1290,6 +1291,10 @@ pub const WlShell = struct {
             .version = version,
         };
     }
+
+    pub const Error = enum(u32) {
+        role = 0,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -1329,10 +1334,6 @@ pub const WlShell = struct {
         id: u32,
         surface: WlSurface,
     };
-
-    pub const Error = enum(u32) {
-        role = 0,
-    };
 };
 
 // wl_shell_surface
@@ -1350,6 +1351,31 @@ pub const WlShellSurface = struct {
             .version = version,
         };
     }
+
+    pub const Resize = packed struct(u32) { // bitfield
+        // none 0 (removed from bitfield)
+        top: bool = false, // 1
+        bottom: bool = false, // 2
+        left: bool = false, // 4
+        // top_left 5 (removed from bitfield)
+        // bottom_left 6 (removed from bitfield)
+        right: bool = false, // 8
+        // top_right 9 (removed from bitfield)
+        // bottom_right 10 (removed from bitfield)
+        _padding: u28 = 0,
+    };
+
+    pub const Transient = packed struct(u32) { // bitfield
+        inactive: bool = false, // 1
+        _padding: u31 = 0,
+    };
+
+    pub const FullscreenMethod = enum(u32) {
+        default = 0,
+        scale = 1,
+        driver = 2,
+        fill = 3,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -1386,7 +1412,7 @@ pub const WlShellSurface = struct {
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
                 const serial: u32 = try self.wire.nextU32();
-                const edges: Resize = @intToEnum(Resize, try self.wire.nextU32()); // enum
+                const edges: Resize = @bitCast(Resize, try self.wire.nextU32()); // bitfield
                 return Message{
                     .resize = ResizeMessage{
                         .wl_shell_surface = self.*,
@@ -1412,7 +1438,7 @@ pub const WlShellSurface = struct {
                 } else return error.ExpectedObject;
                 const x: i32 = try self.wire.nextI32();
                 const y: i32 = try self.wire.nextI32();
-                const flags: Transient = @intToEnum(Transient, try self.wire.nextU32()); // enum
+                const flags: Transient = @bitCast(Transient, try self.wire.nextU32()); // bitfield
                 return Message{
                     .set_transient = SetTransientMessage{
                         .wl_shell_surface = self.*,
@@ -1453,7 +1479,7 @@ pub const WlShellSurface = struct {
                 } else return error.ExpectedObject;
                 const x: i32 = try self.wire.nextI32();
                 const y: i32 = try self.wire.nextI32();
-                const flags: Transient = @intToEnum(Transient, try self.wire.nextU32()); // enum
+                const flags: Transient = @bitCast(Transient, try self.wire.nextU32()); // bitfield
                 return Message{
                     .set_popup = SetPopupMessage{
                         .wl_shell_surface = self.*,
@@ -1625,7 +1651,7 @@ pub const WlShellSurface = struct {
     //
     pub fn sendConfigure(self: Self, edges: Resize, width: i32, height: i32) anyerror!void {
         try self.wire.startWrite();
-        try self.wire.putU32(@enumToInt(edges));
+        try self.wire.putU32(@bitCast(u32, edges)); // bitfield
         try self.wire.putI32(width);
         try self.wire.putI32(height);
         try self.wire.finishWrite(self.id, 1);
@@ -1640,29 +1666,6 @@ pub const WlShellSurface = struct {
         try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 2);
     }
-
-    pub const Resize = enum(u32) {
-        none = 0,
-        top = 1,
-        bottom = 2,
-        left = 4,
-        top_left = 5,
-        bottom_left = 6,
-        right = 8,
-        top_right = 9,
-        bottom_right = 10,
-    };
-
-    pub const Transient = enum(u32) {
-        inactive = 0x1,
-    };
-
-    pub const FullscreenMethod = enum(u32) {
-        default = 0,
-        scale = 1,
-        driver = 2,
-        fill = 3,
-    };
 };
 
 // wl_surface
@@ -1680,6 +1683,11 @@ pub const WlSurface = struct {
             .version = version,
         };
     }
+
+    pub const Error = enum(u32) {
+        invalid_scale = 0,
+        invalid_transform = 1,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -1917,11 +1925,6 @@ pub const WlSurface = struct {
         try self.wire.putU32(output);
         try self.wire.finishWrite(self.id, 1);
     }
-
-    pub const Error = enum(u32) {
-        invalid_scale = 0,
-        invalid_transform = 1,
-    };
 };
 
 // wl_seat
@@ -1939,6 +1942,13 @@ pub const WlSeat = struct {
             .version = version,
         };
     }
+
+    pub const Capability = packed struct(u32) { // bitfield
+        pointer: bool = false, // 1
+        keyboard: bool = false, // 2
+        touch: bool = false, // 4
+        _padding: u29 = 0,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -2049,7 +2059,7 @@ pub const WlSeat = struct {
     //
     pub fn sendCapabilities(self: Self, capabilities: Capability) anyerror!void {
         try self.wire.startWrite();
-        try self.wire.putU32(@enumToInt(capabilities));
+        try self.wire.putU32(@bitCast(u32, capabilities)); // bitfield
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -2063,12 +2073,6 @@ pub const WlSeat = struct {
         try self.wire.putString(name);
         try self.wire.finishWrite(self.id, 1);
     }
-
-    pub const Capability = enum(u32) {
-        pointer = 1,
-        keyboard = 2,
-        touch = 4,
-    };
 };
 
 // wl_pointer
@@ -2086,6 +2090,27 @@ pub const WlPointer = struct {
             .version = version,
         };
     }
+
+    pub const Error = enum(u32) {
+        role = 0,
+    };
+
+    pub const ButtonState = enum(u32) {
+        released = 0,
+        pressed = 1,
+    };
+
+    pub const Axis = enum(u32) {
+        vertical_scroll = 0,
+        horizontal_scroll = 1,
+    };
+
+    pub const AxisSource = enum(u32) {
+        wheel = 0,
+        finger = 1,
+        continuous = 2,
+        wheel_tilt = 3,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -2211,7 +2236,7 @@ pub const WlPointer = struct {
         try self.wire.putU32(serial);
         try self.wire.putU32(time);
         try self.wire.putU32(button);
-        try self.wire.putU32(@enumToInt(state));
+        try self.wire.putU32(@enumToInt(state)); // enum
         try self.wire.finishWrite(self.id, 3);
     }
 
@@ -2236,7 +2261,7 @@ pub const WlPointer = struct {
     pub fn sendAxis(self: Self, time: u32, axis: Axis, value: f32) anyerror!void {
         try self.wire.startWrite();
         try self.wire.putU32(time);
-        try self.wire.putU32(@enumToInt(axis));
+        try self.wire.putU32(@enumToInt(axis)); // enum
         try self.wire.putFixed(value);
         try self.wire.finishWrite(self.id, 4);
     }
@@ -2311,7 +2336,7 @@ pub const WlPointer = struct {
     //
     pub fn sendAxisSource(self: Self, axis_source: AxisSource) anyerror!void {
         try self.wire.startWrite();
-        try self.wire.putU32(@enumToInt(axis_source));
+        try self.wire.putU32(@enumToInt(axis_source)); // enum
         try self.wire.finishWrite(self.id, 6);
     }
 
@@ -2334,7 +2359,7 @@ pub const WlPointer = struct {
     pub fn sendAxisStop(self: Self, time: u32, axis: Axis) anyerror!void {
         try self.wire.startWrite();
         try self.wire.putU32(time);
-        try self.wire.putU32(@enumToInt(axis));
+        try self.wire.putU32(@enumToInt(axis)); // enum
         try self.wire.finishWrite(self.id, 7);
     }
 
@@ -2368,31 +2393,10 @@ pub const WlPointer = struct {
     //
     pub fn sendAxisDiscrete(self: Self, axis: Axis, discrete: i32) anyerror!void {
         try self.wire.startWrite();
-        try self.wire.putU32(@enumToInt(axis));
+        try self.wire.putU32(@enumToInt(axis)); // enum
         try self.wire.putI32(discrete);
         try self.wire.finishWrite(self.id, 8);
     }
-
-    pub const Error = enum(u32) {
-        role = 0,
-    };
-
-    pub const ButtonState = enum(u32) {
-        released = 0,
-        pressed = 1,
-    };
-
-    pub const Axis = enum(u32) {
-        vertical_scroll = 0,
-        horizontal_scroll = 1,
-    };
-
-    pub const AxisSource = enum(u32) {
-        wheel = 0,
-        finger = 1,
-        continuous = 2,
-        wheel_tilt = 3,
-    };
 };
 
 // wl_keyboard
@@ -2410,6 +2414,16 @@ pub const WlKeyboard = struct {
             .version = version,
         };
     }
+
+    pub const KeymapFormat = enum(u32) {
+        no_keymap = 0,
+        xkb_v1 = 1,
+    };
+
+    pub const KeyState = enum(u32) {
+        released = 0,
+        pressed = 1,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -2450,7 +2464,7 @@ pub const WlKeyboard = struct {
     //
     pub fn sendKeymap(self: Self, format: KeymapFormat, fd: i32, size: u32) anyerror!void {
         try self.wire.startWrite();
-        try self.wire.putU32(@enumToInt(format));
+        try self.wire.putU32(@enumToInt(format)); // enum
         try self.wire.putFd(fd);
         try self.wire.putU32(size);
         try self.wire.finishWrite(self.id, 0);
@@ -2492,7 +2506,7 @@ pub const WlKeyboard = struct {
         try self.wire.putU32(serial);
         try self.wire.putU32(time);
         try self.wire.putU32(key);
-        try self.wire.putU32(@enumToInt(state));
+        try self.wire.putU32(@enumToInt(state)); // enum
         try self.wire.finishWrite(self.id, 3);
     }
 
@@ -2530,16 +2544,6 @@ pub const WlKeyboard = struct {
         try self.wire.putI32(delay);
         try self.wire.finishWrite(self.id, 5);
     }
-
-    pub const KeymapFormat = enum(u32) {
-        no_keymap = 0,
-        xkb_v1 = 1,
-    };
-
-    pub const KeyState = enum(u32) {
-        released = 0,
-        pressed = 1,
-    };
 };
 
 // wl_touch
@@ -2742,6 +2746,32 @@ pub const WlOutput = struct {
         };
     }
 
+    pub const Subpixel = enum(u32) {
+        unknown = 0,
+        none = 1,
+        horizontal_rgb = 2,
+        horizontal_bgr = 3,
+        vertical_rgb = 4,
+        vertical_bgr = 5,
+    };
+
+    pub const Transform = enum(u32) {
+        normal = 0,
+        @"90" = 1,
+        @"180" = 2,
+        @"270" = 3,
+        flipped = 4,
+        flipped_90 = 5,
+        flipped_180 = 6,
+        flipped_270 = 7,
+    };
+
+    pub const Mode = packed struct(u32) { // bitfield
+        current: bool = false, // 1
+        preferred: bool = false, // 2
+        _padding: u30 = 0,
+    };
+
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
@@ -2793,10 +2823,10 @@ pub const WlOutput = struct {
         try self.wire.putI32(y);
         try self.wire.putI32(physical_width);
         try self.wire.putI32(physical_height);
-        try self.wire.putU32(@enumToInt(subpixel));
+        try self.wire.putU32(@enumToInt(subpixel)); // enum
         try self.wire.putString(make);
         try self.wire.putString(model);
-        try self.wire.putU32(@enumToInt(transform));
+        try self.wire.putU32(@enumToInt(transform)); // enum
         try self.wire.finishWrite(self.id, 0);
     }
 
@@ -2827,7 +2857,7 @@ pub const WlOutput = struct {
     //
     pub fn sendMode(self: Self, flags: Mode, width: i32, height: i32, refresh: i32) anyerror!void {
         try self.wire.startWrite();
-        try self.wire.putU32(@enumToInt(flags));
+        try self.wire.putU32(@bitCast(u32, flags)); // bitfield
         try self.wire.putI32(width);
         try self.wire.putI32(height);
         try self.wire.putI32(refresh);
@@ -2871,31 +2901,6 @@ pub const WlOutput = struct {
         try self.wire.putI32(factor);
         try self.wire.finishWrite(self.id, 3);
     }
-
-    pub const Subpixel = enum(u32) {
-        unknown = 0,
-        none = 1,
-        horizontal_rgb = 2,
-        horizontal_bgr = 3,
-        vertical_rgb = 4,
-        vertical_bgr = 5,
-    };
-
-    pub const Transform = enum(u32) {
-        normal = 0,
-        @"90" = 1,
-        @"180" = 2,
-        @"270" = 3,
-        flipped = 4,
-        flipped_90 = 5,
-        flipped_180 = 6,
-        flipped_270 = 7,
-    };
-
-    pub const Mode = enum(u32) {
-        current = 0x1,
-        preferred = 0x2,
-    };
 };
 
 // wl_region
@@ -3013,6 +3018,10 @@ pub const WlSubcompositor = struct {
         };
     }
 
+    pub const Error = enum(u32) {
+        bad_surface = 0,
+    };
+
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
         switch (opcode) {
@@ -3071,10 +3080,6 @@ pub const WlSubcompositor = struct {
         surface: WlSurface,
         parent: WlSurface,
     };
-
-    pub const Error = enum(u32) {
-        bad_surface = 0,
-    };
 };
 
 // wl_subsurface
@@ -3092,6 +3097,10 @@ pub const WlSubsurface = struct {
             .version = version,
         };
     }
+
+    pub const Error = enum(u32) {
+        bad_surface = 0,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -3210,10 +3219,6 @@ pub const WlSubsurface = struct {
     const SetDesyncMessage = struct {
         wl_subsurface: WlSubsurface,
     };
-
-    pub const Error = enum(u32) {
-        bad_surface = 0,
-    };
 };
 
 // xdg_wm_base
@@ -3231,6 +3236,15 @@ pub const XdgWmBase = struct {
             .version = version,
         };
     }
+
+    pub const Error = enum(u32) {
+        role = 0,
+        defunct_surfaces = 1,
+        not_the_topmost_popup = 2,
+        invalid_popup_parent = 3,
+        invalid_surface_state = 4,
+        invalid_positioner = 5,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -3337,15 +3351,6 @@ pub const XdgWmBase = struct {
         try self.wire.putU32(serial);
         try self.wire.finishWrite(self.id, 0);
     }
-
-    pub const Error = enum(u32) {
-        role = 0,
-        defunct_surfaces = 1,
-        not_the_topmost_popup = 2,
-        invalid_popup_parent = 3,
-        invalid_surface_state = 4,
-        invalid_positioner = 5,
-    };
 };
 
 // xdg_positioner
@@ -3363,6 +3368,45 @@ pub const XdgPositioner = struct {
             .version = version,
         };
     }
+
+    pub const Error = enum(u32) {
+        invalid_input = 0,
+    };
+
+    pub const Anchor = enum(u32) {
+        none = 0,
+        top = 1,
+        bottom = 2,
+        left = 3,
+        right = 4,
+        top_left = 5,
+        bottom_left = 6,
+        top_right = 7,
+        bottom_right = 8,
+    };
+
+    pub const Gravity = enum(u32) {
+        none = 0,
+        top = 1,
+        bottom = 2,
+        left = 3,
+        right = 4,
+        top_left = 5,
+        bottom_left = 6,
+        top_right = 7,
+        bottom_right = 8,
+    };
+
+    pub const ConstraintAdjustment = packed struct(u32) { // bitfield
+        // none 0 (removed from bitfield)
+        slide_x: bool = false, // 1
+        slide_y: bool = false, // 2
+        flip_x: bool = false, // 4
+        flip_y: bool = false, // 8
+        resize_x: bool = false, // 16
+        resize_y: bool = false, // 32
+        _padding: u26 = 0,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -3510,44 +3554,6 @@ pub const XdgPositioner = struct {
         x: i32,
         y: i32,
     };
-
-    pub const Error = enum(u32) {
-        invalid_input = 0,
-    };
-
-    pub const Anchor = enum(u32) {
-        none = 0,
-        top = 1,
-        bottom = 2,
-        left = 3,
-        right = 4,
-        top_left = 5,
-        bottom_left = 6,
-        top_right = 7,
-        bottom_right = 8,
-    };
-
-    pub const Gravity = enum(u32) {
-        none = 0,
-        top = 1,
-        bottom = 2,
-        left = 3,
-        right = 4,
-        top_left = 5,
-        bottom_left = 6,
-        top_right = 7,
-        bottom_right = 8,
-    };
-
-    pub const ConstraintAdjustment = enum(u32) {
-        none = 0,
-        slide_x = 1,
-        slide_y = 2,
-        flip_x = 4,
-        flip_y = 8,
-        resize_x = 16,
-        resize_y = 32,
-    };
 };
 
 // xdg_surface
@@ -3565,6 +3571,12 @@ pub const XdgSurface = struct {
             .version = version,
         };
     }
+
+    pub const Error = enum(u32) {
+        not_constructed = 1,
+        already_constructed = 2,
+        unconfigured_buffer = 3,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -3708,12 +3720,6 @@ pub const XdgSurface = struct {
         try self.wire.putU32(serial);
         try self.wire.finishWrite(self.id, 0);
     }
-
-    pub const Error = enum(u32) {
-        not_constructed = 1,
-        already_constructed = 2,
-        unconfigured_buffer = 3,
-    };
 };
 
 // xdg_toplevel
@@ -3731,6 +3737,29 @@ pub const XdgToplevel = struct {
             .version = version,
         };
     }
+
+    pub const ResizeEdge = enum(u32) {
+        none = 0,
+        top = 1,
+        bottom = 2,
+        left = 4,
+        top_left = 5,
+        bottom_left = 6,
+        right = 8,
+        top_right = 9,
+        bottom_right = 10,
+    };
+
+    pub const State = enum(u32) {
+        maximized = 1,
+        fullscreen = 2,
+        resizing = 3,
+        activated = 4,
+        tiled_left = 5,
+        tiled_right = 6,
+        tiled_top = 7,
+        tiled_bottom = 8,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -4053,29 +4082,6 @@ pub const XdgToplevel = struct {
         try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 1);
     }
-
-    pub const ResizeEdge = enum(u32) {
-        none = 0,
-        top = 1,
-        bottom = 2,
-        left = 4,
-        top_left = 5,
-        bottom_left = 6,
-        right = 8,
-        top_right = 9,
-        bottom_right = 10,
-    };
-
-    pub const State = enum(u32) {
-        maximized = 1,
-        fullscreen = 2,
-        resizing = 3,
-        activated = 4,
-        tiled_left = 5,
-        tiled_right = 6,
-        tiled_top = 7,
-        tiled_bottom = 8,
-    };
 };
 
 // xdg_popup
@@ -4093,6 +4099,10 @@ pub const XdgPopup = struct {
             .version = version,
         };
     }
+
+    pub const Error = enum(u32) {
+        invalid_grab = 0,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -4174,10 +4184,6 @@ pub const XdgPopup = struct {
         try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 1);
     }
-
-    pub const Error = enum(u32) {
-        invalid_grab = 0,
-    };
 };
 
 // zwp_linux_dmabuf_v1
@@ -4305,6 +4311,23 @@ pub const ZwpLinuxBufferParamsV1 = struct {
             .version = version,
         };
     }
+
+    pub const Error = enum(u32) {
+        already_used = 0,
+        plane_idx = 1,
+        plane_set = 2,
+        incomplete = 3,
+        invalid_format = 4,
+        invalid_dimensions = 5,
+        out_of_bounds = 6,
+        invalid_wl_buffer = 7,
+    };
+
+    pub const Flags = enum(u32) {
+        y_invert = 1,
+        interlaced = 2,
+        bottom_first = 4,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -4448,23 +4471,6 @@ pub const ZwpLinuxBufferParamsV1 = struct {
         try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 1);
     }
-
-    pub const Error = enum(u32) {
-        already_used = 0,
-        plane_idx = 1,
-        plane_set = 2,
-        incomplete = 3,
-        invalid_format = 4,
-        invalid_dimensions = 5,
-        out_of_bounds = 6,
-        invalid_wl_buffer = 7,
-    };
-
-    pub const Flags = enum(u32) {
-        y_invert = 1,
-        interlaced = 2,
-        bottom_first = 4,
-    };
 };
 
 // fw_control
@@ -4482,6 +4488,13 @@ pub const FwControl = struct {
             .version = version,
         };
     }
+
+    pub const SurfaceType = enum(u32) {
+        wl_surface = 0,
+        wl_subsurface = 1,
+        xdg_toplevel = 2,
+        xdg_popup = 3,
+    };
 
     pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) anyerror!Message {
         if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s}", .{ &objects, &field });
@@ -4608,13 +4621,6 @@ pub const FwControl = struct {
         try self.wire.startWrite();
         try self.wire.finishWrite(self.id, 4);
     }
-
-    pub const SurfaceType = enum(u32) {
-        wl_surface = 0,
-        wl_subsurface = 1,
-        xdg_toplevel = 2,
-        xdg_popup = 3,
-    };
 };
 
 pub const WlInterfaceType = enum(u8) {
