@@ -1,6 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const mem = std.mem;
+const math = std.math;
 const epoll = @import("epoll.zig");
 const Event = @import("subsystem.zig").Event;
 const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
@@ -698,10 +699,21 @@ pub const Client = struct {
 
     pub fn handleXdgToplevel(self: *Client, message: XdgToplevel.Message) !void {
         switch (message) {
-            .set_title => |_| {},
+            .set_title => |msg| {
+                const window = self.getWindow(msg.xdg_toplevel.id) orelse return error.NoSuchWindow;
+                const length = math.min(window.title.len, msg.title.len);
+                mem.copy(u8, window.title[0..length], msg.title[0..length]);
+            },
             .destroy => |_| return error.NotImplemented,
-            .set_parent => |_| return error.NotImplemented,
-            .set_app_id => |_| return error.NotImplemented,
+            .set_parent => |msg| {
+                const window = self.getWindow(msg.xdg_toplevel.id) orelse return error.NoSuchWindow;
+                window.parent = if (msg.parent) |p| self.getWindow(p.id) orelse return error.NoSuchWindow else null;
+            },
+            .set_app_id => |msg| {
+                const window = self.getWindow(msg.xdg_toplevel.id) orelse return error.NoSuchWindow;
+                const length = math.min(window.app_id.len, msg.app_id.len);
+                mem.copy(u8, window.app_id[0..length], msg.app_id[0..length]);
+            },
             .show_window_menu => |_| return error.NotImplemented,
             .move => |msg| {
                 const window = self.getWindow(msg.xdg_toplevel.id) orelse return error.NoSuchWindow;
