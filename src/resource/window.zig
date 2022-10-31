@@ -636,9 +636,6 @@ pub const Window = struct {
             }
         }
 
-        self.state[0].deinit();
-        self.state[1].deinit();
-
         if (self.texture) |texture| {
             self.texture = null;
             // Note that while this can fail, we're doing
@@ -648,47 +645,6 @@ pub const Window = struct {
         }
     }
 };
-
-// pub fn newWindow(client: *Client, wl_surface_id: u32) !*Window {
-//     var i: usize = 0;
-//     while (i < MAX_WINDOWS) {
-//         var window: *Window = &WINDOWS[i];
-//         if (window.in_use == false) {
-//             window.index = i;
-//             window.in_use = true;
-//             window.client = client;
-
-//             window.wl_surface_id = wl_surface_id;
-//             window.wl_buffer_id = null;
-//             window.xdg_surface_id = null;
-//             window.xdg_toplevel_id = null;
-
-//             window.callbacks = LinearFifo(u32, LinearFifoBufferType{ .Static = 32 }).init();
-
-//             window.texture = null;
-//             window.width = 0;
-//             window.height = 0;
-
-//             window.first_configure = false;
-//             window.first_buffer = false;
-
-//             window.scaleX = 1.0;
-//             window.scaleY = 1.0;
-//             window.originX = 0.0;
-//             window.originY = 0.0;
-
-//             window.state[0].deinit();
-//             window.state[1].deinit();
-
-//             return window;
-//         } else {
-//             i = i + 1;
-//             continue;
-//         }
-//     }
-
-//     return error.WindowsExhausted;
-// }
 
 pub fn debug(window: ?*Window) void {
     if (window) |self| {
@@ -801,40 +757,7 @@ const BufferedState = struct {
     children: Link = Link{},
 
     const Self = @This();
-
-    fn deinit(self: *Self) void {
-        self.sync = false;
-
-        self.siblings.prev = null;
-        self.siblings.next = null;
-
-        self.x = 0;
-        self.y = 0;
-        self.scale = 1;
-
-        self.input_region = null;
-        self.opaque_region = null;
-
-        self.min_width = null;
-        self.min_height = null;
-        self.max_width = null;
-        self.max_height = null;
-
-        self.children.prev = null;
-        self.children.next = null;
-    }
 };
-
-// pub fn releaseWindows(client: *Client) !void {
-//     var i: usize = 0;
-//     while (i < MAX_WINDOWS) {
-//         var window: *Window = &WINDOWS[i];
-//         if (window.in_use and window.client == client) {
-//             try window.deinit();
-//         }
-//         i = i + 1;
-//     }
-// }
 
 pub const Link = struct {
     prev: ?*Window = null,
@@ -863,82 +786,3 @@ pub const Cursor = struct {
     hotspot_x: i32,
     hotspot_y: i32,
 };
-
-// test "Window + View" {
-//     var c: Client = undefined;
-//     var v: View = View{
-//         .top = null,
-//         .pointer_window = null,
-//         .active_window = null,
-//         .focus = .Click,
-//     };
-
-//     var back = v.back();
-//     std.debug.assert(back == null);
-
-//     // var w1 = try newWindow(&c, 1);
-//     v.push(w1);
-//     std.debug.assert(v.top == w1);
-
-//     back = v.back();
-//     std.debug.assert(back == w1);
-
-//     std.debug.assert(w1.toplevel.prev == null);
-//     std.debug.assert(w1.toplevel.next == null);
-
-//     var w2 = try newWindow(&c, 2);
-//     v.push(w2);
-//     std.debug.assert(v.top == w2);
-
-//     back = v.back();
-//     std.debug.assert(back == w1);
-
-//     std.debug.assert(w1.toplevel.prev == null);
-//     std.debug.assert(w1.toplevel.next == w2);
-
-//     std.debug.assert(w2.toplevel.prev == w1);
-//     std.debug.assert(w2.toplevel.next == null);
-
-//     var w3 = try newWindow(&c, 3);
-//     v.push(w3);
-//     std.debug.assert(v.top == w3);
-
-//     back = v.back();
-//     std.debug.assert(back == w1);
-
-//     std.debug.assert(w1.toplevel.prev == null);
-//     std.debug.assert(w1.toplevel.next == w2);
-
-//     std.debug.assert(w2.toplevel.prev == w1);
-//     std.debug.assert(w2.toplevel.next == w3);
-
-//     std.debug.assert(w3.toplevel.prev == w2);
-//     std.debug.assert(w3.toplevel.next == null);
-
-//     // Remove middle window
-//     v.remove(w2);
-//     std.debug.assert(v.top == w3);
-
-//     back = v.back();
-//     std.debug.assert(back == w1);
-
-//     std.debug.assert(w1.toplevel.prev == null);
-//     std.debug.assert(w1.toplevel.next == w3);
-
-//     std.debug.assert(w3.toplevel.prev == w1);
-//     std.debug.assert(w3.toplevel.next == null);
-
-//     v.remove(w3);
-//     std.debug.assert(v.top == w1);
-
-//     back = v.back();
-//     std.debug.assert(back == w1);
-
-//     std.debug.assert(w1.toplevel.prev == null);
-//     std.debug.assert(w1.toplevel.next == null);
-
-//     v.remove(w1);
-
-//     back = v.back();
-//     std.debug.assert(back == null);
-// }
