@@ -36,9 +36,8 @@ pub const View = struct {
 
     pub fn push(self: *Self, window: *Window) void {
         if (self.top) |top| {
-            if (top == window) {
-                return;
-            }
+            if (top == window) return;
+
             top.toplevel.next = window;
             window.toplevel.prev = top;
         }
@@ -107,15 +106,12 @@ pub const View = struct {
         // 4. Raise any of our children
         it = self.back();
         while (it) |window| : (it = window.toplevel.next) {
-            if (window.toplevel.mark == true) {
-                break;
-            }
+            if (window.toplevel.mark == true) break;
+            if (window.parent != raising_window.toplevelWindow()) continue;
 
-            if (window.parent == raising_window.toplevelWindow()) {
-                self.remove(window);
-                self.push(window);
-                window.toplevel.mark = true;
-            }
+            self.remove(window);
+            self.push(window);
+            window.toplevel.mark = true;
         }
     }
 
@@ -161,15 +157,13 @@ pub const View = struct {
     }
 
     pub fn keyboard(self: *Self, time: u32, button: u32, action: u32) !void {
-        if (self.active_window) |active_window| {
-            try active_window.keyboardKey(time, button, action);
-        }
+        const active_window = self.active_window orelse return;
+        try active_window.keyboardKey(time, button, action);
     }
 
     pub fn mouseAxis(self: *Self, time: u32, axis: u32, value: f64) !void {
-        if (self.pointer_window) |pointer_window| {
-            try pointer_window.mouseAxis(time, axis, value);
-        }
+        const pointer_window = self.pointer_window orelse return;
+        try pointer_window.mouseAxis(time, axis, value);
     }
 
     pub fn deinit(_: *Self) void {
