@@ -14,7 +14,7 @@ jobs:
       - run: sudo apt-get update
       - run: sudo apt-get install libx11-dev libxcb1-dev libx11-xcb-dev libegl-dev libgles-dev libsystemd-dev libudev-dev libinput-dev libdrm-dev libxkbcommon-dev
       - run: zig build
-      - run: zig build -fstage1
+      # - run: zig build -fstage1 (stage 1 doesn't support packed struct(u32))
   lint:
     runs-on: ubuntu-latest
     steps:
