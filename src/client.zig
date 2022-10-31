@@ -305,7 +305,7 @@ pub const Client = struct {
             .xdg_toplevel => |msg| try self.handleXdgToplevel(msg),
             .wl_region => |msg| try self.handleWlRegion(msg),
             .wl_subcompositor => |msg| try self.handleWlSubcompositor(msg),
-            .wl_subsurface => |_| return error.NotImplemented,
+            .wl_subsurface => |msg| try self.handleWlSubsurface(msg),
             .wl_callback => |_| return error.NotImplemented,
             .wl_buffer => |_| return error.NotImplemented,
             .wl_data_offer => |_| return error.NotImplemented,
@@ -645,6 +645,45 @@ pub const Client = struct {
                 child.placeAbove(parent);
 
                 try self.link(.{ .wl_subsurface = wl_subsurface }, .{ .window = child });
+            },
+        }
+    }
+
+    pub fn handleWlSubsurface(self: *Client, message: WlSubsurface.Message) !void {
+        switch (message) {
+            .destroy => |msg| {
+                const window = self.getWindow(msg.wl_subsurface.id) orelse return error.NoSuchWindow;
+                window.wl_subsurface = null;
+                try self.wl_display.sendDeleteId(msg.wl_subsurface.id);
+                self.unlink(msg.wl_subsurface.id);
+            },
+            .set_position => |msg| {
+                const window = self.getWindow(msg.wl_subsurface.id) orelse return error.NoSuchWindow;
+                window.pending().x = msg.x;
+                window.pending().y = msg.y;
+            },
+            .place_above => |msg| {
+                const window = self.getWindow(msg.wl_subsurface.id) orelse return error.NoSuchWindow;
+                const sibling = self.getWindow(msg.sibling.id) orelse return error.NoSuchWindow;
+                window.placeAbove(sibling);
+            },
+            .place_below => |msg| {
+                const window = self.getWindow(msg.wl_subsurface.id) orelse return error.NoSuchWindow;
+                const sibling = self.getWindow(msg.sibling.id) orelse return error.NoSuchWindow;
+                window.placeBelow(sibling);
+            },
+            .set_sync => |msg| {
+                const window = self.getWindow(msg.wl_subsurface.id) orelse return error.NoSuchWindow;
+                window.synchronized = true;
+            },
+            .set_desync => |msg| {
+                const window = self.getWindow(msg.wl_subsurface.id) orelse return error.NoSuchWindow;
+                window.synchronized = false;
+                if (window.parent) |parent| {
+                    if (!parent.synchronized) {
+                        try window.flip();
+                    }
+                }
             },
         }
     }
