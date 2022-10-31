@@ -9,6 +9,7 @@ const ShmPool = @import("shm_pool.zig").ShmPool;
 const buffer = @import("buffer.zig");
 const Buffer = buffer.Buffer;
 const WlBuffer = @import("../wl/protocols.zig").WlBuffer;
+const WlShm = @import("../wl/protocols.zig").WlShm;
 
 pub const ShmBuffer = struct {
     client: *Client,
@@ -18,11 +19,11 @@ pub const ShmBuffer = struct {
     width: i32,
     height: i32,
     stride: i32,
-    format: u32,
+    format: WlShm.Format,
 
     const Self = @This();
 
-    pub fn init(client: *Client, shm_pool: *ShmPool, wl_buffer: WlBuffer, offset: i32, width: i32, height: i32, stride: i32, format: u32) ShmBuffer {
+    pub fn init(client: *Client, shm_pool: *ShmPool, wl_buffer: WlBuffer, offset: i32, width: i32, height: i32, stride: i32, format: WlShm.Format) ShmBuffer {
         shm_pool.incrementRefCount();
         return ShmBuffer{
             .client = client,
@@ -56,7 +57,7 @@ pub const ShmBuffer = struct {
 
     pub fn makeTexture(self: *Self) !u32 {
         var offset = @intCast(usize, self.offset);
-        return Renderer.makeTexture(self.width, self.height, self.stride, self.format, self.shm_pool.data[offset..]);
+        return Renderer.makeTexture(self.width, self.height, self.stride, @enumToInt(self.format), self.shm_pool.data[offset..]);
     }
 };
 

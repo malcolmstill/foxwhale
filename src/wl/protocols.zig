@@ -331,7 +331,7 @@ pub const WlShmPool = struct {
                 const width: i32 = try self.wire.nextI32();
                 const height: i32 = try self.wire.nextI32();
                 const stride: i32 = try self.wire.nextI32();
-                const format: u32 = try self.wire.nextU32();
+                const format: WlShm.Format = @intToEnum(WlShm.Format, try self.wire.nextU32()); // enum
                 return Message{
                     .create_buffer = CreateBufferMessage{
                         .wl_shm_pool = self.*,
@@ -388,7 +388,7 @@ pub const WlShmPool = struct {
         width: i32,
         height: i32,
         stride: i32,
-        format: u32,
+        format: WlShm.Format,
     };
 
     const DestroyMessage = struct {
@@ -1386,7 +1386,7 @@ pub const WlShellSurface = struct {
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
                 const serial: u32 = try self.wire.nextU32();
-                const edges: u32 = try self.wire.nextU32();
+                const edges: Resize = @intToEnum(Resize, try self.wire.nextU32()); // enum
                 return Message{
                     .resize = ResizeMessage{
                         .wl_shell_surface = self.*,
@@ -1412,7 +1412,7 @@ pub const WlShellSurface = struct {
                 } else return error.ExpectedObject;
                 const x: i32 = try self.wire.nextI32();
                 const y: i32 = try self.wire.nextI32();
-                const flags: u32 = try self.wire.nextU32();
+                const flags: Transient = @intToEnum(Transient, try self.wire.nextU32()); // enum
                 return Message{
                     .set_transient = SetTransientMessage{
                         .wl_shell_surface = self.*,
@@ -1425,7 +1425,7 @@ pub const WlShellSurface = struct {
             },
             // set_fullscreen
             5 => {
-                const method: u32 = try self.wire.nextU32();
+                const method: FullscreenMethod = @intToEnum(FullscreenMethod, try self.wire.nextU32()); // enum
                 const framerate: u32 = try self.wire.nextU32();
                 const output: ?WlOutput = if (@field(objects, field)(try self.wire.nextU32())) |obj| switch (obj) {
                     .wl_output => |o| o,
@@ -1453,7 +1453,7 @@ pub const WlShellSurface = struct {
                 } else return error.ExpectedObject;
                 const x: i32 = try self.wire.nextI32();
                 const y: i32 = try self.wire.nextI32();
-                const flags: u32 = try self.wire.nextU32();
+                const flags: Transient = @intToEnum(Transient, try self.wire.nextU32()); // enum
                 return Message{
                     .set_popup = SetPopupMessage{
                         .wl_shell_surface = self.*,
@@ -1547,7 +1547,7 @@ pub const WlShellSurface = struct {
         wl_shell_surface: WlShellSurface,
         seat: WlSeat,
         serial: u32,
-        edges: u32,
+        edges: Resize,
     };
 
     const SetToplevelMessage = struct {
@@ -1559,12 +1559,12 @@ pub const WlShellSurface = struct {
         parent: WlSurface,
         x: i32,
         y: i32,
-        flags: u32,
+        flags: Transient,
     };
 
     const SetFullscreenMessage = struct {
         wl_shell_surface: WlShellSurface,
-        method: u32,
+        method: FullscreenMethod,
         framerate: u32,
         output: ?WlOutput,
     };
@@ -1576,7 +1576,7 @@ pub const WlShellSurface = struct {
         parent: WlSurface,
         x: i32,
         y: i32,
-        flags: u32,
+        flags: Transient,
     };
 
     const SetMaximizedMessage = struct {
@@ -1771,7 +1771,7 @@ pub const WlSurface = struct {
             },
             // set_buffer_transform
             7 => {
-                const transform: i32 = try self.wire.nextI32();
+                const transform: WlOutput.Transform = @intToEnum(WlOutput.Transform, try self.wire.nextI32()); // enum
                 return Message{
                     .set_buffer_transform = SetBufferTransformMessage{
                         .wl_surface = self.*,
@@ -1878,7 +1878,7 @@ pub const WlSurface = struct {
 
     const SetBufferTransformMessage = struct {
         wl_surface: WlSurface,
-        transform: i32,
+        transform: WlOutput.Transform,
     };
 
     const SetBufferScaleMessage = struct {
@@ -3405,7 +3405,7 @@ pub const XdgPositioner = struct {
             },
             // set_anchor
             3 => {
-                const anchor: u32 = try self.wire.nextU32();
+                const anchor: Anchor = @intToEnum(Anchor, try self.wire.nextU32()); // enum
                 return Message{
                     .set_anchor = SetAnchorMessage{
                         .xdg_positioner = self.*,
@@ -3415,7 +3415,7 @@ pub const XdgPositioner = struct {
             },
             // set_gravity
             4 => {
-                const gravity: u32 = try self.wire.nextU32();
+                const gravity: Gravity = @intToEnum(Gravity, try self.wire.nextU32()); // enum
                 return Message{
                     .set_gravity = SetGravityMessage{
                         .xdg_positioner = self.*,
@@ -3492,12 +3492,12 @@ pub const XdgPositioner = struct {
 
     const SetAnchorMessage = struct {
         xdg_positioner: XdgPositioner,
-        anchor: u32,
+        anchor: Anchor,
     };
 
     const SetGravityMessage = struct {
         xdg_positioner: XdgPositioner,
-        gravity: u32,
+        gravity: Gravity,
     };
 
     const SetConstraintAdjustmentMessage = struct {
@@ -3817,7 +3817,7 @@ pub const XdgToplevel = struct {
                     else => return error.MismtachObjectTypes,
                 } else return error.ExpectedObject;
                 const serial: u32 = try self.wire.nextU32();
-                const edges: u32 = try self.wire.nextU32();
+                const edges: ResizeEdge = @intToEnum(ResizeEdge, try self.wire.nextU32()); // enum
                 return Message{
                     .resize = ResizeMessage{
                         .xdg_toplevel = self.*,
@@ -3974,7 +3974,7 @@ pub const XdgToplevel = struct {
         xdg_toplevel: XdgToplevel,
         seat: WlSeat,
         serial: u32,
-        edges: u32,
+        edges: ResizeEdge,
     };
 
     const SetMaxSizeMessage = struct {

@@ -58,6 +58,9 @@ pub const Server = struct {
     move: ?Move = null,
     resize: ?Resize = null,
 
+    pointer_x: f64 = 0.0,
+    pointer_y: f64 = 0.0,
+
     output_base: u32 = 1000,
 
     const ClientNode = std.TailQueue(Client).Node;

@@ -230,8 +230,11 @@ def generate_next(arg):
                 print(f"\t\t\tconst {name}: {object_type} = if (@field(objects, field)(try self.wire.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else return error.ExpectedObject;")
             else:
                 print(f"\t\t\tconst {name}: WlObject = try @field(objects, field)(try self.wire.next_u32());")
-    else:    
-        print(f"\t\t\t\tconst {name}: {atype} = try self.wire.next{next_type(arg.attrib['type'])}();")
+    else:
+        if "enum" in arg.attrib:
+            print(f"\t\t\t\tconst {name}: {atype} = @intToEnum({camelCase(arg.attrib['enum'])}, try self.wire.next{next_type(arg.attrib['type'])}()); // enum")
+        else:   
+            print(f"\t\t\t\tconst {name}: {atype} = try self.wire.next{next_type(arg.attrib['type'])}();")
 
 def next_type(type):
     types = {
@@ -328,6 +331,8 @@ def generate_send(interface, sentType):
             i = i + 1
 
 def lookup_type(type, arg):
+    if "enum" in arg.attrib:
+        return camelCase(arg.attrib['enum'])
     if type == "object":
         if "allow-null" in arg.attrib and arg.attrib["allow-null"]:
             if "interface" in arg.attrib:

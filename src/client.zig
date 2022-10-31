@@ -37,6 +37,8 @@ const XdgConfigurations = @import("resource/window.zig").XdgConfigurations;
 const SubsetPool = @import("datastructures/subset_pool.zig").SubsetPool;
 const ResourceObject = @import("server.zig").ResourceObject;
 const Resource = @import("server.zig").Resource;
+const Move = @import("move.zig").Move;
+const Resize = @import("resize.zig").Resize;
 
 pub const Client = struct {
     server: *Server,
@@ -701,8 +703,25 @@ pub const Client = struct {
             .set_parent => |_| return error.NotImplemented,
             .set_app_id => |_| return error.NotImplemented,
             .show_window_menu => |_| return error.NotImplemented,
-            .move => |_| return error.NotImplemented,
-            .resize => |_| return error.NotImplemented,
+            .move => |msg| {
+                const window = self.getWindow(msg.xdg_toplevel.id) orelse return error.NoSuchWindow;
+
+                if (window.maximized != null) return;
+                self.server.move = Move.init(window, window.current().x, window.current().y, self.server.pointer_x, self.server.pointer_y);
+            },
+            .resize => |msg| {
+                const window = self.getWindow(msg.xdg_toplevel.id) orelse return error.NoSuchWindow;
+                self.server.resize = Resize.init(
+                    window,
+                    window.current().x,
+                    window.current().y,
+                    self.server.pointer_x,
+                    self.server.pointer_y,
+                    (if (window.window_geometry) |wg| wg.width else window.width),
+                    (if (window.window_geometry) |wg| wg.height else window.height),
+                    msg.edges,
+                );
+            },
             .set_max_size => |msg| {
                 const window = self.getWindow(msg.xdg_toplevel.id) orelse return error.NoSuchWindow;
 

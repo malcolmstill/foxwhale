@@ -12,6 +12,19 @@ pub const Resize = struct {
     height: i32,
     direction: XdgToplevel.ResizeEdge,
 
+    pub fn init(window: *Window, window_x: i32, window_y: i32, pointer_x: f64, pointer_y: f64, width: i32, height: i32, direction: XdgToplevel.ResizeEdge) Resize {
+        return Resize{
+            .window = window,
+            .window_x = window_x,
+            .window_y = window_y,
+            .pointer_x = pointer_x,
+            .pointer_y = pointer_y,
+            .width = width,
+            .height = height,
+            .direction = direction,
+        };
+    }
+
     pub fn resize(self: Resize, pointer_x: f64, pointer_y: f64) !void {
         const window = self.window;
         const client = window.client;
