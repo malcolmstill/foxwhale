@@ -23,16 +23,23 @@ pub const Backend = union(BackendType) {
     pub const BackendEventType = enum {
         sync,
         button_press,
+        resize,
     };
 
     pub const BackendEvent = union(BackendEventType) {
         sync: u32,
         button_press: ButtonPress,
+        resize: Resize,
     };
 
     pub const ButtonPress = struct {
         x: i16,
         y: i16,
+    };
+
+    pub const Resize = struct {
+        width: i16,
+        height: i16,
     };
 
     pub const Iterator = union(BackendType) {

@@ -59,8 +59,22 @@ pub const X11 = struct {
                             },
                         };
                     },
+                    c.XCB_EXPOSE => {
+                        const configure = @ptrCast(*c.xcb_expose_event_t, ev);
+                        return Event{
+                            .backend = .{
+                                .backend = self.backend,
+                                .event = .{
+                                    .resize = .{
+                                        .width = @intCast(i16, configure.width),
+                                        .height = @intCast(i16, configure.height),
+                                    },
+                                },
+                            },
+                        };
+                    },
                     else => {
-                        std.log.info("unknown event", .{});
+                        std.log.info("unknown event = {}", .{ev.*.response_type & ~mask});
                         return null;
                     },
                 }

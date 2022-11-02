@@ -59,6 +59,7 @@ pub fn main() !void {
             },
             .backend => |ev| switch (ev.event) {
                 .button_press => |bp| std.log.info("button press = {}", .{bp}),
+                .resize => |e| std.log.info("resize = {}x{}", .{ e.width, e.height }),
                 .sync => {
                     // For the moment we will draw but we'll want to trigger a timer instead
                     counter.update(&server);
@@ -68,7 +69,7 @@ pub fn main() !void {
                         var win_it = server.windows.iterator();
 
                         while (win_it.next()) |window| {
-                            try window.render(400, 300, &renderer, 0, 0);
+                            try window.render(output.getWidth(), output.getHeight(), &renderer, 0, 0);
                         }
                     }
 
