@@ -1,7 +1,6 @@
-const Builder = @import("std").build.Builder;
 const std = @import("std");
 
-pub fn build(b: *Builder) void {
+pub fn build(b: *std.Build) void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
     // means any target is allowed, and the default is native. Other options
@@ -10,13 +9,17 @@ pub fn build(b: *Builder) void {
 
     // Standard release options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
+    const optimize = b.standardOptimizeOption(.{});
 
-    const exe = b.addExecutable("foxwhale", "src/main.zig");
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
+    const exe = b.addExecutable(.{
+        .name = "foxwhale",
+        .root_source_file = .{ .path = "src/main.zig" },
+        .target = target,
+        .optimize = optimize,
+        .single_threaded = true,
+    });
+
     exe.linkSystemLibrary("c");
-    // exe.linkSystemLibrary("glfw3");
     exe.linkSystemLibrary("gl");
     exe.linkSystemLibrary("xkbcommon");
     exe.linkSystemLibrary("libsystemd");
@@ -28,8 +31,8 @@ pub fn build(b: *Builder) void {
     exe.linkSystemLibrary("xcb");
     exe.linkSystemLibrary("X11");
     exe.linkSystemLibrary("X11-xcb");
-    exe.single_threaded = true;
-    exe.install();
+
+    b.installArtifact(exe);
 
     // FIXME: fix client generation of protocols
     // const foxwhalectl_exe = b.addExecutable("foxwhalectl", "src/foxwhalectl/main.zig");
@@ -43,7 +46,7 @@ pub fn build(b: *Builder) void {
     // foxwhalectl_exe.addPackagePath("epoll", "src/epoll.zig");
     // foxwhalectl_exe.addPackagePath("wl", "src/wl/wire.zig");
 
-    const run_cmd = exe.run();
+    const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
 
     const run_step = b.step("run", "Run the app");

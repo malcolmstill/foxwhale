@@ -19,7 +19,7 @@ pub fn IterablePool(comptime T: type, comptime U: type) type {
         pub fn init(allocator: mem.Allocator, count: U) !Self {
             var pool = try Pool(T, U).init(allocator, count);
             errdefer pool.deinit();
-            var nodes = try allocator.alloc(Tq.Node, count);
+            const nodes = try allocator.alloc(Tq.Node, count);
 
             return Self{
                 .alloc = allocator,
@@ -89,13 +89,13 @@ pub fn IterablePool(comptime T: type, comptime U: type) type {
             }
 
             fn indexOf(self: *Iterator, ptr: *Tq.Node) U {
-                const start = @ptrToInt(&self.pool_iterable.nodes[0]);
-                const end = @ptrToInt(&self.pool_iterable.nodes[self.pool_iterable.nodes.len - 1]);
-                const v = @ptrToInt(ptr);
+                const start = @intFromPtr(&self.pool_iterable.nodes[0]);
+                const end = @intFromPtr(&self.pool_iterable.nodes[self.pool_iterable.nodes.len - 1]);
+                const v = @intFromPtr(ptr);
 
                 std.debug.assert(v >= start or v <= end);
 
-                const index = @intCast(U, (v - start) / @sizeOf(Tq.Node));
+                const index: U = @intCast((v - start) / @sizeOf(Tq.Node));
 
                 return index;
             }

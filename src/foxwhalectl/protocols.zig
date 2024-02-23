@@ -10,10 +10,18 @@ pub const wl_display_interface = struct {
 };
 
 fn wl_display_error_default(context: *Context, object: Object, object_id: Object, code: u32, message: []u8) anyerror!void {
+    _ = context;
+    _ = object;
+    _ = object_id;
+    _ = code;
+    _ = message;
     return error.DebugFunctionNotImplemented;
 }
 
 fn wl_display_delete_id_default(context: *Context, object: Object, id: u32) anyerror!void {
+    _ = context;
+    _ = object;
+    _ = id;
     return error.DebugFunctionNotImplemented;
 }
 

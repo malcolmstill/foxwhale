@@ -6,6 +6,8 @@ const math = std.math;
 const txrx = @import("txrx.zig");
 const FdBuffer = fifo.LinearFifo(i32, fifo.LinearFifoBufferType{ .Static = txrx.MAX_FDS });
 
+const endian = @import("builtin").cpu.arch.endian();
+
 const BUFFER_SIZE = 4096;
 
 pub fn Wire(comptime WlMessage: type) type {
@@ -48,10 +50,11 @@ pub fn Wire(comptime WlMessage: type) type {
 
             self.rx_write_offset = n;
 
-            mem.copy(u8, self.rx_buf[0..n], self.rx_buf[read_offset .. read_offset + n]);
+            mem.copyForwards(u8, self.rx_buf[0..n], self.rx_buf[read_offset .. read_offset + n]);
         }
 
-        pub fn readEvent(self: *Self, objects: anytype, comptime field: []const u8) !?WlMessage {
+        // Is objects just client?
+        pub fn readEvent(self: *Self, comptime C: type, objects: anytype, comptime field: []const u8) !?WlMessage {
             const rdr = self.rx.reader();
 
             // We need to have read at least a header
@@ -61,17 +64,19 @@ pub fn Wire(comptime WlMessage: type) type {
             const start = try self.rx.getPos();
 
             const header = Header{
-                .id = try rdr.readIntNative(u32),
-                .opcode = try rdr.readIntNative(u16),
-                .length = try rdr.readIntNative(u16),
+                .id = try rdr.readInt(u32, endian),
+                .opcode = try rdr.readInt(u16, endian),
+                .length = try rdr.readInt(u16, endian),
             };
 
             // We need to have read a full message
             if (remaining < header.length) return null;
 
-            var object = @field(objects, field)(header.id) orelse return error.CouldntFindExpectedId;
+            // var object = @field(objects, field)(header.id) orelse return error.CouldntFindExpectedId;
 
-            const event = try object.readMessage(objects, field, header.opcode);
+            var object = @call(.auto, @field(C, field), .{ objects, header.id }) orelse return error.CouldntFindExpectedId;
+
+            const event = try object.readMessage(C, objects, field, header.opcode);
 
             const actual_length = (try self.rx.getPos()) - start;
             if (actual_length != header.length) return error.MessageWrongLength;
@@ -80,11 +85,11 @@ pub fn Wire(comptime WlMessage: type) type {
         }
 
         pub fn nextU32(self: *Self) !u32 {
-            return self.rx.reader().readIntNative(u32);
+            return self.rx.reader().readInt(u32, endian);
         }
 
         pub fn nextI32(self: *Self) !i32 {
-            return self.rx.reader().readIntNative(i32);
+            return self.rx.reader().readInt(i32, endian);
         }
 
         // we just expose a pointer to the rx_buf for the
@@ -101,7 +106,7 @@ pub fn Wire(comptime WlMessage: type) type {
             try self.rx.reader().skipBytes(padded_length, .{});
 
             var s: []u8 = undefined;
-            s.ptr = @ptrCast([*]u8, &self.rx_buf[start]);
+            s.ptr = @ptrCast(&self.rx_buf[start]);
             s.len = length;
 
             return s;
@@ -132,18 +137,18 @@ pub fn Wire(comptime WlMessage: type) type {
 
         pub fn startWrite(self: *Self) !void {
             self.tx = io.fixedBufferStream(self.tx_buf[0..]);
-            try self.tx.writer().writeIntNative(u32, 0);
-            try self.tx.writer().writeIntNative(u16, 0);
-            try self.tx.writer().writeIntNative(u16, 0);
+            try self.tx.writer().writeInt(u32, 0, endian);
+            try self.tx.writer().writeInt(u16, 0, endian);
+            try self.tx.writer().writeInt(u16, 0, endian);
         }
 
         pub fn finishWrite(self: *Self, id: u32, opcode: u16) !void {
             const end_pos = math.cast(u16, try self.tx.getPos()) orelse return error.EndPositionMustBeU16;
             self.tx.reset();
 
-            try self.tx.writer().writeIntNative(u32, id);
-            try self.tx.writer().writeIntNative(u16, opcode);
-            try self.tx.writer().writeIntNative(u16, end_pos);
+            try self.tx.writer().writeInt(u32, id, endian);
+            try self.tx.writer().writeInt(u16, opcode, endian);
+            try self.tx.writer().writeInt(u16, end_pos, endian);
 
             _ = txrx.sendMsg(self.fd, self.tx_buf[0..end_pos], &self.tx_fds) catch |err| switch (err) {
                 error.BrokenPipe => return,
@@ -152,11 +157,11 @@ pub fn Wire(comptime WlMessage: type) type {
         }
 
         pub fn putU32(self: *Self, value: u32) !void {
-            try self.tx.writer().writeIntNative(u32, value);
+            try self.tx.writer().writeInt(u32, value, endian);
         }
 
         pub fn putI32(self: *Self, value: i32) !void {
-            try self.tx.writer().writeIntNative(i32, value);
+            try self.tx.writer().writeInt(i32, value, endian);
         }
 
         pub fn putFd(self: *Self, value: i32) !void {
@@ -176,7 +181,7 @@ pub fn Wire(comptime WlMessage: type) type {
             const start = try self.tx.getPos();
             try self.tx.seekBy(padded_length);
 
-            mem.copy(u8, self.tx_buf[start .. start + length], array);
+            mem.copyForwards(u8, self.tx_buf[start .. start + length], array);
         }
 
         // string is assumed to have a null byte within its contents / length
@@ -189,20 +194,20 @@ pub fn Wire(comptime WlMessage: type) type {
 
             try self.tx.seekBy(padded_length);
 
-            std.mem.copy(u8, self.tx_buf[start .. start + length], string);
+            std.mem.copyForwards(u8, self.tx_buf[start .. start + length], string);
         }
     };
 }
 
 fn doubleToFixed(f: f64) i32 {
     var x: f64 = f + (3 << (51 - 8));
-    var x_ptr = @ptrCast(*i32, &x);
+    const x_ptr: *i32 = @ptrCast(&x);
     return x_ptr.*;
 }
 
 fn fixedToDouble(f: i32) f64 {
     var x: i32 = ((1023 + 44) << 52) + (1 << 51) + f;
-    var x_ptr = @ptrCast(*f64, &x);
+    const x_ptr: *f64 = @ptrCast(&x);
     return x_ptr.*;
 }
 

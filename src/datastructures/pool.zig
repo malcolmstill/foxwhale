@@ -16,7 +16,7 @@ pub fn Pool(comptime T: type, comptime U: type) type {
         pub const Handle = U;
 
         pub fn init(allocator: mem.Allocator, count: U) !Self {
-            var entities = try allocator.alloc(T, count);
+            const entities = try allocator.alloc(T, count);
             var free_stack = try allocator.alloc(?U, count);
             var in_use: (if (builtin.mode == .Debug) []bool else void) = if (builtin.mode == .Debug) try allocator.alloc(bool, count) else undefined;
 
@@ -28,9 +28,9 @@ pub fn Pool(comptime T: type, comptime U: type) type {
             });
 
             // Make every free_stack node point to the next node
-            for (free_stack) |_, index| {
+            for (free_stack, 0..) |_, index| {
                 if (builtin.mode == .Debug) in_use[index] = false;
-                free_stack[index] = @intCast(U, index) + 1;
+                free_stack[index] = @as(U, @intCast(index)) + 1;
             }
             free_stack[free_stack.len - 1] = null;
 
@@ -45,7 +45,7 @@ pub fn Pool(comptime T: type, comptime U: type) type {
 
         pub fn deinit(self: *Self) void {
             if (builtin.mode == .Debug) {
-                for (self.in_use) |in_use, i| {
+                for (self.in_use, 0..) |in_use, i| {
                     if (in_use) {
                         std.debug.print("Pool: leaked item {} in [{}]{}\n", .{ i, self.entities.len, T });
                     }
@@ -88,13 +88,13 @@ pub fn Pool(comptime T: type, comptime U: type) type {
         }
 
         pub fn indexOf(self: *Self, ptr: *T) ?U {
-            const start = @ptrToInt(&self.entities[0]);
-            const end = @ptrToInt(&self.entities[self.entities.len - 1]);
-            const v = @ptrToInt(ptr);
+            const start = @intFromPtr(&self.entities[0]);
+            const end = @intFromPtr(&self.entities[self.entities.len - 1]);
+            const v = @intFromPtr(ptr);
 
             if (v < start or v > end) return null;
 
-            const index = @intCast(U, (v - start) / @sizeOf(T));
+            const index = @as(U, @intCast((v - start) / @sizeOf(T)));
 
             return index;
         }
@@ -105,8 +105,8 @@ test {
     var p = try Pool(i32, u2).init(std.testing.allocator, 3);
     defer p.deinit();
 
-    var first = try p.create(11);
-    var middle = try p.create(12);
+    const first = try p.create(11);
+    const middle = try p.create(12);
     var last = try p.create(13);
 
     try std.testing.expectEqual(first.*, 11);

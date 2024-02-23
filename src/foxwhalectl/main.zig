@@ -51,17 +51,17 @@ pub fn main() anyerror!void {
     prot.FW_CONTROL.region_rect = region_rect;
     prot.FW_CONTROL.done = done;
 
-    var file = try std.net.connectUnixSocket("/run/user/1000/wayland-0");
+    const file = try std.net.connectUnixSocket("/run/user/1000/wayland-0");
     conn.dispatchable.impl = connections.dispatch;
     conn.context.init(file.handle, &conn);
 
     try epoll.addFd(file.handle, &conn.dispatchable);
 
-    var wl_display = prot.new_wl_display(1, &conn.context, 0);
+    const wl_display = prot.new_wl_display(1, &conn.context, 0);
     try conn.context.register(wl_display);
-    var wl_registry = prot.new_wl_registry(2, &conn.context, 0);
+    const wl_registry = prot.new_wl_registry(2, &conn.context, 0);
     try conn.context.register(wl_registry);
-    var wl_callback = prot.new_wl_callback(3, &conn.context, 0);
+    const wl_callback = prot.new_wl_callback(3, &conn.context, 0);
     try conn.context.register(wl_callback);
 
     try prot.wl_display_send_get_registry(wl_display, 2);
@@ -69,7 +69,7 @@ pub fn main() anyerror!void {
 
     while (waiting) {
         var i: usize = 0;
-        var n = epoll.wait(-1);
+        const n = epoll.wait(-1);
 
         while (i < n) {
             try epoll.dispatch(i);
@@ -93,7 +93,7 @@ fn global(
 ) anyerror!void {
     if (std.mem.eql(u8, interface, "fw_control\x00\x00")) {
         try prot.wl_registry_send_bind(wl_registry, name, "fw_control\x00", 1, 4);
-        var fw_control = prot.new_fw_control(4, context, 0);
+        const fw_control = prot.new_fw_control(4, context, 0);
         try conn.context.register(fw_control);
 
         // As soon as we've bound the interface we can send our query
@@ -146,7 +146,7 @@ fn window(
 }
 
 fn windowsWindow(index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, sibling_prev: i32, sibling_next: i32, children_prev: i32, children_next: i32, input_region_id: u32) void {
-    var st = @intToEnum(prot.fw_control_surface_type, surface_type);
+    const st: prot.fw_control_surface_type = @enumFromInt(surface_type);
 
     std.log.warn("window[{} ^", .{index});
     if (parent < 0) {
@@ -184,7 +184,7 @@ fn windowTressWindow(
     children_next: i32,
     _: u32, // input_region_id
 ) void {
-    var st = @intToEnum(prot.fw_control_surface_type, surface_type);
+    const st: prot.fw_control_surface_type = @enumFromInt(surface_type);
     std.log.warn("    window[{} ^", .{index});
     if (parent < 0) {
         std.log.warn(" null]", .{});
@@ -215,7 +215,7 @@ fn toplevel_window(
     height: i32,
     _: u32, // input_region_id
 ) anyerror!void {
-    var st = @intToEnum(prot.fw_control_surface_type, surface_type);
+    const st: prot.fw_control_surface_type = @enumFromInt(surface_type);
 
     std.log.warn("window[{} ^", .{index});
     if (parent < 0) {

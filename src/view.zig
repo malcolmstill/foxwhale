@@ -86,7 +86,7 @@ pub const View = struct {
         // 2. Raise our parent if it exists
         if (raising_window.parent) |parent| {
             // var root = pointer_window.root();
-            var parent_toplevel = parent.toplevelWindow();
+            const parent_toplevel = parent.toplevelWindow();
             parent.toplevel.mark = true;
             self.remove(parent_toplevel);
             self.push(parent_toplevel);

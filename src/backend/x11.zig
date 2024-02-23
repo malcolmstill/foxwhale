@@ -45,7 +45,7 @@ pub const X11 = struct {
                 std.log.info("event response type = {}", .{ev.*.response_type});
                 switch (ev.*.response_type & ~mask) {
                     c.XCB_BUTTON_PRESS => {
-                        const press = @ptrCast(*c.xcb_button_press_event_t, ev);
+                        const press: *c.xcb_button_press_event_t = @ptrCast(ev);
                         std.log.info("button = {}x{}", .{ press.event_x, press.event_y });
                         return Event{
                             .backend = Backend.TargetEvent{
@@ -60,14 +60,14 @@ pub const X11 = struct {
                         };
                     },
                     c.XCB_EXPOSE => {
-                        const configure = @ptrCast(*c.xcb_expose_event_t, ev);
+                        const configure: *c.xcb_expose_event_t = @ptrCast(ev);
                         return Event{
                             .backend = .{
                                 .backend = self.backend,
                                 .event = .{
                                     .resize = .{
-                                        .width = @intCast(i16, configure.width),
-                                        .height = @intCast(i16, configure.height),
+                                        .width = @intCast(configure.width),
+                                        .height = @intCast(configure.height),
                                     },
                                 },
                             },
@@ -97,7 +97,7 @@ pub const X11 = struct {
 
     pub fn newOutput(self: *X11, w: i16, h: i16) !X11Output {
         const setup = c.xcb_get_setup(self.conn);
-        var iter = c.xcb_setup_roots_iterator(setup);
+        const iter = c.xcb_setup_roots_iterator(setup);
         const screen = iter.data;
 
         const mask = c.XCB_CW_EVENT_MASK;
@@ -111,8 +111,8 @@ pub const X11 = struct {
             screen.*.root,
             0,
             0,
-            @intCast(u16, w),
-            @intCast(u16, h),
+            @intCast(w),
+            @intCast(h),
             10,
             c.XCB_WINDOW_CLASS_INPUT_OUTPUT,
             screen.*.root_visual,
@@ -184,7 +184,7 @@ pub const SurfacContext = struct {
 fn setupEgl(api: c.EGLint, native_display: c.EGLNativeDisplayType, native_window: c.EGLNativeWindowType) !SurfacContext {
     var ok: c.EGLBoolean = undefined;
 
-    ok = c.eglBindAPI(@intCast(c_uint, api));
+    ok = c.eglBindAPI(@intCast(api));
     if (ok == c.EGL_FALSE) return error.EglFailedToBind;
 
     const display = c.eglGetDisplay(native_display);

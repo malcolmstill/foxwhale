@@ -17,30 +17,30 @@ pub const Xkb = struct {
     };
 
     pub fn getKeymap(self: *Self) !FdSize {
-        var xdg_runtime_dir = std.os.getenv("XDG_RUNTIME_DIR") orelse return error.NoXdgRuntimeDir;
+        const xdg_runtime_dir = std.os.getenv("XDG_RUNTIME_DIR") orelse return error.NoXdgRuntimeDir;
 
         var filename: [128]u8 = [_]u8{0} ** 128;
-        var random = "/XXXXXX";
-        std.mem.copy(u8, filename[0..filename.len], xdg_runtime_dir);
+        const random = "/XXXXXX";
+        std.mem.copyForwards(u8, filename[0..filename.len], xdg_runtime_dir);
         if (xdg_runtime_dir.len >= filename.len - 1) {
             return error.FilenameBufferTooSmall;
         }
-        std.mem.copy(u8, filename[xdg_runtime_dir.len..], random);
+        std.mem.copyForwards(u8, filename[xdg_runtime_dir.len..], random);
 
         if (self.keymap) |keymap| {
-            var keymap_as_string = c.xkb_keymap_get_as_string(keymap, c.XKB_KEYMAP_FORMAT_TEXT_V1);
+            const keymap_as_string = c.xkb_keymap_get_as_string(keymap, c.XKB_KEYMAP_FORMAT_TEXT_V1);
             if (keymap_as_string) |string| {
                 defer c.free(string);
-                var size = std.mem.len(string) + 1;
+                const size = std.mem.len(string) + 1;
                 var keymap_string: []u8 = undefined;
                 keymap_string.ptr = string;
                 keymap_string.len = size;
 
-                var fd: i32 = c.mkstemp(&filename[0]); // O_CLOEXEC?
+                const fd: i32 = c.mkstemp(&filename[0]); // O_CLOEXEC?
                 try std.os.ftruncate(fd, size);
-                var data = try std.os.mmap(null, @intCast(usize, size), std.os.linux.PROT.READ | std.os.linux.PROT.WRITE, std.os.linux.MAP.SHARED, fd, 0);
+                const data = try std.os.mmap(null, @intCast(size), std.os.linux.PROT.READ | std.os.linux.PROT.WRITE, std.os.linux.MAP{ .TYPE = .SHARED }, fd, 0);
 
-                std.mem.copy(u8, data, keymap_string);
+                std.mem.copyForwards(u8, data, keymap_string);
 
                 std.os.munmap(data);
 
@@ -56,8 +56,8 @@ pub const Xkb = struct {
     }
 
     pub fn updateKey(self: *Self, keycode: u32, state: u32) void {
-        var direction = if (state == 1) c.XKB_KEY_DOWN else c.XKB_KEY_UP;
-        _ = c.xkb_state_update_key(self.state, keycode + 8, @intCast(c_uint, direction));
+        const direction = if (state == 1) c.XKB_KEY_DOWN else c.XKB_KEY_UP;
+        _ = c.xkb_state_update_key(self.state, keycode + 8, @intCast(direction));
     }
 
     pub fn serializeDepressed(self: *Self) u32 {
@@ -78,10 +78,10 @@ pub const Xkb = struct {
 };
 
 pub fn init() !Xkb {
-    var flags = c.XKB_CONTEXT_NO_FLAGS;
-    var context = try newContext(@intCast(c_uint, flags));
-    var keymap = try newKeymapFromNames(context, "evdev\x00", "apple\x00", "gb\x00", "\x00", "\x00");
-    var state = try newState(keymap);
+    const flags = c.XKB_CONTEXT_NO_FLAGS;
+    const context = try newContext(@intCast(flags));
+    const keymap = try newKeymapFromNames(context, "evdev\x00", "apple\x00", "gb\x00", "\x00", "\x00");
+    const state = try newState(keymap);
 
     return Xkb{
         .context = context,
@@ -103,9 +103,9 @@ fn newKeymapFromNames(context: *c.xkb_context, rules: []const u8, model: []const
         .options = &options[0],
     };
 
-    var flags = c.XKB_KEYMAP_COMPILE_NO_FLAGS;
+    const flags = c.XKB_KEYMAP_COMPILE_NO_FLAGS;
 
-    return c.xkb_keymap_new_from_names(context, &names, @intCast(c_uint, flags)) orelse error.XkbKeymapCreationFailed;
+    return c.xkb_keymap_new_from_names(context, &names, @intCast(flags)) orelse error.XkbKeymapCreationFailed;
 }
 
 fn newState(keymap: *c.xkb_keymap) !*c.xkb_state {

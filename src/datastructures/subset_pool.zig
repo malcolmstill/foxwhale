@@ -20,8 +20,8 @@ pub fn SubsetPool(comptime T: type, comptime U: type) type {
         pub fn init(allocator: mem.Allocator, count: U) !Self {
             var pool = try Pool(T, U).init(allocator, count);
             errdefer pool.deinit();
-            var nodes = try allocator.alloc(Tq.Node, count);
-            var global_nodes = try allocator.alloc(Tq.Node, count);
+            const nodes = try allocator.alloc(Tq.Node, count);
+            const global_nodes = try allocator.alloc(Tq.Node, count);
 
             return Self{
                 .alloc = allocator,
@@ -117,13 +117,13 @@ pub fn SubsetPool(comptime T: type, comptime U: type) type {
                 }
 
                 fn indexOf(self: *SubsetIterator, ptr: *Tq.Node) U {
-                    const start = @ptrToInt(&self.subset.pool_iterable.nodes[0]);
-                    const end = @ptrToInt(&self.subset.pool_iterable.nodes[self.subset.pool_iterable.nodes.len - 1]);
-                    const v = @ptrToInt(ptr);
+                    const start = @intFromPtr(&self.subset.pool_iterable.nodes[0]);
+                    const end = @intFromPtr(&self.subset.pool_iterable.nodes[self.subset.pool_iterable.nodes.len - 1]);
+                    const v = @intFromPtr(ptr);
 
                     std.debug.assert(v >= start or v <= end);
 
-                    const index = @intCast(U, (v - start) / @sizeOf(Tq.Node));
+                    const index: U = @intCast((v - start) / @sizeOf(Tq.Node));
 
                     return index;
                 }
@@ -155,13 +155,13 @@ pub fn SubsetPool(comptime T: type, comptime U: type) type {
             }
 
             fn indexOf(self: *Iterator, ptr: *Tq.Node) U {
-                const start = @ptrToInt(&self.pool_iterable.global_nodes[0]);
-                const end = @ptrToInt(&self.pool_iterable.global_nodes[self.pool_iterable.global_nodes.len - 1]);
-                const v = @ptrToInt(ptr);
+                const start = @intFromPtr(&self.pool_iterable.global_nodes[0]);
+                const end = @intFromPtr(&self.pool_iterable.global_nodes[self.pool_iterable.global_nodes.len - 1]);
+                const v = @intFromPtr(ptr);
 
                 std.debug.assert(v >= start or v <= end);
 
-                const index = @intCast(U, (v - start) / @sizeOf(Tq.Node));
+                const index: U = @intCast((v - start) / @sizeOf(Tq.Node));
 
                 return index;
             }
@@ -175,9 +175,9 @@ test {
 
     var list = p.iterable();
 
-    var first = try list.create(38);
+    const first = try list.create(38);
     defer list.destroy(first);
-    var middle = try list.create(39);
+    const middle = try list.create(39);
     defer list.destroy(middle);
 
     var it = list.iterator();
@@ -185,7 +185,7 @@ test {
     try std.testing.expectEqual(it.next(), middle);
     try std.testing.expectEqual(it.next(), null);
 
-    var last = try list.create(40);
+    const last = try list.create(40);
     defer list.destroy(last);
 
     it = list.iterator();

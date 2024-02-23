@@ -52,7 +52,7 @@ pub const Resize = struct {
             else => 0,
         };
 
-        return self.width + @floatToInt(i32, dx);
+        return self.width + @as(i32, @intFromFloat(dx));
     }
 
     fn newHeight(self: Resize, pointer_y: f64) i32 {
@@ -66,7 +66,7 @@ pub const Resize = struct {
             else => 0,
         };
 
-        return self.height + @floatToInt(i32, dy);
+        return self.height + @as(i32, @intFromFloat(dy));
     }
 
     pub fn offsetX(self: Resize, old_buffer_width: i32, new_buffer_width: i32) i32 {

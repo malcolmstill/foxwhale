@@ -161,7 +161,7 @@ pub const Server = struct {
         pub fn next(self: *Iterator, _: u32) !?Event {
             if (self.accepted) return null;
 
-            var conn = try self.server.server.accept();
+            const conn = try self.server.server.accept();
 
             self.accepted = true;
 
@@ -179,7 +179,7 @@ pub const Server = struct {
 
 fn socket() !std.net.StreamServer {
     _ = std.os.unlink("/run/user/1000/wayland-1") catch {};
-    var addr = try std.net.Address.initUnix("/run/user/1000/wayland-1");
+    const addr = try std.net.Address.initUnix("/run/user/1000/wayland-1");
 
     var server = std.net.StreamServer.init(.{});
     try server.listen(addr);

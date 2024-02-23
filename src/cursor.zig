@@ -10,7 +10,7 @@ pub const Cursor = struct {
     height: i32,
 
     pub fn init() !Cursor {
-        var texture = try Renderer.makeTexture(32, 32, 32 * 4, 0, cursor[0..]);
+        const texture = try Renderer.makeTexture(32, 32, 32 * 4, 0, cursor[0..]);
 
         return Cursor{
             .width = 32,
@@ -40,7 +40,7 @@ pub const Cursor = struct {
         const program = try renderer.useProgram("window");
         try Renderer.setUniformFloat(program, "opacity", 1.0);
         try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ 1.0, 1.0, 1.0, 1.0 }).data);
-        try Renderer.setUniformMatrix(program, "translate", Mat4x4(f32).translate([_]f32{ @intToFloat(f32, x), @intToFloat(f32, y), 0.0, 1.0 }).data);
+        try Renderer.setUniformMatrix(program, "translate", Mat4x4(f32).translate([_]f32{ @floatFromInt(x), @floatFromInt(y), 0.0, 1.0 }).data);
         try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).identity().data);
         try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).identity().data);
         try renderer.renderSurface(output_width, output_height, program, texture, self.width, self.height);

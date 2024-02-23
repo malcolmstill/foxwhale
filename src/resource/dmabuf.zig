@@ -18,7 +18,7 @@ pub fn newDmaBuffer(client: *Client, params_id: u32, id: u32, width: i32, height
         .image = image,
     };
 
-    var buf = try buffer.newBuffer(client);
+    const buf = try buffer.newBuffer(client);
     buf.* = Buffer{ .Dma = dmabuf };
 
     return buf;

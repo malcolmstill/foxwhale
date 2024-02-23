@@ -112,8 +112,8 @@ pub const Compositor = struct {
 
     pub fn mouseMove(self: *Self, dx: f64, dy: f64) !void {
         const view = self.current_view orelse return;
-        const width = @intToFloat(f64, view.output.?.backend.getWidth());
-        const height = @intToFloat(f64, view.output.?.backend.getHeight());
+        const width: f64 = @floatFromInt(view.output.?.backend.getWidth());
+        const height: f64 = @floatFromInt(view.output.?.backend.getHeight());
 
         self.pointer_x = self.pointer_x + dx;
         self.pointer_y = self.pointer_y + dy;
@@ -135,8 +135,8 @@ pub const Compositor = struct {
         }
 
         if (self.move) |move| {
-            var new_window_x = move.window_x + @floatToInt(i32, self.pointer_x - move.pointer_x);
-            var new_window_y = move.window_y + @floatToInt(i32, self.pointer_y - move.pointer_y);
+            const new_window_x = move.window_x + @as(i32, @intFromFloat(self.pointer_x - move.pointer_x));
+            const new_window_y = move.window_y + @as(i32, @intFromFloat(self.pointer_y - move.pointer_y));
             move.window.current().x = new_window_x;
             move.window.pending().x = new_window_x;
             move.window.current().y = new_window_y;

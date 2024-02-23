@@ -130,10 +130,10 @@ def generate_message_union(msgs):
         print(f"{m}: {camelCase(m)},")
     print(f"")
     # 
-    print(f"pub fn readMessage(self: *WlObject, objects: anytype, comptime field: []const u8, opcode: u16) !WlMessage {{")
+    print(f"pub fn readMessage(self: *WlObject, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !WlMessage {{")
     print(f"return switch (self.*) {{")
     for m in msgs:
-        print(f".{m} => |*o| WlMessage{{ .{m} = try o.readMessage(objects, field, opcode) }},")
+        print(f".{m} => |*o| WlMessage{{ .{m} = try o.readMessage(Client, objects, field, opcode) }},")
     print(f"}};")
     print(f"}}")
     print(f"// end of dispatch")
@@ -184,8 +184,8 @@ def generate_enum(interface):
 # Generate Dispatch function
 def generate_dispatch_function(interface, receiveType, local_enum_map, global_enum_map):
     interfaceName = f"{camelCase(interface.attrib['name'])}"
-    print(f"pub fn readMessage(self: *Self, objects: anytype, comptime field: []const u8, opcode: u16) !Message {{")
-    print(f"if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info(\"{{any}}, {{s}}\", .{{&objects, &field}});")
+    print(f"pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {{")
+    print(f"if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info(\"{{any}}, {{s}} {{s}}\", .{{&objects, &field, Client}});")
     print(f"\tswitch(opcode) {{")
     i = 0
     for child in interface:
@@ -287,24 +287,24 @@ def generate_next(arg, local_enum_map, global_enum_map):
             if "interface" in arg.attrib:
                 object_interface = arg.attrib["interface"]
                 object_type = camelCase(arg.attrib["interface"])
-                print(f"\t\t\tconst {name}: ?{object_type} = if (@field(objects, field)(try self.wire.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else null;")
+                print(f"\t\t\tconst {name}: ?{object_type} = if (@call(.auto, @field(Client, field), .{{objects, try self.wire.nextU32()}})) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else null;")
             else:
-                print(f"\t\t\tconst {name}: ?WlObject = try @field(objects, field)(try self.wire.next_u32());")
+                print(f"\t\t\tconst {name}: ?WlObject = try @call(.auto, @field(Client, field), .{{objects, try self.wire.next_u32()}});")
         else:
             if "interface" in arg.attrib:
                 object_interface = arg.attrib["interface"]
                 object_type = camelCase(arg.attrib["interface"])
-                print(f"\t\t\tconst {name}: {object_type} = if (@field(objects, field)(try self.wire.nextU32())) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else return error.ExpectedObject;")
+                print(f"\t\t\tconst {name}: {object_type} = if (@call(.auto, @field(Client, field), .{{objects, try self.wire.nextU32()}})) |obj|  switch (obj) {{ .{object_interface} => |o| o, else => return error.MismtachObjectTypes, }} else return error.ExpectedObject;")
             else:
-                print(f"\t\t\tconst {name}: WlObject = try @field(objects, field)(try self.wire.next_u32());")
+                print(f"\t\t\tconst {name}: WlObject = try @call(.auto, @field(Client, field), .{{objects, try self.wire.next_u32()}});")
     else:
         if "enum" in arg.attrib:
             enum_name = arg.attrib["enum"]
             enum_type = local_enum_map.get(enum_name, global_enum_map.get(enum_name, None))
             if enum_type == "bitfield":
-                print(f"\t\t\t\tconst {name}: {atype} = @bitCast({camelCase(arg.attrib['enum'])}, try self.wire.next{next_type(arg.attrib['type'])}()); // {enum_type}")
+                print(f"\t\t\t\tconst {name}: {atype} = @bitCast(try self.wire.next{next_type(arg.attrib['type'])}()); // {enum_type}")
             else:
-                print(f"\t\t\t\tconst {name}: {atype} = @intToEnum({camelCase(arg.attrib['enum'])}, try self.wire.next{next_type(arg.attrib['type'])}()); // {enum_type}")
+                print(f"\t\t\t\tconst {name}: {atype} = @enumFromInt(try self.wire.next{next_type(arg.attrib['type'])}()); // {enum_type}")
         else:   
             print(f"\t\t\t\tconst {name}: {atype} = try self.wire.next{next_type(arg.attrib['type'])}();")
 
@@ -399,9 +399,9 @@ def generate_send(interface, sentType, local_enum_map, global_enum_map):
                         # print(f"// {enum_name} {local_enum_map}, {global_enum_map}")
                         enum_type = local_enum_map.get(enum_name, global_enum_map.get(enum_name, None))
                         if enum_type ==  "bitfield":
-                            print(f"\ttry self.wire.putU32(@bitCast(u32, {arg.attrib['name']})); // {enum_type}")
+                            print(f"\ttry self.wire.putU32(@bitCast({arg.attrib['name']})); // {enum_type}")
                         else:
-                            print(f"\ttry self.wire.putU32(@enumToInt({arg.attrib['name']})); // {enum_type}")
+                            print(f"\ttry self.wire.putU32(@intFromEnum({arg.attrib['name']})); // {enum_type}")
                     else:
                         print(f"\ttry self.wire.put{put_type(arg.attrib['type'])}({arg.attrib['name']});")
             print(f"\ttry self.wire.finishWrite(self.id, {i});")

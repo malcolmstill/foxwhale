@@ -56,8 +56,8 @@ pub const ShmBuffer = struct {
     }
 
     pub fn makeTexture(self: *Self) !u32 {
-        var offset = @intCast(usize, self.offset);
-        return Renderer.makeTexture(self.width, self.height, self.stride, @enumToInt(self.format), self.shm_pool.data[offset..]);
+        const offset = @as(u32, @intCast(self.offset));
+        return Renderer.makeTexture(self.width, self.height, self.stride, @intFromEnum(self.format), self.shm_pool.data[offset..]);
     }
 };
 
@@ -88,5 +88,12 @@ fn sigbusHandler(
     _: ?*const anyopaque, // data
 ) callconv(.C) void {
     SIGBUS_ERROR = true;
-    _ = linux.mmap(CURRENT_POOL_ADDRESS, CURRENT_POOL_SIZE, linux.PROT.READ | linux.PROT.WRITE, linux.MAP.FIXED | linux.MAP.PRIVATE | linux.MAP.ANONYMOUS, -1, 0);
+    _ = linux.mmap(
+        CURRENT_POOL_ADDRESS,
+        CURRENT_POOL_SIZE,
+        linux.PROT.READ | linux.PROT.WRITE,
+        .{ .TYPE = .PRIVATE, .FIXED = true, .ANONYMOUS = true },
+        -1,
+        0,
+    );
 }

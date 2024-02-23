@@ -131,14 +131,14 @@ pub const Window = struct {
 
                 const win_x = window.current().x;
                 const win_y = window.current().y;
-                const abs_x = @intToFloat(f32, window.absoluteX() + x);
-                const abs_y = @intToFloat(f32, window.absoluteY() + y);
+                const abs_x: f32 = @floatFromInt(window.absoluteX() + x);
+                const abs_y: f32 = @floatFromInt(window.absoluteY() + y);
 
                 if (window.parent) |parent| {
                     try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ parent.scaleX, parent.scaleY, 1.0, 1.0 }).data);
                     try Renderer.setUniformMatrix(program, "translate", Mat4x4(f32).translate([_]f32{ abs_x, abs_y, 0.0, 1.0 }).data);
-                    try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).translate([_]f32{ -parent.originX + @intToFloat(f32, win_x), -parent.originY + @intToFloat(f32, win_y), 0.0, 1.0 }).data);
-                    try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).translate([_]f32{ parent.originX - @intToFloat(f32, win_x), parent.originY - @intToFloat(f32, win_y), 0.0, 1.0 }).data);
+                    try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).translate([_]f32{ -parent.originX + @as(f32, @floatFromInt(win_x)), -parent.originY + @as(f32, @floatFromInt(win_y)), 0.0, 1.0 }).data);
+                    try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).translate([_]f32{ parent.originX - @as(f32, @floatFromInt(win_x)), parent.originY - @as(f32, @floatFromInt(win_y)), 0.0, 1.0 }).data);
                     try Renderer.setUniformFloat(program, "opacity", 1.0);
                 } else {
                     try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ self.scaleX, self.scaleY, 1.0, 1.0 }).data);
@@ -189,12 +189,12 @@ pub const Window = struct {
     }
 
     pub fn absoluteX(self: *Self) i32 {
-        var parent_x = (if (self.parent) |p| p.absoluteX() else 0);
-        var self_x = self.current().x;
+        const parent_x = (if (self.parent) |p| p.absoluteX() else 0);
+        const self_x = self.current().x;
         var positioner_x: i32 = 0;
 
         if (self.positioner) |positioner| {
-            var rect = positioner.anchor_rect;
+            const rect = positioner.anchor_rect;
             positioner_x = switch (positioner.anchor) {
                 .none => rect.x + @divTrunc(rect.width, 2),
                 .top => rect.x + @divTrunc(rect.width, 2),
@@ -208,18 +208,18 @@ pub const Window = struct {
             } + (if (self.parent) |parent| (if (parent.window_geometry) |wg| wg.x else 0) else 0);
         }
 
-        var wg_x = (if (self.window_geometry) |wg| wg.x else 0);
+        const wg_x = (if (self.window_geometry) |wg| wg.x else 0);
 
         return parent_x + self_x + positioner_x - wg_x;
     }
 
     pub fn absoluteY(self: *Self) i32 {
-        var parent_y = (if (self.parent) |p| p.absoluteY() else 0);
-        var self_y = self.current().y;
+        const parent_y = (if (self.parent) |p| p.absoluteY() else 0);
+        const self_y = self.current().y;
         var positioner_y: i32 = 0;
 
         if (self.positioner) |positioner| {
-            var rect = positioner.anchor_rect;
+            const rect = positioner.anchor_rect;
             positioner_y = switch (positioner.anchor) {
                 .none => rect.y + @divTrunc(rect.height, 2),
                 .top => rect.y,
@@ -233,7 +233,7 @@ pub const Window = struct {
             } + (if (self.parent) |parent| (if (parent.window_geometry) |wg| wg.y else 0) else 0);
         }
 
-        var wg_y = (if (self.window_geometry) |wg| wg.y else 0);
+        const wg_y = (if (self.window_geometry) |wg| wg.y else 0);
 
         return parent_y + self_y + positioner_y - wg_y;
     }
@@ -243,7 +243,7 @@ pub const Window = struct {
         defer self.ready_for_callback = false;
 
         while (self.callbacks.readItem()) |wl_callback| {
-            try wl_callback.sendDone(@truncate(u32, @intCast(u64, std.time.milliTimestamp())));
+            try wl_callback.sendDone(@truncate(@as(u64, @intCast(std.time.milliTimestamp()))));
             try self.client.wl_display.sendDeleteId(wl_callback.id);
             self.client.unregister(wl_callback.id);
         }
@@ -287,7 +287,7 @@ pub const Window = struct {
 
     pub fn windowUnderPointer(self: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
         if (self.popup) |popup| {
-            var maybe_popup_window = popup.windowUnderPointer(pointer_x, pointer_y);
+            const maybe_popup_window = popup.windowUnderPointer(pointer_x, pointer_y);
             if (maybe_popup_window) |popup_window| {
                 return popup_window;
             }
@@ -311,11 +311,11 @@ pub const Window = struct {
 
     fn isPointerInside(self: *Self, x: f64, y: f64) bool {
         if (self.current().input_region) |input_region| {
-            return input_region.pointInside(x - @intToFloat(f64, self.absoluteX()), y - @intToFloat(f64, self.absoluteY()));
+            return input_region.pointInside(x - @as(f64, @floatFromInt(self.absoluteX())), y - @as(f64, @floatFromInt(self.absoluteY())));
         }
 
-        if (x >= @intToFloat(f64, self.absoluteX()) and x <= @intToFloat(f64, (self.absoluteX() + self.width))) {
-            if (y >= @intToFloat(f64, self.absoluteY()) and y <= @intToFloat(f64, (self.absoluteY() + self.height))) {
+        if (x >= @as(f64, @floatFromInt(self.absoluteX())) and x <= @as(f64, @floatFromInt(self.absoluteX() + self.width))) {
+            if (y >= @as(f64, @floatFromInt(self.absoluteY())) and y <= @as(f64, @floatFromInt((self.absoluteY() + self.height)))) {
                 return true;
             }
         }
@@ -326,7 +326,7 @@ pub const Window = struct {
         const client = self.client;
         const wl_pointer = client.wl_pointer orelse return;
 
-        const now = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
+        const now: u32 = @truncate(@as(u64, @intCast(std.time.milliTimestamp())));
         try wl_pointer.sendButton(client.nextSerial(), now, button, action);
     }
 
@@ -414,8 +414,8 @@ pub const Window = struct {
 
     // detach window from parent / siblings. Note this detaches the pending state only
     pub fn detach(self: *Self) void {
-        var maybe_prev = self.pending().siblings.prev;
-        var maybe_next = self.pending().siblings.next;
+        const maybe_prev = self.pending().siblings.prev;
+        const maybe_next = self.pending().siblings.next;
 
         if (maybe_prev) |prev| {
             if (prev == self.parent) {
@@ -443,7 +443,7 @@ pub const Window = struct {
             // sibling pointers but the parent's children pointers
 
             // Save the current next child of parent
-            var next = reference.pending().children.next; // should this be current()
+            const next = reference.pending().children.next; // should this be current()
             // Set the next child to be our window
             reference.pending().children.next = self;
 
@@ -457,7 +457,7 @@ pub const Window = struct {
         } else {
             // If we're inserting above a sibling we need to set our
             // sibling pointers and the sibling's sibling pointers
-            var next = reference.pending().siblings.next; // should this be current()?
+            const next = reference.pending().siblings.next; // should this be current()?
             reference.pending().siblings.next = self;
 
             // if next is non-null we have two options. Next is either our
@@ -477,7 +477,7 @@ pub const Window = struct {
 
     pub fn insertBelow(self: *Self, reference: *Self) void {
         if (reference == self.parent) {
-            var prev = reference.pending().children.prev;
+            const prev = reference.pending().children.prev;
             reference.pending().children.prev = self;
 
             if (prev) |p| {
@@ -487,7 +487,7 @@ pub const Window = struct {
             self.pending().siblings.next = reference;
             self.pending().siblings.prev = prev;
         } else {
-            var prev = reference.pending().siblings.prev;
+            const prev = reference.pending().siblings.prev;
             reference.pending().siblings.prev = self;
 
             if (prev) |p| {
@@ -520,7 +520,7 @@ pub const Window = struct {
             const xdg_surface = self.xdg_surface orelse break :config;
             const xdg_toplevel = self.xdg_toplevel orelse break :config;
 
-            var state: [1]u32 = [_]u32{@enumToInt(.XdgToplevelState.activated)};
+            var state: [1]u32 = [_]u32{@intFromEnum(.XdgToplevelState.activated)};
             if (self.window_geometry) |window_geometry| {
                 try xdg_toplevel.sendConfigure(window_geometry.width, window_geometry.height, &state);
             } else {
@@ -560,7 +560,12 @@ pub const Window = struct {
         const client = self.client;
         const wl_pointer = client.wl_pointer orelse return;
 
-        try wl_pointer.sendEnter(client.nextSerial(), self.wl_surface_id, @floatCast(f32, pointer_x - @intToFloat(f64, self.current().x)), @floatCast(f32, pointer_y - @intToFloat(f64, self.current().y)));
+        try wl_pointer.sendEnter(
+            client.nextSerial(),
+            self.wl_surface_id,
+            @floatCast(pointer_x - @as(f64, @floatFromInt(self.current().x))),
+            @floatCast(pointer_y - @as(f64, @floatFromInt(self.current().y))),
+        );
     }
 
     pub fn pointerMotion(self: *Self, pointer_x: f64, pointer_y: f64) !void {
@@ -568,9 +573,9 @@ pub const Window = struct {
         const wl_pointer = client.wl_pointer orelse return;
 
         try wl_pointer.sendMotion(
-            @truncate(u32, @intCast(u64, std.time.milliTimestamp())),
-            @floatCast(f32, pointer_x - @intToFloat(f64, self.absoluteX())),
-            @floatCast(f32, pointer_y - @intToFloat(f64, self.absoluteY())),
+            @truncate(@as(u64, @intCast(std.time.milliTimestamp()))),
+            @floatCast(pointer_x - @as(f64, @floatFromInt(self.absoluteX()))),
+            @floatCast(pointer_y - @as(f64, @floatFromInt(self.absoluteY()))),
         );
     }
 
@@ -586,7 +591,7 @@ pub const Window = struct {
         const wl_pointer = client.wl_pointer orelse return;
 
         // const now = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
-        try wl_pointer.sendAxis(time, axis, @floatCast(f32, value));
+        try wl_pointer.sendAxis(time, axis, @floatCast(value));
     }
 
     pub fn keyboardKey(self: *Self, time: u32, button: u32, action: u32) !void {

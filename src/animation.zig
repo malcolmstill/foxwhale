@@ -109,14 +109,14 @@ pub fn Animation(comptime Targets: type) type {
             }
 
             pub fn addParallel(self: *Sequential) !*Parallel {
-                var a = Parallel.init(self.alloc);
+                const a = Parallel.init(self.alloc);
                 const a_ptr = try self.animations.addOne();
                 a_ptr.* = AnimationType{ .parallel = a };
                 return &(a_ptr.*.parallel);
             }
 
             pub fn addSequential(self: *Sequential) !*Sequential {
-                var a = Sequential.init(self.alloc);
+                const a = Sequential.init(self.alloc);
                 const a_ptr = try self.animations.addOne();
                 a_ptr.* = AnimationType{ .sequential = a };
                 return &(a_ptr.*.sequential);
@@ -167,14 +167,14 @@ pub fn Animation(comptime Targets: type) type {
             }
 
             pub fn addParallel(self: *Parallel) !*Parallel {
-                var a = Parallel.init(self.alloc);
+                const a = Parallel.init(self.alloc);
                 const a_ptr = try self.animations.addOne();
                 a_ptr.* = AnimationType{ .parallel = a };
                 return &(a_ptr.*.parallel);
             }
 
             pub fn addSequential(self: *Parallel) !*Sequential {
-                var a = Sequential.init(self.alloc);
+                const a = Sequential.init(self.alloc);
                 const a_ptr = try self.animations.addOne();
                 a_ptr.* = AnimationType{ .sequential = a };
                 return &(a_ptr.*.sequential);
@@ -202,7 +202,7 @@ pub fn Animation(comptime Targets: type) type {
 const testing = std.testing;
 
 test "Sequential Animations" {
-    var allocator = testing.allocator;
+    const allocator = testing.allocator;
 
     const Point = struct {
         x: f32,
@@ -257,7 +257,7 @@ test "Sequential Animations" {
 }
 
 test "Parallel Animations" {
-    var allocator = testing.allocator;
+    const allocator = testing.allocator;
 
     const Point = struct {
         x: f32,
@@ -313,5 +313,5 @@ test "Parallel Animations" {
 
 // seconds
 pub fn now() f64 {
-    return @intToFloat(f64, time.nanoTimestamp()) / 1_000_000_000.0;
+    return @as(f64, @floatFromInt(time.nanoTimestamp())) / 1_000_000_000.0;
 }

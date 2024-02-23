@@ -31,14 +31,14 @@ pub const AnimationList = struct {
     // }
 
     pub fn addParallel(self: *AnimationList) !*Animatable.Parallel {
-        var a = Animatable.Parallel.init(self.alloc);
+        const a = Animatable.Parallel.init(self.alloc);
         const a_ptr = try self.animations.addOne();
         a_ptr.* = Animatable{ .parallel = a };
         return &(a_ptr.*.parallel);
     }
 
     pub fn addSequential(self: *AnimationList) !*Animatable.Sequential {
-        var a = Animatable.Sequential.init(self.alloc);
+        const a = Animatable.Sequential.init(self.alloc);
         const a_ptr = try self.animations.addOne();
         a_ptr.* = Animatable{ .sequential = a };
         return &(a_ptr.*.sequential);

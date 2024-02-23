@@ -165,7 +165,7 @@ pub const Client = struct {
                 self.state = .read_buffer;
             }
 
-            const event = self.client.wire.readEvent(self.client, "getObject") catch |err| {
+            const event = self.client.wire.readEvent(Client, self.client, "getObject") catch |err| {
                 if (err == error.ClientSigbusd or builtin.mode != .Debug) {
                     return Event{
                         .client = Client.TargetEvent{
@@ -266,6 +266,7 @@ pub const Client = struct {
             .xdg_popup => |_| return error.NotImplemented,
             .zwp_linux_dmabuf_v1 => |_| return error.NotImplemented,
             .zwp_linux_buffer_params_v1 => |_| return error.NotImplemented,
+            .zwp_linux_dmabuf_feedback_v1 => |_| return error.NotImplemented,
             .fw_control => |_| return error.NotImplemented,
         }
     }
@@ -605,6 +606,7 @@ pub const Client = struct {
             .set_buffer_transform => |_| return error.WlSurfaceSetBufferTransformNotImplemented,
             .set_buffer_scale => |_| return error.WlSurfaceSetBufferScaleNotImplemented,
             .damage_buffer => |_| return error.WlSurfaceDamageBufferNotImplemented,
+            .offset => |_| return error.WlSurfaceOffsetNotImplemented,
         }
     }
 
@@ -626,7 +628,7 @@ pub const Client = struct {
                 if (self.server.xkb) |*xkb| {
                     const fd_size = try xkb.getKeymap();
 
-                    try wl_keyboard.sendKeymap(.xkb_v1, fd_size.fd, @intCast(u32, fd_size.size));
+                    try wl_keyboard.sendKeymap(.xkb_v1, fd_size.fd, @intCast(fd_size.size));
 
                     if (msg.wl_seat.version >= 4) try wl_keyboard.sendRepeatInfo(1, 2000);
                 }
@@ -819,8 +821,8 @@ pub const Client = struct {
         switch (message) {
             .set_title => |msg| {
                 const window = msg.xdg_toplevel.resource;
-                const length = math.min(window.title.len, msg.title.len);
-                mem.copy(u8, window.title[0..length], msg.title[0..length]);
+                const length = @min(window.title.len, msg.title.len);
+                mem.copyForwards(u8, window.title[0..length], msg.title[0..length]);
             },
             .destroy => |msg| {
                 const window = msg.xdg_toplevel.resource;
@@ -835,8 +837,8 @@ pub const Client = struct {
             },
             .set_app_id => |msg| {
                 const window = msg.xdg_toplevel.resource;
-                const length = math.min(window.app_id.len, msg.app_id.len);
-                mem.copy(u8, window.app_id[0..length], msg.app_id[0..length]);
+                const length = @min(window.app_id.len, msg.app_id.len);
+                mem.copyForwards(u8, window.app_id[0..length], msg.app_id[0..length]);
             },
             .show_window_menu => |_| return error.NotImplemented,
             .move => |msg| {
