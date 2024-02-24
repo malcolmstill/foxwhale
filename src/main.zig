@@ -23,7 +23,9 @@ pub fn main() !void {
 
     try epoll.addFd(server.server.sockfd.?, Target{ .server = &server });
 
-    var backend = try Backend.init(.x11);
+    var backend = try Backend.init(allocator, .x11);
+    defer backend.deinit();
+
     try epoll.addFd(backend.getFd(), Target{ .backend = &backend });
 
     var output = try backend.newOutput(400, 300);
@@ -34,6 +36,7 @@ pub fn main() !void {
     defer renderer.deinit();
     try renderer.initShaders();
 
+    try renderer.render();
     try output.swap();
 
     var counter = FrameCounter.init();

@@ -1,4 +1,5 @@
 const std = @import("std");
+const mem = std.mem;
 const os = std.os;
 const linux = os.linux;
 const c = @cImport({
@@ -14,8 +15,9 @@ pub const X11 = struct {
     conn: *c.xcb_connection_t,
     fd: i32,
     display: *c.Display,
+    outputs: std.ArrayList(X11Output),
 
-    pub fn init() !X11 {
+    pub fn init(allocator: mem.Allocator) !X11 {
         const display: *c.Display = c.XOpenDisplay(null) orelse return error.FailedToOpenDisplay;
         const conn = c.XGetXCBConnection(display) orelse return error.FailedToGetXcbConnection;
 
@@ -23,7 +25,12 @@ pub const X11 = struct {
             .conn = conn,
             .fd = c.xcb_get_file_descriptor(conn),
             .display = display,
+            .outputs = std.ArrayList(X11Output).init(allocator),
         };
+    }
+
+    pub fn deinit(backend: *X11) void {
+        backend.outputs.deinit();
     }
 
     pub const Iterator = struct {
@@ -38,20 +45,22 @@ pub const X11 = struct {
             };
         }
 
-        pub fn next(self: *Iterator, _: u32) !?Event {
-            defer self.count += 1;
-            if (c.xcb_poll_for_event(self.x11.conn)) |ev| {
+        pub fn next(it: *Iterator, _: u32) !?Event {
+            defer it.count += 1;
+            if (c.xcb_poll_for_event(it.x11.conn)) |ev| {
                 const mask: usize = 0x80;
                 std.log.info("event response type = {}", .{ev.*.response_type});
+
                 switch (ev.*.response_type & ~mask) {
                     c.XCB_BUTTON_PRESS => {
                         const press: *c.xcb_button_press_event_t = @ptrCast(ev);
                         std.log.info("button = {}x{}", .{ press.event_x, press.event_y });
-                        return Event{
-                            .backend = Backend.TargetEvent{
-                                .backend = self.backend,
-                                .event = Backend.BackendEvent{
-                                    .button_press = Backend.ButtonPress{
+
+                        return .{
+                            .backend = .{
+                                .backend = it.backend,
+                                .event = .{
+                                    .button_press = .{
                                         .x = press.event_x,
                                         .y = press.event_y,
                                     },
@@ -61,9 +70,10 @@ pub const X11 = struct {
                     },
                     c.XCB_EXPOSE => {
                         const configure: *c.xcb_expose_event_t = @ptrCast(ev);
-                        return Event{
+
+                        return .{
                             .backend = .{
-                                .backend = self.backend,
+                                .backend = it.backend,
                                 .event = .{
                                     .resize = .{
                                         .width = @intCast(configure.width),
@@ -78,34 +88,34 @@ pub const X11 = struct {
                         return null;
                     },
                 }
-            } else {
-                if (self.count == 0) {
-                    return Event{
-                        .backend = Backend.TargetEvent{
-                            .backend = self.backend,
-                            .event = Backend.BackendEvent{
-                                .sync = 0,
-                            },
-                        },
-                    };
-                } else {
-                    return null;
-                }
             }
+
+            if (it.count == 0) {
+                return .{
+                    .backend = .{
+                        .backend = it.backend,
+                        .event = .{
+                            .sync = 0,
+                        },
+                    },
+                };
+            }
+
+            return null;
         }
     };
 
-    pub fn newOutput(self: *X11, w: i16, h: i16) !X11Output {
-        const setup = c.xcb_get_setup(self.conn);
+    pub fn newOutput(backend: *X11, w: i16, h: i16) !*X11Output {
+        const setup = c.xcb_get_setup(backend.conn);
         const iter = c.xcb_setup_roots_iterator(setup);
         const screen = iter.data;
 
         const mask = c.XCB_CW_EVENT_MASK;
         var valwin = [1]u32{c.XCB_EVENT_MASK_BUTTON_PRESS | c.XCB_EVENT_MASK_EXPOSURE};
 
-        const window = c.xcb_generate_id(self.conn);
+        const window = c.xcb_generate_id(backend.conn);
         _ = c.xcb_create_window(
-            self.conn,
+            backend.conn,
             c.XCB_COPY_FROM_PARENT,
             window,
             screen.*.root,
@@ -120,11 +130,11 @@ pub const X11 = struct {
             &valwin,
         );
 
-        const egl = try setupEgl(c.EGL_OPENGL_API, self.display, window);
+        const egl = try setupEgl(c.EGL_OPENGL_API, backend.display, window);
 
         const title = "Blit.kit: X11";
         _ = c.xcb_change_property(
-            self.conn,
+            backend.conn,
             c.XCB_PROP_MODE_REPLACE,
             window,
             c.XCB_ATOM_WM_NAME,
@@ -134,22 +144,27 @@ pub const X11 = struct {
             title,
         );
 
-        _ = c.xcb_map_window(self.conn, window);
+        _ = c.xcb_map_window(backend.conn, window);
 
-        _ = c.xcb_flush(self.conn);
+        _ = c.xcb_flush(backend.conn);
 
         std.log.info("egl = {}", .{egl});
 
         c.glClearColor(1.0, 0.0, 0.0, 0.0);
 
-        return X11Output{
+        const output = X11Output{
             .window_id = window,
-            .backend = self,
+            .backend = backend,
             .display = egl.display,
             .surface = egl.surface,
             .width = w,
             .height = h,
         };
+
+        const output_ptr = try backend.outputs.addOne();
+        output_ptr.* = output;
+
+        return output_ptr;
     }
 };
 

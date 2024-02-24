@@ -47,7 +47,11 @@ pub const Backend = union(BackendType) {
 
         pub fn init(backend: *Backend) SubsystemIterator {
             return switch (backend.*) {
-                .x11 => |*b| SubsystemIterator{ .backend = Backend.Iterator{ .x11 = X11.Iterator.init(backend, b) } },
+                .x11 => |*b| .{
+                    .backend = .{
+                        .x11 = X11.Iterator.init(backend, b),
+                    },
+                },
             };
         }
 
@@ -58,10 +62,17 @@ pub const Backend = union(BackendType) {
         }
     };
 
-    pub fn init(backend_type: BackendType) !Backend {
+    pub fn init(allocator: std.mem.Allocator, backend_type: BackendType) !Backend {
         return switch (backend_type) {
-            .x11 => Backend{ .x11 = try X11.init() },
+            .x11 => Backend{ .x11 = try X11.init(allocator) },
             // BackendType.DRM => Self{ .DRM = try drm.new() },
+        };
+    }
+
+    pub fn deinit(self: *Self) void {
+        return switch (self.*) {
+            .x11 => |*o| o.deinit(),
+            // BackendType.DRM => |*drm_backend| drm_backend.deinit(),
         };
     }
 
@@ -91,17 +102,10 @@ pub const Backend = union(BackendType) {
             .x11 => |*x| BackendOutput{ .x11 = try x.newOutput(w, h) },
         };
     }
-
-    pub fn deinit(self: *Self) void {
-        return switch (self.*) {
-            .x11 => |*o| o.deinit(),
-            // BackendType.DRM => |*drm_backend| drm_backend.deinit(),
-        };
-    }
 };
 
 pub const BackendOutput = union(BackendType) {
-    x11: X11Output,
+    x11: *X11Output,
 
     const Self = @This();
 
@@ -121,7 +125,7 @@ pub const BackendOutput = union(BackendType) {
 
     pub fn swap(self: *Self) !void {
         switch (self.*) {
-            .x11 => |*o| try o.swap(),
+            .x11 => |o| try o.swap(),
             // BackendType.DRM => |*drm_output| try drm_output.swap(),
         }
     }
@@ -135,14 +139,14 @@ pub const BackendOutput = union(BackendType) {
 
     pub fn getWidth(self: *Self) i32 {
         return switch (self.*) {
-            .x11 => |*o| o.getWidth(),
+            .x11 => |o| o.getWidth(),
             // BackendType.DRM => |drm_output| drm_output.getWidth(),
         };
     }
 
     pub fn getHeight(self: *Self) i32 {
         return switch (self.*) {
-            .x11 => |*o| o.getHeight(),
+            .x11 => |o| o.getHeight(),
             // BackendType.DRM => |drm_output| drm_output.getHeight(),
         };
     }
