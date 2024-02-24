@@ -34,6 +34,8 @@ pub fn main() !void {
     defer renderer.deinit();
     try renderer.initShaders();
 
+    try output.swap();
+
     var counter = FrameCounter.init();
 
     while (true) {
