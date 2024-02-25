@@ -59,6 +59,7 @@ pub const X11 = struct {
                         return .{
                             .backend = .{
                                 .backend = it.backend,
+                                .output = press.event,
                                 .event = .{
                                     .button_press = .{
                                         .x = press.event_x,
@@ -74,6 +75,7 @@ pub const X11 = struct {
                         return .{
                             .backend = .{
                                 .backend = it.backend,
+                                .output = configure.window,
                                 .event = .{
                                     .resize = .{
                                         .width = @intCast(configure.width),
@@ -91,9 +93,12 @@ pub const X11 = struct {
             }
 
             if (it.count == 0) {
+                std.debug.assert(it.x11.outputs.items.len > 0);
+
                 return .{
                     .backend = .{
                         .backend = it.backend,
+                        .output = it.x11.outputs.items[0].window_id,
                         .event = .{
                             .sync = 0,
                         },

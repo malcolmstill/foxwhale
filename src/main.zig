@@ -63,9 +63,10 @@ pub fn main() !void {
                 .err => std.debug.print("got err\n", .{}),
             },
             .backend => |ev| switch (ev.event) {
-                .button_press => |bp| std.log.info("button press = {}", .{bp}),
-                .resize => |e| std.log.info("resize = {}x{}", .{ e.width, e.height }),
-                .sync => {
+                .button_press => |bp| std.log.info("button press = {} (0x{x})", .{ bp, ev.output }),
+                .resize => |e| std.log.info("resize = {}x{} (0x{x})", .{ e.width, e.height, ev.output }),
+                .sync => |_| {
+                    // std.log.info("sync (0x{x})", .{ev.output});
                     // For the moment we will draw but we'll want to trigger a timer instead
                     counter.update(&server);
                     try renderer.render();
@@ -104,12 +105,13 @@ const FrameCounter = struct {
     }
 
     pub fn update(self: *FrameCounter, server: *Server) void {
+        _ = server;
         self.frames += 1;
         const now = std.time.milliTimestamp();
 
         if ((now - self.then) > 5000) {
             std.log.info("fps = {}", .{self.frames / 5});
-            server.usage();
+            // server.usage();
             self.then = now;
             self.frames = 0;
         }

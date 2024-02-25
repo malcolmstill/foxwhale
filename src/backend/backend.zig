@@ -17,6 +17,7 @@ pub const Backend = union(BackendType) {
 
     pub const TargetEvent = struct {
         backend: *Backend,
+        output: usize,
         event: BackendEvent,
     };
 
