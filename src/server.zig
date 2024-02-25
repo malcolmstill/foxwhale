@@ -103,44 +103,44 @@ pub const Server = struct {
         };
     }
 
-    pub fn deinit(self: *Self) void {
-        self.server.close();
+    pub fn deinit(server: *Self) void {
+        server.server.close();
 
-        self.clients.deinit();
-        self.windows.deinit();
-        self.regions.deinit();
-        self.buffers.deinit();
-        self.shm_pools.deinit();
+        server.clients.deinit();
+        server.windows.deinit();
+        server.regions.deinit();
+        server.buffers.deinit();
+        server.shm_pools.deinit();
 
-        self.objects.deinit();
+        server.objects.deinit();
     }
 
-    pub fn usage(self: *Self) void {
+    pub fn usage(server: *Self) void {
         std.debug.print("\n- Usage -------\n", .{});
-        std.debug.print("  clients: {}   \n", .{self.clients.pool.count});
-        std.debug.print("  outputs: {}   \n", .{self.outputs.pool.count});
-        std.debug.print("  windows: {}   \n", .{self.windows.pool.count});
-        std.debug.print("  regions: {}   \n", .{self.regions.pool.count});
-        std.debug.print("  buffers: {}   \n", .{self.buffers.pool.count});
-        std.debug.print("  shm_pools: {} \n", .{self.shm_pools.pool.count});
-        std.debug.print("  objects: {}   \n", .{self.objects.pool.count});
+        std.debug.print("  clients: {}   \n", .{server.clients.pool.count});
+        std.debug.print("  outputs: {}   \n", .{server.outputs.pool.count});
+        std.debug.print("  windows: {}   \n", .{server.windows.pool.count});
+        std.debug.print("  regions: {}   \n", .{server.regions.pool.count});
+        std.debug.print("  buffers: {}   \n", .{server.buffers.pool.count});
+        std.debug.print("  shm_pools: {} \n", .{server.shm_pools.pool.count});
+        std.debug.print("  objects: {}   \n", .{server.objects.pool.count});
         std.debug.print("---------------\n", .{});
     }
 
-    pub fn addClient(self: *Self, conn: std.net.StreamServer.Connection) !*Client {
-        var client = try self.clients.createPtr();
-        errdefer self.clients.destroy(client);
+    pub fn addClient(server: *Self, conn: std.net.StreamServer.Connection) !*Client {
+        var client = try server.clients.createPtr();
+        errdefer server.clients.destroy(client);
 
         const wl_display = wl.WlDisplay.init(1, &client.wire, 0, null);
-        client.* = Client.init(self.alloc, self, conn, wl_display);
+        client.* = Client.init(server.alloc, server, conn, wl_display);
         try client.register(.{ .wl_display = wl_display });
 
         return client;
     }
 
-    pub fn removeClient(self: *Self, client: *Client) void {
+    pub fn removeClient(server: *Self, client: *Client) void {
         client.deinit();
-        self.clients.destroy(client);
+        server.clients.destroy(client);
     }
 
     /// Initialise a new backend of the given type.
@@ -156,8 +156,8 @@ pub const Server = struct {
         return output_ptr;
     }
 
-    pub fn iterator(self: *Server) SubsystemIterator {
-        return SubsystemIterator{ .server = Iterator.init(self) };
+    pub fn iterator(server: *Server) SubsystemIterator {
+        return SubsystemIterator{ .server = Iterator.init(server) };
     }
 
     pub const Iterator = struct {
@@ -170,16 +170,16 @@ pub const Server = struct {
             };
         }
 
-        pub fn next(self: *Iterator, _: u32) !?Event {
-            if (self.accepted) return null;
+        pub fn next(it: *Iterator, _: u32) !?Event {
+            if (it.accepted) return null;
 
-            const conn = try self.server.server.accept();
+            const conn = try it.server.server.accept();
 
-            self.accepted = true;
+            it.accepted = true;
 
             return Event{
                 .server = Server.TargetEvent{
-                    .server = self.server,
+                    .server = it.server,
                     .event = ServerEvent{
                         .client_connected = conn,
                     },
