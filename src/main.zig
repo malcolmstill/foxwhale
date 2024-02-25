@@ -64,7 +64,9 @@ pub fn main() !void {
             },
             .backend => |ev| switch (ev.event) {
                 .button_press => |bp| std.log.info("button press = {} (0x{x})", .{ bp, ev.output }),
-                .resize => |e| std.log.info("resize = {}x{} (0x{x})", .{ e.width, e.height, ev.output }),
+                .resize => |e| {
+                    std.log.info("resize = {}x{} (0x{x})", .{ e.width, e.height, ev.output });
+                },
                 .sync => |_| {
                     // std.log.info("sync (0x{x})", .{ev.output});
                     // For the moment we will draw but we'll want to trigger a timer instead

@@ -72,6 +72,19 @@ pub const X11 = struct {
                     c.XCB_EXPOSE => {
                         const configure: *c.xcb_expose_event_t = @ptrCast(ev);
 
+                        // For the moment we assume a small number of outputs (in practice)
+                        // probably a fine assumption and simply loop over to find the
+                        // targetted output.
+                        for (it.x11.outputs.items) |*output| {
+                            if (output.window_id != configure.window) continue;
+
+                            output.width = configure.width;
+                            output.height = configure.height;
+                            c.glViewport(0, 0, output.width, output.height);
+
+                            break;
+                        }
+
                         return .{
                             .backend = .{
                                 .backend = it.backend,
