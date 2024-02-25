@@ -9,6 +9,8 @@ const Backend = @import("backend/backend.zig").Backend;
 const Renderer = @import("renderer.zig").Renderer;
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 
+const log = std.log.scoped(.foxwhale);
+
 pub fn main() !void {
     std.debug.print("Starting gunflint...\n", .{});
 
@@ -48,6 +50,7 @@ pub fn main() !void {
             // 1. Handle new wayland connections
             .server => |ev| switch (ev.event) {
                 .client_connected => |conn| {
+                    log.info("client {} connected", .{conn.stream.handle});
                     const client = try server.addClient(conn);
                     try epoll.addFd(conn.stream.handle, Target{ .client = client });
                 },
@@ -55,7 +58,7 @@ pub fn main() !void {
             // 2. Handle wayland events per client
             .client => |ev| switch (ev.event) {
                 .hangup => {
-                    std.log.info("hangup removing client", .{});
+                    log.info("client {} disconnected", .{ev.client.conn.stream.handle});
                     try epoll.removeFd(ev.client.conn.stream.handle);
                     server.removeClient(ev.client);
                 },
