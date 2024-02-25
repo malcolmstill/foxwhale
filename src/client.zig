@@ -98,7 +98,14 @@ pub const Client = struct {
     pub fn deinit(client: *Self) void {
         std.os.close(client.conn.stream.handle);
 
-        client.windows.deinit();
+        {
+            // Release client's windows
+            var it = client.windows.iterator();
+            while (it.next()) |w| w.deinit();
+
+            client.windows.deinit();
+        }
+
         client.regions.deinit();
         client.buffers.deinit();
         client.shm_pools.deinit();
