@@ -380,25 +380,28 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlCompositor(self: *Client, message: wl.WlCompositor.Message) !void {
+    pub fn handleWlCompositor(client: *Client, message: wl.WlCompositor.Message) !void {
         switch (message) {
             .create_surface => |msg| {
-                const window = try self.windows.createPtr();
-                errdefer self.windows.destroy(window);
+                const window = try client.windows.createPtr();
+                errdefer client.windows.destroy(window);
 
-                const wl_surface = wl.WlSurface.init(msg.id, &self.wire, 0, window);
-                try self.register(.{ .wl_surface = wl_surface });
+                const wl_surface = wl.WlSurface.init(msg.id, &client.wire, 0, window);
+                try client.register(.{ .wl_surface = wl_surface });
 
-                window.* = Window.init(self, wl_surface);
+                window.* = Window.init(client, wl_surface);
+
+                // The window's view will be the current view
+                window.view = client.server.current_view;
             },
             .create_region => |msg| {
-                const region = try self.regions.createPtr();
-                errdefer self.regions.destroy(region);
+                const region = try client.regions.createPtr();
+                errdefer client.regions.destroy(region);
 
-                const wl_region = wl.WlRegion.init(msg.id, &self.wire, 0, region);
-                try self.register(.{ .wl_region = wl_region });
+                const wl_region = wl.WlRegion.init(msg.id, &client.wire, 0, region);
+                try client.register(.{ .wl_region = wl_region });
 
-                region.* = Region.init(self, wl_region);
+                region.* = Region.init(client, wl_region);
             },
         }
     }

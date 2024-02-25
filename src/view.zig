@@ -15,12 +15,12 @@ pub const View = struct {
         return View{};
     }
 
-    pub fn visible(_: *Self) bool {
+    pub fn visible(_: *const Self) bool {
         return true;
     }
 
-    pub fn back(self: *Self) ?*Window {
-        var it = self.top;
+    pub fn back(view: *const Self) ?*Window {
+        var it = view.top;
         var window: ?*Window = null;
         while (it) |w| : (it = w.toplevel.prev) {
             window = w;
@@ -29,20 +29,20 @@ pub const View = struct {
         return window;
     }
 
-    pub fn push(self: *Self, window: *Window) void {
-        if (self.top) |top| {
+    pub fn push(view: *Self, window: *Window) void {
+        if (view.top) |top| {
             if (top == window) return;
 
             top.toplevel.next = window;
             window.toplevel.prev = top;
         }
 
-        self.top = window;
+        view.top = window;
     }
 
-    pub fn remove(self: *Self, window: *Window) void {
-        if (self.top == window) {
-            self.top = window.toplevel.prev;
+    pub fn remove(view: *Self, window: *Window) void {
+        if (view.top == window) {
+            view.top = window.toplevel.prev;
         }
 
         window.toplevel.deinit();

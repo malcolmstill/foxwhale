@@ -30,16 +30,23 @@ pub fn main() !void {
 
     try epoll.addFd(backend.getFd(), Target{ .backend = &backend });
 
-    var output = try backend.newOutput(400, 300);
-
-    _ = try server.addOutput(&output);
+    {
+        var output = try backend.newOutput(400, 300);
+        _ = try server.addOutput(&output);
+    }
 
     var renderer = Renderer.init(allocator);
     defer renderer.deinit();
     try renderer.initShaders();
 
-    try renderer.render();
-    try output.swap();
+    // Render all outputs initially
+    {
+        var it = server.outputs.iterator();
+        while (it.next()) |output| {
+            try renderer.render();
+            try output.backend_output.swap();
+        }
+    }
 
     var counter = FrameCounter.init();
 
@@ -66,25 +73,43 @@ pub fn main() !void {
                 .err => std.debug.print("got err\n", .{}),
             },
             .backend => |ev| switch (ev.event) {
-                .button_press => |bp| std.log.info("button press = {} (0x{x})", .{ bp, ev.output }),
+                .button_press => |bp| {
+                    std.log.info("button press = {} (0x{x})", .{ bp, ev.output });
+                },
                 .resize => |e| {
                     std.log.info("resize = {}x{} (0x{x})", .{ e.width, e.height, ev.output });
                 },
                 .sync => |_| {
-                    // std.log.info("sync (0x{x})", .{ev.output});
-                    // For the moment we will draw but we'll want to trigger a timer instead
+                    // TODO: For the moment, let's draw all outputs on every sync.
+                    // Later on we'll figure out how to only sync the output
+                    // specified in the event.
+
+                    // TODO: For the moment we will draw but we'll want to trigger a
+                    // timer instead, the idea being that we continue to allow
+                    // events such that we are not always "1 frame late".
                     counter.update(&server);
+
                     try renderer.render();
 
-                    {
-                        var win_it = server.windows.iterator();
+                    var oit = server.outputs.iterator();
+                    while (oit.next()) |output| {
+                        for (output.views) |view| {
+                            if (!view.visible()) continue;
 
-                        while (win_it.next()) |window| {
-                            try window.render(output.getWidth(), output.getHeight(), &renderer, 0, 0);
+                            var vit = view.back();
+                            while (vit) |window| : (vit = window.toplevel.next) {
+                                try window.render(
+                                    output.getWidth(),
+                                    output.getHeight(),
+                                    &renderer,
+                                    0,
+                                    0,
+                                );
+                            }
                         }
-                    }
 
-                    try output.swap();
+                        try output.backend_output.swap();
+                    }
 
                     {
                         var win_it = server.windows.iterator();

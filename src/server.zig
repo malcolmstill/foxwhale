@@ -21,6 +21,7 @@ const Move = @import("move.zig").Move;
 const Resize = @import("resize.zig").Resize;
 const xkbcommon = @import("xkb.zig");
 const Xkb = @import("xkb.zig").Xkb;
+const View = @import("view.zig").View;
 
 // pub const ResourceType = enum(u8) {
 //     window,
@@ -60,6 +61,8 @@ pub const Server = struct {
 
     move: ?Move = null,
     resize: ?Resize = null,
+
+    current_view: ?*View = null,
 
     pointer_x: f64 = 0.0,
     pointer_y: f64 = 0.0,
@@ -140,8 +143,17 @@ pub const Server = struct {
         self.clients.destroy(client);
     }
 
-    pub fn addOutput(self: *Self, backend_output: *BackendOutput) !*Output {
-        return self.outputs.create(try Output.init(self, backend_output));
+    /// Initialise a new backend of the given type.
+    ///
+    /// If this is the first output, the current view will be the first view
+    /// of the output.
+    pub fn addOutput(server: *Self, backend_output: *BackendOutput) !*Output {
+        const output = try Output.init(server, backend_output);
+        const output_ptr = try server.outputs.create(output);
+
+        server.current_view = &output_ptr.views[0];
+
+        return output_ptr;
     }
 
     pub fn iterator(self: *Server) SubsystemIterator {
