@@ -27,23 +27,23 @@ pub fn Epoll(comptime Subsystem: type, comptime SubsystemIterator: type, comptim
             const epfd = try os.epoll_create1(linux.EPOLL.CLOEXEC);
             const targets = std.AutoHashMap(i32, Target).init(alloc);
 
-            return Self{
+            return .{
                 .alloc = alloc,
                 .fd = epfd,
                 .targets = targets,
             };
         }
 
-        pub fn deinit(self: *Self) void {
-            os.close(self.fd);
-            self.targets.deinit();
+        pub fn deinit(epoll: *Self) void {
+            os.close(epoll.fd);
+            epoll.targets.deinit();
         }
 
-        pub fn wait(self: *Self, timeout: i32) Iterator {
-            const n = os.epoll_wait(self.fd, self.events[0..], timeout);
+        pub fn wait(epoll: *Self, timeout: i32) Iterator {
+            const n = os.epoll_wait(epoll.fd, epoll.events[0..], timeout);
 
             return Iterator{
-                .epoll = self,
+                .epoll = epoll,
                 .n = n,
             };
         }
@@ -51,31 +51,31 @@ pub fn Epoll(comptime Subsystem: type, comptime SubsystemIterator: type, comptim
         const Iterator = struct {
             i: usize = 0,
             n: usize,
-            it: ?SubsystemIterator = null,
+            sub_it: ?SubsystemIterator = null,
             epoll: *Epoll(Subsystem, SubsystemIterator, Event, Target),
 
-            pub fn next(self: *Iterator) !?Event {
-                if (self.i == self.n) return null;
+            pub fn next(it: *Iterator) !?Event {
+                if (it.i == it.n) return null;
 
-                if (self.it == null) {
-                    const fd = self.epoll.events[self.i].data.fd;
-                    const target = self.epoll.targets.get(fd) orelse return error.ExpectedTarget;
+                if (it.sub_it == null) {
+                    const fd = it.epoll.events[it.i].data.fd;
+                    const target = it.epoll.targets.get(fd) orelse return error.ExpectedTarget;
 
-                    self.it = target.iterator();
+                    it.sub_it = target.iterator();
                 }
 
-                const event = try self.it.?.next(self.epoll.events[self.i].events);
+                const event = try it.sub_it.?.next(it.epoll.events[it.i].events);
                 if (event == null) {
-                    self.i += 1;
-                    self.it = null;
+                    it.i += 1;
+                    it.sub_it = null;
                 }
 
                 return event;
             }
         };
 
-        pub fn addFd(self: *Self, fd: i32, target: Target) !void {
-            try self.targets.put(fd, target);
+        pub fn addFd(epoll: *Self, fd: i32, target: Target) !void {
+            try epoll.targets.put(fd, target);
 
             var ev = linux.epoll_event{
                 .events = linux.EPOLL.IN,
@@ -84,10 +84,10 @@ pub fn Epoll(comptime Subsystem: type, comptime SubsystemIterator: type, comptim
                 },
             };
 
-            try os.epoll_ctl(self.fd, linux.EPOLL.CTL_ADD, fd, &ev);
+            try os.epoll_ctl(epoll.fd, linux.EPOLL.CTL_ADD, fd, &ev);
         }
 
-        pub fn removeFd(self: *Self, fd: i32) !void {
+        pub fn removeFd(epoll: *Self, fd: i32) !void {
             var ev = linux.epoll_event{
                 .events = linux.EPOLL.IN,
                 .data = linux.epoll_data{
@@ -95,7 +95,7 @@ pub fn Epoll(comptime Subsystem: type, comptime SubsystemIterator: type, comptim
                 },
             };
 
-            try os.epoll_ctl(self.fd, linux.EPOLL.CTL_DEL, fd, &ev);
+            try os.epoll_ctl(epoll.fd, linux.EPOLL.CTL_DEL, fd, &ev);
         }
     };
 }
