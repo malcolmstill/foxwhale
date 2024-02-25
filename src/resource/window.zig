@@ -78,83 +78,86 @@ pub const Window = struct {
     }
 
     // flip double-buffered state
-    pub fn flip(self: *Self) void {
-        // std.log.warn("flipping: {}\n", .{self.index});
-        self.stateIndex +%= 1;
-        if (self.current().input_region != self.pending().input_region) {
-            if (self.pending().input_region) |input_region| {
+    pub fn flip(window: *Self) void {
+        // std.log.warn("flipping: {}\n", .{window.index});
+        window.stateIndex +%= 1;
+        if (window.current().input_region != window.pending().input_region) {
+            if (window.pending().input_region) |input_region| {
                 // try input_region.deinit();
-                self.client.removeRegion(input_region);
+                window.client.removeRegion(input_region);
             }
         }
 
-        if (self.current().opaque_region != self.pending().opaque_region) {
-            if (self.pending().opaque_region) |opaque_region| {
+        if (window.current().opaque_region != window.pending().opaque_region) {
+            if (window.pending().opaque_region) |opaque_region| {
                 // try opaque_region.deinit();
-                self.client.removeRegion(opaque_region);
+                window.client.removeRegion(opaque_region);
             }
         }
-        self.pending().* = self.current().*;
+        window.pending().* = window.current().*;
 
-        // flip synchronized subwindows above self
-        var forward_it = self.subwindowIterator();
+        // flip synchronized subwindows above window
+        var forward_it = window.subwindowIterator();
         while (forward_it.nextPending()) |subwindow| {
-            if (subwindow != self and subwindow.synchronized) {
+            if (subwindow != window and subwindow.synchronized) {
                 subwindow.flip();
             }
         }
 
-        // flip synchronized subwindows below self
-        var backward_it = self.subwindowIterator();
+        // flip synchronized subwindows below window
+        var backward_it = window.subwindowIterator();
         while (backward_it.prevPending()) |subwindow| {
-            if (subwindow != self and subwindow.synchronized) {
+            if (subwindow != window and subwindow.synchronized) {
                 subwindow.flip();
             }
         }
     }
 
-    pub fn current(self: *Self) *BufferedState {
-        return &self.state[self.stateIndex];
+    /// Get the buffered state currently displayed
+    pub fn current(window: *Self) *BufferedState {
+        return &window.state[window.stateIndex];
     }
 
-    pub fn pending(self: *Self) *BufferedState {
-        return &self.state[self.stateIndex +% 1];
+    // Get the pending buffered state
+    pub fn pending(window: *Self) *BufferedState {
+        return &window.state[window.stateIndex +% 1];
     }
 
-    pub fn render(self: *Self, output_width: i32, output_height: i32, renderer: *Renderer, x: i32, y: i32) !void {
-        var it = self.forwardIterator();
-        while (it.next()) |window| {
-            window.ready_for_callback = true;
-            if (window == self) {
-                const texture = window.texture orelse continue; // TODO: maybe we should not render subwindows if parent window not ready
+    pub fn render(window: *Self, output_width: i32, output_height: i32, renderer: *Renderer, x: i32, y: i32) !void {
+        var it = window.forwardIterator();
+
+        while (it.next()) |w| {
+            w.ready_for_callback = true;
+            if (w == window) {
+                const texture = w.texture orelse continue; // TODO: maybe we should not render subwindows if parent window not ready
                 const program = try renderer.useProgram("window");
 
-                const win_x = window.current().x;
-                const win_y = window.current().y;
-                const abs_x: f32 = @floatFromInt(window.absoluteX() + x);
-                const abs_y: f32 = @floatFromInt(window.absoluteY() + y);
+                const win_x = w.current().x;
+                const win_y = w.current().y;
+                const abs_x: f32 = @floatFromInt(w.absoluteX() + x);
+                const abs_y: f32 = @floatFromInt(w.absoluteY() + y);
 
-                if (window.parent) |parent| {
+                if (w.parent) |parent| {
                     try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ parent.scaleX, parent.scaleY, 1.0, 1.0 }).data);
                     try Renderer.setUniformMatrix(program, "translate", Mat4x4(f32).translate([_]f32{ abs_x, abs_y, 0.0, 1.0 }).data);
                     try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).translate([_]f32{ -parent.originX + @as(f32, @floatFromInt(win_x)), -parent.originY + @as(f32, @floatFromInt(win_y)), 0.0, 1.0 }).data);
                     try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).translate([_]f32{ parent.originX - @as(f32, @floatFromInt(win_x)), parent.originY - @as(f32, @floatFromInt(win_y)), 0.0, 1.0 }).data);
                     try Renderer.setUniformFloat(program, "opacity", 1.0);
                 } else {
-                    try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ self.scaleX, self.scaleY, 1.0, 1.0 }).data);
+                    try Renderer.setUniformMatrix(program, "scale", Mat4x4(f32).scale([_]f32{ window.scaleX, window.scaleY, 1.0, 1.0 }).data);
                     try Renderer.setUniformMatrix(program, "translate", Mat4x4(f32).translate([_]f32{ abs_x, abs_y, 0.0, 1.0 }).data);
-                    try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).translate([_]f32{ -self.originX, -self.originY, 0.0, 1.0 }).data);
-                    try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).translate([_]f32{ self.originX, self.originY, 0.0, 1.0 }).data);
+                    try Renderer.setUniformMatrix(program, "origin", Mat4x4(f32).translate([_]f32{ -window.originX, -window.originY, 0.0, 1.0 }).data);
+                    try Renderer.setUniformMatrix(program, "originInverse", Mat4x4(f32).translate([_]f32{ window.originX, window.originY, 0.0, 1.0 }).data);
                     try Renderer.setUniformFloat(program, "opacity", 1.0);
                 }
 
-                try renderer.renderSurface(output_width, output_height, program, texture, window.width, window.height);
+                try renderer.renderSurface(output_width, output_height, program, texture, w.width, w.height);
             } else {
-                try window.render(output_width, output_height, renderer, x, y);
+                try w.render(output_width, output_height, renderer, x, y);
             }
         }
 
-        if (self.popup) |popup| {
+        if (window.popup) |popup| {
             try popup.render(output_width, output_height, renderer, x, y);
         }
     }
@@ -188,12 +191,12 @@ pub const Window = struct {
         // seq.start();
     }
 
-    pub fn absoluteX(self: *Self) i32 {
-        const parent_x = (if (self.parent) |p| p.absoluteX() else 0);
-        const self_x = self.current().x;
+    pub fn absoluteX(window: *Self) i32 {
+        const parent_x = (if (window.parent) |p| p.absoluteX() else 0);
+        const window_x = window.current().x;
         var positioner_x: i32 = 0;
 
-        if (self.positioner) |positioner| {
+        if (window.positioner) |positioner| {
             const rect = positioner.anchor_rect;
             positioner_x = switch (positioner.anchor) {
                 .none => rect.x + @divTrunc(rect.width, 2),
@@ -205,20 +208,20 @@ pub const Window = struct {
                 .bottom_left => rect.x,
                 .top_right => rect.x + rect.width,
                 .bottom_right => rect.x + rect.width,
-            } + (if (self.parent) |parent| (if (parent.window_geometry) |wg| wg.x else 0) else 0);
+            } + (if (window.parent) |parent| (if (parent.window_geometry) |wg| wg.x else 0) else 0);
         }
 
-        const wg_x = (if (self.window_geometry) |wg| wg.x else 0);
+        const wg_x = (if (window.window_geometry) |wg| wg.x else 0);
 
-        return parent_x + self_x + positioner_x - wg_x;
+        return parent_x + window_x + positioner_x - wg_x;
     }
 
-    pub fn absoluteY(self: *Self) i32 {
-        const parent_y = (if (self.parent) |p| p.absoluteY() else 0);
-        const self_y = self.current().y;
+    pub fn absoluteY(window: *Self) i32 {
+        const parent_y = (if (window.parent) |p| p.absoluteY() else 0);
+        const window_y = window.current().y;
         var positioner_y: i32 = 0;
 
-        if (self.positioner) |positioner| {
+        if (window.positioner) |positioner| {
             const rect = positioner.anchor_rect;
             positioner_y = switch (positioner.anchor) {
                 .none => rect.y + @divTrunc(rect.height, 2),
@@ -230,77 +233,77 @@ pub const Window = struct {
                 .bottom_left => rect.y + rect.height,
                 .top_right => rect.y,
                 .bottom_right => rect.y + rect.height,
-            } + (if (self.parent) |parent| (if (parent.window_geometry) |wg| wg.y else 0) else 0);
+            } + (if (window.parent) |parent| (if (parent.window_geometry) |wg| wg.y else 0) else 0);
         }
 
-        const wg_y = (if (self.window_geometry) |wg| wg.y else 0);
+        const wg_y = (if (window.window_geometry) |wg| wg.y else 0);
 
-        return parent_y + self_y + positioner_y - wg_y;
+        return parent_y + window_y + positioner_y - wg_y;
     }
 
-    pub fn frameCallback(self: *Self) !void {
-        if (self.ready_for_callback == false) return;
-        defer self.ready_for_callback = false;
+    pub fn frameCallback(window: *Self) !void {
+        if (window.ready_for_callback == false) return;
+        defer window.ready_for_callback = false;
 
-        while (self.callbacks.readItem()) |wl_callback| {
+        while (window.callbacks.readItem()) |wl_callback| {
             try wl_callback.sendDone(@truncate(@as(u64, @intCast(std.time.milliTimestamp()))));
-            try self.client.wl_display.sendDeleteId(wl_callback.id);
-            self.client.unregister(wl_callback.id);
+            try window.client.wl_display.sendDeleteId(wl_callback.id);
+            window.client.unregister(wl_callback.id);
         }
     }
 
-    pub fn root(self: *Window) *Window {
-        if (self.parent) |parent| {
+    pub fn root(window: *Window) *Window {
+        if (window.parent) |parent| {
             return parent.root();
         } else {
-            return self;
+            return window;
         }
     }
 
-    pub fn toplevelWindow(self: *Window) *Window {
-        if (self.xdg_toplevel_id != null) {
-            return self;
+    pub fn toplevelWindow(window: *Window) *Window {
+        if (window.xdg_toplevel_id != null) {
+            return window;
         }
 
-        if (self.parent) |parent| {
+        if (window.parent) |parent| {
             return parent.root();
         } else {
-            return self;
+            return window;
         }
     }
 
-    pub fn toplevelUnderPointer(self: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
-        var it = self.backwardIterator();
-        while (it.prev()) |window| {
-            if (self == window) {
-                if (isPointerInside(self, pointer_x, pointer_y)) {
-                    return self;
+    pub fn toplevelUnderPointer(window: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
+        var it = window.backwardIterator();
+        while (it.prev()) |w| {
+            if (window == w) {
+                if (isPointerInside(window, pointer_x, pointer_y)) {
+                    return window;
                 }
             } else {
-                if (window.windowUnderPointer(pointer_x, pointer_y)) |_| {
-                    return self;
+                if (w.windowUnderPointer(pointer_x, pointer_y)) |_| {
+                    return window;
                 }
             }
         }
         return null;
     }
 
-    pub fn windowUnderPointer(self: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
-        if (self.popup) |popup| {
+    pub fn windowUnderPointer(window: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
+        if (window.popup) |popup| {
             const maybe_popup_window = popup.windowUnderPointer(pointer_x, pointer_y);
             if (maybe_popup_window) |popup_window| {
                 return popup_window;
             }
         }
 
-        var it = self.backwardIterator();
-        while (it.prev()) |window| {
-            if (self == window) {
-                if (isPointerInside(self, pointer_x, pointer_y)) {
-                    return window;
+        var it = window.backwardIterator();
+        while (it.prev()) |w| {
+            if (w == window) {
+                if (isPointerInside(window, pointer_x, pointer_y)) {
+                    return w;
                 }
             } else {
-                if (window.windowUnderPointer(pointer_x, pointer_y)) |child| {
+                if (w.windowUnderPointer(pointer_x, pointer_y)) |child| {
                     return child;
                 }
             }
@@ -309,21 +312,21 @@ pub const Window = struct {
         return null;
     }
 
-    fn isPointerInside(self: *Self, x: f64, y: f64) bool {
-        if (self.current().input_region) |input_region| {
-            return input_region.pointInside(x - @as(f64, @floatFromInt(self.absoluteX())), y - @as(f64, @floatFromInt(self.absoluteY())));
+    fn isPointerInside(window: *Self, x: f64, y: f64) bool {
+        if (window.current().input_region) |input_region| {
+            return input_region.pointInside(x - @as(f64, @floatFromInt(window.absoluteX())), y - @as(f64, @floatFromInt(window.absoluteY())));
         }
 
-        if (x >= @as(f64, @floatFromInt(self.absoluteX())) and x <= @as(f64, @floatFromInt(self.absoluteX() + self.width))) {
-            if (y >= @as(f64, @floatFromInt(self.absoluteY())) and y <= @as(f64, @floatFromInt((self.absoluteY() + self.height)))) {
+        if (x >= @as(f64, @floatFromInt(window.absoluteX())) and x <= @as(f64, @floatFromInt(window.absoluteX() + window.width))) {
+            if (y >= @as(f64, @floatFromInt(window.absoluteY())) and y <= @as(f64, @floatFromInt((window.absoluteY() + window.height)))) {
                 return true;
             }
         }
         return false;
     }
 
-    pub fn mouseClick(self: *Self, button: u32, action: u32) !void {
-        const client = self.client;
+    pub fn mouseClick(window: *Self, button: u32, action: u32) !void {
+        const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 
         const now: u32 = @truncate(@as(u64, @intCast(std.time.milliTimestamp())));
@@ -379,15 +382,15 @@ pub const Window = struct {
         }
     };
 
-    pub fn subwindowIterator(self: *Self) SubwindowIterator {
+    pub fn subwindowIterator(window: *Self) SubwindowIterator {
         return SubwindowIterator{
-            .current = self,
-            .parent = self,
+            .current = window,
+            .parent = window,
         };
     }
 
-    pub fn forwardIterator(self: *Self) SubwindowIterator {
-        var backward_it = self.subwindowIterator();
+    pub fn forwardIterator(window: *Self) SubwindowIterator {
+        var backward_it = window.subwindowIterator();
         var rear: ?*Window = null;
         while (backward_it.prev()) |p| {
             rear = p;
@@ -395,12 +398,12 @@ pub const Window = struct {
 
         return SubwindowIterator{
             .current = rear,
-            .parent = self,
+            .parent = window,
         };
     }
 
-    pub fn backwardIterator(self: *Self) SubwindowIterator {
-        var forward_it = self.subwindowIterator();
+    pub fn backwardIterator(window: *Self) SubwindowIterator {
+        var forward_it = window.subwindowIterator();
         var front: ?*Window = null;
         while (forward_it.next()) |p| {
             front = p;
@@ -408,17 +411,17 @@ pub const Window = struct {
 
         return SubwindowIterator{
             .current = front,
-            .parent = self,
+            .parent = window,
         };
     }
 
     // detach window from parent / siblings. Note this detaches the pending state only
-    pub fn detach(self: *Self) void {
-        const maybe_prev = self.pending().siblings.prev;
-        const maybe_next = self.pending().siblings.next;
+    pub fn detach(window: *Self) void {
+        const maybe_prev = window.pending().siblings.prev;
+        const maybe_next = window.pending().siblings.next;
 
         if (maybe_prev) |prev| {
-            if (prev == self.parent) {
+            if (prev == window.parent) {
                 prev.pending().children.next = maybe_next;
             } else {
                 prev.pending().siblings.next = maybe_next;
@@ -426,176 +429,176 @@ pub const Window = struct {
         }
 
         if (maybe_next) |next| {
-            if (next == self.parent) {
+            if (next == window.parent) {
                 next.pending().children.prev = maybe_prev;
             } else {
                 next.pending().siblings.prev = maybe_prev;
             }
         }
 
-        self.pending().siblings.prev = null;
-        self.pending().siblings.next = null;
+        window.pending().siblings.prev = null;
+        window.pending().siblings.next = null;
     }
 
-    pub fn insertAbove(self: *Self, reference: *Self) void {
-        if (reference == self.parent) {
+    pub fn insertAbove(window: *Self, reference: *Self) void {
+        if (reference == window.parent) {
             // If we're inserting above our parent we need to set our
             // sibling pointers but the parent's children pointers
 
             // Save the current next child of parent
             const next = reference.pending().children.next; // should this be current()
             // Set the next child to be our window
-            reference.pending().children.next = self;
+            reference.pending().children.next = window;
 
             // If next is not null set its previous to be our window
             if (next) |n| {
-                n.pending().siblings.prev = self;
+                n.pending().siblings.prev = window;
             }
 
-            self.pending().siblings.next = next;
-            self.pending().siblings.prev = reference;
+            window.pending().siblings.next = next;
+            window.pending().siblings.prev = reference;
         } else {
             // If we're inserting above a sibling we need to set our
             // sibling pointers and the sibling's sibling pointers
             const next = reference.pending().siblings.next; // should this be current()?
-            reference.pending().siblings.next = self;
+            reference.pending().siblings.next = window;
 
             // if next is non-null we have two options. Next is either our
             // parent or another sibling. Choose .children or .siblings appropriately.
             if (next) |n| {
-                if (n == self.parent) {
-                    n.pending().children.prev = self;
+                if (n == window.parent) {
+                    n.pending().children.prev = window;
                 } else {
-                    n.pending().siblings.prev = self;
+                    n.pending().siblings.prev = window;
                 }
             }
 
-            self.pending().siblings.next = next;
-            self.pending().siblings.prev = reference;
+            window.pending().siblings.next = next;
+            window.pending().siblings.prev = reference;
         }
     }
 
-    pub fn insertBelow(self: *Self, reference: *Self) void {
-        if (reference == self.parent) {
+    pub fn insertBelow(window: *Self, reference: *Self) void {
+        if (reference == window.parent) {
             const prev = reference.pending().children.prev;
-            reference.pending().children.prev = self;
+            reference.pending().children.prev = window;
 
             if (prev) |p| {
-                p.pending().siblings.next = self;
+                p.pending().siblings.next = window;
             }
 
-            self.pending().siblings.next = reference;
-            self.pending().siblings.prev = prev;
+            window.pending().siblings.next = reference;
+            window.pending().siblings.prev = prev;
         } else {
             const prev = reference.pending().siblings.prev;
-            reference.pending().siblings.prev = self;
+            reference.pending().siblings.prev = window;
 
             if (prev) |p| {
-                if (p == self.parent) {
-                    p.pending().children.next = self;
+                if (p == window.parent) {
+                    p.pending().children.next = window;
                 } else {
-                    p.pending().siblings.next = self;
+                    p.pending().siblings.next = window;
                 }
             }
 
-            self.pending().siblings.next = reference;
-            self.pending().siblings.prev = prev;
+            window.pending().siblings.next = reference;
+            window.pending().siblings.prev = prev;
         }
     }
 
-    pub fn placeAbove(self: *Self, reference: *Self) void {
-        self.detach();
-        self.insertAbove(reference);
+    pub fn placeAbove(window: *Self, reference: *Self) void {
+        window.detach();
+        window.insertAbove(reference);
     }
 
-    pub fn placeBelow(self: *Self, reference: *Self) void {
-        self.detach();
-        self.insertBelow(reference);
+    pub fn placeBelow(window: *Self, reference: *Self) void {
+        window.detach();
+        window.insertBelow(reference);
     }
 
-    pub fn activate(self: *Self) !void {
-        var client = self.client;
+    pub fn activate(window: *Self) !void {
+        var client = window.client;
 
         config: {
-            const xdg_surface = self.xdg_surface orelse break :config;
-            const xdg_toplevel = self.xdg_toplevel orelse break :config;
+            const xdg_surface = window.xdg_surface orelse break :config;
+            const xdg_toplevel = window.xdg_toplevel orelse break :config;
 
             var state: [1]u32 = [_]u32{@intFromEnum(.XdgToplevelState.activated)};
-            if (self.window_geometry) |window_geometry| {
+            if (window.window_geometry) |window_geometry| {
                 try xdg_toplevel.sendConfigure(window_geometry.width, window_geometry.height, &state);
             } else {
-                try xdg_toplevel.sendConfigure(self.width, self.height, &state);
+                try xdg_toplevel.sendConfigure(window.width, window.height, &state);
             }
             try xdg_surface.sendConfigure(client.nextSerial());
         }
 
         keyboard: {
             const wl_keyboard = client.wl_keyboard orelse break :keyboard;
-            try wl_keyboard.sendEnter(client.nextSerial(), self.wl_surface_id, &[_]u32{});
+            try wl_keyboard.sendEnter(client.nextSerial(), window.wl_surface_id, &[_]u32{});
         }
     }
 
-    pub fn deactivate(self: *Self) !void {
-        var client = self.client;
+    pub fn deactivate(window: *Self) !void {
+        var client = window.client;
 
         config: {
-            const xdg_surface = self.xdg_surface orelse break :config;
-            const xdg_toplevel = self.xdg_toplevel orelse break :config;
+            const xdg_surface = window.xdg_surface orelse break :config;
+            const xdg_toplevel = window.xdg_toplevel orelse break :config;
 
-            if (self.window_geometry) |window_geometry| {
+            if (window.window_geometry) |window_geometry| {
                 try xdg_toplevel.sendConfigure(xdg_toplevel, window_geometry.width, window_geometry.height, &[_]u32{});
             } else {
-                try xdg_toplevel.sendConfigure(xdg_toplevel, self.width, self.height, &[_]u32{});
+                try xdg_toplevel.sendConfigure(xdg_toplevel, window.width, window.height, &[_]u32{});
             }
             try xdg_surface.sendConfigure(xdg_surface, client.nextSerial());
         }
 
         keyboard: {
             const wl_keyboard = client.wl_keyboard_ orelse break :keyboard;
-            try wl_keyboard.sendLeave(client.nextSerial(), self.wl_surface_id);
+            try wl_keyboard.sendLeave(client.nextSerial(), window.wl_surface_id);
         }
     }
 
-    pub fn pointerEnter(self: *Self, pointer_x: f64, pointer_y: f64) !void {
-        const client = self.client;
+    pub fn pointerEnter(window: *Self, pointer_x: f64, pointer_y: f64) !void {
+        const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 
         try wl_pointer.sendEnter(
             client.nextSerial(),
-            self.wl_surface_id,
-            @floatCast(pointer_x - @as(f64, @floatFromInt(self.current().x))),
-            @floatCast(pointer_y - @as(f64, @floatFromInt(self.current().y))),
+            window.wl_surface_id,
+            @floatCast(pointer_x - @as(f64, @floatFromInt(window.current().x))),
+            @floatCast(pointer_y - @as(f64, @floatFromInt(window.current().y))),
         );
     }
 
-    pub fn pointerMotion(self: *Self, pointer_x: f64, pointer_y: f64) !void {
-        const client = self.client;
+    pub fn pointerMotion(window: *Self, pointer_x: f64, pointer_y: f64) !void {
+        const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 
         try wl_pointer.sendMotion(
             @truncate(@as(u64, @intCast(std.time.milliTimestamp()))),
-            @floatCast(pointer_x - @as(f64, @floatFromInt(self.absoluteX()))),
-            @floatCast(pointer_y - @as(f64, @floatFromInt(self.absoluteY()))),
+            @floatCast(pointer_x - @as(f64, @floatFromInt(window.absoluteX()))),
+            @floatCast(pointer_y - @as(f64, @floatFromInt(window.absoluteY()))),
         );
     }
 
-    pub fn pointerLeave(self: *Self) !void {
-        const client = self.client;
+    pub fn pointerLeave(window: *Self) !void {
+        const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 
-        try wl_pointer.sendLeave(client.nextSerial(), self.wl_surface_id);
+        try wl_pointer.sendLeave(client.nextSerial(), window.wl_surface_id);
     }
 
-    pub fn mouseAxis(self: *Self, time: u32, axis: u32, value: f64) !void {
-        const client = self.client;
+    pub fn mouseAxis(window: *Self, time: u32, axis: u32, value: f64) !void {
+        const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 
         // const now = @truncate(u32, @intCast(u64, std.time.milliTimestamp()));
         try wl_pointer.sendAxis(time, axis, @floatCast(value));
     }
 
-    pub fn keyboardKey(self: *Self, time: u32, button: u32, action: u32) !void {
-        const client = self.client;
+    pub fn keyboardKey(window: *Self, time: u32, button: u32, action: u32) !void {
+        const client = window.client;
         const wl_keyboard = client.wl_keyboard orelse return;
 
         try wl_keyboard.sendKey(
@@ -616,33 +619,33 @@ pub const Window = struct {
         // );
     }
 
-    pub fn deinit(self: *Self) void {
+    pub fn deinit(window: *Self) void {
         // Before doing anything else, such as deiniting the parent
         // detach this surface from its siblings
-        self.detach(); // maybe we also need to detach current, i.e. self.detachCurrent()?
+        window.detach(); // maybe we also need to detach current, i.e. window.detachCurrent()?
 
-        if (self.xdg_popup_id != null) {
-            if (self.parent) |parent| {
+        if (window.xdg_popup_id != null) {
+            if (window.parent) |parent| {
                 parent.popup = null;
             }
         }
 
-        if (self.positioner) |positioner| {
+        if (window.positioner) |positioner| {
             positioner.deinit();
         }
 
-        if (self.view) |view| {
-            view.remove(self);
-            if (view.active_window == self) {
+        if (window.view) |view| {
+            view.remove(window);
+            if (view.active_window == window) {
                 view.active_window = null;
             }
-            if (view.pointer_window == self) {
+            if (view.pointer_window == window) {
                 view.pointer_window = null;
             }
         }
 
-        if (self.texture) |texture| {
-            self.texture = null;
+        if (window.texture) |texture| {
+            window.texture = null;
             // Note that while this can fail, we're doing
             // the bits that can fail after deinitialising
             // enough so that this window could be reused
@@ -769,21 +772,21 @@ pub const Link = struct {
     next: ?*Window = null,
     mark: bool = false,
 
-    pub fn unanchored(self: Link) bool {
-        return (self.prev == null) and (self.next == null);
+    pub fn unanchored(link: Link) bool {
+        return (link.prev == null) and (link.next == null);
     }
 
-    pub fn deinit(self: *Link) void {
-        if (self.next) |next| {
-            next.toplevel.prev = self.prev;
+    pub fn deinit(link: *Link) void {
+        if (link.next) |next| {
+            next.toplevel.prev = link.prev;
         }
 
-        if (self.prev) |prev| {
-            prev.toplevel.next = self.next;
+        if (link.prev) |prev| {
+            prev.toplevel.next = link.next;
         }
 
-        self.prev = null;
-        self.next = null;
+        link.prev = null;
+        link.next = null;
     }
 };
 
