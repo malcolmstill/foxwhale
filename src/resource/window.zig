@@ -619,6 +619,11 @@ pub const Window = struct {
         // );
     }
 
+    /// Deinitialise window.
+    ///
+    /// - Detaches the window from any sibling windows
+    /// - Removes the window from its view (where one exists).
+    /// - Releases the window's texture (where one exists).
     pub fn deinit(window: *Self) void {
         // Before doing anything else, such as deiniting the parent
         // detach this surface from its siblings
