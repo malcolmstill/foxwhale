@@ -23,6 +23,8 @@ const SubsetPool = @import("datastructures/subset_pool.zig").SubsetPool;
 const Move = @import("move.zig").Move;
 const Resize = @import("resize.zig").Resize;
 
+const log = std.log.scoped(.client);
+
 pub const wl = @import("wl/protocols.zig").Wayland(.{
     .wl_surface = *Window,
     .wl_subsurface = *Window,
@@ -219,7 +221,7 @@ pub const Client = struct {
             }
         }
 
-        std.log.warn("No id {}", .{id});
+        log.warn("unregister: no id {}", .{id});
     }
 
     pub fn removeWindow(client: *Client, window: *Window) void {
@@ -259,7 +261,7 @@ pub const Client = struct {
             .wl_shell_surface => |_| return error.NotImplemented,
             .wl_surface => |msg| try client.handleWlSurface(msg),
             .wl_seat => |msg| try client.handleWlSeat(msg),
-            .wl_pointer => |_| return error.NotImplemented,
+            .wl_pointer => |msg| try client.handleWlPointer(msg),
             .wl_keyboard => |_| return error.NotImplemented,
             .wl_touch => |_| return error.NotImplemented,
             .wl_output => |_| return error.NotImplemented,
@@ -313,7 +315,7 @@ pub const Client = struct {
     pub fn handleWlRegistry(client: *Client, message: wl.WlRegistry.Message) !void {
         switch (message) {
             .bind => |msg| {
-                std.log.info("Client requested iterface {s}", .{msg.name_string});
+                log.info("Client requested iterface {s}", .{msg.name_string});
                 switch (msg.name) {
                     1 => {
                         if (!mem.eql(u8, msg.name_string, "wl_compositor\x00")) return error.UnexpectedName;
@@ -426,7 +428,7 @@ pub const Client = struct {
             },
             .destroy => |msg| {
                 const wl_shm_pool = msg.wl_shm_pool;
-                const shm_pool = wl_shm_pool.resource;
+                const shm_pool: *ShmPool = wl_shm_pool.resource;
 
                 shm_pool.to_be_destroyed = true;
                 if (shm_pool.ref_count == 0) {
@@ -438,7 +440,7 @@ pub const Client = struct {
                 client.unregister(wl_shm_pool.id);
             },
             .resize => |msg| {
-                const shm_pool = msg.wl_shm_pool.resource;
+                const shm_pool: *ShmPool = msg.wl_shm_pool.resource;
                 try shm_pool.resize(msg.size);
             },
         }
@@ -462,7 +464,7 @@ pub const Client = struct {
     pub fn handleWlBuffer(client: *Client, message: wl.WlBuffer.Message) !void {
         switch (message) {
             .destroy => |msg| {
-                const buffer = msg.wl_buffer.resource;
+                const buffer: *Buffer = msg.wl_buffer.resource;
                 switch (buffer.*) {
                     .shm => |*shmbuf| shmbuf.shm_pool.decrementRefCount(),
                     else => {},
@@ -479,13 +481,14 @@ pub const Client = struct {
     pub fn handleWlSurface(client: *Client, message: wl.WlSurface.Message) !void {
         switch (message) {
             .commit => |msg| {
-                const window = msg.wl_surface.resource;
+                const window: *Window = msg.wl_surface.resource;
+                log.info("commit (client@{} wl_surface@{})", .{ window.client.conn.stream.handle, window.wl_surface.id });
 
                 // We may, without error, receive a .commit without an attached buffer.
                 // In that case we can make no further process so we just return
                 const wl_buffer = window.wl_buffer orelse return;
 
-                const buffer = wl_buffer.resource;
+                const buffer: *Buffer = wl_buffer.resource;
                 buffer.beginAccess();
 
                 if (window.texture) |texture| {
@@ -534,7 +537,7 @@ pub const Client = struct {
             },
             .damage => |_| {},
             .attach => |msg| {
-                const window = msg.wl_surface.resource;
+                const window: *Window = msg.wl_surface.resource;
 
                 if (msg.buffer) |wl_buffer| {
                     window.wl_buffer = wl_buffer;
@@ -543,7 +546,7 @@ pub const Client = struct {
                 }
             },
             .frame => |msg| {
-                const window = msg.wl_surface.resource;
+                const window: *Window = msg.wl_surface.resource;
 
                 const wl_callback = wl.WlCallback.init(msg.callback, &client.wire, 0, null);
                 try window.callbacks.writeItem(wl_callback);
@@ -551,7 +554,7 @@ pub const Client = struct {
                 try client.register(.{ .wl_callback = wl_callback });
             },
             .destroy => |msg| {
-                const window = msg.wl_surface.resource;
+                const window: *Window = msg.wl_surface.resource;
                 // TODO: what about subsurfaces / popups?
                 window.deinit();
 
@@ -559,7 +562,7 @@ pub const Client = struct {
                 client.unregister(msg.wl_surface.id);
             },
             .set_opaque_region => |msg| {
-                const window = msg.wl_surface.resource;
+                const window: *Window = msg.wl_surface.resource;
 
                 if (msg.region) |wl_region| {
                     const region = wl_region.resource;
@@ -586,7 +589,7 @@ pub const Client = struct {
                 }
             },
             .set_input_region => |msg| {
-                const window = msg.wl_surface.resource;
+                const window: *Window = msg.wl_surface.resource;
 
                 if (msg.region) |wl_region| {
                     const region = wl_region.resource;
@@ -617,6 +620,15 @@ pub const Client = struct {
             .set_buffer_scale => |_| return error.WlSurfaceSetBufferScaleNotImplemented,
             .damage_buffer => |_| return error.WlSurfaceDamageBufferNotImplemented,
             .offset => |_| return error.WlSurfaceOffsetNotImplemented,
+        }
+    }
+
+    // wl_pointer
+
+    pub fn handleWlPointer(_: *Client, message: wl.WlPointer.Message) !void {
+        switch (message) {
+            .set_cursor => |_| {},
+            .release => |_| {},
         }
     }
 
@@ -652,7 +664,7 @@ pub const Client = struct {
         switch (message) {
             .destroy => |msg| {
                 const wl_region = msg.wl_region;
-                const region = wl_region.resource;
+                const region: *Region = wl_region.resource;
 
                 if (region.window == null) {
                     // TODO: What do we actually need to do here?
@@ -663,7 +675,7 @@ pub const Client = struct {
                 client.unregister(wl_region.id);
             },
             .add => |msg| {
-                const region = msg.wl_region.resource;
+                const region: *Region = msg.wl_region.resource;
 
                 const rect = RectangleOp{
                     .rectangle = Rectangle.init(msg.x, msg.y, msg.width, msg.height),
@@ -673,7 +685,7 @@ pub const Client = struct {
                 try region.rectangles.writeItem(rect);
             },
             .subtract => |msg| {
-                const region = msg.wl_region.resource;
+                const region: *Region = msg.wl_region.resource;
 
                 const rect = RectangleOp{
                     .rectangle = Rectangle.init(msg.x, msg.y, msg.width, msg.height),
@@ -713,29 +725,29 @@ pub const Client = struct {
     pub fn handleWlSubsurface(client: *Client, message: wl.WlSubsurface.Message) !void {
         switch (message) {
             .destroy => |msg| {
-                const window = msg.wl_subsurface.resource;
+                const window: *Window = msg.wl_subsurface.resource;
                 window.wl_subsurface = null;
                 try client.wl_display.sendDeleteId(msg.wl_subsurface.id);
                 client.unregister(msg.wl_subsurface.id);
             },
             .set_position => |msg| {
-                const window = msg.wl_subsurface.resource;
+                const window: *Window = msg.wl_subsurface.resource;
                 window.pending().x = msg.x;
                 window.pending().y = msg.y;
             },
             .place_above => |msg| {
-                const window = msg.wl_subsurface.resource;
+                const window: *Window = msg.wl_subsurface.resource;
                 const sibling = msg.sibling.resource;
                 window.placeAbove(sibling);
             },
             .place_below => |msg| {
-                const window = msg.wl_subsurface.resource;
+                const window: *Window = msg.wl_subsurface.resource;
                 const sibling = msg.sibling.resource;
                 window.placeBelow(sibling);
             },
             .set_sync => |msg| msg.wl_subsurface.resource.synchronized = true,
             .set_desync => |msg| {
-                const window = msg.wl_subsurface.resource;
+                const window: *Window = msg.wl_subsurface.resource;
                 window.synchronized = false;
                 if (window.parent) |parent| {
                     if (!parent.synchronized) window.flip();
@@ -747,7 +759,7 @@ pub const Client = struct {
     pub fn handleXdgWmBase(client: *Client, message: wl.XdgWmBase.Message) !void {
         switch (message) {
             .get_xdg_surface => |msg| {
-                const window = msg.surface.resource;
+                const window: *Window = msg.surface.resource;
 
                 const xdg_surface = wl.XdgSurface.init(msg.id, &client.wire, 0, window);
                 try client.register(.{ .xdg_surface = xdg_surface });
@@ -766,7 +778,7 @@ pub const Client = struct {
     pub fn handleXdgSurface(client: *Client, message: wl.XdgSurface.Message) !void {
         switch (message) {
             .get_toplevel => |msg| {
-                const window = msg.xdg_surface.resource;
+                const window: *Window = msg.xdg_surface.resource;
                 const xdg_toplevel = wl.XdgToplevel.init(msg.id, &client.wire, 0, window);
                 try client.register(.{ .xdg_toplevel = xdg_toplevel });
 
@@ -778,7 +790,7 @@ pub const Client = struct {
                 try msg.xdg_surface.sendConfigure(serial);
             },
             .ack_configure => |msg| {
-                const window = msg.xdg_surface.resource;
+                const window: *Window = msg.xdg_surface.resource;
 
                 while (window.xdg_configurations.readItem()) |xdg_configuration| {
                     if (msg.serial == xdg_configuration.serial) {
@@ -812,7 +824,7 @@ pub const Client = struct {
                 if (window.first_configure == false) window.first_configure = true;
             },
             .destroy => |msg| {
-                const window = msg.xdg_surface.resource;
+                const window: *Window = msg.xdg_surface.resource;
                 window.xdg_surface = null;
 
                 try client.wl_display.sendDeleteId(msg.xdg_surface.id);
@@ -820,7 +832,7 @@ pub const Client = struct {
             },
             .get_popup => |_| return error.NotImplemented,
             .set_window_geometry => |msg| {
-                const window = msg.xdg_surface.resource;
+                const window: *Window = msg.xdg_surface.resource;
 
                 window.window_geometry = Rectangle.init(msg.x, msg.y, msg.width, msg.height);
             },
@@ -830,35 +842,35 @@ pub const Client = struct {
     pub fn handleXdgToplevel(client: *Client, message: wl.XdgToplevel.Message) !void {
         switch (message) {
             .set_title => |msg| {
-                const window = msg.xdg_toplevel.resource;
+                const window: *Window = msg.xdg_toplevel.resource;
                 const length = @min(window.title.len, msg.title.len);
                 mem.copyForwards(u8, window.title[0..length], msg.title[0..length]);
             },
             .destroy => |msg| {
-                const window = msg.xdg_toplevel.resource;
+                const window: *Window = msg.xdg_toplevel.resource;
                 window.xdg_toplevel = null;
 
                 try client.wl_display.sendDeleteId(msg.xdg_toplevel.id);
                 client.unregister(msg.xdg_toplevel.id);
             },
             .set_parent => |msg| {
-                const window = msg.xdg_toplevel.resource;
+                const window: *Window = msg.xdg_toplevel.resource;
                 window.parent = if (msg.parent) |p| p.resource else null;
             },
             .set_app_id => |msg| {
-                const window = msg.xdg_toplevel.resource;
+                const window: *Window = msg.xdg_toplevel.resource;
                 const length = @min(window.app_id.len, msg.app_id.len);
                 mem.copyForwards(u8, window.app_id[0..length], msg.app_id[0..length]);
             },
             .show_window_menu => |_| return error.NotImplemented,
             .move => |msg| {
-                const window = msg.xdg_toplevel.resource;
+                const window: *Window = msg.xdg_toplevel.resource;
 
                 if (window.maximized != null) return;
                 client.server.move = Move.init(window, window.current().x, window.current().y, client.server.pointer_x, client.server.pointer_y);
             },
             .resize => |msg| {
-                const window = msg.xdg_toplevel.resource;
+                const window: *Window = msg.xdg_toplevel.resource;
                 client.server.resize = Resize.init(
                     window,
                     window.current().x,
@@ -871,12 +883,12 @@ pub const Client = struct {
                 );
             },
             .set_max_size => |msg| {
-                const window = msg.xdg_toplevel.resource;
+                const window: *Window = msg.xdg_toplevel.resource;
                 window.pending().max_width = if (msg.width <= 0) null else msg.width;
                 window.pending().max_height = if (msg.height <= 0) null else msg.height;
             },
             .set_min_size => |msg| {
-                const window = msg.xdg_toplevel.resource;
+                const window: *Window = msg.xdg_toplevel.resource;
                 window.pending().min_width = if (msg.width <= 0) null else msg.width;
                 window.pending().min_height = if (msg.height <= 0) null else msg.height;
             },

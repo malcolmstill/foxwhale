@@ -24,18 +24,27 @@ pub const Backend = union(BackendType) {
     pub const BackendEventType = enum {
         sync,
         button_press,
+        mouse_move,
         resize,
     };
 
     pub const BackendEvent = union(BackendEventType) {
         sync: u32,
         button_press: ButtonPress,
+        mouse_move: MouseMove,
         resize: Resize,
     };
 
     pub const ButtonPress = struct {
         x: i16,
         y: i16,
+        button: u8,
+        state: u32,
+    };
+
+    pub const MouseMove = struct {
+        dx: f64,
+        dy: f64,
     };
 
     pub const Resize = struct {

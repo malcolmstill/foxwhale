@@ -1,3 +1,6 @@
+const std = @import("std");
+const builtin = @import("builtin");
+const endian = builtin.cpu.arch.endian();
 const wl = @import("client.zig").wl;
 const Window = @import("resource/window.zig").Window;
 const XdgConfiguration = @import("resource/window.zig").XdgConfiguration;
@@ -29,13 +32,14 @@ pub const Resize = struct {
         const window = self.window;
         const client = window.client;
 
-        const xdg_surface = window.xdg_surface_id orelse return;
+        const xdg_surface = window.xdg_surface orelse return;
         const xdg_toplevel = window.xdg_toplevel orelse return;
 
-        const state = [_]wl.XdgToplevel.ResizeEdge{
-            .activated,
-            .resizing,
-        };
+        var state: [8]u8 = undefined;
+        var fbs = std.io.fixedBufferStream(state[0..]);
+
+        try fbs.writer().writeInt(u32, @intFromEnum(wl.XdgToplevel.State.activated), endian);
+        try fbs.writer().writeInt(u32, @intFromEnum(wl.XdgToplevel.State.resizing), endian);
 
         try xdg_toplevel.sendConfigure(self.newWidth(pointer_x), self.newHeight(pointer_y), state[0..]);
         try xdg_surface.sendConfigure(client.nextSerial());

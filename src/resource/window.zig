@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const math = std.math;
 const Renderer = @import("../renderer.zig").Renderer;
 const Client = @import("../client.zig").Client;
@@ -15,6 +16,9 @@ const RemoveError = @import("../client.zig").RemoveError;
 const ease = @import("../ease.zig");
 
 const wl = @import("../client.zig").wl;
+const endian = builtin.cpu.arch.endian();
+
+const log = std.log.scoped(.window);
 
 pub const XdgConfigurations = LinearFifo(XdgConfiguration, LinearFifoBufferType{ .Static = 32 });
 const Callbacks = LinearFifo(wl.WlCallback, LinearFifoBufferType{ .Static = 32 });
@@ -261,7 +265,7 @@ pub const Window = struct {
     }
 
     pub fn toplevelWindow(window: *Window) *Window {
-        if (window.xdg_toplevel_id != null) {
+        if (window.xdg_toplevel != null) {
             return window;
         }
 
@@ -329,8 +333,10 @@ pub const Window = struct {
         const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 
+        const state = if (action == 0) wl.WlPointer.ButtonState.released else wl.WlPointer.ButtonState.pressed;
+
         const now: u32 = @truncate(@as(u64, @intCast(std.time.milliTimestamp())));
-        try wl_pointer.sendButton(client.nextSerial(), now, button, action);
+        try wl_pointer.sendButton(client.nextSerial(), now, button, state);
     }
 
     pub const SubwindowIterator = struct {
@@ -517,45 +523,49 @@ pub const Window = struct {
     }
 
     pub fn activate(window: *Self) !void {
+        log.info("activate", .{});
         var client = window.client;
 
         config: {
             const xdg_surface = window.xdg_surface orelse break :config;
             const xdg_toplevel = window.xdg_toplevel orelse break :config;
 
-            var state: [1]u32 = [_]u32{@intFromEnum(.XdgToplevelState.activated)};
-            if (window.window_geometry) |window_geometry| {
-                try xdg_toplevel.sendConfigure(window_geometry.width, window_geometry.height, &state);
-            } else {
-                try xdg_toplevel.sendConfigure(window.width, window.height, &state);
-            }
+            var state: [4]u8 = undefined;
+            var fbs = std.io.fixedBufferStream(state[0..]);
+
+            try fbs.writer().writeInt(u32, @intFromEnum(wl.XdgToplevel.State.activated), endian);
+
+            const width = if (window.window_geometry) |window_geometry| window_geometry.width else window.width;
+            const height = if (window.window_geometry) |window_geometry| window_geometry.height else window.height;
+
+            try xdg_toplevel.sendConfigure(width, height, &state);
             try xdg_surface.sendConfigure(client.nextSerial());
         }
 
         keyboard: {
             const wl_keyboard = client.wl_keyboard orelse break :keyboard;
-            try wl_keyboard.sendEnter(client.nextSerial(), window.wl_surface_id, &[_]u32{});
+            try wl_keyboard.sendEnter(client.nextSerial(), window.wl_surface.id, &[_]u8{});
         }
     }
 
     pub fn deactivate(window: *Self) !void {
+        log.info("deactivate", .{});
         var client = window.client;
 
         config: {
             const xdg_surface = window.xdg_surface orelse break :config;
             const xdg_toplevel = window.xdg_toplevel orelse break :config;
 
-            if (window.window_geometry) |window_geometry| {
-                try xdg_toplevel.sendConfigure(xdg_toplevel, window_geometry.width, window_geometry.height, &[_]u32{});
-            } else {
-                try xdg_toplevel.sendConfigure(xdg_toplevel, window.width, window.height, &[_]u32{});
-            }
-            try xdg_surface.sendConfigure(xdg_surface, client.nextSerial());
+            const width = if (window.window_geometry) |window_geometry| window_geometry.width else window.width;
+            const height = if (window.window_geometry) |window_geometry| window_geometry.height else window.height;
+
+            try xdg_toplevel.sendConfigure(width, height, &[_]u8{});
+            try xdg_surface.sendConfigure(client.nextSerial());
         }
 
         keyboard: {
-            const wl_keyboard = client.wl_keyboard_ orelse break :keyboard;
-            try wl_keyboard.sendLeave(client.nextSerial(), window.wl_surface_id);
+            const wl_keyboard = client.wl_keyboard orelse break :keyboard;
+            try wl_keyboard.sendLeave(client.nextSerial(), window.wl_surface.id);
         }
     }
 
@@ -565,7 +575,7 @@ pub const Window = struct {
 
         try wl_pointer.sendEnter(
             client.nextSerial(),
-            window.wl_surface_id,
+            window.wl_surface.id,
             @floatCast(pointer_x - @as(f64, @floatFromInt(window.current().x))),
             @floatCast(pointer_y - @as(f64, @floatFromInt(window.current().y))),
         );
@@ -586,7 +596,7 @@ pub const Window = struct {
         const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 
-        try wl_pointer.sendLeave(client.nextSerial(), window.wl_surface_id);
+        try wl_pointer.sendLeave(client.nextSerial(), window.wl_surface.id);
     }
 
     pub fn mouseAxis(window: *Self, time: u32, axis: u32, value: f64) !void {
@@ -625,6 +635,7 @@ pub const Window = struct {
     /// - Removes the window from its view (where one exists).
     /// - Releases the window's texture (where one exists).
     pub fn deinit(window: *Self) void {
+        log.info("deinit (client@{} wl_surface@{})", .{ window.client.conn.stream.handle, window.wl_surface.id });
         // Before doing anything else, such as deiniting the parent
         // detach this surface from its siblings
         window.detach(); // maybe we also need to detach current, i.e. window.detachCurrent()?

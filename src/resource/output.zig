@@ -26,10 +26,10 @@ pub const Output = struct {
             .backend_output = backend_output,
             .id = id,
             .views = [_]View{
-                View.init(),
-                View.init(),
-                View.init(),
-                View.init(),
+                View.init(backend_output.getWidth(), backend_output.getHeight()),
+                View.init(backend_output.getWidth(), backend_output.getHeight()),
+                View.init(backend_output.getWidth(), backend_output.getHeight()),
+                View.init(backend_output.getWidth(), backend_output.getHeight()),
             },
         };
     }

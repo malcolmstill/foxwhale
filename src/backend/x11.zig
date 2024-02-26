@@ -11,6 +11,9 @@ const c = @cImport({
 const Event = @import("../subsystem.zig").Event;
 const Backend = @import("backend.zig").Backend;
 
+var previous_x: f64 = 0.0;
+var previous_y: f64 = 0.0;
+
 pub const X11 = struct {
     conn: *c.xcb_connection_t,
     fd: i32,
@@ -49,12 +52,12 @@ pub const X11 = struct {
             defer it.count += 1;
             if (c.xcb_poll_for_event(it.x11.conn)) |ev| {
                 const mask: usize = 0x80;
-                std.log.info("event response type = {}", .{ev.*.response_type});
+                // std.log.info("event response type = {}", .{ev.*.response_type});
 
                 switch (ev.*.response_type & ~mask) {
                     c.XCB_BUTTON_PRESS => {
                         const press: *c.xcb_button_press_event_t = @ptrCast(ev);
-                        std.log.info("button = {}x{}", .{ press.event_x, press.event_y });
+                        std.log.info("button press = {}x{}", .{ press.event_x, press.event_y });
 
                         return .{
                             .backend = .{
@@ -64,6 +67,50 @@ pub const X11 = struct {
                                     .button_press = .{
                                         .x = press.event_x,
                                         .y = press.event_y,
+                                        .button = press.detail,
+                                        .state = 1,
+                                    },
+                                },
+                            },
+                        };
+                    },
+                    c.XCB_BUTTON_RELEASE => {
+                        const press: *c.xcb_button_release_event_t = @ptrCast(ev);
+                        std.log.info("button release = {}x{}", .{ press.event_x, press.event_y });
+
+                        return .{
+                            .backend = .{
+                                .backend = it.backend,
+                                .output = press.event,
+                                .event = .{
+                                    .button_press = .{
+                                        .x = press.event_x,
+                                        .y = press.event_y,
+                                        .button = press.detail,
+                                        .state = 0,
+                                    },
+                                },
+                            },
+                        };
+                    },
+                    c.XCB_MOTION_NOTIFY => {
+                        const press: *c.xcb_motion_notify_event_t = @ptrCast(ev);
+                        // std.log.info("mouse motion = {}x{}", .{ press.event_x, press.event_y });
+
+                        const dx: f64 = @as(f64, @floatFromInt(press.event_x)) - previous_x;
+                        const dy: f64 = @as(f64, @floatFromInt(press.event_y)) - previous_y;
+
+                        previous_x = @as(f64, @floatFromInt(press.event_x));
+                        previous_y = @as(f64, @floatFromInt(press.event_y));
+
+                        return .{
+                            .backend = .{
+                                .backend = it.backend,
+                                .output = press.event,
+                                .event = .{
+                                    .mouse_move = .{
+                                        .dx = dx,
+                                        .dy = dy,
                                     },
                                 },
                             },
@@ -129,7 +176,7 @@ pub const X11 = struct {
         const screen = iter.data;
 
         const mask = c.XCB_CW_EVENT_MASK;
-        var valwin = [1]u32{c.XCB_EVENT_MASK_BUTTON_PRESS | c.XCB_EVENT_MASK_EXPOSURE};
+        var valwin = [1]u32{c.XCB_EVENT_MASK_BUTTON_PRESS | c.XCB_EVENT_MASK_BUTTON_RELEASE | c.XCB_EVENT_MASK_POINTER_MOTION | c.XCB_EVENT_MASK_EXPOSURE};
 
         const window = c.xcb_generate_id(backend.conn);
         _ = c.xcb_create_window(

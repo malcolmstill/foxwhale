@@ -23,6 +23,8 @@ const xkbcommon = @import("xkb.zig");
 const Xkb = @import("xkb.zig").Xkb;
 const View = @import("view.zig").View;
 
+const log = std.log.scoped(.server);
+
 // pub const ResourceType = enum(u8) {
 //     window,
 //     region,
@@ -154,6 +156,69 @@ pub const Server = struct {
         server.current_view = &output_ptr.views[0];
 
         return output_ptr;
+    }
+
+    pub fn mouseClick(server: *Self, button: u32, action: u32) !void {
+        log.info("mouseClick: button={} action={}", .{ button, action });
+        if (server.move) |_| {
+            // Mouse raise cancels move
+            if (action == 0) {
+                server.move = null;
+            }
+        }
+
+        if (server.resize) |_| {
+            // Mouse raise cancels resize
+            if (action == 0) {
+                server.resize = null;
+            }
+        }
+
+        const view = server.current_view orelse return;
+
+        try view.mouseClick(button, action);
+    }
+
+    pub fn mouseMove(server: *Self, dx: f64, dy: f64) !void {
+        const view = server.current_view orelse return;
+        const width: f64 = @floatFromInt(view.width);
+        const height: f64 = @floatFromInt(view.height);
+
+        server.pointer_x = server.pointer_x + dx;
+        server.pointer_y = server.pointer_y + dy;
+
+        if (server.pointer_x < 0) {
+            server.pointer_x = 0;
+        }
+
+        if (server.pointer_x > width) {
+            server.pointer_x = width;
+        }
+
+        if (server.pointer_y < 0) {
+            server.pointer_y = 0;
+        }
+
+        if (server.pointer_y > height) {
+            server.pointer_y = height;
+        }
+
+        if (server.move) |move| {
+            const new_window_x = move.window_x + @as(i32, @intFromFloat(server.pointer_x - move.pointer_x));
+            const new_window_y = move.window_y + @as(i32, @intFromFloat(server.pointer_y - move.pointer_y));
+            move.window.current().x = new_window_x;
+            move.window.pending().x = new_window_x;
+            move.window.current().y = new_window_y;
+            move.window.pending().y = new_window_y;
+            return;
+        }
+
+        if (server.resize) |resize| {
+            try resize.resize(server.pointer_x, server.pointer_y);
+            return;
+        }
+
+        try view.updatePointer(server.pointer_x, server.pointer_y);
     }
 
     pub fn iterator(server: *Server) SubsystemIterator {

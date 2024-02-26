@@ -31,7 +31,7 @@ pub fn main() !void {
     try epoll.addFd(backend.getFd(), Target{ .backend = &backend });
 
     {
-        var output = try backend.newOutput(400, 300);
+        var output = try backend.newOutput(800, 600);
         _ = try server.addOutput(&output);
     }
 
@@ -74,10 +74,24 @@ pub fn main() !void {
             },
             .backend => |ev| switch (ev.event) {
                 .button_press => |bp| {
-                    std.log.info("button press = {} (0x{x})", .{ bp, ev.output });
+                    log.info("button press = {} {} (0x{x})", .{ bp.button, bp.state, ev.output });
+
+                    try server.mouseClick(bp.button, bp.state);
+                },
+                .mouse_move => |e| {
+                    // log.info("mouse move = {d}x{d} (0x{x})", .{ e.dx, e.dy, ev.output });
+
+                    try server.mouseMove(e.dx, e.dy);
                 },
                 .resize => |e| {
-                    std.log.info("resize = {}x{} (0x{x})", .{ e.width, e.height, ev.output });
+                    log.info("resize = {}x{} (0x{x})", .{ e.width, e.height, ev.output });
+
+                    // 1. Get compositor output from event
+                    // 2. Update output's view with new size
+                    var oit = server.outputs.iterator();
+                    while (oit.next()) |_| {
+                        //
+                    }
                 },
                 .sync => |_| {
                     // TODO: For the moment, let's draw all outputs on every sync.
@@ -98,13 +112,8 @@ pub fn main() !void {
 
                             var vit = view.back();
                             while (vit) |window| : (vit = window.toplevel.next) {
-                                try window.render(
-                                    output.getWidth(),
-                                    output.getHeight(),
-                                    &renderer,
-                                    0,
-                                    0,
-                                );
+                                // log.info("drawing {}", .{window.wl_surface.id});
+                                try window.render(output.getWidth(), output.getHeight(), &renderer, 0, 0);
                             }
                         }
 
