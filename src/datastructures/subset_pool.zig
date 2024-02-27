@@ -20,6 +20,7 @@ pub fn SubsetPool(comptime T: type, comptime U: type) type {
         pub fn init(allocator: mem.Allocator, count: U) !Self {
             var pool = try Pool(T, U).init(allocator, count);
             errdefer pool.deinit();
+
             const nodes = try allocator.alloc(Tq.Node, count);
             const global_nodes = try allocator.alloc(Tq.Node, count);
 
@@ -49,11 +50,11 @@ pub fn SubsetPool(comptime T: type, comptime U: type) type {
             subset_pool: *Self,
             list: Tq,
 
-            pub fn deinit(self: *Subset) void {
-                var it = self.iterator();
+            pub fn deinit(subset: *Subset) void {
+                var it = subset.iterator();
 
                 while (it.next()) |n| {
-                    self.destroy(n);
+                    subset.destroy(n);
                 }
             }
 
@@ -94,6 +95,7 @@ pub fn SubsetPool(comptime T: type, comptime U: type) type {
                 return subset.subset_pool.pool.indexOf(ptr);
             }
 
+            // Iterate over values in this particular subset
             pub fn iterator(subset: *Subset) SubsetIterator {
                 return .{
                     .subset = subset,
