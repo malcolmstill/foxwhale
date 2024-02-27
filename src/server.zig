@@ -181,8 +181,8 @@ pub const Server = struct {
 
     pub fn mouseMove(server: *Self, dx: f64, dy: f64) !void {
         const view = server.current_view orelse return;
-        const width: f64 = @floatFromInt(view.width);
-        const height: f64 = @floatFromInt(view.height);
+        const width: f64 = @floatFromInt(view.backend_output.getWidth());
+        const height: f64 = @floatFromInt(view.backend_output.getHeight());
 
         server.pointer_x = server.pointer_x + dx;
         server.pointer_y = server.pointer_y + dy;

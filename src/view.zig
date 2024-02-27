@@ -2,6 +2,7 @@ const std = @import("std");
 const prot = @import("wl/protocols.zig");
 const Focus = @import("focus.zig").Focus;
 const Window = @import("resource/window.zig").Window;
+const BackendOutput = @import("backend/backend.zig").BackendOutput;
 
 const log = std.log.scoped(.view);
 
@@ -10,15 +11,13 @@ pub const View = struct {
     pointer_window: ?*Window = null,
     active_window: ?*Window = null,
     focus: Focus = .Click,
-    width: i32,
-    height: i32,
+    backend_output: *BackendOutput,
 
     const Self = @This();
 
-    pub fn init(width: i32, height: i32) View {
+    pub fn init(backend_output: *BackendOutput) View {
         return .{
-            .width = width,
-            .height = height,
+            .backend_output = backend_output,
         };
     }
 
