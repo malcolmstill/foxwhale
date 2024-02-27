@@ -266,9 +266,7 @@ pub const Window = struct {
     }
 
     pub fn toplevelWindow(window: *Window) *Window {
-        if (window.xdg_toplevel != null) {
-            return window;
-        }
+        if (window.xdg_toplevel != null) return;
 
         if (window.parent) |parent| {
             return parent.root();
@@ -277,7 +275,7 @@ pub const Window = struct {
         }
     }
 
-    pub fn toplevelUnderPointer(window: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
+    pub fn toplevelUnderPointer(window: *Window, pointer_x: f64, pointer_y: f64) ?*Window {
         var it = window.backwardIterator();
         while (it.prev()) |w| {
             if (window == w) {
@@ -293,7 +291,7 @@ pub const Window = struct {
         return null;
     }
 
-    pub fn windowUnderPointer(window: *Self, pointer_x: f64, pointer_y: f64) ?*Window {
+    pub fn windowUnderPointer(window: *Window, pointer_x: f64, pointer_y: f64) ?*Window {
         if (window.popup) |popup| {
             const maybe_popup_window = popup.windowUnderPointer(pointer_x, pointer_y);
             if (maybe_popup_window) |popup_window| {
@@ -317,7 +315,7 @@ pub const Window = struct {
         return null;
     }
 
-    fn isPointerInside(window: *Self, x: f64, y: f64) bool {
+    fn isPointerInside(window: *Window, x: f64, y: f64) bool {
         if (window.current().input_region) |input_region| {
             return input_region.pointInside(x - @as(f64, @floatFromInt(window.absoluteX())), y - @as(f64, @floatFromInt(window.absoluteY())));
         }
@@ -330,7 +328,7 @@ pub const Window = struct {
         return false;
     }
 
-    pub fn mouseClick(window: *Self, button: u32, action: u32) !void {
+    pub fn mouseClick(window: *Window, button: u32, action: u32) !void {
         log.info("mouseClick", .{});
         const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
@@ -448,7 +446,7 @@ pub const Window = struct {
         window.pending().siblings.next = null;
     }
 
-    pub fn insertAbove(window: *Self, reference: *Self) void {
+    pub fn insertAbove(window: *Window, reference: *Self) void {
         if (reference == window.parent) {
             // If we're inserting above our parent we need to set our
             // sibling pointers but the parent's children pointers
@@ -486,7 +484,7 @@ pub const Window = struct {
         }
     }
 
-    pub fn insertBelow(window: *Self, reference: *Self) void {
+    pub fn insertBelow(window: *Window, reference: *Self) void {
         if (reference == window.parent) {
             const prev = reference.pending().children.prev;
             reference.pending().children.prev = window;
@@ -514,12 +512,12 @@ pub const Window = struct {
         }
     }
 
-    pub fn placeAbove(window: *Self, reference: *Self) void {
+    pub fn placeAbove(window: *Window, reference: *Self) void {
         window.detach();
         window.insertAbove(reference);
     }
 
-    pub fn placeBelow(window: *Self, reference: *Self) void {
+    pub fn placeBelow(window: *Window, reference: *Self) void {
         window.detach();
         window.insertBelow(reference);
     }
@@ -571,7 +569,7 @@ pub const Window = struct {
         }
     }
 
-    pub fn pointerEnter(window: *Self, pointer_x: f64, pointer_y: f64) !void {
+    pub fn pointerEnter(window: *Window, pointer_x: f64, pointer_y: f64) !void {
         const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 
@@ -583,7 +581,7 @@ pub const Window = struct {
         );
     }
 
-    pub fn pointerMotion(window: *Self, pointer_x: f64, pointer_y: f64) !void {
+    pub fn pointerMotion(window: *Window, pointer_x: f64, pointer_y: f64) !void {
         const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 
@@ -601,7 +599,7 @@ pub const Window = struct {
         try wl_pointer.sendLeave(client.nextSerial(), window.wl_surface.id);
     }
 
-    pub fn mouseAxis(window: *Self, time: u32, axis: u32, value: f64) !void {
+    pub fn mouseAxis(window: *Window, time: u32, axis: u32, value: f64) !void {
         const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 
@@ -609,7 +607,7 @@ pub const Window = struct {
         try wl_pointer.sendAxis(time, axis, @floatCast(value));
     }
 
-    pub fn keyboardKey(window: *Self, time: u32, button: u32, action: u32) !void {
+    pub fn keyboardKey(window: *Window, time: u32, button: u32, action: u32) !void {
         const client = window.client;
         const wl_keyboard = client.wl_keyboard orelse return;
 
