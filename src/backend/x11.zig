@@ -14,6 +14,16 @@ const Backend = @import("backend.zig").Backend;
 var previous_x: f64 = 0.0;
 var previous_y: f64 = 0.0;
 
+fn buttonMap(button: u8) u16 {
+    // Codes as per linux/inpit-event-codes.h
+    return switch (button) {
+        1 => 0x110, // BTN_LEFT
+        2 => 0x112, // BTN_MIDDLE
+        3 => 0x111, // BTN_RIGHT
+        else => unreachable,
+    };
+}
+
 pub const X11 = struct {
     conn: *c.xcb_connection_t,
     fd: i32,
@@ -57,7 +67,7 @@ pub const X11 = struct {
                 switch (ev.*.response_type & ~mask) {
                     c.XCB_BUTTON_PRESS => {
                         const press: *c.xcb_button_press_event_t = @ptrCast(ev);
-                        std.log.info("button press = {}x{}", .{ press.event_x, press.event_y });
+                        // std.log.info("button press = {}x{} 0x{x}", .{ press.event_x, press.event_y, press.state });
 
                         return .{
                             .backend = .{
@@ -67,7 +77,7 @@ pub const X11 = struct {
                                     .button_press = .{
                                         .x = press.event_x,
                                         .y = press.event_y,
-                                        .button = press.detail,
+                                        .button = buttonMap(press.detail),
                                         .state = 1,
                                     },
                                 },
@@ -76,7 +86,7 @@ pub const X11 = struct {
                     },
                     c.XCB_BUTTON_RELEASE => {
                         const press: *c.xcb_button_release_event_t = @ptrCast(ev);
-                        std.log.info("button release = {}x{}", .{ press.event_x, press.event_y });
+                        // std.log.info("button release = {}x{} 0x{x}", .{ press.event_x, press.event_y, press.state });
 
                         return .{
                             .backend = .{
@@ -86,7 +96,7 @@ pub const X11 = struct {
                                     .button_press = .{
                                         .x = press.event_x,
                                         .y = press.event_y,
-                                        .button = press.detail,
+                                        .button = buttonMap(press.detail),
                                         .state = 0,
                                     },
                                 },

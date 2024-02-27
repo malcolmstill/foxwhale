@@ -38,7 +38,7 @@ pub const Backend = union(BackendType) {
     pub const ButtonPress = struct {
         x: i16,
         y: i16,
-        button: u8,
+        button: u16,
         state: u32,
     };
 

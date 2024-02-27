@@ -74,7 +74,7 @@ pub fn main() !void {
             },
             .backend => |ev| switch (ev.event) {
                 .button_press => |bp| {
-                    log.info("button press = {} {} (0x{x})", .{ bp.button, bp.state, ev.output });
+                    // log.info("button press = {} {} (0x{x})", .{ bp.button, bp.state, ev.output });
 
                     try server.mouseClick(bp.button, bp.state);
                 },

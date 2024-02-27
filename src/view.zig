@@ -65,7 +65,6 @@ pub const View = struct {
     }
 
     pub fn mouseClick(view: *View, button: u32, action: u32) !void {
-        // log.info("mouseClick")
         if (view.pointer_window) |pointer_window| {
             if (action == 1) {
                 // Raise the window under the pointer if not already
@@ -86,7 +85,6 @@ pub const View = struct {
                 }
             }
 
-            // Send the mouse click to window
             try pointer_window.mouseClick(button, action);
         } else {
             if (view.active_window) |active_window| {
@@ -167,7 +165,7 @@ pub const View = struct {
                     view.active_window = window;
                 }
             } else {
-                log.warn("new pointer_window: null", .{});
+                // log.warn("new pointer_window: null", .{});
                 // FIXME: reinstate
                 // compositor.COMPOSITOR.client_cursor = null;
             }

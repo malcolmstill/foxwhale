@@ -329,7 +329,7 @@ pub const Window = struct {
     }
 
     pub fn mouseClick(window: *Window, button: u32, action: u32) !void {
-        log.info("mouseClick", .{});
+        log.info("mouseClick button = 0x{x}, action = {}, wl_surface@{}", .{ button, action, window.wl_surface.id });
         const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 

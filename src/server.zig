@@ -159,7 +159,7 @@ pub const Server = struct {
     }
 
     pub fn mouseClick(server: *Self, button: u32, action: u32) !void {
-        log.info("mouseClick: button={} action={}", .{ button, action });
+        // log.info("mouseClick: button={} action={}", .{ button, action });
         if (server.move) |_| {
             // Mouse raise cancels move
             if (action == 0) {
