@@ -39,17 +39,17 @@ pub const X11 = struct {
     pub const Iterator = struct {
         backend: *Backend,
         x11: *X11,
-        count: usize = 0,
+        sync_sent: bool,
 
         pub fn init(backend: *Backend, x11: *X11) Iterator {
             return Iterator{
                 .backend = backend,
                 .x11 = x11,
+                .sync_sent = false,
             };
         }
 
         pub fn next(it: *Iterator, _: u32) !?Event {
-            defer it.count += 1;
             if (c.xcb_poll_for_event(it.x11.conn)) |ev| {
                 const mask: usize = 0x80;
                 // std.log.info("event response type = {}", .{ev.*.response_type});
@@ -152,8 +152,9 @@ pub const X11 = struct {
                 }
             }
 
-            if (it.count == 0) {
+            if (!it.sync_sent) {
                 std.debug.assert(it.x11.outputs.items.len > 0);
+                defer it.sync_sent = true;
 
                 return .{
                     .backend = .{

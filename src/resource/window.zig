@@ -27,6 +27,7 @@ pub const Window = struct {
     client: *Client,
 
     mapped: bool = false,
+    // Should we remove `view`?
     view: ?*View = null,
 
     parent: ?*Window = null,

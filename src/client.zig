@@ -481,7 +481,10 @@ pub const Client = struct {
     pub fn handleWlSurface(client: *Client, message: wl.WlSurface.Message) !void {
         switch (message) {
             .commit => |msg| {
+                std.debug.assert(msg.wl_surface.resource.client == client);
+
                 const window: *Window = msg.wl_surface.resource;
+
                 log.info("commit (client@{} wl_surface@{})", .{ window.client.conn.stream.handle, window.wl_surface.id });
 
                 // We may, without error, receive a .commit without an attached buffer.
