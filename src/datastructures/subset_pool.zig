@@ -172,27 +172,51 @@ pub fn SubsetPool(comptime T: type, comptime U: type) type {
 }
 
 test {
-    var p = try SubsetPool(i32, u2).init(std.testing.allocator, 3);
+    var p = try SubsetPool(i32, u3).init(std.testing.allocator, 6);
     defer p.deinit();
 
-    var list = p.iterable();
+    var subset1 = p.initSubset();
+    defer subset1.deinit();
+    var subset2 = p.initSubset();
+    defer subset2.deinit();
 
-    const first = try list.create(38);
-    defer list.destroy(first);
-    const middle = try list.create(39);
-    defer list.destroy(middle);
+    const subset1_1 = try subset1.create(11);
+    const subset1_2 = try subset1.create(12);
+    const subset1_3 = try subset1.create(12);
 
-    var it = list.iterator();
-    try std.testing.expectEqual(it.next(), first);
-    try std.testing.expectEqual(it.next(), middle);
-    try std.testing.expectEqual(it.next(), null);
+    const subset2_1 = try subset2.create(21);
+    const subset2_2 = try subset2.create(22);
+    const subset2_3 = try subset2.create(22);
 
-    const last = try list.create(40);
-    defer list.destroy(last);
+    {
+        var it = subset1.iterator();
+        try std.testing.expectEqual(it.next(), subset1_1);
+        try std.testing.expectEqual(it.next(), subset1_2);
+        try std.testing.expectEqual(it.next(), subset1_3);
+        try std.testing.expectEqual(it.next(), null);
+    }
 
-    it = list.iterator();
-    try std.testing.expectEqual(it.next(), first);
-    try std.testing.expectEqual(it.next(), middle);
-    try std.testing.expectEqual(it.next(), last);
-    try std.testing.expectEqual(it.next(), null);
+    {
+        var it = subset2.iterator();
+        try std.testing.expectEqual(it.next(), subset2_1);
+        try std.testing.expectEqual(it.next(), subset2_2);
+        try std.testing.expectEqual(it.next(), subset2_3);
+        try std.testing.expectEqual(it.next(), null);
+    }
+
+    subset1.destroy(subset1_1);
+    {
+        var it = subset1.iterator();
+        try std.testing.expectEqual(it.next(), subset1_2);
+        try std.testing.expectEqual(it.next(), subset1_3);
+        try std.testing.expectEqual(it.next(), null);
+    }
+
+    {
+        var it = subset2.iterator();
+        try std.testing.expectEqual(it.next(), subset2_1);
+        try std.testing.expectEqual(it.next(), subset2_2);
+        try std.testing.expectEqual(it.next(), subset2_3);
+        try std.testing.expectEqual(it.next(), null);
+    }
 }
