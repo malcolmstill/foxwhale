@@ -33,6 +33,7 @@ pub const wl = @import("wl/protocols.zig").Wayland(.{
     .wl_subsurface = *Window,
     .xdg_surface = *Window,
     .xdg_toplevel = *Window,
+    .xdg_popup = *Window,
     .xdg_positioner = *Positioner,
     .wl_region = *Region,
     .wl_output = *Output,
@@ -288,7 +289,7 @@ pub const Client = struct {
             .xdg_positioner => |msg| try client.handleXdgPositioner(msg),
             .xdg_surface => |msg| try client.handleXdgSurface(msg),
             .xdg_toplevel => |msg| try client.handleXdgToplevel(msg),
-            .xdg_popup => |_| return error.NotImplemented,
+            .xdg_popup => |msg| try client.handleXdgPopup(msg),
             .zwp_linux_dmabuf_v1 => |_| return error.NotImplemented,
             .zwp_linux_buffer_params_v1 => |_| return error.NotImplemented,
             .zwp_linux_dmabuf_feedback_v1 => |_| return error.NotImplemented,
@@ -917,7 +918,36 @@ pub const Client = struct {
                 try client.wl_display.sendDeleteId(msg.xdg_surface.id);
                 client.unregister(.{ .xdg_surface = msg.xdg_surface });
             },
-            .get_popup => |_| return error.NotImplemented,
+            .get_popup => |msg| {
+                const xdg_surface = msg.xdg_surface;
+                const window: *Window = msg.xdg_surface.resource;
+                const positioner: *Positioner = msg.positioner.resource;
+
+                if (msg.parent) |parent| {
+                    const parent_window: *Window = parent.resource;
+                    window.parent = parent_window;
+                    parent_window.popup = window;
+                } else {
+                    if (window.parent) |parent| parent.popup = null;
+                    window.parent = null;
+                }
+
+                window.positioner = positioner;
+                window.xdg_popup_id = msg.id;
+
+                const xdg_popup = wl.XdgPopup.init(msg.id, &client.wire, 0, window);
+
+                const serial = client.nextSerial();
+                try xdg_popup.sendConfigure(
+                    positioner.anchor_rect.x,
+                    positioner.anchor_rect.y,
+                    positioner.width,
+                    positioner.height,
+                );
+                try xdg_surface.sendConfigure(serial);
+
+                try client.register(.{ .xdg_popup = xdg_popup });
+            },
             .set_window_geometry => |msg| {
                 const window: *Window = msg.xdg_surface.resource;
 
@@ -1025,6 +1055,26 @@ pub const Client = struct {
             .set_fullscreen => |_| return error.NotImplemented,
             .unset_fullscreen => |_| return error.NotImplemented,
             .set_minimized => |_| return error.NotImplemented,
+        }
+    }
+
+    pub fn handleXdgPopup(client: *Client, message: wl.XdgPopup.Message) !void {
+        switch (message) {
+            .destroy => |msg| {
+                const popup_window: *Window = msg.xdg_popup.resource;
+
+                if (popup_window.parent) |parent| {
+                    parent.popup = null;
+                }
+                popup_window.parent = null;
+
+                try client.wl_display.sendDeleteId(msg.xdg_popup.id);
+                client.unregister(.{ .xdg_popup = msg.xdg_popup });
+            },
+            .grab => |_| {
+                std.log.warn("xdg_popup.grab not implemented", .{});
+            },
+            .reposition => |_| unreachable,
         }
     }
 };
