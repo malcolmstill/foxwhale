@@ -211,37 +211,46 @@ pub const Client = struct {
         _ = try client.objects.create(object);
     }
 
-    pub fn unregister(client: *Client, id: u32) void {
+    pub fn unregister(client: *Client, object: wl.WlObject) void {
+        log.info("unregister {s}@{}", .{ @tagName(object), object.id() });
         var it = client.objects.iterator();
 
+        // FIXME: should this be made more efficient?
         while (it.next()) |n| {
-            if (n.id() == id) {
-                client.objects.destroy(n);
-                return;
-            }
+            if (n.id() != object.id()) continue;
+
+            return client.objects.destroy(n);
         }
 
-        log.warn("unregister: no id {}", .{id});
+        log.warn("unregister no id {s}@{}", .{ @tagName(object), object.id() });
+        std.debug.assert(false);
     }
 
     pub fn removeWindow(client: *Client, window: *Window) void {
         client.windows.destroy(window);
-        client.unregister(window.wl_surface.id);
+        client.unregister(.{ .wl_surface = window.wl_surface });
     }
 
-    pub fn removeRegion(client: *Client, region: *Region) void {
-        client.regions.destroy(region);
-        client.unregister(region.wl_region.id);
+    // FIXME: we seem to be calling removeRegion when flipping window
+    // state. However, we are also calling (conditionally) destory
+    // and unregister in `.destroy` of `wl_region`.
+    //
+    // So the question is what is the correct thing to do? Should we
+    // in some way remove the region here? Or should that only
+    // occur in `.destroy` of `wl_region`
+    pub fn removeRegion(_: *Client, _: *Region) void {
+        // client.regions.destroy(region);
+        // client.unregister(.{ .wl_region = region.wl_region });
     }
 
     pub fn removeShmPool(client: *Client, shm_pool: *ShmPool) void {
         client.shm_pools.destroy(shm_pool);
-        client.unregister(shm_pool.wl_shm_pool.id);
+        client.unregister(.{ .wl_shm_pool = shm_pool.wl_shm_pool });
     }
 
     pub fn removeBuffer(client: *Client, buffer: *Buffer) void {
         client.buffers.destroy(buffer);
-        client.unregister(buffer.wl_buffer.id);
+        client.unregister(.{ .wl_buffer = buffer.wl_buffer });
     }
 
     pub fn dispatch(client: *Client, message: wl.WlMessage) !void {
@@ -410,6 +419,8 @@ pub const Client = struct {
                 const wl_region = wl.WlRegion.init(msg.id, &client.wire, 0, region);
                 try client.register(.{ .wl_region = wl_region });
 
+                log.info("create_region wl_region@{}", .{wl_region.id});
+
                 region.* = Region.init(client, wl_region);
             },
         }
@@ -437,7 +448,7 @@ pub const Client = struct {
                 }
 
                 try client.wl_display.sendDeleteId(wl_shm_pool.id);
-                client.unregister(wl_shm_pool.id);
+                client.unregister(.{ .wl_shm_pool = wl_shm_pool });
             },
             .resize => |msg| {
                 const shm_pool: *ShmPool = msg.wl_shm_pool.resource;
@@ -454,7 +465,7 @@ pub const Client = struct {
 
                 const wl_shm_pool = wl.WlShmPool.init(msg.id, &client.wire, 0, shm_pool);
                 try client.register(.{ .wl_shm_pool = wl_shm_pool });
-                errdefer client.unregister(wl_shm_pool.id);
+                errdefer client.unregister(.{ .wl_shm_pool = wl_shm_pool });
 
                 shm_pool.* = try ShmPool.init(client, msg.fd, wl_shm_pool, msg.size);
             },
@@ -473,7 +484,7 @@ pub const Client = struct {
 
                 // We still want to do this
                 try client.wl_display.sendDeleteId(msg.wl_buffer.id);
-                client.unregister(msg.wl_buffer.id);
+                client.unregister(.{ .wl_buffer = msg.wl_buffer });
             },
         }
     }
@@ -562,7 +573,7 @@ pub const Client = struct {
                 window.deinit();
 
                 try client.wl_display.sendDeleteId(msg.wl_surface.id);
-                client.unregister(msg.wl_surface.id);
+                client.unregister(.{ .wl_surface = msg.wl_surface });
             },
             .set_opaque_region => |msg| {
                 const window: *Window = msg.wl_surface.resource;
@@ -667,6 +678,7 @@ pub const Client = struct {
         switch (message) {
             .destroy => |msg| {
                 const wl_region = msg.wl_region;
+                log.info("wl_region.destroy wl_region@{}", .{wl_region.id});
                 const region: *Region = wl_region.resource;
 
                 if (region.window == null) {
@@ -675,7 +687,7 @@ pub const Client = struct {
                 }
 
                 try client.wl_display.sendDeleteId(wl_region.id);
-                client.unregister(wl_region.id);
+                client.unregister(.{ .wl_region = wl_region });
             },
             .add => |msg| {
                 const region: *Region = msg.wl_region.resource;
@@ -705,7 +717,7 @@ pub const Client = struct {
             .destroy => |msg| {
                 client.wl_subcompositor = null;
                 try client.wl_display.sendDeleteId(msg.wl_subcompositor.id);
-                client.unregister(msg.wl_subcompositor.id);
+                client.unregister(.{ .wl_subcompositor = msg.wl_subcompositor });
             },
             .get_subsurface => |msg| {
                 const child = msg.surface.resource;
@@ -731,7 +743,7 @@ pub const Client = struct {
                 const window: *Window = msg.wl_subsurface.resource;
                 window.wl_subsurface = null;
                 try client.wl_display.sendDeleteId(msg.wl_subsurface.id);
-                client.unregister(msg.wl_subsurface.id);
+                client.unregister(.{ .wl_subsurface = msg.wl_subsurface });
             },
             .set_position => |msg| {
                 const window: *Window = msg.wl_subsurface.resource;
@@ -771,7 +783,7 @@ pub const Client = struct {
             },
             .destroy => |msg| {
                 try client.wl_display.sendDeleteId(msg.xdg_wm_base.id);
-                client.unregister(msg.xdg_wm_base.id);
+                client.unregister(.{ .xdg_wm_base = msg.xdg_wm_base });
             },
             .create_positioner => |_| return error.NotImplemented,
             .pong => |_| return error.NotImplemented,
@@ -831,7 +843,7 @@ pub const Client = struct {
                 window.xdg_surface = null;
 
                 try client.wl_display.sendDeleteId(msg.xdg_surface.id);
-                client.unregister(msg.xdg_surface.id);
+                client.unregister(.{ .xdg_surface = msg.xdg_surface });
             },
             .get_popup => |_| return error.NotImplemented,
             .set_window_geometry => |msg| {
@@ -854,7 +866,7 @@ pub const Client = struct {
                 window.xdg_toplevel = null;
 
                 try client.wl_display.sendDeleteId(msg.xdg_toplevel.id);
-                client.unregister(msg.xdg_toplevel.id);
+                client.unregister(.{ .xdg_toplevel = msg.xdg_toplevel });
             },
             .set_parent => |msg| {
                 const window: *Window = msg.xdg_toplevel.resource;

@@ -253,7 +253,7 @@ pub const Window = struct {
         while (window.callbacks.readItem()) |wl_callback| {
             try wl_callback.sendDone(@truncate(@as(u64, @intCast(std.time.milliTimestamp()))));
             try window.client.wl_display.sendDeleteId(wl_callback.id);
-            window.client.unregister(wl_callback.id);
+            window.client.unregister(.{ .wl_callback = wl_callback });
         }
     }
 

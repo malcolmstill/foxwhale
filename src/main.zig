@@ -149,7 +149,7 @@ const FrameCounter = struct {
         const now = std.time.milliTimestamp();
 
         if ((now - self.then) > 5000) {
-            std.log.info("fps = {}", .{self.frames / 5});
+            // std.log.info("fps = {}", .{self.frames / 5});
             // server.usage();
             self.then = now;
             self.frames = 0;
