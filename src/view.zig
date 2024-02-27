@@ -64,7 +64,8 @@ pub const View = struct {
         window.toplevel.deinit();
     }
 
-    pub fn mouseClick(view: *Self, button: u32, action: u32) !void {
+    pub fn mouseClick(view: *View, button: u32, action: u32) !void {
+        // log.info("mouseClick")
         if (view.pointer_window) |pointer_window| {
             if (action == 1) {
                 if (view.top != pointer_window.toplevelWindow()) {
@@ -127,11 +128,12 @@ pub const View = struct {
         }
     }
 
-    pub fn updatePointer(view: *Self, x: f64, y: f64) !void {
+    pub fn updatePointer(view: *View, x: f64, y: f64) !void {
         const old_pointer_window = view.pointer_window;
 
         // Iterate from front to back to find the window under the
         // pointer (if any)
+        view.pointer_window = null;
         var it = view.top;
         while (it) |window| : (it = window.toplevel.prev) {
             view.pointer_window = window.windowUnderPointer(x, y) orelse continue;
@@ -162,6 +164,12 @@ pub const View = struct {
                 log.warn("new pointer_window: null", .{});
                 // FIXME: reinstate
                 // compositor.COMPOSITOR.client_cursor = null;
+            }
+
+            if (view.pointer_window) |new_pointer_window| {
+                log.info("new pointer window = wl_surface@{}", .{new_pointer_window.wl_surface.id});
+            } else {
+                log.info("new pointer window = {?}", .{view.pointer_window});
             }
         }
 
