@@ -532,7 +532,6 @@ pub const Window = struct {
 
             var state: [4]u8 = undefined;
             var fbs = std.io.fixedBufferStream(state[0..]);
-
             try fbs.writer().writeInt(u32, @intFromEnum(wl.XdgToplevel.State.activated), endian);
 
             const width = if (window.window_geometry) |window_geometry| window_geometry.width else window.width;
@@ -775,6 +774,7 @@ const BufferedState = struct {
     x: i32 = 0,
     y: i32 = 0,
     scale: i32 = 1,
+    transform: wl.WlOutput.Transform = .normal,
 
     input_region: ?*Region = null,
     opaque_region: ?*Region = null,

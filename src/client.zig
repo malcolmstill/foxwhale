@@ -23,6 +23,8 @@ const SubsetPool = @import("datastructures/subset_pool.zig").SubsetPool;
 const Move = @import("move.zig").Move;
 const Resize = @import("resize.zig").Resize;
 
+const endian = builtin.cpu.arch.endian();
+
 const log = std.log.scoped(.client);
 
 pub const wl = @import("wl/protocols.zig").Wayland(.{
@@ -630,8 +632,14 @@ pub const Client = struct {
                     window.pending().input_region = null;
                 }
             },
-            .set_buffer_transform => |_| return error.WlSurfaceSetBufferTransformNotImplemented,
-            .set_buffer_scale => |_| return error.WlSurfaceSetBufferScaleNotImplemented,
+            .set_buffer_transform => |msg| {
+                const window: *Window = msg.wl_surface.resource;
+                window.pending().transform = msg.transform;
+            },
+            .set_buffer_scale => |msg| {
+                const window: *Window = msg.wl_surface.resource;
+                window.pending().scale = msg.scale;
+            },
             .damage_buffer => |_| return error.WlSurfaceDamageBufferNotImplemented,
             .offset => |_| return error.WlSurfaceOffsetNotImplemented,
         }
@@ -907,8 +915,49 @@ pub const Client = struct {
                 window.pending().min_width = if (msg.width <= 0) null else msg.width;
                 window.pending().min_height = if (msg.height <= 0) null else msg.height;
             },
-            .set_maximized => |_| return error.NotImplemented,
-            .unset_maximized => |_| return error.NotImplemented,
+            .set_maximized => |msg| {
+                std.debug.assert(msg.xdg_toplevel.resource.client == client);
+                const window: *Window = msg.xdg_toplevel.resource;
+
+                // The unreachables assert that we have a xdg_toplevel,
+                // xdg_surface and view.
+                const xdg_toplevel = window.xdg_toplevel orelse unreachable;
+                const xdg_surface = window.xdg_surface orelse unreachable;
+                const view = window.view orelse unreachable;
+                const serial = client.nextSerial();
+
+                try window.xdg_configurations.writeItem(.{ .serial = serial, .operation = .Maximize });
+
+                var state: [8]u8 = undefined;
+                var fbs = std.io.fixedBufferStream(state[0..]);
+                try fbs.writer().writeInt(u32, @intFromEnum(wl.XdgToplevel.State.maximized), endian);
+                try fbs.writer().writeInt(u32, @intFromEnum(wl.XdgToplevel.State.activated), endian);
+
+                try xdg_toplevel.sendConfigure(view.backend_output.getWidth(), view.backend_output.getHeight(), &state);
+                try xdg_surface.sendConfigure(serial);
+            },
+            .unset_maximized => |msg| {
+                std.debug.assert(msg.xdg_toplevel.resource.client == client);
+                const window: *Window = msg.xdg_toplevel.resource;
+
+                // The unreachables assert that we have a xdg_toplevel,
+                // and xdg_surface.
+                const xdg_toplevel = window.xdg_toplevel orelse unreachable;
+                const xdg_surface = window.xdg_surface orelse unreachable;
+                const serial = client.nextSerial();
+
+                try window.xdg_configurations.writeItem(.{ .serial = serial, .operation = .Unmaximize });
+
+                var state: [4]u8 = undefined;
+                var fbs = std.io.fixedBufferStream(state[0..]);
+                try fbs.writer().writeInt(u32, @intFromEnum(wl.XdgToplevel.State.activated), endian);
+
+                const width = if (window.maximized) |maximized| maximized.width else window.width;
+                const height = if (window.maximized) |maximized| maximized.height else window.height;
+
+                try xdg_toplevel.sendConfigure(width, height, &state);
+                try xdg_surface.sendConfigure(serial);
+            },
             .set_fullscreen => |_| return error.NotImplemented,
             .unset_fullscreen => |_| return error.NotImplemented,
             .set_minimized => |_| return error.NotImplemented,
