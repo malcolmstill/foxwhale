@@ -89,11 +89,11 @@ pub const Client = struct {
             .conn = conn,
             .wl_display = wl_display,
             .wire = wl.Wire.init(conn.stream.handle),
-            .windows = server.windows.subset(),
-            .regions = server.regions.subset(),
-            .buffers = server.buffers.subset(),
-            .shm_pools = server.shm_pools.subset(),
-            .objects = server.objects.subset(),
+            .windows = server.windows.initSubset(),
+            .regions = server.regions.initSubset(),
+            .buffers = server.buffers.initSubset(),
+            .shm_pools = server.shm_pools.initSubset(),
+            .objects = server.objects.initSubset(),
         };
     }
 

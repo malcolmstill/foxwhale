@@ -23,7 +23,7 @@ pub fn SubsetPool(comptime T: type, comptime U: type) type {
             const nodes = try allocator.alloc(Tq.Node, count);
             const global_nodes = try allocator.alloc(Tq.Node, count);
 
-            return Self{
+            return .{
                 .alloc = allocator,
                 .pool = pool,
                 .nodes = nodes,
@@ -32,21 +32,21 @@ pub fn SubsetPool(comptime T: type, comptime U: type) type {
             };
         }
 
-        pub fn deinit(self: *Self) void {
-            self.alloc.free(self.nodes);
-            self.alloc.free(self.global_nodes);
-            self.pool.deinit();
+        pub fn deinit(subset_pool: *Self) void {
+            subset_pool.alloc.free(subset_pool.nodes);
+            subset_pool.alloc.free(subset_pool.global_nodes);
+            subset_pool.pool.deinit();
         }
 
-        pub fn subset(self: *Self) Subset {
-            return Subset{
-                .pool_iterable = self,
+        pub fn initSubset(subset_pool: *Self) Subset {
+            return .{
+                .subset_pool = subset_pool,
                 .list = Tq{},
             };
         }
 
         pub const Subset = struct {
-            pool_iterable: *Self,
+            subset_pool: *Self,
             list: Tq,
 
             pub fn deinit(self: *Subset) void {
@@ -57,45 +57,47 @@ pub fn SubsetPool(comptime T: type, comptime U: type) type {
                 }
             }
 
-            pub fn create(self: *Subset, value: T) !*T {
-                const ptr = try self.pool_iterable.pool.create(value);
-                const index = self.pool_iterable.pool.indexOf(ptr);
+            pub fn create(subset: *Subset, value: T) !*T {
+                // Allocate from the underlying pool
+                const ptr = try subset.subset_pool.pool.create(value);
+                const index = subset.subset_pool.pool.indexOf(ptr);
 
                 std.debug.assert(index != null);
-                defer self.list.append(&self.pool_iterable.nodes[index.?]);
-                defer self.pool_iterable.global_list.append(&self.pool_iterable.global_nodes[index.?]);
+
+                defer subset.list.append(&subset.subset_pool.nodes[index.?]);
+                defer subset.subset_pool.global_list.append(&subset.subset_pool.global_nodes[index.?]);
 
                 return ptr;
             }
 
-            pub fn createPtr(self: *Subset) !*T {
-                const ptr = try self.pool_iterable.pool.createPtr();
-                const index = self.pool_iterable.pool.indexOf(ptr);
+            pub fn createPtr(subset: *Subset) !*T {
+                const ptr = try subset.subset_pool.pool.createPtr();
+                const index = subset.subset_pool.pool.indexOf(ptr);
 
                 std.debug.assert(index != null);
-                defer self.list.append(&self.pool_iterable.nodes[index.?]);
-                defer self.pool_iterable.global_list.append(&self.pool_iterable.global_nodes[index.?]);
+                defer subset.list.append(&subset.subset_pool.nodes[index.?]);
+                defer subset.subset_pool.global_list.append(&subset.subset_pool.global_nodes[index.?]);
 
                 return ptr;
             }
 
-            pub fn destroy(self: *Subset, ptr: *T) void {
-                const index = self.pool_iterable.pool.indexOf(ptr) orelse return;
+            pub fn destroy(subset: *Subset, ptr: *T) void {
+                const index = subset.subset_pool.pool.indexOf(ptr) orelse return;
 
-                self.list.remove(&self.pool_iterable.nodes[index]);
-                self.pool_iterable.global_list.remove(&self.pool_iterable.global_nodes[index]);
+                subset.list.remove(&subset.subset_pool.nodes[index]);
+                subset.subset_pool.global_list.remove(&subset.subset_pool.global_nodes[index]);
 
-                self.pool_iterable.pool.destroy(ptr);
+                subset.subset_pool.pool.destroy(ptr);
             }
 
-            pub fn indexOf(self: *Subset, ptr: *T) U {
-                return self.pool_iterable.pool.indexOf(ptr);
+            pub fn indexOf(subset: *Subset, ptr: *T) U {
+                return subset.subset_pool.pool.indexOf(ptr);
             }
 
-            pub fn iterator(self: *Subset) SubsetIterator {
-                return SubsetIterator{
-                    .subset = self,
-                    .node = self.list.first,
+            pub fn iterator(subset: *Subset) SubsetIterator {
+                return .{
+                    .subset = subset,
+                    .node = subset.list.first,
                 };
             }
 
@@ -103,12 +105,12 @@ pub fn SubsetPool(comptime T: type, comptime U: type) type {
                 subset: *Subset,
                 node: ?*Tq.Node,
 
-                pub fn next(self: *SubsetIterator) ?*T {
-                    if (self.node) |node| {
-                        defer self.node = node.next;
+                pub fn next(it: *SubsetIterator) ?*T {
+                    if (it.node) |node| {
+                        defer it.node = node.next;
 
-                        const index = self.indexOf(node);
-                        const ptr = &self.subset.pool_iterable.pool.entities[index];
+                        const index = it.indexOf(node);
+                        const ptr = &it.subset.subset_pool.pool.entities[index];
 
                         return ptr;
                     }
@@ -116,9 +118,9 @@ pub fn SubsetPool(comptime T: type, comptime U: type) type {
                     return null;
                 }
 
-                fn indexOf(self: *SubsetIterator, ptr: *Tq.Node) U {
-                    const start = @intFromPtr(&self.subset.pool_iterable.nodes[0]);
-                    const end = @intFromPtr(&self.subset.pool_iterable.nodes[self.subset.pool_iterable.nodes.len - 1]);
+                fn indexOf(it: *SubsetIterator, ptr: *Tq.Node) U {
+                    const start = @intFromPtr(&it.subset.subset_pool.nodes[0]);
+                    const end = @intFromPtr(&it.subset.subset_pool.nodes[it.subset.subset_pool.nodes.len - 1]);
                     const v = @intFromPtr(ptr);
 
                     std.debug.assert(v >= start or v <= end);
@@ -130,23 +132,23 @@ pub fn SubsetPool(comptime T: type, comptime U: type) type {
             };
         };
 
-        pub fn iterator(self: *Self) Iterator {
+        pub fn iterator(subset_pool: *Self) Iterator {
             return Iterator{
-                .pool_iterable = self,
-                .node = self.global_list.first,
+                .subset_pool = subset_pool,
+                .node = subset_pool.global_list.first,
             };
         }
 
         pub const Iterator = struct {
-            pool_iterable: *Self,
+            subset_pool: *Self,
             node: ?*Tq.Node,
 
-            pub fn next(self: *Iterator) ?*T {
-                if (self.node) |node| {
-                    defer self.node = node.next;
+            pub fn next(it: *Iterator) ?*T {
+                if (it.node) |node| {
+                    defer it.node = node.next;
 
-                    const index = self.indexOf(node);
-                    const ptr = &self.pool_iterable.pool.entities[index];
+                    const index = it.indexOf(node);
+                    const ptr = &it.subset_pool.pool.entities[index];
 
                     return ptr;
                 }
@@ -154,9 +156,9 @@ pub fn SubsetPool(comptime T: type, comptime U: type) type {
                 return null;
             }
 
-            fn indexOf(self: *Iterator, ptr: *Tq.Node) U {
-                const start = @intFromPtr(&self.pool_iterable.global_nodes[0]);
-                const end = @intFromPtr(&self.pool_iterable.global_nodes[self.pool_iterable.global_nodes.len - 1]);
+            fn indexOf(it: *Iterator, ptr: *Tq.Node) U {
+                const start = @intFromPtr(&it.subset_pool.global_nodes[0]);
+                const end = @intFromPtr(&it.subset_pool.global_nodes[it.subset_pool.global_nodes.len - 1]);
                 const v = @intFromPtr(ptr);
 
                 std.debug.assert(v >= start or v <= end);

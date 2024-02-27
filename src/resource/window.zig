@@ -331,6 +331,7 @@ pub const Window = struct {
     }
 
     pub fn mouseClick(window: *Self, button: u32, action: u32) !void {
+        log.info("mouseClick", .{});
         const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 

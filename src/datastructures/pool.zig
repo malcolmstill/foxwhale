@@ -34,7 +34,7 @@ pub fn Pool(comptime T: type, comptime U: type) type {
             }
             free_stack[free_stack.len - 1] = null;
 
-            return Self{
+            return .{
                 .alloc = allocator,
                 .entities = entities,
                 .free_stack = free_stack,
@@ -43,53 +43,53 @@ pub fn Pool(comptime T: type, comptime U: type) type {
             };
         }
 
-        pub fn deinit(self: *Self) void {
+        pub fn deinit(pool: *Self) void {
             if (builtin.mode == .Debug) {
-                for (self.in_use, 0..) |in_use, i| {
+                for (pool.in_use, 0..) |in_use, i| {
                     if (in_use) {
-                        std.debug.print("Pool: leaked item {} in [{}]{}\n", .{ i, self.entities.len, T });
+                        std.debug.print("Pool: leaked item {} in [{}]{}\n", .{ i, pool.entities.len, T });
                     }
                 }
             }
 
-            self.alloc.free(self.entities);
-            self.alloc.free(self.free_stack);
-            if (builtin.mode == .Debug) self.alloc.free(self.in_use);
+            pool.alloc.free(pool.entities);
+            pool.alloc.free(pool.free_stack);
+            if (builtin.mode == .Debug) pool.alloc.free(pool.in_use);
         }
 
-        pub fn create(self: *Self, value: T) !*T {
-            const ptr = try self.createPtr();
+        pub fn create(pool: *Self, value: T) !*T {
+            const ptr = try pool.createPtr();
 
             ptr.* = value;
 
             return ptr;
         }
 
-        pub fn createPtr(self: *Self) !*T {
-            if (self.next_free) |next_free| {
-                defer self.next_free = self.free_stack[next_free];
+        pub fn createPtr(pool: *Self) !*T {
+            if (pool.next_free) |next_free| {
+                defer pool.next_free = pool.free_stack[next_free];
 
-                if (builtin.mode == .Debug) self.in_use[next_free] = true;
-                self.count += 1;
-                return &self.entities[next_free];
+                if (builtin.mode == .Debug) pool.in_use[next_free] = true;
+                pool.count += 1;
+                return &pool.entities[next_free];
             }
 
             return error.OutOfMemory;
         }
 
-        pub fn destroy(self: *Self, ptr: *T) void {
-            const index = self.indexOf(ptr) orelse return;
+        pub fn destroy(pool: *Self, ptr: *T) void {
+            const index = pool.indexOf(ptr) orelse return;
 
-            self.count -= 1;
-            if (builtin.mode == .Debug) self.in_use[index] = false;
+            pool.count -= 1;
+            if (builtin.mode == .Debug) pool.in_use[index] = false;
 
-            self.free_stack[index] = self.next_free;
-            self.next_free = index;
+            pool.free_stack[index] = pool.next_free;
+            pool.next_free = index;
         }
 
-        pub fn indexOf(self: *Self, ptr: *T) ?U {
-            const start = @intFromPtr(&self.entities[0]);
-            const end = @intFromPtr(&self.entities[self.entities.len - 1]);
+        pub fn indexOf(pool: *Self, ptr: *T) ?U {
+            const start = @intFromPtr(&pool.entities[0]);
+            const end = @intFromPtr(&pool.entities[pool.entities.len - 1]);
             const v = @intFromPtr(ptr);
 
             if (v < start or v > end) return null;

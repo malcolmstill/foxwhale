@@ -68,10 +68,14 @@ pub const View = struct {
         // log.info("mouseClick")
         if (view.pointer_window) |pointer_window| {
             if (action == 1) {
+                // Raise the window under the pointer if not already
+                // at the top.
                 if (view.top != pointer_window.toplevelWindow()) {
                     view.raise(pointer_window.toplevelWindow());
                 }
 
+                // Activate the clicked window if not already active (deactivate
+                // the old active window if necessary).
                 if (pointer_window.toplevelWindow() != view.active_window) {
                     if (view.active_window) |active_window| {
                         try active_window.deactivate();
@@ -82,6 +86,7 @@ pub const View = struct {
                 }
             }
 
+            // Send the mouse click to window
             try pointer_window.mouseClick(button, action);
         } else {
             if (view.active_window) |active_window| {
@@ -95,6 +100,7 @@ pub const View = struct {
 
     fn raise(view: *Self, raising_window: *Window) void {
         log.info("raise (client@{} wl_surface@{})", .{ raising_window.client.conn.stream.handle, raising_window.wl_surface.id });
+
         // 1. iterate down, removing any marks
         var it = view.top;
         while (it) |window| : (it = window.toplevel.prev) {
@@ -164,12 +170,6 @@ pub const View = struct {
                 log.warn("new pointer_window: null", .{});
                 // FIXME: reinstate
                 // compositor.COMPOSITOR.client_cursor = null;
-            }
-
-            if (view.pointer_window) |new_pointer_window| {
-                log.info("new pointer window = wl_surface@{}", .{new_pointer_window.wl_surface.id});
-            } else {
-                log.info("new pointer window = {?}", .{view.pointer_window});
             }
         }
 
