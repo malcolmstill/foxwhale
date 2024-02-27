@@ -266,7 +266,7 @@ pub const Window = struct {
     }
 
     pub fn toplevelWindow(window: *Window) *Window {
-        if (window.xdg_toplevel != null) return;
+        if (window.xdg_toplevel != null) return window;
 
         if (window.parent) |parent| {
             return parent.root();
@@ -573,11 +573,14 @@ pub const Window = struct {
         const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 
+        const x: f64 = @floatFromInt(window.current().x);
+        const y: f64 = @floatFromInt(window.current().y);
+
         try wl_pointer.sendEnter(
             client.nextSerial(),
             window.wl_surface.id,
-            @floatCast(pointer_x - @as(f64, @floatFromInt(window.current().x))),
-            @floatCast(pointer_y - @as(f64, @floatFromInt(window.current().y))),
+            @floatCast(pointer_x - x),
+            @floatCast(pointer_y - y),
         );
     }
 
@@ -585,10 +588,13 @@ pub const Window = struct {
         const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 
+        const window_x: f64 = @floatFromInt(window.absoluteX());
+        const window_y: f64 = @floatFromInt(window.absoluteY());
+
         try wl_pointer.sendMotion(
             @truncate(@as(u64, @intCast(std.time.milliTimestamp()))),
-            @floatCast(pointer_x - @as(f64, @floatFromInt(window.absoluteX()))),
-            @floatCast(pointer_y - @as(f64, @floatFromInt(window.absoluteY()))),
+            @floatCast(pointer_x - window_x),
+            @floatCast(pointer_y - window_y),
         );
     }
 
