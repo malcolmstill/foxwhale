@@ -9,6 +9,7 @@ const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
 
 const Window = @import("resource/window.zig").Window;
 const Region = @import("resource/region.zig").Region;
+const Positioner = @import("resource/positioner.zig").Positioner;
 const Output = @import("resource/output.zig").Output;
 const RegionOp = @import("resource/region.zig").RegionOp;
 const RectangleOp = @import("resource/region.zig").RectangleOp;
@@ -32,6 +33,7 @@ pub const wl = @import("wl/protocols.zig").Wayland(.{
     .wl_subsurface = *Window,
     .xdg_surface = *Window,
     .xdg_toplevel = *Window,
+    .xdg_positioner = *Positioner,
     .wl_region = *Region,
     .wl_output = *Output,
     .wl_buffer = *Buffer,
@@ -48,6 +50,7 @@ pub const Client = struct {
 
     windows: SubsetPool(Window, u16).Subset,
     regions: SubsetPool(Region, u16).Subset,
+    positioners: SubsetPool(Positioner, u16).Subset,
     buffers: SubsetPool(Buffer, u16).Subset,
     shm_pools: SubsetPool(ShmPool, u16).Subset,
     objects: SubsetPool(wl.WlObject, u16).Subset,
@@ -93,6 +96,7 @@ pub const Client = struct {
             .wire = wl.Wire.init(conn.stream.handle),
             .windows = server.windows.initSubset(),
             .regions = server.regions.initSubset(),
+            .positioners = server.positioners.initSubset(),
             .buffers = server.buffers.initSubset(),
             .shm_pools = server.shm_pools.initSubset(),
             .objects = server.objects.initSubset(),
@@ -111,6 +115,7 @@ pub const Client = struct {
         }
 
         client.regions.deinit();
+        client.positioners.deinit();
         client.buffers.deinit();
         client.shm_pools.deinit();
 
@@ -280,7 +285,7 @@ pub const Client = struct {
             .wl_subcompositor => |msg| try client.handleWlSubcompositor(msg),
             .wl_subsurface => |msg| try client.handleWlSubsurface(msg),
             .xdg_wm_base => |msg| try client.handleXdgWmBase(msg),
-            .xdg_positioner => |_| return error.NotImplemented,
+            .xdg_positioner => |msg| try client.handleXdgPositioner(msg),
             .xdg_surface => |msg| try client.handleXdgSurface(msg),
             .xdg_toplevel => |msg| try client.handleXdgToplevel(msg),
             .xdg_popup => |_| return error.NotImplemented,
@@ -793,8 +798,67 @@ pub const Client = struct {
                 try client.wl_display.sendDeleteId(msg.xdg_wm_base.id);
                 client.unregister(.{ .xdg_wm_base = msg.xdg_wm_base });
             },
-            .create_positioner => |_| return error.NotImplemented,
+            .create_positioner => |msg| {
+                const positioner_ptr = try client.positioners.createPtr();
+                errdefer client.positioners.destroy(positioner_ptr);
+
+                const xdg_positioner = wl.XdgPositioner.init(msg.id, &client.wire, 0, positioner_ptr);
+                try client.register(.{ .xdg_positioner = xdg_positioner });
+
+                positioner_ptr.* = Positioner.init(client, xdg_positioner);
+            },
             .pong => |_| return error.NotImplemented,
+        }
+    }
+
+    pub fn handleXdgPositioner(client: *Client, message: wl.XdgPositioner.Message) !void {
+        switch (message) {
+            .destroy => |msg| {
+                const xdg_positioner = msg.xdg_positioner;
+                log.info("xdg_positioner.destroy xdg_positioner@{}", .{xdg_positioner.id});
+                const positioner: *Positioner = xdg_positioner.resource;
+
+                client.positioners.destroy(positioner);
+
+                try client.wl_display.sendDeleteId(xdg_positioner.id);
+                client.unregister(.{ .xdg_positioner = xdg_positioner });
+            },
+            .set_size => |msg| {
+                const positioner: *Positioner = msg.xdg_positioner.resource;
+
+                positioner.width = msg.width;
+                positioner.height = msg.height;
+            },
+            .set_anchor_rect => |msg| {
+                const positioner: *Positioner = msg.xdg_positioner.resource;
+
+                positioner.anchor_rect = .{
+                    .x = msg.x,
+                    .y = msg.y,
+                    .width = msg.width,
+                    .height = msg.width,
+                };
+            },
+            .set_anchor => |msg| {
+                const positioner: *Positioner = msg.xdg_positioner.resource;
+                positioner.anchor = msg.anchor;
+            },
+            .set_gravity => |msg| {
+                const positioner: *Positioner = msg.xdg_positioner.resource;
+                positioner.gravity = msg.gravity;
+            },
+            .set_constraint_adjustment => |msg| {
+                const positioner: *Positioner = msg.xdg_positioner.resource;
+                positioner.constraint_adjustment = @bitCast(msg.constraint_adjustment);
+            },
+            .set_offset => |msg| {
+                const positioner: *Positioner = msg.xdg_positioner.resource;
+                positioner.x = msg.x;
+                positioner.y = msg.y;
+            },
+            .set_reactive => |_| unreachable,
+            .set_parent_size => |_| unreachable,
+            .set_parent_configure => |_| unreachable,
         }
     }
 

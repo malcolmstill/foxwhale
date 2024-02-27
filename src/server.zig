@@ -12,6 +12,7 @@ const wl = @import("client.zig").wl;
 const Window = @import("resource/window.zig").Window;
 const Buffer = @import("resource/buffer.zig").Buffer;
 const Region = @import("resource/region.zig").Region;
+const Positioner = @import("resource/positioner.zig").Positioner;
 const ShmPool = @import("resource/shm_pool.zig").ShmPool;
 const Output = @import("resource/output.zig").Output;
 const IterablePool = @import("datastructures/iterable_pool.zig").IterablePool;
@@ -57,6 +58,7 @@ pub const Server = struct {
     // per-client resources:
     windows: SubsetPool(Window, u16),
     regions: SubsetPool(Region, u16),
+    positioners: SubsetPool(Positioner, u16),
     buffers: SubsetPool(Buffer, u16),
     shm_pools: SubsetPool(ShmPool, u16),
     objects: SubsetPool(wl.WlObject, u16),
@@ -97,6 +99,7 @@ pub const Server = struct {
             .outputs = try IterablePool(Output, u5).init(alloc, 31),
             .windows = try SubsetPool(Window, u16).init(alloc, 1024),
             .regions = try SubsetPool(Region, u16).init(alloc, 1024),
+            .positioners = try SubsetPool(Positioner, u16).init(alloc, 1024),
             .buffers = try SubsetPool(Buffer, u16).init(alloc, 1024),
             .shm_pools = try SubsetPool(ShmPool, u16).init(alloc, 1024),
             .objects = try SubsetPool(wl.WlObject, u16).init(alloc, 16384),
@@ -111,6 +114,7 @@ pub const Server = struct {
         server.clients.deinit();
         server.windows.deinit();
         server.regions.deinit();
+        server.positioners.deinit();
         server.buffers.deinit();
         server.shm_pools.deinit();
 
