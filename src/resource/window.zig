@@ -83,7 +83,7 @@ pub const Window = struct {
     }
 
     // flip double-buffered state
-    pub fn flip(window: *Self) void {
+    pub fn flip(window: *Window) void {
         // std.log.warn("flipping: {}\n", .{window.index});
         window.stateIndex +%= 1;
         if (window.current().input_region != window.pending().input_region) {
@@ -119,16 +119,16 @@ pub const Window = struct {
     }
 
     /// Get the buffered state currently displayed
-    pub fn current(window: *Self) *BufferedState {
+    pub fn current(window: *Window) *BufferedState {
         return &window.state[window.stateIndex];
     }
 
     // Get the pending buffered state
-    pub fn pending(window: *Self) *BufferedState {
+    pub fn pending(window: *Window) *BufferedState {
         return &window.state[window.stateIndex +% 1];
     }
 
-    pub fn render(window: *Self, output_width: i32, output_height: i32, renderer: *Renderer, x: i32, y: i32) !void {
+    pub fn render(window: *Window, output_width: i32, output_height: i32, renderer: *Renderer, x: i32, y: i32) !void {
         var it = window.forwardIterator();
 
         while (it.next()) |w| {
@@ -167,7 +167,7 @@ pub const Window = struct {
         }
     }
 
-    pub fn firstCommit(_: *Self) !void {
+    pub fn firstCommit(_: *Window) !void {
         // self.originX = @intToFloat(f32, self.width) / 2.0;
         // self.originY = @intToFloat(f32, self.height) / 2.0;
         // self.scaleX = 0.0;
@@ -196,7 +196,7 @@ pub const Window = struct {
         // seq.start();
     }
 
-    pub fn absoluteX(window: *Self) i32 {
+    pub fn absoluteX(window: *Window) i32 {
         const parent_x = (if (window.parent) |p| p.absoluteX() else 0);
         const window_x = window.current().x;
         var positioner_x: i32 = 0;
@@ -221,7 +221,7 @@ pub const Window = struct {
         return parent_x + window_x + positioner_x - wg_x;
     }
 
-    pub fn absoluteY(window: *Self) i32 {
+    pub fn absoluteY(window: *Window) i32 {
         const parent_y = (if (window.parent) |p| p.absoluteY() else 0);
         const window_y = window.current().y;
         var positioner_y: i32 = 0;
@@ -246,7 +246,7 @@ pub const Window = struct {
         return parent_y + window_y + positioner_y - wg_y;
     }
 
-    pub fn frameCallback(window: *Self) !void {
+    pub fn frameCallback(window: *Window) !void {
         if (window.ready_for_callback == false) return;
         defer window.ready_for_callback = false;
 
@@ -390,14 +390,14 @@ pub const Window = struct {
         }
     };
 
-    pub fn subwindowIterator(window: *Self) SubwindowIterator {
+    pub fn subwindowIterator(window: *Window) SubwindowIterator {
         return SubwindowIterator{
             .current = window,
             .parent = window,
         };
     }
 
-    pub fn forwardIterator(window: *Self) SubwindowIterator {
+    pub fn forwardIterator(window: *Window) SubwindowIterator {
         var backward_it = window.subwindowIterator();
         var rear: ?*Window = null;
         while (backward_it.prev()) |p| {
@@ -410,7 +410,7 @@ pub const Window = struct {
         };
     }
 
-    pub fn backwardIterator(window: *Self) SubwindowIterator {
+    pub fn backwardIterator(window: *Window) SubwindowIterator {
         var forward_it = window.subwindowIterator();
         var front: ?*Window = null;
         while (forward_it.next()) |p| {
@@ -424,7 +424,7 @@ pub const Window = struct {
     }
 
     // detach window from parent / siblings. Note this detaches the pending state only
-    pub fn detach(window: *Self) void {
+    pub fn detach(window: *Window) void {
         const maybe_prev = window.pending().siblings.prev;
         const maybe_next = window.pending().siblings.next;
 
@@ -524,7 +524,7 @@ pub const Window = struct {
         window.insertBelow(reference);
     }
 
-    pub fn activate(window: *Self) !void {
+    pub fn activate(window: *Window) !void {
         log.info("activate", .{});
         var client = window.client;
 
@@ -550,7 +550,7 @@ pub const Window = struct {
         }
     }
 
-    pub fn deactivate(window: *Self) !void {
+    pub fn deactivate(window: *Window) !void {
         log.info("deactivate", .{});
         var client = window.client;
 
@@ -594,7 +594,7 @@ pub const Window = struct {
         );
     }
 
-    pub fn pointerLeave(window: *Self) !void {
+    pub fn pointerLeave(window: *Window) !void {
         const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 
@@ -636,7 +636,7 @@ pub const Window = struct {
     /// - Detaches the window from any sibling windows
     /// - Removes the window from its view (where one exists).
     /// - Releases the window's texture (where one exists).
-    pub fn deinit(window: *Self) void {
+    pub fn deinit(window: *Window) void {
         log.info("deinit (client@{} wl_surface@{})", .{ window.client.conn.stream.handle, window.wl_surface.id });
         // Before doing anything else, such as deiniting the parent
         // detach this surface from its siblings
