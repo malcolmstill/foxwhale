@@ -248,33 +248,33 @@ pub const Client = struct {
 
     pub fn dispatch(client: *Client, message: wl.WlMessage) !void {
         switch (message) {
-            .wl_display => |msg| try client.handleWlDisplay(msg),
-            .wl_registry => |msg| try client.handleWlRegistry(msg),
+            .wl_display => |msg| try client.dispatchWlDisplay(msg),
+            .wl_registry => |msg| try client.dispatchWlRegistry(msg),
             .wl_callback => |_| return error.CallbackHasNoRequests,
-            .wl_compositor => |msg| try client.handleWlCompositor(msg),
-            .wl_shm_pool => |msg| try client.handleWlShmPool(msg),
-            .wl_shm => |msg| try client.handleWlShm(msg),
-            .wl_buffer => |msg| try client.handleWlBuffer(msg),
+            .wl_compositor => |msg| try client.dispatchWlCompositor(msg),
+            .wl_shm_pool => |msg| try client.dispatchWlShmPool(msg),
+            .wl_shm => |msg| try client.dispatchWlShm(msg),
+            .wl_buffer => |msg| try client.dispatchWlBuffer(msg),
             .wl_data_offer => |_| return error.NotImplemented,
             .wl_data_source => |_| return error.NotImplemented,
             .wl_data_device => |_| return error.NotImplemented,
             .wl_data_device_manager => |_| return error.NotImplemented,
             .wl_shell => |_| return error.NotImplemented,
             .wl_shell_surface => |_| return error.NotImplemented,
-            .wl_surface => |msg| try client.handleWlSurface(msg),
-            .wl_seat => |msg| try client.handleWlSeat(msg),
-            .wl_pointer => |msg| try client.handleWlPointer(msg),
+            .wl_surface => |msg| try client.dispatchWlSurface(msg),
+            .wl_seat => |msg| try client.dispatchWlSeat(msg),
+            .wl_pointer => |msg| try client.dispatchWlPointer(msg),
             .wl_keyboard => |_| return error.NotImplemented,
             .wl_touch => |_| return error.NotImplemented,
             .wl_output => |_| return error.NotImplemented,
-            .wl_region => |msg| try client.handleWlRegion(msg),
-            .wl_subcompositor => |msg| try client.handleWlSubcompositor(msg),
-            .wl_subsurface => |msg| try client.handleWlSubsurface(msg),
-            .xdg_wm_base => |msg| try client.handleXdgWmBase(msg),
-            .xdg_positioner => |msg| try client.handleXdgPositioner(msg),
-            .xdg_surface => |msg| try client.handleXdgSurface(msg),
-            .xdg_toplevel => |msg| try client.handleXdgToplevel(msg),
-            .xdg_popup => |msg| try client.handleXdgPopup(msg),
+            .wl_region => |msg| try client.dispatchWlRegion(msg),
+            .wl_subcompositor => |msg| try client.dispatchWlSubcompositor(msg),
+            .wl_subsurface => |msg| try client.dispatchWlSubsurface(msg),
+            .xdg_wm_base => |msg| try client.dispatchXdgWmBase(msg),
+            .xdg_positioner => |msg| try client.dispatchXdgPositioner(msg),
+            .xdg_surface => |msg| try client.dispatchXdgSurface(msg),
+            .xdg_toplevel => |msg| try client.dispatchXdgToplevel(msg),
+            .xdg_popup => |msg| try client.dispatchXdgPopup(msg),
             .zwp_linux_dmabuf_v1 => |_| return error.NotImplemented,
             .zwp_linux_buffer_params_v1 => |_| return error.NotImplemented,
             .zwp_linux_dmabuf_feedback_v1 => |_| return error.NotImplemented,
@@ -282,7 +282,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlDisplay(client: *Client, message: wl.WlDisplay.Message) !void {
+    pub fn dispatchWlDisplay(client: *Client, message: wl.WlDisplay.Message) !void {
         switch (message) {
             .get_registry => |msg| {
                 const wl_registry = wl.WlRegistry.init(msg.registry, &client.wire, 0, null);
@@ -314,7 +314,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlRegistry(client: *Client, message: wl.WlRegistry.Message) !void {
+    pub fn dispatchWlRegistry(client: *Client, message: wl.WlRegistry.Message) !void {
         switch (message) {
             .bind => |msg| {
                 log.info("Client requested iterface {s}", .{msg.name_string});
@@ -391,7 +391,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlCompositor(client: *Client, message: wl.WlCompositor.Message) !void {
+    pub fn dispatchWlCompositor(client: *Client, message: wl.WlCompositor.Message) !void {
         switch (message) {
             .create_surface => |msg| {
                 const window = try client.windows.createPtr();
@@ -419,7 +419,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlShmPool(client: *Client, message: wl.WlShmPool.Message) !void {
+    pub fn dispatchWlShmPool(client: *Client, message: wl.WlShmPool.Message) !void {
         switch (message) {
             .create_buffer => |msg| {
                 const buffer = try client.buffers.createPtr();
@@ -450,7 +450,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlShm(client: *Client, message: wl.WlShm.Message) !void {
+    pub fn dispatchWlShm(client: *Client, message: wl.WlShm.Message) !void {
         switch (message) {
             .create_pool => |msg| {
                 const shm_pool = try client.shm_pools.createPtr();
@@ -465,7 +465,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlBuffer(client: *Client, message: wl.WlBuffer.Message) !void {
+    pub fn dispatchWlBuffer(client: *Client, message: wl.WlBuffer.Message) !void {
         switch (message) {
             .destroy => |msg| {
                 const buffer: *Buffer = msg.wl_buffer.resource;
@@ -482,7 +482,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlSurface(client: *Client, message: wl.WlSurface.Message) !void {
+    pub fn dispatchWlSurface(client: *Client, message: wl.WlSurface.Message) !void {
         switch (message) {
             .commit => |msg| {
                 std.debug.assert(msg.wl_surface.resource.client == client);
@@ -640,7 +640,7 @@ pub const Client = struct {
 
     // wl_pointer
 
-    pub fn handleWlPointer(_: *Client, message: wl.WlPointer.Message) !void {
+    pub fn dispatchWlPointer(_: *Client, message: wl.WlPointer.Message) !void {
         switch (message) {
             .set_cursor => |_| {},
             .release => |_| {},
@@ -648,7 +648,7 @@ pub const Client = struct {
     }
 
     // wl_seat
-    pub fn handleWlSeat(client: *Client, message: wl.WlSeat.Message) !void {
+    pub fn dispatchWlSeat(client: *Client, message: wl.WlSeat.Message) !void {
         switch (message) {
             .get_pointer => |msg| {
                 const wl_pointer = wl.WlPointer.init(msg.id, &client.wire, 0, null);
@@ -675,7 +675,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlRegion(client: *Client, message: wl.WlRegion.Message) !void {
+    pub fn dispatchWlRegion(client: *Client, message: wl.WlRegion.Message) !void {
         switch (message) {
             .destroy => |msg| {
                 const wl_region = msg.wl_region;
@@ -713,7 +713,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlSubcompositor(client: *Client, message: wl.WlSubcompositor.Message) !void {
+    pub fn dispatchWlSubcompositor(client: *Client, message: wl.WlSubcompositor.Message) !void {
         switch (message) {
             .destroy => |msg| {
                 client.wl_subcompositor = null;
@@ -738,7 +738,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleWlSubsurface(client: *Client, message: wl.WlSubsurface.Message) !void {
+    pub fn dispatchWlSubsurface(client: *Client, message: wl.WlSubsurface.Message) !void {
         switch (message) {
             .destroy => |msg| {
                 const window: *Window = msg.wl_subsurface.resource;
@@ -772,7 +772,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleXdgWmBase(client: *Client, message: wl.XdgWmBase.Message) !void {
+    pub fn dispatchXdgWmBase(client: *Client, message: wl.XdgWmBase.Message) !void {
         switch (message) {
             .get_xdg_surface => |msg| {
                 const window: *Window = msg.surface.resource;
@@ -799,7 +799,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleXdgPositioner(client: *Client, message: wl.XdgPositioner.Message) !void {
+    pub fn dispatchXdgPositioner(client: *Client, message: wl.XdgPositioner.Message) !void {
         switch (message) {
             .destroy => |msg| {
                 const xdg_positioner = msg.xdg_positioner;
@@ -850,7 +850,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleXdgSurface(client: *Client, message: wl.XdgSurface.Message) !void {
+    pub fn dispatchXdgSurface(client: *Client, message: wl.XdgSurface.Message) !void {
         switch (message) {
             .get_toplevel => |msg| {
                 const window: *Window = msg.xdg_surface.resource;
@@ -943,7 +943,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleXdgToplevel(client: *Client, message: wl.XdgToplevel.Message) !void {
+    pub fn dispatchXdgToplevel(client: *Client, message: wl.XdgToplevel.Message) !void {
         switch (message) {
             .set_title => |msg| {
                 const window: *Window = msg.xdg_toplevel.resource;
@@ -1047,7 +1047,7 @@ pub const Client = struct {
         }
     }
 
-    pub fn handleXdgPopup(client: *Client, message: wl.XdgPopup.Message) !void {
+    pub fn dispatchXdgPopup(client: *Client, message: wl.XdgPopup.Message) !void {
         switch (message) {
             .destroy => |msg| {
                 const popup_window: *Window = msg.xdg_popup.resource;
