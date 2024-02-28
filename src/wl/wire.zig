@@ -12,7 +12,7 @@ const BUFFER_SIZE = 4096;
 
 pub fn Wire(comptime WlMessage: type) type {
     return struct {
-        fd: i32 = -1,
+        fd: i32,
         rx: io.FixedBufferStream([]u8) = undefined,
         tx: io.FixedBufferStream([]u8) = undefined,
         rx_buf: [BUFFER_SIZE]u8 = [_]u8{0} ** BUFFER_SIZE,
@@ -25,9 +25,7 @@ pub fn Wire(comptime WlMessage: type) type {
         const Self = @This();
 
         pub fn init(fd: i32) Self {
-            return Self{
-                .fd = fd,
-            };
+            return .{ .fd = fd };
         }
 
         const Header = struct {
@@ -71,8 +69,6 @@ pub fn Wire(comptime WlMessage: type) type {
 
             // We need to have read a full message
             if (remaining < header.length) return null;
-
-            // var object = @field(objects, field)(header.id) orelse return error.CouldntFindExpectedId;
 
             var object = @call(.auto, @field(C, field), .{ objects, header.id }) orelse return error.CouldntFindExpectedId;
 
