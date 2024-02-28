@@ -234,7 +234,10 @@ def generate_dispatch_function(interface, receiveType, local_enum_map, global_en
 def generate_msg(i, receive, interface):
     enumName = f"{interface.attrib['name']}_{receive.attrib['name']}"
     messageName = f"{camelCase(receive.attrib['name'])}Message"
-    print(f"")
+    for arg in receive:
+        if arg.tag == "description":
+            generate_description(arg)
+  
     print(f"const {messageName} = struct {{")
     # print(f"// TODO: should we include the interface's Object?")
     print(f"{interface.attrib['name']}: {camelCase(interface.attrib['name'])},")
@@ -351,7 +354,10 @@ def put_type(type):
 
 def generate_description(description):
     desc = description.attrib["summary"]
-    print(f"\t// {desc}")
+    print(f"\n\t/// {desc}")
+    if description.text:
+        for line in description.text.splitlines():
+            print(f"/// {line.strip()}")
 
 def escapename(name):
     if name == "error":
