@@ -218,6 +218,9 @@ def generate_dispatch_function(interface, receiveType, local_enum_map, global_en
         i = 0
         for child in interface:
             if child.tag == receiveType:
+                for arg in child:
+                    if arg.tag == "description":
+                        generate_description(arg)
                 print(f"{child.attrib['name']}: {camelCase(child.attrib['name'])}Message,")
                 i = i + 1
         print(f"}};")
@@ -249,6 +252,9 @@ def generate_msg(i, receive, interface):
 def generate_msg_field(arg):
     name = arg.attrib["name"]
     atype = lookup_type(arg.attrib["type"], arg)
+    if "summary"in arg.attrib:
+        summary = arg.attrib["summary"]
+        print(f"\t\t\t\t /// {summary}")
     print(f"\t\t\t\t{name}: {atype},")
 
 def fix_wl_registry(interface, request):
