@@ -212,7 +212,7 @@ pub const Client = struct {
     };
 
     pub fn iterator(client: *Client) SubsystemIterator {
-        return SubsystemIterator{ .client = Iterator.init(client) };
+        return .{ .client = Iterator.init(client) };
     }
 
     pub fn register(client: *Client, object: wl.WlObject) !void {
@@ -234,11 +234,6 @@ pub const Client = struct {
         std.debug.assert(false);
     }
 
-    pub fn removeWindow(client: *Client, window: *Window) void {
-        client.windows.destroy(window);
-        client.unregister(.{ .wl_surface = window.wl_surface });
-    }
-
     // FIXME: we seem to be calling removeRegion when flipping window
     // state. However, we are also calling (conditionally) destory
     // and unregister in `.destroy` of `wl_region`.
@@ -249,16 +244,6 @@ pub const Client = struct {
     pub fn removeRegion(_: *Client, _: *Region) void {
         // client.regions.destroy(region);
         // client.unregister(.{ .wl_region = region.wl_region });
-    }
-
-    pub fn removeShmPool(client: *Client, shm_pool: *ShmPool) void {
-        client.shm_pools.destroy(shm_pool);
-        client.unregister(.{ .wl_shm_pool = shm_pool.wl_shm_pool });
-    }
-
-    pub fn removeBuffer(client: *Client, buffer: *Buffer) void {
-        client.buffers.destroy(buffer);
-        client.unregister(.{ .wl_buffer = buffer.wl_buffer });
     }
 
     pub fn dispatch(client: *Client, message: wl.WlMessage) !void {
