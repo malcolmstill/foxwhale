@@ -38,7 +38,12 @@ pub fn Wayland(comptime ResourceMap: struct {
     return struct {
         pub const Wire = WireFn(WlMessage);
 
-        // wl_display
+        /// wl_display
+        /// core global object
+        ///
+        /// The core global object.  This is a special singleton object.  It
+        /// is used for internal Wayland protocol features.
+        ///
         pub const WlDisplay = struct {
             wire: *Wire,
             id: u32,
@@ -199,7 +204,30 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_registry
+        /// wl_registry
+        /// global registry object
+        ///
+        /// The singleton global registry object.  The server has a number of
+        /// global objects that are available to all clients.  These objects
+        /// typically represent an actual object in the server (for example,
+        /// an input device) or they are singleton objects that provide
+        /// extension functionality.
+        ///
+        /// When a client creates a registry object, the registry object
+        /// will emit a global event for each global currently in the
+        /// registry.  Globals come and go as a result of device or
+        /// monitor hotplugs, reconfiguration or other events, and the
+        /// registry will send out global and global_remove events to
+        /// keep the client up to date with the changes.  To mark the end
+        /// of the initial burst of events, the client can use the
+        /// wl_display.sync request immediately after calling
+        /// wl_display.get_registry.
+        ///
+        /// A client can bind to a global object by using the bind
+        /// request.  This creates a client-side handle that lets the object
+        /// emit events to the client and lets the client invoke requests on
+        /// the object.
+        ///
         pub const WlRegistry = struct {
             wire: *Wire,
             id: u32,
@@ -305,7 +333,12 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_callback
+        /// wl_callback
+        /// callback object
+        ///
+        /// Clients can handle the 'done' event to get notified when
+        /// the related request is done.
+        ///
         pub const WlCallback = struct {
             wire: *Wire,
             id: u32,
@@ -347,7 +380,13 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_compositor
+        /// wl_compositor
+        /// the compositor singleton
+        ///
+        /// A compositor.  This object is a singleton global.  The
+        /// compositor is in charge of combining the contents of multiple
+        /// surfaces into one displayable output.
+        ///
         pub const WlCompositor = struct {
             wire: *Wire,
             id: u32,
@@ -435,7 +474,17 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
         };
 
-        // wl_shm_pool
+        /// wl_shm_pool
+        /// a shared memory pool
+        ///
+        /// The wl_shm_pool object encapsulates a piece of memory shared
+        /// between the compositor and client.  Through the wl_shm_pool
+        /// object, the client can allocate shared memory wl_buffer objects.
+        /// All objects created through the same pool share the same
+        /// underlying mapped memory. Reusing the mapped memory avoids the
+        /// setup/teardown overhead and is useful when interactively resizing
+        /// a surface or for many small buffers.
+        ///
         pub const WlShmPool = struct {
             wire: *Wire,
             id: u32,
@@ -600,7 +649,19 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
         };
 
-        // wl_shm
+        /// wl_shm
+        /// shared memory support
+        ///
+        /// A singleton global object that provides support for shared
+        /// memory.
+        ///
+        /// Clients can create wl_shm_pool objects using the create_pool
+        /// request.
+        ///
+        /// At connection setup time, the wl_shm object emits one or more
+        /// format events to inform clients about the valid pixel formats
+        /// that can be used for buffers.
+        ///
         pub const WlShm = struct {
             wire: *Wire,
             id: u32,
@@ -805,7 +866,20 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_buffer
+        /// wl_buffer
+        /// content for a wl_surface
+        ///
+        /// A buffer provides the content for a wl_surface. Buffers are
+        /// created through factory interfaces such as wl_shm, wp_linux_buffer_params
+        /// (from the linux-dmabuf protocol extension) or similar. It has a width and
+        /// a height and can be attached to a wl_surface, but the mechanism by which a
+        /// client provides and updates the contents is defined by the buffer factory
+        /// interface.
+        ///
+        /// If the buffer uses a format that has an alpha channel, the alpha channel
+        /// is assumed to be premultiplied in the color channels unless otherwise
+        /// specified.
+        ///
         pub const WlBuffer = struct {
             wire: *Wire,
             id: u32,
@@ -887,7 +961,16 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_data_offer
+        /// wl_data_offer
+        /// offer to transfer data
+        ///
+        /// A wl_data_offer represents a piece of data offered for transfer
+        /// by another client (the source client).  It is used by the
+        /// copy-and-paste and drag-and-drop mechanisms.  The offer
+        /// describes the different mime types that the data can be
+        /// converted to and provides the mechanism for transferring the
+        /// data directly from the source client.
+        ///
         pub const WlDataOffer = struct {
             wire: *Wire,
             id: u32,
@@ -1271,7 +1354,14 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_data_source
+        /// wl_data_source
+        /// offer to transfer data
+        ///
+        /// The wl_data_source object is the source side of a wl_data_offer.
+        /// It is created by the source client in a data transfer and
+        /// provides a way to describe the offered data and a way to respond
+        /// to requests to transfer the data.
+        ///
         pub const WlDataSource = struct {
             wire: *Wire,
             id: u32,
@@ -1528,7 +1618,15 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_data_device
+        /// wl_data_device
+        /// data transfer device
+        ///
+        /// There is one wl_data_device per seat which can be obtained
+        /// from the global wl_data_device_manager singleton.
+        ///
+        /// A wl_data_device provides access to inter-client data transfer
+        /// mechanisms such as copy-and-paste and drag-and-drop.
+        ///
         pub const WlDataDevice = struct {
             wire: *Wire,
             id: u32,
@@ -1826,7 +1924,20 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_data_device_manager
+        /// wl_data_device_manager
+        /// data transfer interface
+        ///
+        /// The wl_data_device_manager is a singleton global object that
+        /// provides access to inter-client data transfer mechanisms such as
+        /// copy-and-paste and drag-and-drop.  These mechanisms are tied to
+        /// a wl_seat and this interface lets a client get a wl_data_device
+        /// corresponding to a wl_seat.
+        ///
+        /// Depending on the version bound, the objects created from the bound
+        /// wl_data_device_manager object will have different requirements for
+        /// functioning properly. See wl_data_source.set_actions,
+        /// wl_data_offer.accept and wl_data_offer.finish for details.
+        ///
         pub const WlDataDeviceManager = struct {
             wire: *Wire,
             id: u32,
@@ -1929,7 +2040,18 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
         };
 
-        // wl_shell
+        /// wl_shell
+        /// create desktop-style surfaces
+        ///
+        /// This interface is implemented by servers that provide
+        /// desktop-style user interfaces.
+        ///
+        /// It allows clients to associate a wl_shell_surface with
+        /// a basic surface.
+        ///
+        /// Note! This protocol is deprecated and not intended for production use.
+        /// For desktop-style user interfaces, use xdg_shell.
+        ///
         pub const WlShell = struct {
             wire: *Wire,
             id: u32,
@@ -2009,7 +2131,21 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
         };
 
-        // wl_shell_surface
+        /// wl_shell_surface
+        /// desktop-style metadata interface
+        ///
+        /// An interface that may be implemented by a wl_surface, for
+        /// implementations that provide a desktop-style user interface.
+        ///
+        /// It provides requests to treat surfaces like toplevel, fullscreen
+        /// or popup windows, move, resize or maximize them, associate
+        /// metadata like title and class, etc.
+        ///
+        /// On the server side the object is automatically destroyed when
+        /// the related wl_surface is destroyed. On the client side,
+        /// wl_shell_surface_destroy() must be called before destroying
+        /// the wl_surface object.
+        ///
         pub const WlShellSurface = struct {
             wire: *Wire,
             id: u32,
@@ -2644,7 +2780,51 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_surface
+        /// wl_surface
+        /// an onscreen surface
+        ///
+        /// A surface is a rectangular area that may be displayed on zero
+        /// or more outputs, and shown any number of times at the compositor's
+        /// discretion. They can present wl_buffers, receive user input, and
+        /// define a local coordinate system.
+        ///
+        /// The size of a surface (and relative positions on it) is described
+        /// in surface-local coordinates, which may differ from the buffer
+        /// coordinates of the pixel content, in case a buffer_transform
+        /// or a buffer_scale is used.
+        ///
+        /// A surface without a "role" is fairly useless: a compositor does
+        /// not know where, when or how to present it. The role is the
+        /// purpose of a wl_surface. Examples of roles are a cursor for a
+        /// pointer (as set by wl_pointer.set_cursor), a drag icon
+        /// (wl_data_device.start_drag), a sub-surface
+        /// (wl_subcompositor.get_subsurface), and a window as defined by a
+        /// shell protocol (e.g. wl_shell.get_shell_surface).
+        ///
+        /// A surface can have only one role at a time. Initially a
+        /// wl_surface does not have a role. Once a wl_surface is given a
+        /// role, it is set permanently for the whole lifetime of the
+        /// wl_surface object. Giving the current role again is allowed,
+        /// unless explicitly forbidden by the relevant interface
+        /// specification.
+        ///
+        /// Surface roles are given by requests in other interfaces such as
+        /// wl_pointer.set_cursor. The request should explicitly mention
+        /// that this request gives a role to a wl_surface. Often, this
+        /// request also creates a new protocol object that represents the
+        /// role and adds additional functionality to wl_surface. When a
+        /// client wants to destroy a wl_surface, they must destroy this 'role
+        /// object' before the wl_surface.
+        ///
+        /// Destroying the role object does not remove the role from the
+        /// wl_surface, but it may stop the wl_surface from "playing the role".
+        /// For instance, if a wl_subsurface object is destroyed, the wl_surface
+        /// it was created for will be unmapped and forget its position and
+        /// z-order. It is allowed to create a wl_subsurface for the same
+        /// wl_surface again, but it is not allowed to use the wl_surface as
+        /// a cursor (cursor is a different role than sub-surface, and role
+        /// switching is not allowed).
+        ///
         pub const WlSurface = struct {
             wire: *Wire,
             id: u32,
@@ -3565,7 +3745,14 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_seat
+        /// wl_seat
+        /// group of input devices
+        ///
+        /// A seat is a group of keyboards, pointer and touch devices. This
+        /// object is published as a global during start up, or when such a
+        /// device is hot plugged.  A seat typically has a pointer and
+        /// maintains a keyboard focus and a pointer focus.
+        ///
         pub const WlSeat = struct {
             wire: *Wire,
             id: u32,
@@ -3814,7 +4001,18 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_pointer
+        /// wl_pointer
+        /// pointer input device
+        ///
+        /// The wl_pointer interface represents one or more input devices,
+        /// such as mice, which control the pointer location and pointer_focus
+        /// of a seat.
+        ///
+        /// The wl_pointer interface generates motion, enter and leave
+        /// events for the surfaces that the pointer is located over,
+        /// and button and axis events for button presses, button releases
+        /// and scrolling.
+        ///
         pub const WlPointer = struct {
             wire: *Wire,
             id: u32,
@@ -4237,7 +4435,12 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_keyboard
+        /// wl_keyboard
+        /// keyboard input device
+        ///
+        /// The wl_keyboard interface represents one or more keyboards
+        /// associated with a seat.
+        ///
         pub const WlKeyboard = struct {
             wire: *Wire,
             id: u32,
@@ -4401,7 +4604,18 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_touch
+        /// wl_touch
+        /// touchscreen input device
+        ///
+        /// The wl_touch interface represents a touchscreen
+        /// associated with a seat.
+        ///
+        /// Touch interactions can consist of one or more contacts.
+        /// For each contact, a series of events is generated, starting
+        /// with a down event, followed by zero or more motion events,
+        /// and ending with an up event. Events relating to the same
+        /// contact point can be identified by the ID of the sequence.
+        ///
         pub const WlTouch = struct {
             wire: *Wire,
             id: u32,
@@ -4589,7 +4803,16 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_output
+        /// wl_output
+        /// compositor output region
+        ///
+        /// An output describes part of the compositor geometry.  The
+        /// compositor works in the 'compositor coordinate system' and an
+        /// output corresponds to a rectangular area in that space that is
+        /// actually visible.  This typically corresponds to a monitor that
+        /// displays part of the compositor space.  This object is published
+        /// as global during start up, or when a monitor is hotplugged.
+        ///
         pub const WlOutput = struct {
             wire: *Wire,
             id: u32,
@@ -4847,7 +5070,14 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // wl_region
+        /// wl_region
+        /// region interface
+        ///
+        /// A region object describes an area.
+        ///
+        /// Region objects are used to describe the opaque and input
+        /// regions of a surface.
+        ///
         pub const WlRegion = struct {
             wire: *Wire,
             id: u32,
@@ -4982,7 +5212,29 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
         };
 
-        // wl_subcompositor
+        /// wl_subcompositor
+        /// sub-surface compositing
+        ///
+        /// The global interface exposing sub-surface compositing capabilities.
+        /// A wl_surface, that has sub-surfaces associated, is called the
+        /// parent surface. Sub-surfaces can be arbitrarily nested and create
+        /// a tree of sub-surfaces.
+        ///
+        /// The root surface in a tree of sub-surfaces is the main
+        /// surface. The main surface cannot be a sub-surface, because
+        /// sub-surfaces must always have a parent.
+        ///
+        /// A main surface with its sub-surfaces forms a (compound) window.
+        /// For window management purposes, this set of wl_surface objects is
+        /// to be considered as a single window, and it should also behave as
+        /// such.
+        ///
+        /// The aim of sub-surfaces is to offload some of the compositing work
+        /// within a window from clients to the compositor. A prime example is
+        /// a video player with decorations and video in separate wl_surface
+        /// objects. This should allow the compositor to pass YUV video buffer
+        /// processing to dedicated overlay hardware when possible.
+        ///
         pub const WlSubcompositor = struct {
             wire: *Wire,
             id: u32,
@@ -5116,7 +5368,59 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
         };
 
-        // wl_subsurface
+        /// wl_subsurface
+        /// sub-surface interface to a wl_surface
+        ///
+        /// An additional interface to a wl_surface object, which has been
+        /// made a sub-surface. A sub-surface has one parent surface. A
+        /// sub-surface's size and position are not limited to that of the parent.
+        /// Particularly, a sub-surface is not automatically clipped to its
+        /// parent's area.
+        ///
+        /// A sub-surface becomes mapped, when a non-NULL wl_buffer is applied
+        /// and the parent surface is mapped. The order of which one happens
+        /// first is irrelevant. A sub-surface is hidden if the parent becomes
+        /// hidden, or if a NULL wl_buffer is applied. These rules apply
+        /// recursively through the tree of surfaces.
+        ///
+        /// The behaviour of a wl_surface.commit request on a sub-surface
+        /// depends on the sub-surface's mode. The possible modes are
+        /// synchronized and desynchronized, see methods
+        /// wl_subsurface.set_sync and wl_subsurface.set_desync. Synchronized
+        /// mode caches the wl_surface state to be applied when the parent's
+        /// state gets applied, and desynchronized mode applies the pending
+        /// wl_surface state directly. A sub-surface is initially in the
+        /// synchronized mode.
+        ///
+        /// Sub-surfaces also have another kind of state, which is managed by
+        /// wl_subsurface requests, as opposed to wl_surface requests. This
+        /// state includes the sub-surface position relative to the parent
+        /// surface (wl_subsurface.set_position), and the stacking order of
+        /// the parent and its sub-surfaces (wl_subsurface.place_above and
+        /// .place_below). This state is applied when the parent surface's
+        /// wl_surface state is applied, regardless of the sub-surface's mode.
+        /// As the exception, set_sync and set_desync are effective immediately.
+        ///
+        /// The main surface can be thought to be always in desynchronized mode,
+        /// since it does not have a parent in the sub-surfaces sense.
+        ///
+        /// Even if a sub-surface is in desynchronized mode, it will behave as
+        /// in synchronized mode, if its parent surface behaves as in
+        /// synchronized mode. This rule is applied recursively throughout the
+        /// tree of surfaces. This means, that one can set a sub-surface into
+        /// synchronized mode, and then assume that all its child and grand-child
+        /// sub-surfaces are synchronized, too, without explicitly setting them.
+        ///
+        /// If the wl_surface associated with the wl_subsurface is destroyed, the
+        /// wl_subsurface object becomes inert. Note, that destroying either object
+        /// takes effect immediately. If you need to synchronize the removal
+        /// of a sub-surface to the parent surface update, unmap the sub-surface
+        /// first by attaching a NULL wl_buffer, update parent, and then destroy
+        /// the sub-surface.
+        ///
+        /// If the parent wl_surface object is destroyed, the sub-surface is
+        /// unmapped.
+        ///
         pub const WlSubsurface = struct {
             wire: *Wire,
             id: u32,
@@ -5442,7 +5746,15 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
         };
 
-        // xdg_wm_base
+        /// xdg_wm_base
+        /// create desktop-style surfaces
+        ///
+        /// The xdg_wm_base interface is exposed as a global object enabling clients
+        /// to turn their wl_surfaces into windows in a desktop environment. It
+        /// defines the basic functionality needed for clients and the compositor to
+        /// create windows that can be dragged, resized, maximized, etc, as well as
+        /// creating transient windows such as popup menus.
+        ///
         pub const XdgWmBase = struct {
             wire: *Wire,
             id: u32,
@@ -5650,7 +5962,29 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // xdg_positioner
+        /// xdg_positioner
+        /// child surface positioner
+        ///
+        /// The xdg_positioner provides a collection of rules for the placement of a
+        /// child surface relative to a parent surface. Rules can be defined to ensure
+        /// the child surface remains within the visible area's borders, and to
+        /// specify how the child surface changes its position, such as sliding along
+        /// an axis, or flipping around a rectangle. These positioner-created rules are
+        /// constrained by the requirement that a child surface must intersect with or
+        /// be at least partially adjacent to its parent surface.
+        ///
+        /// See the various requests for details about possible rules.
+        ///
+        /// At the time of the request, the compositor makes a copy of the rules
+        /// specified by the xdg_positioner. Thus, after the request is complete the
+        /// xdg_positioner object can be destroyed or reused; further changes to the
+        /// object will have no effect on previous usages.
+        ///
+        /// For an xdg_positioner object to be considered complete, it must have a
+        /// non-zero size set by set_size, and a non-zero anchor rectangle set by
+        /// set_anchor_rect. Passing an incomplete xdg_positioner object when
+        /// positioning a surface raises an error.
+        ///
         pub const XdgPositioner = struct {
             wire: *Wire,
             id: u32,
@@ -6127,7 +6461,55 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
         };
 
-        // xdg_surface
+        /// xdg_surface
+        /// desktop user interface surface base interface
+        ///
+        /// An interface that may be implemented by a wl_surface, for
+        /// implementations that provide a desktop-style user interface.
+        ///
+        /// It provides a base set of functionality required to construct user
+        /// interface elements requiring management by the compositor, such as
+        /// toplevel windows, menus, etc. The types of functionality are split into
+        /// xdg_surface roles.
+        ///
+        /// Creating an xdg_surface does not set the role for a wl_surface. In order
+        /// to map an xdg_surface, the client must create a role-specific object
+        /// using, e.g., get_toplevel, get_popup. The wl_surface for any given
+        /// xdg_surface can have at most one role, and may not be assigned any role
+        /// not based on xdg_surface.
+        ///
+        /// A role must be assigned before any other requests are made to the
+        /// xdg_surface object.
+        ///
+        /// The client must call wl_surface.commit on the corresponding wl_surface
+        /// for the xdg_surface state to take effect.
+        ///
+        /// Creating an xdg_surface from a wl_surface which has a buffer attached or
+        /// committed is a client error, and any attempts by a client to attach or
+        /// manipulate a buffer prior to the first xdg_surface.configure call must
+        /// also be treated as errors.
+        ///
+        /// After creating a role-specific object and setting it up, the client must
+        /// perform an initial commit without any buffer attached. The compositor
+        /// will reply with an xdg_surface.configure event. The client must
+        /// acknowledge it and is then allowed to attach a buffer to map the surface.
+        ///
+        /// Mapping an xdg_surface-based role surface is defined as making it
+        /// possible for the surface to be shown by the compositor. Note that
+        /// a mapped surface is not guaranteed to be visible once it is mapped.
+        ///
+        /// For an xdg_surface to be mapped by the compositor, the following
+        /// conditions must be met:
+        /// (1) the client has assigned an xdg_surface-based role to the surface
+        /// (2) the client has set and committed the xdg_surface state and the
+        /// role-dependent state to the surface
+        /// (3) the client has committed a buffer to the surface
+        ///
+        /// A newly-unmapped surface is considered to have met condition (1) out
+        /// of the 3 required conditions for mapping a surface if its role surface
+        /// has not been destroyed, i.e. the client must perform the initial commit
+        /// again before attaching a buffer.
+        ///
         pub const XdgSurface = struct {
             wire: *Wire,
             id: u32,
@@ -6456,7 +6838,27 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // xdg_toplevel
+        /// xdg_toplevel
+        /// toplevel surface
+        ///
+        /// This interface defines an xdg_surface role which allows a surface to,
+        /// among other things, set window-like properties such as maximize,
+        /// fullscreen, and minimize, set application-specific metadata like title and
+        /// id, and well as trigger user interactive operations such as interactive
+        /// resize and move.
+        ///
+        /// Unmapping an xdg_toplevel means that the surface cannot be shown
+        /// by the compositor until it is explicitly mapped again.
+        /// All active operations (e.g., move, resize) are canceled and all
+        /// attributes (e.g. title, state, stacking, ...) are discarded for
+        /// an xdg_toplevel surface when it is unmapped. The xdg_toplevel returns to
+        /// the state it had right after xdg_surface.get_toplevel. The client
+        /// can re-map the toplevel by perfoming a commit without any buffer
+        /// attached, waiting for a configure event and handling it as usual (see
+        /// xdg_surface description).
+        ///
+        /// Attaching a null buffer to a toplevel unmaps the surface.
+        ///
         pub const XdgToplevel = struct {
             wire: *Wire,
             id: u32,
@@ -7478,7 +7880,34 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // xdg_popup
+        /// xdg_popup
+        /// short-lived, popup surfaces for menus
+        ///
+        /// A popup surface is a short-lived, temporary surface. It can be used to
+        /// implement for example menus, popovers, tooltips and other similar user
+        /// interface concepts.
+        ///
+        /// A popup can be made to take an explicit grab. See xdg_popup.grab for
+        /// details.
+        ///
+        /// When the popup is dismissed, a popup_done event will be sent out, and at
+        /// the same time the surface will be unmapped. See the xdg_popup.popup_done
+        /// event for details.
+        ///
+        /// Explicitly destroying the xdg_popup object will also dismiss the popup and
+        /// unmap the surface. Clients that want to dismiss the popup when another
+        /// surface of their own is clicked should dismiss the popup using the destroy
+        /// request.
+        ///
+        /// A newly created xdg_popup will be stacked on top of all previously created
+        /// xdg_popup surfaces associated with the same xdg_toplevel.
+        ///
+        /// The parent of an xdg_popup must be mapped (see the xdg_surface
+        /// description) before the xdg_popup itself.
+        ///
+        /// The client must call wl_surface.commit on the corresponding wl_surface
+        /// for the xdg_popup state to take effect.
+        ///
         pub const XdgPopup = struct {
             wire: *Wire,
             id: u32,
@@ -7794,7 +8223,78 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // zwp_linux_dmabuf_v1
+        /// zwp_linux_dmabuf_v1
+        /// factory for creating dmabuf-based wl_buffers
+        ///
+        /// Following the interfaces from:
+        /// https://www.khronos.org/registry/egl/extensions/EXT/EGL_EXT_image_dma_buf_import.txt
+        /// https://www.khronos.org/registry/EGL/extensions/EXT/EGL_EXT_image_dma_buf_import_modifiers.txt
+        /// and the Linux DRM sub-system's AddFb2 ioctl.
+        ///
+        /// This interface offers ways to create generic dmabuf-based wl_buffers.
+        ///
+        /// Clients can use the get_surface_feedback request to get dmabuf feedback
+        /// for a particular surface. If the client wants to retrieve feedback not
+        /// tied to a surface, they can use the get_default_feedback request.
+        ///
+        /// The following are required from clients:
+        ///
+        /// - Clients must ensure that either all data in the dma-buf is
+        /// coherent for all subsequent read access or that coherency is
+        /// correctly handled by the underlying kernel-side dma-buf
+        /// implementation.
+        ///
+        /// - Don't make any more attachments after sending the buffer to the
+        /// compositor. Making more attachments later increases the risk of
+        /// the compositor not being able to use (re-import) an existing
+        /// dmabuf-based wl_buffer.
+        ///
+        /// The underlying graphics stack must ensure the following:
+        ///
+        /// - The dmabuf file descriptors relayed to the server will stay valid
+        /// for the whole lifetime of the wl_buffer. This means the server may
+        /// at any time use those fds to import the dmabuf into any kernel
+        /// sub-system that might accept it.
+        ///
+        /// However, when the underlying graphics stack fails to deliver the
+        /// promise, because of e.g. a device hot-unplug which raises internal
+        /// errors, after the wl_buffer has been successfully created the
+        /// compositor must not raise protocol errors to the client when dmabuf
+        /// import later fails.
+        ///
+        /// To create a wl_buffer from one or more dmabufs, a client creates a
+        /// zwp_linux_dmabuf_params_v1 object with a zwp_linux_dmabuf_v1.create_params
+        /// request. All planes required by the intended format are added with
+        /// the 'add' request. Finally, a 'create' or 'create_immed' request is
+        /// issued, which has the following outcome depending on the import success.
+        ///
+        /// The 'create' request,
+        /// - on success, triggers a 'created' event which provides the final
+        /// wl_buffer to the client.
+        /// - on failure, triggers a 'failed' event to convey that the server
+        /// cannot use the dmabufs received from the client.
+        ///
+        /// For the 'create_immed' request,
+        /// - on success, the server immediately imports the added dmabufs to
+        /// create a wl_buffer. No event is sent from the server in this case.
+        /// - on failure, the server can choose to either:
+        /// - terminate the client by raising a fatal error.
+        /// - mark the wl_buffer as failed, and send a 'failed' event to the
+        /// client. If the client uses a failed wl_buffer as an argument to any
+        /// request, the behaviour is compositor implementation-defined.
+        ///
+        /// For all DRM formats and unless specified in another protocol extension,
+        /// pre-multiplied alpha is used for pixel values.
+        ///
+        /// Warning! The protocol described in this file is experimental and
+        /// backward incompatible changes may be made. Backward compatible changes
+        /// may be added together with the corresponding interface version bump.
+        /// Backward incompatible changes are done by bumping the version number in
+        /// the protocol and interface names and resetting the interface version.
+        /// Once the protocol is to be declared stable, the 'z' prefix and the
+        /// version number in the protocol and interface names are removed and the
+        /// interface version number is reset.
+        ///
         pub const ZwpLinuxDmabufV1 = struct {
             wire: *Wire,
             id: u32,
@@ -8012,7 +8512,24 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // zwp_linux_buffer_params_v1
+        /// zwp_linux_buffer_params_v1
+        /// parameters for creating a dmabuf-based wl_buffer
+        ///
+        /// This temporary object is a collection of dmabufs and other
+        /// parameters that together form a single logical buffer. The temporary
+        /// object may eventually create one wl_buffer unless cancelled by
+        /// destroying it before requesting 'create'.
+        ///
+        /// Single-planar formats only require one dmabuf, however
+        /// multi-planar formats may require more than one dmabuf. For all
+        /// formats, an 'add' request must be called once per plane (even if the
+        /// underlying dmabuf fd is identical).
+        ///
+        /// You must use consecutive plane indices ('plane_idx' argument for 'add')
+        /// from zero to the number of planes used by the drm_fourcc format code.
+        /// All planes required by the format must be given exactly once, but can
+        /// be given in any order. Each plane index can be set only once.
+        ///
         pub const ZwpLinuxBufferParamsV1 = struct {
             wire: *Wire,
             id: u32,
@@ -8434,7 +8951,35 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // zwp_linux_dmabuf_feedback_v1
+        /// zwp_linux_dmabuf_feedback_v1
+        /// dmabuf feedback
+        ///
+        /// This object advertises dmabuf parameters feedback. This includes the
+        /// preferred devices and the supported formats/modifiers.
+        ///
+        /// The parameters are sent once when this object is created and whenever they
+        /// change. The done event is always sent once after all parameters have been
+        /// sent. When a single parameter changes, all parameters are re-sent by the
+        /// compositor.
+        ///
+        /// Compositors can re-send the parameters when the current client buffer
+        /// allocations are sub-optimal. Compositors should not re-send the
+        /// parameters if re-allocating the buffers would not result in a more optimal
+        /// configuration. In particular, compositors should avoid sending the exact
+        /// same parameters multiple times in a row.
+        ///
+        /// The tranche_target_device and tranche_modifier events are grouped by
+        /// tranches of preference. For each tranche, a tranche_target_device, one
+        /// tranche_flags and one or more tranche_modifier events are sent, followed
+        /// by a tranche_done event finishing the list. The tranches are sent in
+        /// descending order of preference. All formats and modifiers in the same
+        /// tranche have the same preference.
+        ///
+        /// To send parameters, the compositor sends one main_device event, tranches
+        /// (each consisting of one tranche_target_device event, one tranche_flags
+        /// event, tranche_modifier events and then a tranche_done event), then one
+        /// done event.
+        ///
         pub const ZwpLinuxDmabufFeedbackV1 = struct {
             wire: *Wire,
             id: u32,
@@ -8657,7 +9202,14 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
         };
 
-        // fw_control
+        /// fw_control
+        /// protocol for querying and controlling foxwhale
+        ///
+        /// fw_control defines an interface for a a client to query and control
+        /// foxwhale. It is intended to used primarily by foxwhalectl but there
+        /// is no reason that arbitrary clients can't implement some or all of
+        /// the protocol for whatever suits their needs.
+        ///
         pub const FwControl = struct {
             wire: *Wire,
             id: u32,

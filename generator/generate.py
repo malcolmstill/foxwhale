@@ -65,7 +65,10 @@ def generate_protocol(protocol, sendType, receiveType, msgs, interfacesMap):
 
     for child in protocol:
         if child.tag == "interface":
-            print(f"\n// {child.attrib['name']}")
+            print(f"\n/// {child.attrib['name']}")
+            for arg in child:
+                if arg.tag == "description":
+                    generate_description(arg)
             generate_interface_struct(child, receiveType, sendType, global_enum_map)
             msgs.append(child.attrib['name'])
 
