@@ -646,7 +646,9 @@ pub const Client = struct {
                 const window: *Window = msg.wl_surface.resource;
                 window.pending().scale = msg.scale;
             },
-            .damage_buffer => |_| return error.WlSurfaceDamageBufferNotImplemented,
+            .damage_buffer => |_| {
+                unreachable;
+            },
             .offset => |_| return error.WlSurfaceOffsetNotImplemented,
         }
     }
@@ -1053,7 +1055,9 @@ pub const Client = struct {
                 try xdg_surface.sendConfigure(serial);
             },
             .set_fullscreen => |_| return error.NotImplemented,
-            .unset_fullscreen => |_| return error.NotImplemented,
+            .unset_fullscreen => |_| {
+                unreachable;
+            },
             .set_minimized => |_| return error.NotImplemented,
         }
     }
@@ -1072,7 +1076,7 @@ pub const Client = struct {
                 client.unregister(.{ .xdg_popup = msg.xdg_popup });
             },
             .grab => |_| {
-                std.log.warn("xdg_popup.grab not implemented", .{});
+                unreachable;
             },
             .reposition => |_| unreachable,
         }
