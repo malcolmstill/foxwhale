@@ -89,7 +89,7 @@ pub const Client = struct {
     const Self = @This();
 
     pub fn init(alloc: mem.Allocator, server: *Server, conn: net.StreamServer.Connection, wl_display: wl.WlDisplay) Client {
-        return Client{
+        return .{
             .alloc = alloc,
             .server = server,
             .conn = conn,
@@ -137,10 +137,10 @@ pub const Client = struct {
     pub fn getObject(client: *Self, id: u32) ?wl.WlObject {
         var it = client.objects.iterator();
 
-        while (it.next()) |n| {
-            if (n.id() == id) {
-                return n.*;
-            }
+        while (it.next()) |object| {
+            if (object.id() != id) continue;
+
+            return object.*;
         }
 
         return null;
@@ -157,9 +157,7 @@ pub const Client = struct {
         };
 
         pub fn init(client: *Client) Iterator {
-            return Iterator{
-                .client = client,
-            };
+            return .{ .client = client };
         }
 
         pub fn next(it: *Iterator, event_type: u32) !?Event {
