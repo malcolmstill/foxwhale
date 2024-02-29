@@ -396,7 +396,7 @@ def generate_send(interface, sentType, local_enum_map, global_enum_map):
                         lines = desc.text.split('\n')
                         for line in lines:
                             line = line.replace('\t', '')
-                            print(f"// {line}")
+                            print(f"/// {line}")
             print(f"pub fn send{camelCase(child.attrib['name'])}(self: Self", end = '')
             for arg in child:
                 if arg.tag == "arg":
