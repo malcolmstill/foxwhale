@@ -1037,9 +1037,48 @@ pub const Client = struct {
                 try xdg_toplevel.sendConfigure(width, height, &state);
                 try xdg_surface.sendConfigure(serial);
             },
-            .set_fullscreen => |_| return error.NotImplemented,
-            .unset_fullscreen => |_| {
-                unreachable;
+            .set_fullscreen => |msg| {
+                std.debug.assert(msg.xdg_toplevel.resource.client == client);
+                const window: *Window = msg.xdg_toplevel.resource;
+
+                // The unreachables assert that we have a xdg_toplevel,
+                // xdg_surface and view.
+                const xdg_toplevel = window.xdg_toplevel orelse unreachable;
+                const xdg_surface = window.xdg_surface orelse unreachable;
+                const view = window.view orelse unreachable;
+                const serial = client.nextSerial();
+
+                try window.xdg_configurations.writeItem(.{ .serial = serial, .operation = .Maximize });
+
+                var state: [8]u8 = undefined;
+                var fbs = std.io.fixedBufferStream(state[0..]);
+                try fbs.writer().writeInt(u32, @intFromEnum(wl.XdgToplevel.State.fullscreen), endian);
+                try fbs.writer().writeInt(u32, @intFromEnum(wl.XdgToplevel.State.activated), endian);
+
+                try xdg_toplevel.sendConfigure(view.backend_output.getWidth(), view.backend_output.getHeight(), &state);
+                try xdg_surface.sendConfigure(serial);
+            },
+            .unset_fullscreen => |msg| {
+                std.debug.assert(msg.xdg_toplevel.resource.client == client);
+                const window: *Window = msg.xdg_toplevel.resource;
+
+                // The unreachables assert that we have a xdg_toplevel,
+                // and xdg_surface.
+                const xdg_toplevel = window.xdg_toplevel orelse unreachable;
+                const xdg_surface = window.xdg_surface orelse unreachable;
+                const serial = client.nextSerial();
+
+                try window.xdg_configurations.writeItem(.{ .serial = serial, .operation = .Unmaximize });
+
+                var state: [4]u8 = undefined;
+                var fbs = std.io.fixedBufferStream(state[0..]);
+                try fbs.writer().writeInt(u32, @intFromEnum(wl.XdgToplevel.State.activated), endian);
+
+                const width = if (window.maximized) |maximized| maximized.width else window.width;
+                const height = if (window.maximized) |maximized| maximized.height else window.height;
+
+                try xdg_toplevel.sendConfigure(width, height, &state);
+                try xdg_surface.sendConfigure(serial);
             },
             .set_minimized => |_| return error.NotImplemented,
         }
