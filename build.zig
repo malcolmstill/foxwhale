@@ -22,7 +22,7 @@ pub fn build(b: *std.Build) void {
     exe.linkSystemLibrary("c");
     exe.linkSystemLibrary("gl");
     exe.linkSystemLibrary("xkbcommon");
-    exe.linkSystemLibrary("xkbcommon-x11");
+    // exe.linkSystemLibrary("xkbcommon-x11");
     exe.linkSystemLibrary("libsystemd");
     exe.linkSystemLibrary("libudev");
     exe.linkSystemLibrary("libinput");

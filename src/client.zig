@@ -1096,7 +1096,8 @@ pub const Client = struct {
                 client.unregister(.{ .xdg_popup = msg.xdg_popup });
             },
             .grab => |_| {
-                unreachable;
+                // unreachable;
+                log.warn(".grab not implemented", .{});
             },
             .reposition => |_| unreachable,
         }

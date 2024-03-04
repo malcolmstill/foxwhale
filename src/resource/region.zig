@@ -11,20 +11,22 @@ const wl = @import("../client.zig").wl;
 pub const Region = struct {
     client: *Client,
     wl_region: wl.WlRegion,
-    rectangles: RectangleBuffer = RectangleBuffer.init(),
-    window: ?*Window = null,
+    rectangles: RectangleBuffer,
+    window: ?*Window,
 
     const Self = @This();
 
     pub fn init(client: *Client, wl_region: wl.WlRegion) Region {
-        return Region{
+        return .{
             .client = client,
             .wl_region = wl_region,
+            .rectangles = RectangleBuffer.init(),
+            .window = null,
         };
     }
 
-    pub fn pointInside(self: *Self, local_x: f64, local_y: f64) bool {
-        const slice = self.rectangles.readableSlice(0);
+    pub fn pointInside(region: *Region, local_x: f64, local_y: f64) bool {
+        const slice = region.rectangles.readableSlice(0);
         for (slice) |rect| {
             const left: f64 = @floatFromInt(rect.rectangle.x);
             const right = left + @as(f64, @floatFromInt(rect.rectangle.width));
