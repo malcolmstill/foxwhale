@@ -543,7 +543,7 @@ pub const Window = struct {
 
         keyboard: {
             const wl_keyboard = client.wl_keyboard orelse break :keyboard;
-            try wl_keyboard.sendEnter(client.nextSerial(), window.wl_surface.id, &[_]u8{});
+            try wl_keyboard.sendEnter(client.nextSerial(), window.wl_surface, &[_]u8{});
         }
     }
 
@@ -564,7 +564,7 @@ pub const Window = struct {
 
         keyboard: {
             const wl_keyboard = client.wl_keyboard orelse break :keyboard;
-            try wl_keyboard.sendLeave(client.nextSerial(), window.wl_surface.id);
+            try wl_keyboard.sendLeave(client.nextSerial(), window.wl_surface);
         }
     }
 
@@ -577,7 +577,7 @@ pub const Window = struct {
 
         try wl_pointer.sendEnter(
             client.nextSerial(),
-            window.wl_surface.id,
+            window.wl_surface,
             @floatCast(pointer_x - x),
             @floatCast(pointer_y - y),
         );
@@ -601,7 +601,7 @@ pub const Window = struct {
         const client = window.client;
         const wl_pointer = client.wl_pointer orelse return;
 
-        try wl_pointer.sendLeave(client.nextSerial(), window.wl_surface.id);
+        try wl_pointer.sendLeave(client.nextSerial(), window.wl_surface);
     }
 
     pub fn mouseAxis(window: *Window, time: u32, axis: u32, value: f64) !void {

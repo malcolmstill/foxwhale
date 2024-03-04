@@ -37,7 +37,6 @@ pub fn Wayland(comptime ResourceMap: struct {
 }) type {
     return struct {
         pub const Wire = WireFn(WlMessage);
-
         /// wl_display
         /// core global object
         ///
@@ -60,7 +59,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 invalid_object = 0,
                 invalid_method = 1,
@@ -69,7 +67,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // sync
                     0 => {
@@ -119,7 +117,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// The callback_data passed in the callback is the event serial.
                 ///
                 sync: SyncMessage,
-
                 /// get global registry object
                 ///
                 /// This request creates a registry object that allows the client
@@ -173,6 +170,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 registry: u32,
             };
 
+            /// fatal error event
             ///
             /// The error event is sent out when a fatal (non-recoverable)
             /// error has occurred.  The object_id argument is the object
@@ -190,6 +188,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// acknowledge object ID deletion
             ///
             /// This event is used internally by the object ID management
             /// logic. When a client deletes an object that it had created,
@@ -246,7 +245,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // bind
                     0 => {
@@ -293,12 +292,15 @@ pub fn Wayland(comptime ResourceMap: struct {
                 wl_registry: WlRegistry,
                 /// unique numeric name of the object
                 name: u32,
+                ///
                 name_string: []u8,
+                ///
                 version: u32,
                 /// bounded object
                 id: u32,
             };
 
+            /// announce global object
             ///
             /// Notify the client of global objects.
             ///
@@ -314,6 +316,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// announce removal of global object
             ///
             /// Notify the client of removed global objects.
             ///
@@ -357,7 +360,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     else => {
                         std.log.info("{}", .{self});
@@ -370,6 +373,7 @@ pub fn Wayland(comptime ResourceMap: struct {
 
             const Message = struct {};
 
+            /// done event
             ///
             /// Notify the client when the related request is done.
             ///
@@ -405,7 +409,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // create_surface
                     0 => {
@@ -445,7 +449,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// Ask the compositor to create a new surface.
                 ///
                 create_surface: CreateSurfaceMessage,
-
                 /// create new region
                 ///
                 /// Ask the compositor to create a new region.
@@ -503,7 +506,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // create_buffer
                     0 => {
@@ -572,7 +575,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// a buffer from it.
                 ///
                 create_buffer: CreateBufferMessage,
-
                 /// destroy the pool
                 ///
                 /// Destroy the shared memory pool.
@@ -582,7 +584,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// are gone.
                 ///
                 destroy: DestroyMessage,
-
                 /// change the size of the pool mapping
                 ///
                 /// This request will cause the server to remap the backing memory
@@ -678,7 +679,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 invalid_format = 0,
                 invalid_stride = 1,
@@ -688,116 +688,116 @@ pub fn Wayland(comptime ResourceMap: struct {
             pub const Format = enum(u32) {
                 argb8888 = 0,
                 xrgb8888 = 1,
-                c8 = 0x20203843,
-                rgb332 = 0x38424752,
-                bgr233 = 0x38524742,
-                xrgb4444 = 0x32315258,
-                xbgr4444 = 0x32314258,
-                rgbx4444 = 0x32315852,
-                bgrx4444 = 0x32315842,
-                argb4444 = 0x32315241,
-                abgr4444 = 0x32314241,
-                rgba4444 = 0x32314152,
-                bgra4444 = 0x32314142,
-                xrgb1555 = 0x35315258,
-                xbgr1555 = 0x35314258,
-                rgbx5551 = 0x35315852,
-                bgrx5551 = 0x35315842,
-                argb1555 = 0x35315241,
-                abgr1555 = 0x35314241,
-                rgba5551 = 0x35314152,
-                bgra5551 = 0x35314142,
-                rgb565 = 0x36314752,
-                bgr565 = 0x36314742,
-                rgb888 = 0x34324752,
-                bgr888 = 0x34324742,
-                xbgr8888 = 0x34324258,
-                rgbx8888 = 0x34325852,
-                bgrx8888 = 0x34325842,
-                abgr8888 = 0x34324241,
-                rgba8888 = 0x34324152,
-                bgra8888 = 0x34324142,
-                xrgb2101010 = 0x30335258,
-                xbgr2101010 = 0x30334258,
-                rgbx1010102 = 0x30335852,
-                bgrx1010102 = 0x30335842,
-                argb2101010 = 0x30335241,
-                abgr2101010 = 0x30334241,
-                rgba1010102 = 0x30334152,
-                bgra1010102 = 0x30334142,
-                yuyv = 0x56595559,
-                yvyu = 0x55595659,
-                uyvy = 0x59565955,
-                vyuy = 0x59555956,
-                ayuv = 0x56555941,
-                nv12 = 0x3231564e,
-                nv21 = 0x3132564e,
-                nv16 = 0x3631564e,
-                nv61 = 0x3136564e,
-                yuv410 = 0x39565559,
-                yvu410 = 0x39555659,
-                yuv411 = 0x31315559,
-                yvu411 = 0x31315659,
-                yuv420 = 0x32315559,
-                yvu420 = 0x32315659,
-                yuv422 = 0x36315559,
-                yvu422 = 0x36315659,
-                yuv444 = 0x34325559,
-                yvu444 = 0x34325659,
-                r8 = 0x20203852,
-                r16 = 0x20363152,
-                rg88 = 0x38384752,
-                gr88 = 0x38385247,
-                rg1616 = 0x32334752,
-                gr1616 = 0x32335247,
-                xrgb16161616f = 0x48345258,
-                xbgr16161616f = 0x48344258,
-                argb16161616f = 0x48345241,
-                abgr16161616f = 0x48344241,
-                xyuv8888 = 0x56555958,
-                vuy888 = 0x34325556,
-                vuy101010 = 0x30335556,
-                y210 = 0x30313259,
-                y212 = 0x32313259,
-                y216 = 0x36313259,
-                y410 = 0x30313459,
-                y412 = 0x32313459,
-                y416 = 0x36313459,
-                xvyu2101010 = 0x30335658,
-                xvyu12_16161616 = 0x36335658,
-                xvyu16161616 = 0x38345658,
-                y0l0 = 0x304c3059,
-                x0l0 = 0x304c3058,
-                y0l2 = 0x324c3059,
-                x0l2 = 0x324c3058,
-                yuv420_8bit = 0x38305559,
-                yuv420_10bit = 0x30315559,
-                xrgb8888_a8 = 0x38415258,
-                xbgr8888_a8 = 0x38414258,
-                rgbx8888_a8 = 0x38415852,
-                bgrx8888_a8 = 0x38415842,
-                rgb888_a8 = 0x38413852,
-                bgr888_a8 = 0x38413842,
-                rgb565_a8 = 0x38413552,
-                bgr565_a8 = 0x38413542,
-                nv24 = 0x3432564e,
-                nv42 = 0x3234564e,
-                p210 = 0x30313250,
-                p010 = 0x30313050,
-                p012 = 0x32313050,
-                p016 = 0x36313050,
-                axbxgxrx106106106106 = 0x30314241,
-                nv15 = 0x3531564e,
-                q410 = 0x30313451,
-                q401 = 0x31303451,
-                xrgb16161616 = 0x38345258,
-                xbgr16161616 = 0x38344258,
-                argb16161616 = 0x38345241,
-                abgr16161616 = 0x38344241,
+                c8 = 538982467,
+                rgb332 = 943867730,
+                bgr233 = 944916290,
+                xrgb4444 = 842093144,
+                xbgr4444 = 842089048,
+                rgbx4444 = 842094674,
+                bgrx4444 = 842094658,
+                argb4444 = 842093121,
+                abgr4444 = 842089025,
+                rgba4444 = 842088786,
+                bgra4444 = 842088770,
+                xrgb1555 = 892424792,
+                xbgr1555 = 892420696,
+                rgbx5551 = 892426322,
+                bgrx5551 = 892426306,
+                argb1555 = 892424769,
+                abgr1555 = 892420673,
+                rgba5551 = 892420434,
+                bgra5551 = 892420418,
+                rgb565 = 909199186,
+                bgr565 = 909199170,
+                rgb888 = 875710290,
+                bgr888 = 875710274,
+                xbgr8888 = 875709016,
+                rgbx8888 = 875714642,
+                bgrx8888 = 875714626,
+                abgr8888 = 875708993,
+                rgba8888 = 875708754,
+                bgra8888 = 875708738,
+                xrgb2101010 = 808669784,
+                xbgr2101010 = 808665688,
+                rgbx1010102 = 808671314,
+                bgrx1010102 = 808671298,
+                argb2101010 = 808669761,
+                abgr2101010 = 808665665,
+                rgba1010102 = 808665426,
+                bgra1010102 = 808665410,
+                yuyv = 1448695129,
+                yvyu = 1431918169,
+                uyvy = 1498831189,
+                vyuy = 1498765654,
+                ayuv = 1448433985,
+                nv12 = 842094158,
+                nv21 = 825382478,
+                nv16 = 909203022,
+                nv61 = 825644622,
+                yuv410 = 961959257,
+                yvu410 = 961893977,
+                yuv411 = 825316697,
+                yvu411 = 825316953,
+                yuv420 = 842093913,
+                yvu420 = 842094169,
+                yuv422 = 909202777,
+                yvu422 = 909203033,
+                yuv444 = 875713881,
+                yvu444 = 875714137,
+                r8 = 538982482,
+                r16 = 540422482,
+                rg88 = 943212370,
+                gr88 = 943215175,
+                rg1616 = 842221394,
+                gr1616 = 842224199,
+                xrgb16161616f = 1211388504,
+                xbgr16161616f = 1211384408,
+                argb16161616f = 1211388481,
+                abgr16161616f = 1211384385,
+                xyuv8888 = 1448434008,
+                vuy888 = 875713878,
+                vuy101010 = 808670550,
+                y210 = 808530521,
+                y212 = 842084953,
+                y216 = 909193817,
+                y410 = 808531033,
+                y412 = 842085465,
+                y416 = 909194329,
+                xvyu2101010 = 808670808,
+                xvyu12_16161616 = 909334104,
+                xvyu16161616 = 942954072,
+                y0l0 = 810299481,
+                x0l0 = 810299480,
+                y0l2 = 843853913,
+                x0l2 = 843853912,
+                yuv420_8bit = 942691673,
+                yuv420_10bit = 808539481,
+                xrgb8888_a8 = 943805016,
+                xbgr8888_a8 = 943800920,
+                rgbx8888_a8 = 943806546,
+                bgrx8888_a8 = 943806530,
+                rgb888_a8 = 943798354,
+                bgr888_a8 = 943798338,
+                rgb565_a8 = 943797586,
+                bgr565_a8 = 943797570,
+                nv24 = 875714126,
+                nv42 = 842290766,
+                p210 = 808530512,
+                p010 = 808530000,
+                p012 = 842084432,
+                p016 = 909193296,
+                axbxgxrx106106106106 = 808534593,
+                nv15 = 892425806,
+                q410 = 808531025,
+                q401 = 825242705,
+                xrgb16161616 = 942953048,
+                xbgr16161616 = 942948952,
+                argb16161616 = 942953025,
+                abgr16161616 = 942948929,
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // create_pool
                     0 => {
@@ -854,6 +854,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 size: i32,
             };
 
+            /// pixel format description
             ///
             /// Informs the client about a valid pixel format that
             /// can be used for buffers. Known formats include
@@ -898,7 +899,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // destroy
                     0 => {
@@ -941,6 +942,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 wl_buffer: WlBuffer,
             };
 
+            /// compositor releases buffer
             ///
             /// Sent when this wl_buffer is no longer used by the compositor.
             /// The client is now free to reuse or destroy this buffer and its
@@ -987,7 +989,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 invalid_finish = 0,
                 invalid_action_mask = 1,
@@ -996,7 +997,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // accept
                     0 => {
@@ -1084,7 +1085,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// conjunction with wl_data_source.action for feedback.
                 ///
                 accept: AcceptMessage,
-
                 /// request that the data is transferred
                 ///
                 /// To transfer the offered data, the client issues this request
@@ -1104,13 +1104,11 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// determine acceptance.
                 ///
                 receive: ReceiveMessage,
-
                 /// destroy data offer
                 ///
                 /// Destroy the data offer.
                 ///
                 destroy: DestroyMessage,
-
                 /// the offer will no longer be used
                 ///
                 /// Notifies the compositor that the drag destination successfully
@@ -1129,7 +1127,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// operation, the invalid_finish protocol error is raised.
                 ///
                 finish: FinishMessage,
-
                 /// set the available/preferred drag-and-drop actions
                 ///
                 /// Sets the actions that the destination side client supports for
@@ -1289,6 +1286,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 preferred_action: WlDataDeviceManager.DndAction,
             };
 
+            /// advertise offered mime type
             ///
             /// Sent immediately after creating the wl_data_offer object.  One
             /// event per offered mime type.
@@ -1299,6 +1297,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// notify the source-side available actions
             ///
             /// This event indicates the actions offered by the data source. It
             /// will be sent right after wl_data_device.enter, or anytime the source
@@ -1310,6 +1309,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 1);
             }
 
+            /// notify the selected action
             ///
             /// This event indicates the action selected by the compositor after
             /// matching the source/destination side actions. Only one action (or
@@ -1378,14 +1378,13 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 invalid_action_mask = 0,
                 invalid_source = 1,
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // offer
                     0 => {
@@ -1436,13 +1435,11 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// multiple types.
                 ///
                 offer: OfferMessage,
-
                 /// destroy the data source
                 ///
                 /// Destroy the data source.
                 ///
                 destroy: DestroyMessage,
-
                 /// set the available drag-and-drop actions
                 ///
                 /// Sets the actions that the source side client supports for this
@@ -1504,6 +1501,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 dnd_actions: WlDataDeviceManager.DndAction,
             };
 
+            /// a target accepts an offered mime type
             ///
             /// Sent when a target accepts pointer_focus or motion events.  If
             /// a target does not accept any of the offered types, type is NULL.
@@ -1516,6 +1514,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// send the data
             ///
             /// Request for data from the client.  Send the data as the
             /// specified mime type over the passed file descriptor, then
@@ -1528,21 +1527,22 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 1);
             }
 
+            /// selection was cancelled
             ///
             /// This data source is no longer valid. There are several reasons why
             /// this could happen:
             ///
             /// - The data source has been replaced by another data source.
             /// - The drag-and-drop operation was performed, but the drop destination
-            ///   did not accept any of the mime types offered through
-            ///   wl_data_source.target.
+            /// did not accept any of the mime types offered through
+            /// wl_data_source.target.
             /// - The drag-and-drop operation was performed, but the drop destination
-            ///   did not select any of the actions present in the mask offered through
-            ///   wl_data_source.action.
+            /// did not select any of the actions present in the mask offered through
+            /// wl_data_source.action.
             /// - The drag-and-drop operation was performed but didn't happen over a
-            ///   surface.
+            /// surface.
             /// - The compositor cancelled the drag-and-drop operation (e.g. compositor
-            ///   dependent timeouts to avoid stale drag-and-drop transfers).
+            /// dependent timeouts to avoid stale drag-and-drop transfers).
             ///
             /// The client should clean up and destroy this data source.
             ///
@@ -1555,6 +1555,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 2);
             }
 
+            /// the drag-and-drop operation physically finished
             ///
             /// The user performed the drop action. This event does not indicate
             /// acceptance, wl_data_source.cancelled may still be emitted afterwards
@@ -1571,6 +1572,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 3);
             }
 
+            /// the drag-and-drop operation concluded
             ///
             /// The drop destination finished interoperating with this data
             /// source, so the client is now free to destroy this data source and
@@ -1584,6 +1586,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 4);
             }
 
+            /// notify the selected action
             ///
             /// This event indicates the action selected by the compositor after
             /// matching the source/destination side actions. Only one action (or
@@ -1643,13 +1646,12 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 role = 0,
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // start_drag
                     0 => {
@@ -1745,7 +1747,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// undefined, and the wl_surface is unmapped.
                 ///
                 start_drag: StartDragMessage,
-
                 /// copy data to the selection
                 ///
                 /// This request asks the compositor to set the selection
@@ -1754,7 +1755,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// To unset the selection, set the source to NULL.
                 ///
                 set_selection: SetSelectionMessage,
-
                 /// destroy data device
                 ///
                 /// This request destroys the data device.
@@ -1828,6 +1828,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 wl_data_device: WlDataDevice,
             };
 
+            /// introduce a new wl_data_offer
             ///
             /// The data_offer event introduces a new wl_data_offer object,
             /// which will subsequently be used in either the
@@ -1843,22 +1844,24 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// initiate drag-and-drop session
             ///
             /// This event is sent when an active drag-and-drop pointer enters
             /// a surface owned by the client.  The position of the pointer at
             /// enter time is provided by the x and y arguments, in surface-local
             /// coordinates.
             ///
-            pub fn sendEnter(self: Self, serial: u32, surface: u32, x: f32, y: f32, id: u32) !void {
+            pub fn sendEnter(self: Self, serial: u32, surface: WlSurface, x: f32, y: f32, id: WlDataOffer) !void {
                 try self.wire.startWrite();
                 try self.wire.putU32(serial);
-                try self.wire.putU32(surface);
+                try self.wire.putU32(surface.id);
                 try self.wire.putFixed(x);
                 try self.wire.putFixed(y);
-                try self.wire.putU32(id);
+                try self.wire.putU32(id.id);
                 try self.wire.finishWrite(self.id, 1);
             }
 
+            /// end drag-and-drop session
             ///
             /// This event is sent when the drag-and-drop pointer leaves the
             /// surface and the session ends.  The client must destroy the
@@ -1869,6 +1872,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 2);
             }
 
+            /// drag-and-drop session motion
             ///
             /// This event is sent when the drag-and-drop pointer moves within
             /// the currently focused surface. The new position of the pointer
@@ -1883,6 +1887,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 3);
             }
 
+            /// end drag-and-drop session successfully
             ///
             /// The event is sent when a drag-and-drop operation is ended
             /// because the implicit grab is removed.
@@ -1903,6 +1908,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 4);
             }
 
+            /// advertise new selection
             ///
             /// The selection event is sent out to notify the client of a new
             /// wl_data_offer for the selection for this device.  The
@@ -1917,9 +1923,9 @@ pub fn Wayland(comptime ResourceMap: struct {
             /// will be sent.  The client must destroy the previous selection
             /// data_offer, if any, upon receiving this event.
             ///
-            pub fn sendSelection(self: Self, id: u32) !void {
+            pub fn sendSelection(self: Self, id: WlDataOffer) !void {
                 try self.wire.startWrite();
-                try self.wire.putU32(id);
+                try self.wire.putU32(id.id);
                 try self.wire.finishWrite(self.id, 5);
             }
         };
@@ -1954,17 +1960,15 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const DndAction = packed struct(u32) { // bitfield
-                // none 0 (removed from bitfield)
-                copy: bool = false, // 1
-                move: bool = false, // 2
-                ask: bool = false, // 4
+                copy: bool = false,
+                move: bool = false,
+                ask: bool = false,
                 _padding: u29 = 0,
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // create_data_source
                     0 => {
@@ -2009,7 +2013,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// Create a new data source.
                 ///
                 create_data_source: CreateDataSourceMessage,
-
                 /// create a new data device
                 ///
                 /// Create a new data device for a given seat.
@@ -2068,13 +2071,12 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 role = 0,
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // get_shell_surface
                     0 => {
@@ -2162,22 +2164,16 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Resize = packed struct(u32) { // bitfield
-                // none 0 (removed from bitfield)
-                top: bool = false, // 1
-                bottom: bool = false, // 2
-                left: bool = false, // 4
-                // top_left 5 (removed from bitfield)
-                // bottom_left 6 (removed from bitfield)
-                right: bool = false, // 8
-                // top_right 9 (removed from bitfield)
-                // bottom_right 10 (removed from bitfield)
+                top: bool = false,
+                bottom: bool = false,
+                left: bool = false,
+                right: bool = false,
                 _padding: u28 = 0,
             };
 
             pub const Transient = packed struct(u32) { // bitfield
-                inactive: bool = false, // 1
+                inactive: bool = false,
                 _padding: u31 = 0,
             };
 
@@ -2189,7 +2185,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // pong
                     0 => {
@@ -2363,7 +2359,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// the client may be deemed unresponsive.
                 ///
                 pong: PongMessage,
-
                 /// start an interactive move
                 ///
                 /// Start a pointer-driven move of the surface.
@@ -2373,7 +2368,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// the surface (e.g. fullscreen or maximized).
                 ///
                 move: MoveMessage,
-
                 /// start an interactive resize
                 ///
                 /// Start a pointer-driven resizing of the surface.
@@ -2383,7 +2377,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// the surface (e.g. fullscreen or maximized).
                 ///
                 resize: ResizeMessage,
-
                 /// make the surface a toplevel surface
                 ///
                 /// Map the surface as a toplevel surface.
@@ -2391,7 +2384,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// A toplevel surface is not fullscreen, maximized or transient.
                 ///
                 set_toplevel: SetToplevelMessage,
-
                 /// make the surface a transient surface
                 ///
                 /// Map the surface relative to an existing surface.
@@ -2403,7 +2395,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// The flags argument controls details of the transient behaviour.
                 ///
                 set_transient: SetTransientMessage,
-
                 /// make the surface a fullscreen surface
                 ///
                 /// Map the surface as a fullscreen surface.
@@ -2441,7 +2432,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// be made fullscreen.
                 ///
                 set_fullscreen: SetFullscreenMessage,
-
                 /// make the surface a popup surface
                 ///
                 /// Map the surface as a popup.
@@ -2465,7 +2455,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// parent surface, in surface-local coordinates.
                 ///
                 set_popup: SetPopupMessage,
-
                 /// make the surface a maximized surface
                 ///
                 /// Map the surface as a maximized surface.
@@ -2488,7 +2477,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// The details depend on the compositor implementation.
                 ///
                 set_maximized: SetMaximizedMessage,
-
                 /// set surface title
                 ///
                 /// Set a short title for the surface.
@@ -2500,7 +2488,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// The string must be encoded in UTF-8.
                 ///
                 set_title: SetTitleMessage,
-
                 /// set surface class
                 ///
                 /// Set a class for the surface.
@@ -2732,6 +2719,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 class_: []u8,
             };
 
+            /// ping client
             ///
             /// Ping a client to check if it is receiving events and sending
             /// requests. A client is expected to reply with a pong request.
@@ -2742,6 +2730,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// suggest resize
             ///
             /// The configure event asks the client to resize its surface.
             ///
@@ -2769,6 +2758,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 1);
             }
 
+            /// popup interaction is done
             ///
             /// The popup_done event is sent out when a popup grab is broken,
             /// that is, when the user clicks a surface that doesn't belong
@@ -2841,7 +2831,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 invalid_scale = 0,
                 invalid_transform = 1,
@@ -2850,7 +2839,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // destroy
                     0 => {
@@ -3012,7 +3001,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// Deletes the surface and invalidates its object ID.
                 ///
                 destroy: DestroyMessage,
-
                 /// set the surface contents
                 ///
                 /// Set a buffer as the content of this surface.
@@ -3073,7 +3061,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// following wl_surface.commit will remove the surface content.
                 ///
                 attach: AttachMessage,
-
                 /// mark part of the surface damaged
                 ///
                 /// This request is used to describe the regions where the pending
@@ -3099,7 +3086,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// instead of surface coordinates.
                 ///
                 damage: DamageMessage,
-
                 /// request a frame throttling hint
                 ///
                 /// Request a notification when it is a good time to start drawing a new
@@ -3136,7 +3122,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// milliseconds, with an undefined base.
                 ///
                 frame: FrameMessage,
-
                 /// set opaque region
                 ///
                 /// This request sets the region of the surface that contains
@@ -3165,7 +3150,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// region to be set to empty.
                 ///
                 set_opaque_region: SetOpaqueRegionMessage,
-
                 /// set input region
                 ///
                 /// This request sets the region of the surface that can receive
@@ -3192,7 +3176,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// to infinite.
                 ///
                 set_input_region: SetInputRegionMessage,
-
                 /// commit pending surface state
                 ///
                 /// Surface state (input, opaque, and damage regions, attached buffers,
@@ -3214,7 +3197,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// Other interfaces may add further double-buffered surface state.
                 ///
                 commit: CommitMessage,
-
                 /// sets the buffer transformation
                 ///
                 /// This request sets an optional transformation on how the compositor
@@ -3248,7 +3230,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// is raised.
                 ///
                 set_buffer_transform: SetBufferTransformMessage,
-
                 /// sets the buffer scaling factor
                 ///
                 /// This request sets an optional scaling factor on how the compositor
@@ -3276,7 +3257,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// raised.
                 ///
                 set_buffer_scale: SetBufferScaleMessage,
-
                 /// mark part of the surface damaged using buffer coordinates
                 ///
                 /// This request is used to describe the regions where the pending
@@ -3313,7 +3293,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// after receiving the wl_surface.commit.
                 ///
                 damage_buffer: DamageBufferMessage,
-
                 /// set the surface contents offset
                 ///
                 /// The x and y arguments specify the location of the new pending
@@ -3714,6 +3693,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 y: i32,
             };
 
+            /// surface enters an output
             ///
             /// This is emitted whenever a surface's creation, movement, or resizing
             /// results in some part of it being within the scanout region of an
@@ -3721,12 +3701,13 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             /// Note that a surface may be overlapping with zero or more outputs.
             ///
-            pub fn sendEnter(self: Self, output: u32) !void {
+            pub fn sendEnter(self: Self, output: WlOutput) !void {
                 try self.wire.startWrite();
-                try self.wire.putU32(output);
+                try self.wire.putU32(output.id);
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// surface leaves an output
             ///
             /// This is emitted whenever a surface's creation, movement, or resizing
             /// results in it no longer having any part of it within the scanout region
@@ -3738,9 +3719,9 @@ pub fn Wayland(comptime ResourceMap: struct {
             /// updates even if no enter event has been sent. The frame event should be
             /// used instead.
             ///
-            pub fn sendLeave(self: Self, output: u32) !void {
+            pub fn sendLeave(self: Self, output: WlOutput) !void {
                 try self.wire.startWrite();
-                try self.wire.putU32(output);
+                try self.wire.putU32(output.id);
                 try self.wire.finishWrite(self.id, 1);
             }
         };
@@ -3769,11 +3750,10 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Capability = packed struct(u32) { // bitfield
-                pointer: bool = false, // 1
-                keyboard: bool = false, // 2
-                touch: bool = false, // 4
+                pointer: bool = false,
+                keyboard: bool = false,
+                touch: bool = false,
                 _padding: u29 = 0,
             };
 
@@ -3782,7 +3762,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // get_pointer
                     0 => {
@@ -3849,7 +3829,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// be sent in this case.
                 ///
                 get_pointer: GetPointerMessage,
-
                 /// return keyboard object
                 ///
                 /// The ID provided will be initialized to the wl_keyboard interface
@@ -3862,7 +3841,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// be sent in this case.
                 ///
                 get_keyboard: GetKeyboardMessage,
-
                 /// return touch object
                 ///
                 /// The ID provided will be initialized to the wl_touch interface
@@ -3875,7 +3853,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// be sent in this case.
                 ///
                 get_touch: GetTouchMessage,
-
                 /// release the seat object
                 ///
                 /// Using this request a client can tell the server that it is not going to
@@ -3944,6 +3921,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 wl_seat: WlSeat,
             };
 
+            /// seat capabilities changed
             ///
             /// This is emitted whenever a seat gains or loses the pointer,
             /// keyboard or touch capabilities.  The argument is a capability
@@ -3976,6 +3954,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// unique identifier for this seat
             ///
             /// In a multi-seat configuration the seat name can be used by clients to
             /// help identify which physical devices the seat represents.
@@ -4029,7 +4008,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 role = 0,
             };
@@ -4052,7 +4030,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // set_cursor
                     0 => {
@@ -4133,7 +4111,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// ignored.
                 ///
                 set_cursor: SetCursorMessage,
-
                 /// release the pointer object
                 ///
                 /// Using this request a client can tell the server that it is not going to
@@ -4207,6 +4184,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 wl_pointer: WlPointer,
             };
 
+            /// enter event
             ///
             /// Notification that this seat's pointer is focused on a certain
             /// surface.
@@ -4215,15 +4193,16 @@ pub fn Wayland(comptime ResourceMap: struct {
             /// is undefined and a client should respond to this event by setting
             /// an appropriate pointer image with the set_cursor request.
             ///
-            pub fn sendEnter(self: Self, serial: u32, surface: u32, surface_x: f32, surface_y: f32) !void {
+            pub fn sendEnter(self: Self, serial: u32, surface: WlSurface, surface_x: f32, surface_y: f32) !void {
                 try self.wire.startWrite();
                 try self.wire.putU32(serial);
-                try self.wire.putU32(surface);
+                try self.wire.putU32(surface.id);
                 try self.wire.putFixed(surface_x);
                 try self.wire.putFixed(surface_y);
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// leave event
             ///
             /// Notification that this seat's pointer is no longer focused on
             /// a certain surface.
@@ -4231,13 +4210,14 @@ pub fn Wayland(comptime ResourceMap: struct {
             /// The leave notification is sent before the enter notification
             /// for the new focus.
             ///
-            pub fn sendLeave(self: Self, serial: u32, surface: u32) !void {
+            pub fn sendLeave(self: Self, serial: u32, surface: WlSurface) !void {
                 try self.wire.startWrite();
                 try self.wire.putU32(serial);
-                try self.wire.putU32(surface);
+                try self.wire.putU32(surface.id);
                 try self.wire.finishWrite(self.id, 1);
             }
 
+            /// pointer motion event
             ///
             /// Notification of pointer location change. The arguments
             /// surface_x and surface_y are the location relative to the
@@ -4251,6 +4231,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 2);
             }
 
+            /// pointer button event
             ///
             /// Mouse button click and release notifications.
             ///
@@ -4276,6 +4257,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 3);
             }
 
+            /// axis event
             ///
             /// Scroll and other axis notifications.
             ///
@@ -4302,6 +4284,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 4);
             }
 
+            /// end of a pointer event sequence
             ///
             /// Indicates the end of a set of events that logically belong together.
             /// A client is expected to accumulate the data in all events within the
@@ -4343,6 +4326,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 5);
             }
 
+            /// axis source event
             ///
             /// Source information for scroll and other axes.
             ///
@@ -4376,6 +4360,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 6);
             }
 
+            /// axis stop event
             ///
             /// Stop notification for scroll and other axes.
             ///
@@ -4399,6 +4384,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 7);
             }
 
+            /// axis click event
             ///
             /// Discrete step information for scroll and other axes.
             ///
@@ -4457,7 +4443,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const KeymapFormat = enum(u32) {
                 no_keymap = 0,
                 xkb_v1 = 1,
@@ -4469,7 +4454,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // release
                     0 => {
@@ -4492,14 +4477,17 @@ pub fn Wayland(comptime ResourceMap: struct {
 
             pub const Message = union(MessageType) {
                 /// release the keyboard object
+                ///
                 release: ReleaseMessage,
             };
 
             /// release the keyboard object
+            ///
             const ReleaseMessage = struct {
                 wl_keyboard: WlKeyboard,
             };
 
+            /// keyboard mapping
             ///
             /// This event provides a file descriptor to the client which can be
             /// memory-mapped in read-only mode to provide a keyboard mapping
@@ -4516,6 +4504,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// enter event
             ///
             /// Notification that this seat's keyboard focus is on a certain
             /// surface.
@@ -4523,14 +4512,15 @@ pub fn Wayland(comptime ResourceMap: struct {
             /// The compositor must send the wl_keyboard.modifiers event after this
             /// event.
             ///
-            pub fn sendEnter(self: Self, serial: u32, surface: u32, keys: []u8) !void {
+            pub fn sendEnter(self: Self, serial: u32, surface: WlSurface, keys: []u8) !void {
                 try self.wire.startWrite();
                 try self.wire.putU32(serial);
-                try self.wire.putU32(surface);
+                try self.wire.putU32(surface.id);
                 try self.wire.putArray(keys);
                 try self.wire.finishWrite(self.id, 1);
             }
 
+            /// leave event
             ///
             /// Notification that this seat's keyboard focus is no longer on
             /// a certain surface.
@@ -4541,13 +4531,14 @@ pub fn Wayland(comptime ResourceMap: struct {
             /// After this event client must assume that all keys, including modifiers,
             /// are lifted and also it must stop key repeating if there's some going on.
             ///
-            pub fn sendLeave(self: Self, serial: u32, surface: u32) !void {
+            pub fn sendLeave(self: Self, serial: u32, surface: WlSurface) !void {
                 try self.wire.startWrite();
                 try self.wire.putU32(serial);
-                try self.wire.putU32(surface);
+                try self.wire.putU32(surface.id);
                 try self.wire.finishWrite(self.id, 2);
             }
 
+            /// key event
             ///
             /// A key was pressed or released.
             /// The time argument is a timestamp with millisecond
@@ -4568,6 +4559,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 3);
             }
 
+            /// modifier and group state
             ///
             /// Notifies clients that the modifier and/or group state has
             /// changed, and it should update its local state.
@@ -4582,6 +4574,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 4);
             }
 
+            /// repeat rate and delay
             ///
             /// Informs the client about the keyboard's repeat rate and delay.
             ///
@@ -4634,7 +4627,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // release
                     0 => {
@@ -4657,31 +4650,35 @@ pub fn Wayland(comptime ResourceMap: struct {
 
             pub const Message = union(MessageType) {
                 /// release the touch object
+                ///
                 release: ReleaseMessage,
             };
 
             /// release the touch object
+            ///
             const ReleaseMessage = struct {
                 wl_touch: WlTouch,
             };
 
+            /// touch down event and beginning of a touch sequence
             ///
             /// A new touch point has appeared on the surface. This touch point is
             /// assigned a unique ID. Future events from this touch point reference
             /// this ID. The ID ceases to be valid after a touch up event and may be
             /// reused in the future.
             ///
-            pub fn sendDown(self: Self, serial: u32, time: u32, surface: u32, id: i32, x: f32, y: f32) !void {
+            pub fn sendDown(self: Self, serial: u32, time: u32, surface: WlSurface, id: i32, x: f32, y: f32) !void {
                 try self.wire.startWrite();
                 try self.wire.putU32(serial);
                 try self.wire.putU32(time);
-                try self.wire.putU32(surface);
+                try self.wire.putU32(surface.id);
                 try self.wire.putI32(id);
                 try self.wire.putFixed(x);
                 try self.wire.putFixed(y);
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// end of a touch event sequence
             ///
             /// The touch point has disappeared. No further events will be sent for
             /// this touch point and the touch point's ID is released and may be
@@ -4695,6 +4692,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 1);
             }
 
+            /// update of touch point coordinates
             ///
             /// A touch point has changed coordinates.
             ///
@@ -4707,6 +4705,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 2);
             }
 
+            /// end of touch frame event
             ///
             /// Indicates the end of a set of events that logically belong together.
             /// A client is expected to accumulate the data in all events within the
@@ -4722,6 +4721,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 3);
             }
 
+            /// touch session cancelled
             ///
             /// Sent if the compositor decides the touch stream is a global
             /// gesture. No further events are sent to the clients from that
@@ -4735,6 +4735,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 4);
             }
 
+            /// update shape of touch point
             ///
             /// Sent when a touchpoint has changed its shape.
             ///
@@ -4770,6 +4771,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 5);
             }
 
+            /// update orientation of touch point
             ///
             /// Sent when a touchpoint has changed its orientation.
             ///
@@ -4829,7 +4831,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Subpixel = enum(u32) {
                 unknown = 0,
                 none = 1,
@@ -4851,13 +4852,13 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
 
             pub const Mode = packed struct(u32) { // bitfield
-                current: bool = false, // 1
-                preferred: bool = false, // 2
+                current: bool = false,
+                preferred: bool = false,
                 _padding: u30 = 0,
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // release
                     0 => {
@@ -4896,6 +4897,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 wl_output: WlOutput,
             };
 
+            /// properties of the output
             ///
             /// The geometry event describes geometric properties of the output.
             /// The event is sent when binding to the output object and whenever
@@ -4927,6 +4929,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// advertise available modes for the output
             ///
             /// The mode event describes an available mode for the output.
             ///
@@ -4971,6 +4974,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 1);
             }
 
+            /// sent all information about output
             ///
             /// This event is sent after all other properties have been
             /// sent after binding to the output object and after any
@@ -4983,6 +4987,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 2);
             }
 
+            /// output scaling properties
             ///
             /// This event contains scaling geometry information
             /// that is not in the geometry event. It may be sent after
@@ -5011,6 +5016,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 3);
             }
 
+            /// name of this output
             ///
             /// Many compositors will assign user-friendly names to their outputs, show
             /// them to the user, allow the user to refer to an output, etc. The client
@@ -5047,6 +5053,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 4);
             }
 
+            /// human-readable description of this output
             ///
             /// Many compositors can produce human-readable descriptions of their
             /// outputs. The client may wish to know this description as well, e.g. for
@@ -5096,7 +5103,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // destroy
                     0 => {
@@ -5157,13 +5164,11 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// Destroy the region.  This will invalidate the object ID.
                 ///
                 destroy: DestroyMessage,
-
                 /// add rectangle to region
                 ///
                 /// Add the specified rectangle to the region.
                 ///
                 add: AddMessage,
-
                 /// subtract rectangle from region
                 ///
                 /// Subtract the specified rectangle from the region.
@@ -5251,13 +5256,12 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 bad_surface = 0,
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // destroy
                     0 => {
@@ -5307,7 +5311,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// objects, wl_subsurface objects included.
                 ///
                 destroy: DestroyMessage,
-
                 /// give a surface the role sub-surface
                 ///
                 /// Create a sub-surface interface for the given surface, and
@@ -5437,13 +5440,12 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 bad_surface = 0,
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // destroy
                     0 => {
@@ -5533,7 +5535,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// a sub-surface. The wl_surface is unmapped immediately.
                 ///
                 destroy: DestroyMessage,
-
                 /// reposition the sub-surface
                 ///
                 /// This schedules a sub-surface position change.
@@ -5554,7 +5555,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// The initial position is 0, 0.
                 ///
                 set_position: SetPositionMessage,
-
                 /// restack the sub-surface
                 ///
                 /// This sub-surface is taken from the stack, and put back just
@@ -5574,14 +5574,12 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// of its siblings and parent.
                 ///
                 place_above: PlaceAboveMessage,
-
                 /// restack the sub-surface
                 ///
                 /// The sub-surface is placed just below the reference surface.
                 /// See wl_subsurface.place_above.
                 ///
                 place_below: PlaceBelowMessage,
-
                 /// set sub-surface to synchronized mode
                 ///
                 /// Change the commit behaviour of the sub-surface to synchronized
@@ -5599,7 +5597,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// See wl_subsurface for the recursive effect of this mode.
                 ///
                 set_sync: SetSyncMessage,
-
                 /// set sub-surface to desynchronized mode
                 ///
                 /// Change the commit behaviour of the sub-surface to desynchronized
@@ -5771,7 +5768,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 role = 0,
                 defunct_surfaces = 1,
@@ -5782,7 +5778,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // destroy
                     0 => {
@@ -5851,7 +5847,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// and will result in a protocol error.
                 ///
                 destroy: DestroyMessage,
-
                 /// create a positioner object
                 ///
                 /// Create a positioner object. A positioner object is used to position
@@ -5859,7 +5854,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// and xdg_surface.get_popup for details.
                 ///
                 create_positioner: CreatePositionerMessage,
-
                 /// create a shell surface from a surface
                 ///
                 /// This creates an xdg_surface for the given surface. While xdg_surface
@@ -5877,7 +5871,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// xdg_surface is and how it is used.
                 ///
                 get_xdg_surface: GetXdgSurfaceMessage,
-
                 /// respond to a ping event
                 ///
                 /// A client must respond to a ping event with a pong request or
@@ -5906,6 +5899,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             const CreatePositionerMessage = struct {
                 xdg_wm_base: XdgWmBase,
+                ///
                 id: u32,
             };
 
@@ -5927,7 +5921,9 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             const GetXdgSurfaceMessage = struct {
                 xdg_wm_base: XdgWmBase,
+                ///
                 id: u32,
+                ///
                 surface: WlSurface,
             };
 
@@ -5942,6 +5938,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 serial: u32,
             };
 
+            /// check if the client is alive
             ///
             /// The ping event asks the client if it's still alive. Pass the
             /// serial specified in the event back to the compositor by sending
@@ -6001,7 +5998,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 invalid_input = 0,
             };
@@ -6031,18 +6027,17 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
 
             pub const ConstraintAdjustment = packed struct(u32) { // bitfield
-                // none 0 (removed from bitfield)
-                slide_x: bool = false, // 1
-                slide_y: bool = false, // 2
-                flip_x: bool = false, // 4
-                flip_y: bool = false, // 8
-                resize_x: bool = false, // 16
-                resize_y: bool = false, // 32
+                slide_x: bool = false,
+                slide_y: bool = false,
+                flip_x: bool = false,
+                flip_y: bool = false,
+                resize_x: bool = false,
+                resize_y: bool = false,
                 _padding: u26 = 0,
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // destroy
                     0 => {
@@ -6178,7 +6173,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// Notify the compositor that the xdg_positioner will no longer be used.
                 ///
                 destroy: DestroyMessage,
-
                 /// set the size of the to-be positioned rectangle
                 ///
                 /// Set the size of the surface that is to be positioned with the positioner
@@ -6188,7 +6182,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// If a zero or negative size is set the invalid_input error is raised.
                 ///
                 set_size: SetSizeMessage,
-
                 /// set the anchor rectangle within the parent surface
                 ///
                 /// Specify the anchor rectangle within the parent surface that the child
@@ -6203,7 +6196,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// If a negative size is set the invalid_input error is raised.
                 ///
                 set_anchor_rect: SetAnchorRectMessage,
-
                 /// set anchor rectangle anchor
                 ///
                 /// Defines the anchor point for the anchor rectangle. The specified anchor
@@ -6214,7 +6206,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// edge, or in the center of the anchor rectangle if no edge is specified.
                 ///
                 set_anchor: SetAnchorMessage,
-
                 /// set child surface gravity
                 ///
                 /// Defines in what direction a surface should be positioned, relative to
@@ -6225,7 +6216,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// gravity specified.
                 ///
                 set_gravity: SetGravityMessage,
-
                 /// set the adjustment to be done when constrained
                 ///
                 /// Specify how the window should be positioned if the originally intended
@@ -6243,7 +6233,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// The default adjustment is none.
                 ///
                 set_constraint_adjustment: SetConstraintAdjustmentMessage,
-
                 /// set surface position offset
                 ///
                 /// Specify the surface position offset relative to the position of the
@@ -6259,7 +6248,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// with some user interface element placed somewhere in the popup surface.
                 ///
                 set_offset: SetOffsetMessage,
-
                 /// continuously reconstrain the surface
                 ///
                 /// When set reactive, the surface is reconstrained if the conditions used
@@ -6270,7 +6258,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// xdg_surface.configure event.
                 ///
                 set_reactive: SetReactiveMessage,
-
                 ///
                 ///
                 /// Set the parent window geometry the compositor should use when
@@ -6282,7 +6269,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// The arguments are given in the surface-local coordinate space.
                 ///
                 set_parent_size: SetParentSizeMessage,
-
                 /// set parent configure this is a response to
                 ///
                 /// Set the serial of an xdg_surface.configure event this positioner will be
@@ -6526,7 +6512,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 not_constructed = 1,
                 already_constructed = 2,
@@ -6534,7 +6519,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // destroy
                     0 => {
@@ -6622,7 +6607,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// after its role object has been destroyed.
                 ///
                 destroy: DestroyMessage,
-
                 /// assign the xdg_toplevel surface role
                 ///
                 /// This creates an xdg_toplevel object for the given xdg_surface and gives
@@ -6632,7 +6616,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// xdg_toplevel is and how it is used.
                 ///
                 get_toplevel: GetToplevelMessage,
-
                 /// assign the xdg_popup surface role
                 ///
                 /// This creates an xdg_popup object for the given xdg_surface and gives
@@ -6645,7 +6628,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// xdg_popup is and how it is used.
                 ///
                 get_popup: GetPopupMessage,
-
                 /// set the new window geometry
                 ///
                 /// The window geometry of a surface is its "visible bounds" from the
@@ -6679,7 +6661,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// subsurfaces.
                 ///
                 set_window_geometry: SetWindowGeometryMessage,
-
                 /// ack a configure event
                 ///
                 /// When a configure event is received, if a client commits the
@@ -6724,6 +6705,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             const GetToplevelMessage = struct {
                 xdg_surface: XdgSurface,
+                ///
                 id: u32,
             };
 
@@ -6740,8 +6722,11 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             const GetPopupMessage = struct {
                 xdg_surface: XdgSurface,
+                ///
                 id: u32,
+                ///
                 parent: ?XdgSurface,
+                ///
                 positioner: XdgPositioner,
             };
 
@@ -6779,9 +6764,13 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             const SetWindowGeometryMessage = struct {
                 xdg_surface: XdgSurface,
+                ///
                 x: i32,
+                ///
                 y: i32,
+                ///
                 width: i32,
+                ///
                 height: i32,
             };
 
@@ -6813,6 +6802,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 serial: u32,
             };
 
+            /// suggest a surface change
             ///
             /// The configure event marks the end of a configure sequence. A configure
             /// sequence is a set of one or more events configuring the state of the
@@ -6875,7 +6865,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 invalid_resize_edge = 0,
             };
@@ -6904,7 +6893,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // destroy
                     0 => {
@@ -7098,7 +7087,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// see "Unmapping" behavior in interface section for details.
                 ///
                 destroy: DestroyMessage,
-
                 /// set the parent of this surface
                 ///
                 /// Set the "parent" of this surface. This surface should be stacked
@@ -7119,7 +7107,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// parent surface.
                 ///
                 set_parent: SetParentMessage,
-
                 /// set surface title
                 ///
                 /// Set a short title for the surface.
@@ -7131,7 +7118,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// The string must be encoded in UTF-8.
                 ///
                 set_title: SetTitleMessage,
-
                 /// set application ID
                 ///
                 /// Set an application identifier for the surface.
@@ -7159,7 +7145,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// [0] http://standards.freedesktop.org/desktop-entry-spec/
                 ///
                 set_app_id: SetAppIdMessage,
-
                 /// show the window menu
                 ///
                 /// Clients implementing client-side decorations might want to show
@@ -7175,7 +7160,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// like a button press, key press, or touch down event.
                 ///
                 show_window_menu: ShowWindowMenuMessage,
-
                 /// start an interactive move
                 ///
                 /// Start an interactive, user-driven move of the surface.
@@ -7196,7 +7180,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// that the device focus will return when the move is completed.
                 ///
                 move: MoveMessage,
-
                 /// start an interactive resize
                 ///
                 /// Start a user-driven, interactive resize of the surface.
@@ -7232,7 +7215,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// cursor image.
                 ///
                 resize: ResizeMessage,
-
                 /// set the maximum size
                 ///
                 /// Set a maximum size for the window.
@@ -7271,7 +7253,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// protocol error.
                 ///
                 set_max_size: SetMaxSizeMessage,
-
                 /// set the minimum size
                 ///
                 /// Set a minimum size for the window.
@@ -7310,7 +7291,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// protocol error.
                 ///
                 set_min_size: SetMinSizeMessage,
-
                 /// maximize the window
                 ///
                 /// Maximize the surface.
@@ -7334,7 +7314,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// unmaximized unless overridden by the compositor.
                 ///
                 set_maximized: SetMaximizedMessage,
-
                 /// unmaximize the window
                 ///
                 /// Unmaximize the surface.
@@ -7360,7 +7339,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// unmaximized unless overridden by the compositor.
                 ///
                 unset_maximized: UnsetMaximizedMessage,
-
                 /// set the window as fullscreen on an output
                 ///
                 /// Make the surface fullscreen.
@@ -7388,7 +7366,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// visible below the fullscreened surface.
                 ///
                 set_fullscreen: SetFullscreenMessage,
-
                 /// unset the window as fullscreen
                 ///
                 /// Make the surface no longer fullscreen.
@@ -7410,7 +7387,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// content (see ack_configure).
                 ///
                 unset_fullscreen: UnsetFullscreenMessage,
-
                 /// set the window as minimized
                 ///
                 /// Request that the compositor minimize your surface. There is no
@@ -7455,6 +7431,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             const SetParentMessage = struct {
                 xdg_toplevel: XdgToplevel,
+                ///
                 parent: ?XdgToplevel,
             };
 
@@ -7470,6 +7447,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             const SetTitleMessage = struct {
                 xdg_toplevel: XdgToplevel,
+                ///
                 title: []u8,
             };
 
@@ -7501,6 +7479,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             const SetAppIdMessage = struct {
                 xdg_toplevel: XdgToplevel,
+                ///
                 app_id: []u8,
             };
 
@@ -7640,7 +7619,9 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             const SetMaxSizeMessage = struct {
                 xdg_toplevel: XdgToplevel,
+                ///
                 width: i32,
+                ///
                 height: i32,
             };
 
@@ -7683,7 +7664,9 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             const SetMinSizeMessage = struct {
                 xdg_toplevel: XdgToplevel,
+                ///
                 width: i32,
+                ///
                 height: i32,
             };
 
@@ -7769,6 +7752,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             const SetFullscreenMessage = struct {
                 xdg_toplevel: XdgToplevel,
+                ///
                 output: ?WlOutput,
             };
 
@@ -7811,6 +7795,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 xdg_toplevel: XdgToplevel,
             };
 
+            /// suggest a surface change
             ///
             /// This configure event asks the client to resize its toplevel surface or
             /// to change its state. The configured state should not be applied
@@ -7840,6 +7825,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// surface wants to be closed
             ///
             /// The close event is sent by the compositor when the user
             /// wants the surface to be closed. This should be equivalent to
@@ -7855,6 +7841,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 1);
             }
 
+            /// recommended window geometry bounds
             ///
             /// The configure_bounds event may be sent prior to a xdg_toplevel.configure
             /// event to communicate the bounds a window geometry size is recommended
@@ -7924,13 +7911,12 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 invalid_grab = 0,
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // destroy
                     0 => {
@@ -7993,7 +7979,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// will be sent.
                 ///
                 destroy: DestroyMessage,
-
                 /// make the popup take an explicit grab
                 ///
                 /// This request makes the created popup take an explicit grab. An explicit
@@ -8039,7 +8024,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// will always have keyboard focus.
                 ///
                 grab: GrabMessage,
-
                 /// recalculate the popup's location
                 ///
                 /// Reposition an already-mapped popup. The popup will be placed given the
@@ -8161,11 +8145,13 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             const RepositionMessage = struct {
                 xdg_popup: XdgPopup,
+                ///
                 positioner: XdgPositioner,
                 /// reposition request token
                 token: u32,
             };
 
+            /// configure the popup surface
             ///
             /// This event asks the popup surface to configure itself given the
             /// configuration. The configured state should not be applied immediately.
@@ -8189,6 +8175,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// popup interaction is done
             ///
             /// The popup_done event is sent out when a popup is dismissed by the
             /// compositor. The client should destroy the xdg_popup object at this
@@ -8199,6 +8186,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 1);
             }
 
+            /// signal the completion of a repositioned request
             ///
             /// The repositioned event is sent as part of a popup configuration
             /// sequence, together with xdg_popup.configure and lastly
@@ -8313,7 +8301,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             }
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // destroy
                     0 => {
@@ -8379,7 +8367,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// remain valid.
                 ///
                 destroy: DestroyMessage,
-
                 /// create a temporary object for buffer parameters
                 ///
                 /// This temporary object is used to collect multiple dmabuf handles into
@@ -8388,7 +8375,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// received.
                 ///
                 create_params: CreateParamsMessage,
-
                 /// get default feedback
                 ///
                 /// This request creates a new wp_linux_dmabuf_feedback object not bound
@@ -8397,7 +8383,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// (see get_surface_feedback).
                 ///
                 get_default_feedback: GetDefaultFeedbackMessage,
-
                 /// get feedback for a surface
                 ///
                 /// This request creates a new wp_linux_dmabuf_feedback object for the
@@ -8441,6 +8426,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             const GetDefaultFeedbackMessage = struct {
                 zwp_linux_dmabuf_v1: ZwpLinuxDmabufV1,
+                ///
                 id: u32,
             };
 
@@ -8455,22 +8441,25 @@ pub fn Wayland(comptime ResourceMap: struct {
             ///
             const GetSurfaceFeedbackMessage = struct {
                 zwp_linux_dmabuf_v1: ZwpLinuxDmabufV1,
+                ///
                 id: u32,
+                ///
                 surface: WlSurface,
             };
 
+            /// supported buffer format
             ///
-            ///         This event advertises one buffer format that the server supports.
-            ///         All the supported formats are advertised once when the client
-            ///         binds to this interface. A roundtrip after binding guarantees
-            ///         that the client has received all supported formats.
+            /// This event advertises one buffer format that the server supports.
+            /// All the supported formats are advertised once when the client
+            /// binds to this interface. A roundtrip after binding guarantees
+            /// that the client has received all supported formats.
             ///
-            ///         For the definition of the format codes, see the
-            ///         zwp_linux_buffer_params_v1::create request.
+            /// For the definition of the format codes, see the
+            /// zwp_linux_buffer_params_v1::create request.
             ///
-            ///         Starting version 4, the format event is deprecated and must not be
-            ///         sent by compositors. Instead, use get_default_feedback or
-            ///         get_surface_feedback.
+            /// Starting version 4, the format event is deprecated and must not be
+            /// sent by compositors. Instead, use get_default_feedback or
+            /// get_surface_feedback.
             ///
             pub fn sendFormat(self: Self, format: u32) !void {
                 try self.wire.startWrite();
@@ -8478,30 +8467,31 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// supported buffer format modifier
             ///
-            ///         This event advertises the formats that the server supports, along with
-            ///         the modifiers supported for each format. All the supported modifiers
-            ///         for all the supported formats are advertised once when the client
-            ///         binds to this interface. A roundtrip after binding guarantees that
-            ///         the client has received all supported format-modifier pairs.
+            /// This event advertises the formats that the server supports, along with
+            /// the modifiers supported for each format. All the supported modifiers
+            /// for all the supported formats are advertised once when the client
+            /// binds to this interface. A roundtrip after binding guarantees that
+            /// the client has received all supported format-modifier pairs.
             ///
-            ///         For legacy support, DRM_FORMAT_MOD_INVALID (that is, modifier_hi ==
-            ///         0x00ffffff and modifier_lo == 0xffffffff) is allowed in this event.
-            ///         It indicates that the server can support the format with an implicit
-            ///         modifier. When a plane has DRM_FORMAT_MOD_INVALID as its modifier, it
-            ///         is as if no explicit modifier is specified. The effective modifier
-            ///         will be derived from the dmabuf.
+            /// For legacy support, DRM_FORMAT_MOD_INVALID (that is, modifier_hi ==
+            /// 0x00ffffff and modifier_lo == 0xffffffff) is allowed in this event.
+            /// It indicates that the server can support the format with an implicit
+            /// modifier. When a plane has DRM_FORMAT_MOD_INVALID as its modifier, it
+            /// is as if no explicit modifier is specified. The effective modifier
+            /// will be derived from the dmabuf.
             ///
-            ///         A compositor that sends valid modifiers and DRM_FORMAT_MOD_INVALID for
-            ///         a given format supports both explicit modifiers and implicit modifiers.
+            /// A compositor that sends valid modifiers and DRM_FORMAT_MOD_INVALID for
+            /// a given format supports both explicit modifiers and implicit modifiers.
             ///
-            ///         For the definition of the format and modifier codes, see the
-            ///         zwp_linux_buffer_params_v1::create and zwp_linux_buffer_params_v1::add
-            ///         requests.
+            /// For the definition of the format and modifier codes, see the
+            /// zwp_linux_buffer_params_v1::create and zwp_linux_buffer_params_v1::add
+            /// requests.
             ///
-            ///         Starting version 4, the modifier event is deprecated and must not be
-            ///         sent by compositors. Instead, use get_default_feedback or
-            ///         get_surface_feedback.
+            /// Starting version 4, the modifier event is deprecated and must not be
+            /// sent by compositors. Instead, use get_default_feedback or
+            /// get_surface_feedback.
             ///
             pub fn sendModifier(self: Self, format: u32, modifier_hi: u32, modifier_lo: u32) !void {
                 try self.wire.startWrite();
@@ -8546,7 +8536,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const Error = enum(u32) {
                 already_used = 0,
                 plane_idx = 1,
@@ -8559,14 +8548,14 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
 
             pub const Flags = packed struct(u32) { // bitfield
-                y_invert: bool = false, // 1
-                interlaced: bool = false, // 2
-                bottom_first: bool = false, // 4
+                y_invert: bool = false,
+                interlaced: bool = false,
+                bottom_first: bool = false,
                 _padding: u29 = 0,
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // destroy
                     0 => {
@@ -8651,7 +8640,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// wl_buffer creation.
                 ///
                 destroy: DestroyMessage,
-
                 /// add a dmabuf to the temporary set
                 ///
                 /// This request adds one dmabuf to the set in this
@@ -8672,7 +8660,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// was already set.
                 ///
                 add: AddMessage,
-
                 /// create a wl_buffer from the given dmabufs
                 ///
                 /// This asks for creation of a wl_buffer from the added dmabuf
@@ -8736,7 +8723,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// cancel the buffer creation, it can just destroy this object.
                 ///
                 create: CreateMessage,
-
                 /// immediately create a wl_buffer from the given                      dmabufs
                 ///
                 /// This asks for immediate creation of a wl_buffer by importing the
@@ -8924,12 +8910,13 @@ pub fn Wayland(comptime ResourceMap: struct {
                 flags: Flags,
             };
 
+            /// buffer creation succeeded
             ///
-            ///         This event indicates that the attempted buffer creation was
-            ///         successful. It provides the new wl_buffer referencing the dmabuf(s).
+            /// This event indicates that the attempted buffer creation was
+            /// successful. It provides the new wl_buffer referencing the dmabuf(s).
             ///
-            ///         Upon receiving this event, the client should destroy the
-            ///         zlinux_dmabuf_params object.
+            /// Upon receiving this event, the client should destroy the
+            /// zlinux_dmabuf_params object.
             ///
             pub fn sendCreated(self: Self, buffer: u32) !void {
                 try self.wire.startWrite();
@@ -8937,13 +8924,14 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// buffer creation failed
             ///
-            ///         This event indicates that the attempted buffer creation has
-            ///         failed. It usually means that one of the dmabuf constraints
-            ///         has not been fulfilled.
+            /// This event indicates that the attempted buffer creation has
+            /// failed. It usually means that one of the dmabuf constraints
+            /// has not been fulfilled.
             ///
-            ///         Upon receiving this event, the client should destroy the
-            ///         zlinux_buffer_params object.
+            /// Upon receiving this event, the client should destroy the
+            /// zlinux_buffer_params object.
             ///
             pub fn sendFailed(self: Self) !void {
                 try self.wire.startWrite();
@@ -8996,14 +8984,13 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const TrancheFlags = packed struct(u32) { // bitfield
-                scanout: bool = false, // 1
+                scanout: bool = false,
                 _padding: u31 = 0,
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // destroy
                     0 => {
@@ -9042,33 +9029,35 @@ pub fn Wayland(comptime ResourceMap: struct {
                 zwp_linux_dmabuf_feedback_v1: ZwpLinuxDmabufFeedbackV1,
             };
 
+            /// all feedback has been sent
             ///
-            ///         This event is sent after all parameters of a wp_linux_dmabuf_feedback
-            ///         object have been sent.
+            /// This event is sent after all parameters of a wp_linux_dmabuf_feedback
+            /// object have been sent.
             ///
-            ///         This allows changes to the wp_linux_dmabuf_feedback parameters to be
-            ///         seen as atomic, even if they happen via multiple events.
+            /// This allows changes to the wp_linux_dmabuf_feedback parameters to be
+            /// seen as atomic, even if they happen via multiple events.
             ///
             pub fn sendDone(self: Self) !void {
                 try self.wire.startWrite();
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            /// format and modifier table
             ///
-            ///         This event provides a file descriptor which can be memory-mapped to
-            ///         access the format and modifier table.
+            /// This event provides a file descriptor which can be memory-mapped to
+            /// access the format and modifier table.
             ///
-            ///         The table contains a tightly packed array of consecutive format +
-            ///         modifier pairs. Each pair is 16 bytes wide. It contains a format as a
-            ///         32-bit unsigned integer, followed by 4 bytes of unused padding, and a
-            ///         modifier as a 64-bit unsigned integer. The native endianness is used.
+            /// The table contains a tightly packed array of consecutive format +
+            /// modifier pairs. Each pair is 16 bytes wide. It contains a format as a
+            /// 32-bit unsigned integer, followed by 4 bytes of unused padding, and a
+            /// modifier as a 64-bit unsigned integer. The native endianness is used.
             ///
-            ///         The client must map the file descriptor in read-only private mode.
+            /// The client must map the file descriptor in read-only private mode.
             ///
-            ///         Compositors are not allowed to mutate the table file contents once this
-            ///         event has been sent. Instead, compositors must create a new, separate
-            ///         table file and re-send feedback parameters. Compositors are allowed to
-            ///         store duplicate format + modifier pairs in the table.
+            /// Compositors are not allowed to mutate the table file contents once this
+            /// event has been sent. Instead, compositors must create a new, separate
+            /// table file and re-send feedback parameters. Compositors are allowed to
+            /// store duplicate format + modifier pairs in the table.
             ///
             pub fn sendFormatTable(self: Self, fd: i32, size: u32) !void {
                 try self.wire.startWrite();
@@ -9077,30 +9066,31 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 1);
             }
 
+            /// preferred main device
             ///
-            ///         This event advertises the main device that the server prefers to use
-            ///         when direct scan-out to the target device isn't possible. The
-            ///         advertised main device may be different for each
-            ///         wp_linux_dmabuf_feedback object, and may change over time.
+            /// This event advertises the main device that the server prefers to use
+            /// when direct scan-out to the target device isn't possible. The
+            /// advertised main device may be different for each
+            /// wp_linux_dmabuf_feedback object, and may change over time.
             ///
-            ///         There is exactly one main device. The compositor must send at least
-            ///         one preference tranche with tranche_target_device equal to main_device.
+            /// There is exactly one main device. The compositor must send at least
+            /// one preference tranche with tranche_target_device equal to main_device.
             ///
-            ///         Clients need to create buffers that the main device can import and
-            ///         read from, otherwise creating the dmabuf wl_buffer will fail (see the
-            ///         wp_linux_buffer_params.create and create_immed requests for details).
-            ///         The main device will also likely be kept active by the compositor,
-            ///         so clients can use it instead of waking up another device for power
-            ///         savings.
+            /// Clients need to create buffers that the main device can import and
+            /// read from, otherwise creating the dmabuf wl_buffer will fail (see the
+            /// wp_linux_buffer_params.create and create_immed requests for details).
+            /// The main device will also likely be kept active by the compositor,
+            /// so clients can use it instead of waking up another device for power
+            /// savings.
             ///
-            ///         In general the device is a DRM node. The DRM node type (primary vs.
-            ///         render) is unspecified. Clients must not rely on the compositor sending
-            ///         a particular node type. Clients cannot check two devices for equality
-            ///         by comparing the dev_t value.
+            /// In general the device is a DRM node. The DRM node type (primary vs.
+            /// render) is unspecified. Clients must not rely on the compositor sending
+            /// a particular node type. Clients cannot check two devices for equality
+            /// by comparing the dev_t value.
             ///
-            ///         If explicit modifiers are not supported and the client performs buffer
-            ///         allocations on a different device than the main device, then the client
-            ///         must force the buffer to have a linear layout.
+            /// If explicit modifiers are not supported and the client performs buffer
+            /// allocations on a different device than the main device, then the client
+            /// must force the buffer to have a linear layout.
             ///
             pub fn sendMainDevice(self: Self, device: []u8) !void {
                 try self.wire.startWrite();
@@ -9108,44 +9098,46 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 2);
             }
 
+            /// a preference tranche has been sent
             ///
-            ///         This event splits tranche_target_device and tranche_modifier events in
-            ///         preference tranches. It is sent after a set of tranche_target_device
-            ///         and tranche_modifier events; it represents the end of a tranche. The
-            ///         next tranche will have a lower preference.
+            /// This event splits tranche_target_device and tranche_modifier events in
+            /// preference tranches. It is sent after a set of tranche_target_device
+            /// and tranche_modifier events; it represents the end of a tranche. The
+            /// next tranche will have a lower preference.
             ///
             pub fn sendTrancheDone(self: Self) !void {
                 try self.wire.startWrite();
                 try self.wire.finishWrite(self.id, 3);
             }
 
+            /// target device
             ///
-            ///         This event advertises the target device that the server prefers to use
-            ///         for a buffer created given this tranche. The advertised target device
-            ///         may be different for each preference tranche, and may change over time.
+            /// This event advertises the target device that the server prefers to use
+            /// for a buffer created given this tranche. The advertised target device
+            /// may be different for each preference tranche, and may change over time.
             ///
-            ///         There is exactly one target device per tranche.
+            /// There is exactly one target device per tranche.
             ///
-            ///         The target device may be a scan-out device, for example if the
-            ///         compositor prefers to directly scan-out a buffer created given this
-            ///         tranche. The target device may be a rendering device, for example if
-            ///         the compositor prefers to texture from said buffer.
+            /// The target device may be a scan-out device, for example if the
+            /// compositor prefers to directly scan-out a buffer created given this
+            /// tranche. The target device may be a rendering device, for example if
+            /// the compositor prefers to texture from said buffer.
             ///
-            ///         The client can use this hint to allocate the buffer in a way that makes
-            ///         it accessible from the target device, ideally directly. The buffer must
-            ///         still be accessible from the main device, either through direct import
-            ///         or through a potentially more expensive fallback path. If the buffer
-            ///         can't be directly imported from the main device then clients must be
-            ///         prepared for the compositor changing the tranche priority or making
-            ///         wl_buffer creation fail (see the wp_linux_buffer_params.create and
-            ///         create_immed requests for details).
+            /// The client can use this hint to allocate the buffer in a way that makes
+            /// it accessible from the target device, ideally directly. The buffer must
+            /// still be accessible from the main device, either through direct import
+            /// or through a potentially more expensive fallback path. If the buffer
+            /// can't be directly imported from the main device then clients must be
+            /// prepared for the compositor changing the tranche priority or making
+            /// wl_buffer creation fail (see the wp_linux_buffer_params.create and
+            /// create_immed requests for details).
             ///
-            ///         If the device is a DRM node, the DRM node type (primary vs. render) is
-            ///         unspecified. Clients must not rely on the compositor sending a
-            ///         particular node type. Clients cannot check two devices for equality by
-            ///         comparing the dev_t value.
+            /// If the device is a DRM node, the DRM node type (primary vs. render) is
+            /// unspecified. Clients must not rely on the compositor sending a
+            /// particular node type. Clients cannot check two devices for equality by
+            /// comparing the dev_t value.
             ///
-            ///         This event is tied to a preference tranche, see the tranche_done event.
+            /// This event is tied to a preference tranche, see the tranche_done event.
             ///
             pub fn sendTrancheTargetDevice(self: Self, device: []u8) !void {
                 try self.wire.startWrite();
@@ -9153,31 +9145,32 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 4);
             }
 
+            /// supported buffer format modifier
             ///
-            ///         This event advertises the format + modifier combinations that the
-            ///         compositor supports.
+            /// This event advertises the format + modifier combinations that the
+            /// compositor supports.
             ///
-            ///         It carries an array of indices, each referring to a format + modifier
-            ///         pair in the last received format table (see the format_table event).
-            ///         Each index is a 16-bit unsigned integer in native endianness.
+            /// It carries an array of indices, each referring to a format + modifier
+            /// pair in the last received format table (see the format_table event).
+            /// Each index is a 16-bit unsigned integer in native endianness.
             ///
-            ///         For legacy support, DRM_FORMAT_MOD_INVALID is an allowed modifier.
-            ///         It indicates that the server can support the format with an implicit
-            ///         modifier. When a buffer has DRM_FORMAT_MOD_INVALID as its modifier, it
-            ///         is as if no explicit modifier is specified. The effective modifier
-            ///         will be derived from the dmabuf.
+            /// For legacy support, DRM_FORMAT_MOD_INVALID is an allowed modifier.
+            /// It indicates that the server can support the format with an implicit
+            /// modifier. When a buffer has DRM_FORMAT_MOD_INVALID as its modifier, it
+            /// is as if no explicit modifier is specified. The effective modifier
+            /// will be derived from the dmabuf.
             ///
-            ///         A compositor that sends valid modifiers and DRM_FORMAT_MOD_INVALID for
-            ///         a given format supports both explicit modifiers and implicit modifiers.
+            /// A compositor that sends valid modifiers and DRM_FORMAT_MOD_INVALID for
+            /// a given format supports both explicit modifiers and implicit modifiers.
             ///
-            ///         Compositors must not send duplicate format + modifier pairs within the
-            ///         same tranche or across two different tranches with the same target
-            ///         device and flags.
+            /// Compositors must not send duplicate format + modifier pairs within the
+            /// same tranche or across two different tranches with the same target
+            /// device and flags.
             ///
-            ///         This event is tied to a preference tranche, see the tranche_done event.
+            /// This event is tied to a preference tranche, see the tranche_done event.
             ///
-            ///         For the definition of the format and modifier codes, see the
-            ///         wp_linux_buffer_params.create request.
+            /// For the definition of the format and modifier codes, see the
+            /// wp_linux_buffer_params.create request.
             ///
             pub fn sendTrancheFormats(self: Self, indices: []u8) !void {
                 try self.wire.startWrite();
@@ -9185,15 +9178,16 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 5);
             }
 
+            /// tranche flags
             ///
-            ///         This event sets tranche-specific flags.
+            /// This event sets tranche-specific flags.
             ///
-            ///         The scanout flag is a hint that direct scan-out may be attempted by the
-            ///         compositor on the target device if the client appropriately allocates a
-            ///         buffer. How to allocate a buffer that can be scanned out on the target
-            ///         device is implementation-defined.
+            /// The scanout flag is a hint that direct scan-out may be attempted by the
+            /// compositor on the target device if the client appropriately allocates a
+            /// buffer. How to allocate a buffer that can be scanned out on the target
+            /// device is implementation-defined.
             ///
-            ///         This event is tied to a preference tranche, see the tranche_done event.
+            /// This event is tied to a preference tranche, see the tranche_done event.
             ///
             pub fn sendTrancheFlags(self: Self, flags: TrancheFlags) !void {
                 try self.wire.startWrite();
@@ -9226,7 +9220,6 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .resource = resource,
                 };
             }
-
             pub const SurfaceType = enum(u32) {
                 wl_surface = 0,
                 wl_subsurface = 1,
@@ -9235,7 +9228,7 @@ pub fn Wayland(comptime ResourceMap: struct {
             };
 
             pub fn readMessage(self: *Self, comptime Client: type, objects: anytype, comptime field: []const u8, opcode: u16) !Message {
-                if (builtin.mode == .Debug and builtin.mode == .ReleaseFast) std.log.info("{any}, {s} {s}", .{ &objects, &field, Client });
+                use(self, Client, objects, field);
                 switch (opcode) {
                     // get_clients
                     0 => {
@@ -9289,19 +9282,16 @@ pub fn Wayland(comptime ResourceMap: struct {
                 /// Gets metadata about all the clients currently connected to foxwhale.
                 ///
                 get_clients: GetClientsMessage,
-
                 /// get_windows gets current list of windows
                 ///
                 /// Gets metadata about all the windows currently connected to foxwhale.
                 ///
                 get_windows: GetWindowsMessage,
-
                 /// get_windows gets current list of windows
                 ///
                 /// Gets metadata about all the windows currently connected to foxwhale.
                 ///
                 get_window_trees: GetWindowTreesMessage,
-
                 /// delete this object, used or not
                 ///
                 /// Cleans up fw_control object.
@@ -9341,12 +9331,14 @@ pub fn Wayland(comptime ResourceMap: struct {
                 fw_control: FwControl,
             };
 
+            ///
             pub fn sendClient(self: Self, index: u32) !void {
                 try self.wire.startWrite();
                 try self.wire.putU32(index);
                 try self.wire.finishWrite(self.id, 0);
             }
 
+            ///
             pub fn sendWindow(self: Self, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, sibling_prev: i32, sibling_next: i32, children_prev: i32, children_next: i32, input_region_id: u32) !void {
                 try self.wire.startWrite();
                 try self.wire.putU32(index);
@@ -9365,6 +9357,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 1);
             }
 
+            ///
             pub fn sendToplevelWindow(self: Self, index: u32, parent: i32, wl_surface_id: u32, surface_type: u32, x: i32, y: i32, width: i32, height: i32, input_region_id: u32) !void {
                 try self.wire.startWrite();
                 try self.wire.putU32(index);
@@ -9379,6 +9372,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 2);
             }
 
+            ///
             pub fn sendRegionRect(self: Self, index: u32, x: i32, y: i32, width: i32, height: i32, op: i32) !void {
                 try self.wire.startWrite();
                 try self.wire.putU32(index);
@@ -9390,6 +9384,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                 try self.wire.finishWrite(self.id, 3);
             }
 
+            ///
             pub fn sendDone(self: Self) !void {
                 try self.wire.startWrite();
                 try self.wire.finishWrite(self.id, 4);
@@ -9532,7 +9527,7 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .fw_control => |*o| WlMessage{ .fw_control = try o.readMessage(Client, objects, field, opcode) },
                 };
             }
-            // end of dispatch
+
             pub fn id(self: WlObject) u32 {
                 return switch (self) {
                     .wl_display => |o| o.id,
@@ -9568,7 +9563,12 @@ pub fn Wayland(comptime ResourceMap: struct {
                     .fw_control => |o| o.id,
                 };
             }
-            // end of id
         };
     };
+}
+fn use(self: anytype, client: anytype, objects: anytype, field: anytype) void {
+    _ = self;
+    _ = client;
+    _ = objects;
+    _ = field;
 }
