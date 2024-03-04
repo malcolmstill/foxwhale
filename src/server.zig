@@ -233,7 +233,7 @@ pub const Server = struct {
     }
 
     pub fn keyboard(server: *Self, time: u32, button: u32, action: u32) !void {
-        if (button == 224 or button == 25) server.running = false;
+        if (button == 224) server.running = false;
 
         server.xkb.updateKey(button, action);
         server.mods_depressed = server.xkb.serializeDepressed();
