@@ -51,4 +51,30 @@ pub fn build(b: *std.Build) void {
 
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
+
+    // Generate
+    // ===========================
+    const foxwhale_gen = b.dependency("foxwhale_gen", .{ .target = target, .optimize = optimize });
+    const foxwhale_gen_exe = foxwhale_gen.artifact("foxwhale-gen");
+
+    const output_path = "src/wl/protocols.zig";
+    const gen_cmd = b.addRunArtifact(foxwhale_gen_exe);
+    gen_cmd.addArg("server");
+    gen_cmd.addArg("--input-file");
+    gen_cmd.addArg("/usr/share/wayland/wayland.xml");
+    gen_cmd.addArg("--input-file");
+    gen_cmd.addArg("/usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml");
+    gen_cmd.addArg("--input-file");
+    gen_cmd.addArg("/usr/share/wayland-protocols/unstable/linux-dmabuf/linux-dmabuf-unstable-v1.xml");
+    gen_cmd.addArg("--input-file");
+    gen_cmd.addArg("protocols/fw_control.xml");
+    gen_cmd.addArg("--output-file");
+    gen_cmd.addArg(output_path);
+
+    const gen_step = b.step("generate", "Generate wayland protocols");
+
+    const fmt_step = b.addFmt(.{ .paths = &.{output_path} });
+    fmt_step.step.dependOn(&gen_cmd.step);
+
+    gen_step.dependOn(&fmt_step.step);
 }
