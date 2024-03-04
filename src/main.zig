@@ -23,7 +23,7 @@ pub fn main() !void {
     var server = try Server.init(allocator);
     defer server.deinit();
 
-    try epoll.addFd(server.server.sockfd.?, Target{ .server = &server });
+    try epoll.addFd(server.server.stream.handle, Target{ .server = &server });
 
     var backend = try Backend.init(allocator, .x11);
     defer backend.deinit();

@@ -51,7 +51,7 @@ const log = std.log.scoped(.server);
 
 pub const Server = struct {
     alloc: mem.Allocator,
-    server: std.net.StreamServer,
+    server: std.net.Server,
     // per-server resources:
     clients: IterablePool(Client, u8),
     outputs: IterablePool(Output, u5),
@@ -95,7 +95,7 @@ pub const Server = struct {
     };
 
     pub const ServerEvent = union(EventType) {
-        client_connected: std.net.StreamServer.Connection,
+        client_connected: std.net.Server.Connection,
     };
 
     pub fn init(alloc: mem.Allocator) !Server {
@@ -116,7 +116,7 @@ pub const Server = struct {
     }
 
     pub fn deinit(server: *Self) void {
-        server.server.close();
+        server.server.stream.close();
 
         server.clients.deinit();
         server.windows.deinit();
@@ -140,7 +140,7 @@ pub const Server = struct {
         std.debug.print("---------------\n", .{});
     }
 
-    pub fn addClient(server: *Self, conn: std.net.StreamServer.Connection) !*Client {
+    pub fn addClient(server: *Self, conn: std.net.Server.Connection) !*Client {
         var client = try server.clients.createPtr();
         errdefer server.clients.destroy(client);
 
@@ -278,12 +278,12 @@ pub const Server = struct {
     };
 };
 
-fn socket() !std.net.StreamServer {
+fn socket() !std.net.Server {
     _ = std.os.unlink("/run/user/1000/wayland-1") catch {};
     const addr = try std.net.Address.initUnix("/run/user/1000/wayland-1");
 
-    var server = std.net.StreamServer.init(.{});
-    try server.listen(addr);
+    // var server = std.net.Server.init(.{});
+    const server = try addr.listen(.{});
 
     return server;
 }

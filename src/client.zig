@@ -44,7 +44,7 @@ pub const wl = @import("wl/protocols.zig").Wayland(.{
 pub const Client = struct {
     server: *Server,
     alloc: mem.Allocator,
-    conn: net.StreamServer.Connection,
+    conn: net.Server.Connection,
     wire: wl.Wire,
     serial: u32 = 0,
     server_id: u32 = 0xFF00_0000 - 1,
@@ -88,7 +88,7 @@ pub const Client = struct {
 
     const Self = @This();
 
-    pub fn init(alloc: mem.Allocator, server: *Server, conn: net.StreamServer.Connection, wl_display: wl.WlDisplay) Client {
+    pub fn init(alloc: mem.Allocator, server: *Server, conn: net.Server.Connection, wl_display: wl.WlDisplay) Client {
         return .{
             .alloc = alloc,
             .server = server,
