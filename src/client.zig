@@ -524,7 +524,7 @@ pub const Client = struct {
 
                 if (window.view) |view| {
                     if (window.xdg_toplevel != null) {
-                        if (window.toplevel.prev == null and window.toplevel.next == null) {
+                        if (window.toplevel.prev == null and window.toplevel.next == null and view.top != window) {
                             view.remove(window);
                             view.push(window);
                         }
@@ -630,7 +630,7 @@ pub const Client = struct {
                 window.pending().scale = msg.scale;
             },
             .damage_buffer => |_| {
-                unreachable;
+                log.warn("wl_surface.damage_buffer not implemented", .{});
             },
             .offset => |_| return error.WlSurfaceOffsetNotImplemented,
         }
