@@ -256,7 +256,7 @@ pub const Client = struct {
             .wl_data_offer => |_| return error.NotImplemented,
             .wl_data_source => |_| return error.NotImplemented,
             .wl_data_device => |_| return error.NotImplemented,
-            .wl_data_device_manager => |_| return error.NotImplemented,
+            .wl_data_device_manager => |msg| try client.dispatchWlDataDeviceManager(msg),
             .wl_shell => |_| return error.NotImplemented,
             .wl_shell_surface => |_| return error.NotImplemented,
             .wl_surface => |msg| try client.dispatchWlSurface(msg),
@@ -298,7 +298,7 @@ pub const Client = struct {
                     try wl_registry.sendGlobal(output.id, "wl_output\x00", 2);
                 }
 
-                // try wl_registry.sendGlobal(6, "wl_data_device_manager\x00", 3);
+                try wl_registry.sendGlobal(6, "wl_data_device_manager\x00", 3);
                 try wl_registry.sendGlobal(8, "wl_shm\x00", 1);
                 // try wl_registry.sendGlobal(10, "zwp_linux_dmabuf_v1\x00", 3);
                 try wl_registry.sendGlobal(11, "fw_control\x00", 1);
@@ -332,13 +332,12 @@ pub const Client = struct {
                     3 => {
                         if (!mem.eql(u8, msg.name_string, "wl_seat\x00")) return error.UnexpectedName;
 
-                        if (client.wl_seat == null) {
-                            client.wl_seat = wl.WlSeat.init(msg.id, &client.wire, msg.version, null);
-                        }
+                        const wl_seat = wl.WlSeat.init(msg.id, &client.wire, msg.version, null);
+                        try wl_seat.sendCapabilities(.{ .pointer = true, .keyboard = true });
 
-                        try client.wl_seat.?.sendCapabilities(.{ .pointer = true, .keyboard = true });
+                        client.wl_seat = wl_seat;
 
-                        try client.register(.{ .wl_seat = client.wl_seat.? });
+                        try client.register(.{ .wl_seat = wl_seat });
                     },
                     4 => {
                         if (!mem.eql(u8, msg.name_string, "xdg_wm_base\x00")) return error.UnexpectedName;
@@ -476,6 +475,19 @@ pub const Client = struct {
                 // We still want to do this
                 try client.wl_display.sendDeleteId(msg.wl_buffer.id);
                 client.unregister(.{ .wl_buffer = msg.wl_buffer });
+            },
+        }
+    }
+
+    pub fn dispatchWlDataDeviceManager(client: *Client, message: wl.WlDataDeviceManager.Message) !void {
+        switch (message) {
+            .create_data_source => |msg| {
+                const wl_data_source = wl.WlDataSource.init(msg.id, &client.wire, 0, {});
+                try client.register(.{ .wl_data_source = wl_data_source });
+            },
+            .get_data_device => |msg| {
+                const wl_data_device = wl.WlDataDevice.init(msg.id, &client.wire, 0, {});
+                try client.register(.{ .wl_data_device = wl_data_device });
             },
         }
     }
@@ -658,7 +670,11 @@ pub const Client = struct {
                 const wl_keyboard = wl.WlKeyboard.init(msg.id, &client.wire, 0, null);
                 try client.register(.{ .wl_keyboard = wl_keyboard });
 
-                if (client.wl_seat != null) client.wl_keyboard = wl_keyboard;
+                if (client.wl_seat) |client_wl_seat| {
+                    if (client_wl_seat.id == msg.wl_seat.id) {
+                        client.wl_keyboard = wl_keyboard;
+                    }
+                }
 
                 const fd_size = try client.server.xkb.getKeymap();
 
