@@ -50,7 +50,7 @@ pub fn main() !void {
 
     var counter = FrameCounter.init();
 
-    while (true) {
+    while (server.running) {
         var it = epoll.wait(-1);
 
         while (try it.next()) |s| switch (s) {
@@ -73,6 +73,11 @@ pub fn main() !void {
                 .err => std.debug.print("got err\n", .{}),
             },
             .backend => |ev| switch (ev.event) {
+                .key_press => |kp| {
+                    // log.info("button press = {} {} (0x{x})", .{ bp.button, bp.state, ev.output });
+
+                    try server.keyboard(kp.time, kp.button, kp.state);
+                },
                 .button_press => |bp| {
                     // log.info("button press = {} {} (0x{x})", .{ bp.button, bp.state, ev.output });
 

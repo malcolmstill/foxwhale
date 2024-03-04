@@ -66,6 +66,11 @@ pub const Server = struct {
     move: ?Move = null,
     resize: ?Resize = null,
 
+    mods_depressed: u32 = 0,
+    mods_latched: u32 = 0,
+    mods_locked: u32 = 0,
+    mods_group: u32 = 0,
+
     current_view: ?*View = null,
 
     pointer_x: f64 = 0.0,
@@ -73,7 +78,9 @@ pub const Server = struct {
 
     output_base: u32 = 1000,
 
-    xkb: ?Xkb = null,
+    xkb: Xkb,
+
+    running: bool = true,
 
     const ClientNode = std.TailQueue(Client).Node;
     const Self = @This();
@@ -92,7 +99,7 @@ pub const Server = struct {
     };
 
     pub fn init(alloc: mem.Allocator) !Server {
-        return Server{
+        return .{
             .alloc = alloc,
             .server = try socket(),
             .clients = try IterablePool(Client, u8).init(alloc, 255),
@@ -223,6 +230,19 @@ pub const Server = struct {
         }
 
         try view.updatePointer(server.pointer_x, server.pointer_y);
+    }
+
+    pub fn keyboard(server: *Self, time: u32, button: u32, action: u32) !void {
+        if (button == 224 or button == 25) server.running = false;
+
+        server.xkb.updateKey(button, action);
+        server.mods_depressed = server.xkb.serializeDepressed();
+        server.mods_latched = server.xkb.serializeLatched();
+        server.mods_locked = server.xkb.serializeLocked();
+        server.mods_group = server.xkb.serializeGroup();
+
+        const view = server.current_view orelse return;
+        try view.keyboard(time, button, action);
     }
 
     pub fn iterator(server: *Server) SubsystemIterator {

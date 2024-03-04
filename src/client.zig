@@ -660,13 +660,11 @@ pub const Client = struct {
 
                 if (client.wl_seat != null) client.wl_keyboard = wl_keyboard;
 
-                if (client.server.xkb) |*xkb| {
-                    const fd_size = try xkb.getKeymap();
+                const fd_size = try client.server.xkb.getKeymap();
 
-                    try wl_keyboard.sendKeymap(.xkb_v1, fd_size.fd, @intCast(fd_size.size));
+                try wl_keyboard.sendKeymap(.xkb_v1, fd_size.fd, @intCast(fd_size.size));
 
-                    if (msg.wl_seat.version >= 4) try wl_keyboard.sendRepeatInfo(1, 2000);
-                }
+                if (msg.wl_seat.version >= 4) try wl_keyboard.sendRepeatInfo(1, 2000);
             },
             .get_touch => |_| return error.NotImplement,
             .release => |_| return error.NotImplement,

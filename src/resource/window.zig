@@ -616,22 +616,17 @@ pub const Window = struct {
         const client = window.client;
         const wl_keyboard = client.wl_keyboard orelse return;
 
-        try wl_keyboard.sendKey(
-            client.nextSerial(),
-            time,
-            button,
-            action,
-        );
+        const state = if (action == 0) wl.WlKeyboard.KeyState.released else wl.WlKeyboard.KeyState.pressed;
 
-        // TODO: reinstate
-        // try prot.wl_keyboard_send_modifiers(
-        //     wl_keyboard,
-        //     client.nextSerial(),
-        //     compositor.COMPOSITOR.mods_depressed,
-        //     compositor.COMPOSITOR.mods_latched,
-        //     compositor.COMPOSITOR.mods_locked,
-        //     compositor.COMPOSITOR.mods_group,
-        // );
+        try wl_keyboard.sendKey(client.nextSerial(), time, button, state);
+
+        try wl_keyboard.sendModifiers(
+            client.nextSerial(),
+            window.client.server.mods_depressed,
+            window.client.server.mods_latched,
+            window.client.server.mods_locked,
+            window.client.server.mods_group,
+        );
     }
 
     /// Deinitialise window.

@@ -7,7 +7,10 @@ const c = @cImport({
     @cInclude("EGL/egl.h");
     @cInclude("GLES3/gl3.h");
     @cInclude("X11/Xlib-xcb.h");
+    @cInclude("xkbcommon/xkbcommon.h");
+    @cInclude("xkbcommon/xkbcommon-x11.h");
 });
+
 const Event = @import("../subsystem.zig").Event;
 const Backend = @import("backend.zig").Backend;
 
@@ -29,16 +32,33 @@ pub const X11 = struct {
     fd: i32,
     display: *c.Display,
     outputs: std.ArrayList(X11Output),
+    xkb_context: *c.xkb_context,
+    device_id: i32,
+    keymap: *c.xkb_keymap,
+    state: *c.xkb_state,
+    min_keycode: u8,
 
     pub fn init(allocator: mem.Allocator) !X11 {
         const display: *c.Display = c.XOpenDisplay(null) orelse return error.FailedToOpenDisplay;
         const conn = c.XGetXCBConnection(display) orelse return error.FailedToGetXcbConnection;
 
-        return X11{
+        const xkb_context = c.xkb_context_new(c.XKB_CONTEXT_NO_FLAGS) orelse return error.X11XkbContextFailed;
+        const device_id = c.xkb_x11_get_core_keyboard_device_id(conn);
+        const keymap = c.xkb_x11_keymap_new_from_device(xkb_context, conn, device_id, c.XKB_KEYMAP_COMPILE_NO_FLAGS) orelse return error.X11XkbKeymapFailed;
+        const state = c.xkb_x11_state_new_from_device(keymap, conn, device_id) orelse return error.X11XkbStateFailed;
+
+        const setup = c.xcb_get_setup(conn);
+
+        return .{
             .conn = conn,
             .fd = c.xcb_get_file_descriptor(conn),
             .display = display,
             .outputs = std.ArrayList(X11Output).init(allocator),
+            .xkb_context = xkb_context,
+            .device_id = device_id,
+            .keymap = keymap,
+            .state = state,
+            .min_keycode = setup.*.min_keycode,
         };
     }
 
@@ -65,6 +85,49 @@ pub const X11 = struct {
                 // std.log.info("event response type = {}", .{ev.*.response_type});
 
                 switch (ev.*.response_type & ~mask) {
+                    c.XCB_KEY_PRESS => {
+                        const press: *c.xcb_key_press_event_t = @ptrCast(ev);
+
+                        _ = c.xkb_state_update_key(it.x11.state, press.detail, c.XKB_KEY_DOWN);
+                        const keysym = c.xkb_state_key_get_one_sym(it.x11.state, press.detail);
+
+                        std.log.info("key press = {} keysym = {}", .{ press.detail, keysym });
+
+                        return .{
+                            .backend = .{
+                                .backend = it.backend,
+                                .output = press.event,
+                                .event = .{
+                                    .key_press = .{
+                                        .time = press.time,
+                                        .button = keysym - 8,
+                                        .state = 1,
+                                    },
+                                },
+                            },
+                        };
+                    },
+                    c.XCB_KEY_RELEASE => {
+                        const press: *c.xcb_key_release_event_t = @ptrCast(ev);
+                        // std.log.info("button press = {}x{} 0x{x}", .{ press.event_x, press.event_y, press.state });
+
+                        _ = c.xkb_state_update_key(it.x11.state, press.detail, c.XKB_KEY_UP);
+                        const keysym = c.xkb_state_key_get_one_sym(it.x11.state, press.detail);
+
+                        return .{
+                            .backend = .{
+                                .backend = it.backend,
+                                .output = press.event,
+                                .event = .{
+                                    .key_press = .{
+                                        .time = press.time,
+                                        .button = keysym - 8,
+                                        .state = 0,
+                                    },
+                                },
+                            },
+                        };
+                    },
                     c.XCB_BUTTON_PRESS => {
                         const press: *c.xcb_button_press_event_t = @ptrCast(ev);
                         // std.log.info("button press = {}x{} 0x{x}", .{ press.event_x, press.event_y, press.state });
@@ -187,7 +250,12 @@ pub const X11 = struct {
         const screen = iter.data;
 
         const mask = c.XCB_CW_EVENT_MASK;
-        var valwin = [1]u32{c.XCB_EVENT_MASK_BUTTON_PRESS | c.XCB_EVENT_MASK_BUTTON_RELEASE | c.XCB_EVENT_MASK_POINTER_MOTION | c.XCB_EVENT_MASK_EXPOSURE};
+        var valwin = [1]u32{c.XCB_EVENT_MASK_BUTTON_PRESS |
+            c.XCB_EVENT_MASK_BUTTON_RELEASE |
+            c.XCB_EVENT_MASK_POINTER_MOTION |
+            c.XCB_EVENT_MASK_EXPOSURE |
+            c.XCB_EVENT_MASK_KEY_PRESS |
+            c.XCB_EVENT_MASK_KEY_RELEASE};
 
         const window = c.xcb_generate_id(backend.conn);
         _ = c.xcb_create_window(
