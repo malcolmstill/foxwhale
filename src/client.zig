@@ -335,7 +335,10 @@ pub const Client = struct {
                         const wl_seat = wl.WlSeat.init(msg.id, &client.wire, msg.version, null);
                         try wl_seat.sendCapabilities(.{ .pointer = true, .keyboard = true });
 
-                        client.wl_seat = wl_seat;
+                        // Only set the client's wl_seat if it is currently unset.
+                        if (client.wl_seat == null) {
+                            client.wl_seat = wl_seat;
+                        }
 
                         try client.register(.{ .wl_seat = wl_seat });
                     },
