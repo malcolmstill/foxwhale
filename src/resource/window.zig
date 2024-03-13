@@ -544,6 +544,14 @@ pub const Window = struct {
         keyboard: {
             const wl_keyboard = client.wl_keyboard orelse break :keyboard;
             try wl_keyboard.sendEnter(client.nextSerial(), window.wl_surface, &[_]u8{});
+
+            try wl_keyboard.sendModifiers(
+                client.nextSerial(),
+                window.client.server.mods_depressed,
+                window.client.server.mods_latched,
+                window.client.server.mods_locked,
+                window.client.server.mods_group,
+            );
         }
     }
 
@@ -635,7 +643,7 @@ pub const Window = struct {
     /// - Removes the window from its view (where one exists).
     /// - Releases the window's texture (where one exists).
     pub fn deinit(window: *Window) void {
-        log.info("deinit (client@{} wl_surface@{})", .{ window.client.conn.stream.handle, window.wl_surface.id });
+        // log.info("deinit (client@{} wl_surface@{})", .{ window.client.conn.stream.handle, window.wl_surface.id });
         // Before doing anything else, such as deiniting the parent
         // detach this surface from its siblings
         window.detach(); // maybe we also need to detach current, i.e. window.detachCurrent()?

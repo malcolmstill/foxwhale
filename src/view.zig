@@ -54,7 +54,7 @@ pub const View = struct {
     }
 
     pub fn remove(view: *Self, window: *Window) void {
-        log.info("remove (client@{} wl_surface@{})", .{ window.client.conn.stream.handle, window.wl_surface.id });
+        // log.info("remove (client@{} wl_surface@{})", .{ window.client.conn.stream.handle, window.wl_surface.id });
         if (view.top == window) {
             log.info("window was toplevel", .{});
             view.top = window.toplevel.prev;
