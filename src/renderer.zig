@@ -4,16 +4,16 @@ const Mat4x4 = @import("math.zig").Mat4x4;
 const StringHashMap = std.hash_map.StringHashMap;
 // const vertex_shader_source = ;
 const fragment_shader_source = @embedFile("shaders/fragment.glsl");
-const windows = @import("window.zig");
-const Window = @import("window.zig").Window;
-const Output = @import("output.zig").Output;
+const windows = @import("resource/window.zig");
+const Window = @import("resource/window.zig").Window;
+const Output = @import("resource/output.zig").Output;
 const main = @import("main.zig");
 const c = @cImport({
     @cInclude("GLES3/gl3.h");
     @cInclude("EGL/egl.h");
     @cInclude("GLES2/gl2ext.h");
 });
-const egl = @import("backend/drm/egl.zig");
+// const egl = @import("backend/drm/egl.zig");
 
 pub const Renderer = struct {
     shaders: StringHashMap(c_uint),
@@ -25,15 +25,19 @@ pub const Renderer = struct {
     }
 
     pub fn initShaders(self: *Renderer) !void {
-        try self.shaders.put("window", try createProgram(
+        const window_program = try createProgram(
             @embedFile("shaders/window/vertex.glsl"),
             @embedFile("shaders/window/fragment.glsl"),
-        ));
+        );
+        try checkGLError();
+        try self.shaders.put("window", window_program);
 
-        try self.shaders.put("checker", try createProgram(
+        const checker_program = try createProgram(
             @embedFile("shaders/checker/vertex.glsl"),
             @embedFile("shaders/checker/fragment.glsl"),
-        ));
+        );
+        try checkGLError();
+        try self.shaders.put("checker", checker_program);
     }
 
     pub fn deinit(self: *Renderer) void {
@@ -60,7 +64,9 @@ pub const Renderer = struct {
         try checkGLError();
     }
 
-    pub fn render(_: *Renderer, _: *Output) !void {
+    pub fn render(_: *Renderer) !void {
+        c.glClearColor(1.0, 0.0, 0.3, 1.0);
+        c.glClear(c.GL_COLOR_BUFFER_BIT);
         // var width = output.backend.getWidth();
         // var height = output.backend.getHeight();
 
@@ -79,8 +85,8 @@ pub const Renderer = struct {
 
         const ortho = orthographicProjection(
             0.0,
-            @intToFloat(f32, output_width),
-            @intToFloat(f32, output_height),
+            @floatFromInt(output_width),
+            @floatFromInt(output_height),
             0.0,
             -1.0,
             1.0,
@@ -133,8 +139,8 @@ pub const Renderer = struct {
 
         const ortho = orthographicProjection(
             0.0,
-            @intToFloat(f32, output_width),
-            @intToFloat(f32, output_height),
+            @floatFromInt(output_width),
+            @floatFromInt(output_height),
             0.0,
             -1.0,
             1.0,
@@ -186,7 +192,7 @@ pub const Renderer = struct {
     }
 
     pub fn setUniformMatrix(program: c_uint, location_string: []const u8, matrix: [4][4]f32) !void {
-        var location = c.glGetUniformLocation(program, location_string.ptr);
+        const location = c.glGetUniformLocation(program, location_string.ptr);
         try checkGLError();
         if (location == -1) {
             return error.UniformNotFound;
@@ -197,7 +203,7 @@ pub const Renderer = struct {
     }
 
     pub fn setUniformFloat(program: c_uint, location_string: []const u8, value: f32) !void {
-        var location = c.glGetUniformLocation(program, location_string.ptr);
+        const location = c.glGetUniformLocation(program, location_string.ptr);
         try checkGLError();
         if (location == -1) {
             return error.UniformNotFound;
@@ -207,14 +213,14 @@ pub const Renderer = struct {
     }
 
     fn setVertexAttrib(program: c_uint, attribute_string: []const u8, offset: c_uint) !void {
-        var attribute = c.glGetAttribLocation(program, attribute_string.ptr);
+        const attribute = c.glGetAttribLocation(program, attribute_string.ptr);
         try checkGLError();
         if (attribute == -1) {
             return error.AttributeNotFound;
         }
-        c.glEnableVertexAttribArray(@intCast(c_uint, attribute));
+        c.glEnableVertexAttribArray(@intCast(attribute));
         try checkGLError();
-        c.glVertexAttribPointer(@intCast(c_uint, attribute), 2, c.GL_FLOAT, c.GL_FALSE, 16, @intToPtr(*allowzero c_uint, offset));
+        c.glVertexAttribPointer(@intCast(attribute), 2, c.GL_FLOAT, c.GL_FALSE, 16, @ptrFromInt(offset));
         try checkGLError();
     }
 
@@ -307,10 +313,10 @@ pub const Renderer = struct {
 };
 
 fn createProgram(vertex_source: []const u8, fragment_source: []const u8) !c_uint {
-    var vertex_shader = try compileShader(vertex_source, c.GL_VERTEX_SHADER);
-    var fragment_shader = try compileShader(fragment_source, c.GL_FRAGMENT_SHADER);
+    const vertex_shader = try compileShader(vertex_source, c.GL_VERTEX_SHADER);
+    const fragment_shader = try compileShader(fragment_source, c.GL_FRAGMENT_SHADER);
 
-    var program = c.glCreateProgram();
+    const program = c.glCreateProgram();
     try checkGLError();
 
     c.glAttachShader(program, vertex_shader);
@@ -321,6 +327,20 @@ fn createProgram(vertex_source: []const u8, fragment_source: []const u8) !c_uint
 
     c.glLinkProgram(program);
     try checkGLError();
+    var status: i32 = c.GL_TRUE;
+    c.glGetProgramiv(program, c.GL_LINK_STATUS, &status);
+    if (status == c.GL_FALSE) {
+        var log: [256]u8 = undefined;
+        var log_length: c_int = 0;
+        c.glGetProgramiv(program, c.GL_INFO_LOG_LENGTH, &log_length);
+        try checkGLError();
+        c.glGetProgramInfoLog(program, log_length, null, log[0..]);
+        try checkGLError();
+
+        // std.log.warn("log: {s}\n", .{log[0..@min(log.len, @as(usize, @truncate(log_length)))]});
+
+        return error.FailedToCompileShader;
+    }
 
     c.glDeleteShader(vertex_shader);
     try checkGLError();
@@ -333,7 +353,7 @@ fn createProgram(vertex_source: []const u8, fragment_source: []const u8) !c_uint
 
 fn compileShader(source: []const u8, shader_type: c_uint) !c_uint {
     var log: [256]u8 = undefined;
-    var shader = c.glCreateShader(shader_type);
+    const shader = c.glCreateShader(shader_type);
     try checkGLError();
     c.glShaderSource(shader, 1, &source.ptr, null);
     try checkGLError();
@@ -349,7 +369,7 @@ fn compileShader(source: []const u8, shader_type: c_uint) !c_uint {
         c.glGetShaderInfoLog(shader, log_length, null, log[0..]);
         try checkGLError();
 
-        std.log.warn("log: {s}\n", .{log[0..std.math.min(log.len, @intCast(usize, log_length))]});
+        std.log.warn("log: {s}\n", .{log[0..@min(log.len, @as(usize, @intCast(log_length)))]});
 
         return error.FailedToCompileShader;
     }
@@ -389,28 +409,28 @@ pub fn setGeometry(width: i32, height: i32) [28]f32 {
     rectangle[2] = 0.0;
     rectangle[3] = 0.0;
 
-    rectangle[4] = @intToFloat(f32, width);
+    rectangle[4] = @floatFromInt(width);
     rectangle[5] = 0.0;
     rectangle[6] = 1.0;
     rectangle[7] = 0.0;
 
     rectangle[8] = 0.0;
-    rectangle[9] = @intToFloat(f32, height);
+    rectangle[9] = @floatFromInt(height);
     rectangle[10] = 0.0;
     rectangle[11] = 1.0;
 
     rectangle[12] = 0.0;
-    rectangle[13] = @intToFloat(f32, height);
+    rectangle[13] = @floatFromInt(height);
     rectangle[14] = 0.0;
     rectangle[15] = 1.0;
 
-    rectangle[16] = @intToFloat(f32, width);
+    rectangle[16] = @floatFromInt(width);
     rectangle[17] = 0.0;
     rectangle[18] = 1.0;
     rectangle[19] = 0.0;
 
-    rectangle[20] = @intToFloat(f32, width);
-    rectangle[21] = @intToFloat(f32, height);
+    rectangle[20] = @floatFromInt(width);
+    rectangle[21] = @floatFromInt(height);
     rectangle[22] = 1.0;
     rectangle[23] = 1.0;
 
@@ -418,7 +438,7 @@ pub fn setGeometry(width: i32, height: i32) [28]f32 {
 }
 
 fn checkGLError() !void {
-    var err = c.glGetError();
+    const err = c.glGetError();
     if (err != c.GL_NO_ERROR) {
         std.log.warn("error: {}\n", .{err});
         return error.GL_ERROR;

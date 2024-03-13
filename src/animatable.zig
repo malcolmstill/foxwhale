@@ -3,7 +3,7 @@ const mem = std.mem;
 const animation = @import("animation.zig");
 const ArrayList = std.ArrayList;
 const Animation = @import("animation.zig").Animation;
-const Window = @import("window.zig").Window;
+const Window = @import("resource/window.zig").Window;
 
 const AnimatableTypeTag = enum {
     window,
@@ -30,31 +30,31 @@ pub const AnimationList = struct {
     //     try self.animations.append(anim);
     // }
 
-    pub fn addParallel(self: *AnimationList) !*Animatable.Parallel {
-        var a = Animatable.Parallel.init(self.alloc);
-        const a_ptr = try self.animations.addOne();
+    pub fn addParallel(animation_list: *AnimationList) !*Animatable.Parallel {
+        const a = Animatable.Parallel.init(animation_list.alloc);
+        const a_ptr = try animation_list.animations.addOne();
         a_ptr.* = Animatable{ .parallel = a };
         return &(a_ptr.*.parallel);
     }
 
-    pub fn addSequential(self: *AnimationList) !*Animatable.Sequential {
-        var a = Animatable.Sequential.init(self.alloc);
-        const a_ptr = try self.animations.addOne();
+    pub fn addSequential(animation_list: *AnimationList) !*Animatable.Sequential {
+        const a = Animatable.Sequential.init(animation_list.alloc);
+        const a_ptr = try animation_list.animations.addOne();
         a_ptr.* = Animatable{ .sequential = a };
         return &(a_ptr.*.sequential);
     }
 
-    pub fn addProperty(self: *AnimationList, a: Animatable.Property) !void {
-        const a_ptr = try self.animations.addOne();
+    pub fn addProperty(animation_list: *AnimationList, a: Animatable.Property) !void {
+        const a_ptr = try animation_list.animations.addOne();
         a_ptr.* = Animatable{ .property = a };
         return a_ptr;
     }
 
-    pub fn update(self: *AnimationList) !void {
-        var new_list = ArrayList(Animatable).init(self.alloc);
+    pub fn update(animation_list: *AnimationList) !void {
+        var new_list = ArrayList(Animatable).init(animation_list.alloc);
         const now = animation.now();
 
-        for (self.animations.items) |*a| {
+        for (animation_list.animations.items) |*a| {
             const is_finished = a.update(now);
 
             if (is_finished) {
@@ -65,14 +65,14 @@ pub const AnimationList = struct {
             try new_list.append(a.*);
         }
 
-        self.animations.deinit();
-        self.animations = new_list;
+        animation_list.animations.deinit();
+        animation_list.animations = new_list;
     }
 
-    pub fn deinit(self: *AnimationList) void {
-        for (self.animations.items) |*a| {
+    pub fn deinit(animation_list: *AnimationList) void {
+        for (animation_list.animations.items) |*a| {
             a.deinit();
         }
-        self.animations.deinit();
+        animation_list.animations.deinit();
     }
 };

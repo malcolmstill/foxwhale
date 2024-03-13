@@ -1,4 +1,4 @@
-name: foxwren tests
+name: foxwhale tests
 on: push
 jobs:
   test:
@@ -10,15 +10,16 @@ jobs:
       - uses: actions/checkout@v2
       - uses: goto-bus-stop/setup-zig@v1
         with:
-          version: 0.9.1
+          version: master
       - run: sudo apt-get update
-      - run: sudo apt-get install libglfw3 libglfw3-dev libsystemd-dev libudev-dev libinput-dev libdrm-dev libxkbcommon-dev
+      - run: sudo apt-get install libx11-dev libxcb1-dev libx11-xcb-dev libegl-dev libgles-dev libsystemd-dev libudev-dev libinput-dev libdrm-dev libgbm-dev libxkbcommon-dev libxkbcommon-x11-dev
       - run: zig build
+      # - run: zig build -fstage1 (stage 1 doesn't support packed struct(u32))
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: goto-bus-stop/setup-zig@v1
         with:
-          version: 0.9.1
+          version: master
       - run: zig fmt --check src/*.zig

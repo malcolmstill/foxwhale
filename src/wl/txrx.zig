@@ -9,7 +9,7 @@ pub const MAX_FDS = 28;
 
 pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
     var iov: os.iovec = undefined;
-    iov.iov_base = @ptrCast([*]u8, &buffer[0]);
+    iov.iov_base = @ptrCast(&buffer[0]);
     iov.iov_len = buffer.len;
 
     var control: [cmsg_space(MAX_FDS * @sizeOf(i32))]u8 = undefined;
@@ -17,7 +17,7 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
     var msg = linux.msghdr{
         .name = null,
         .namelen = 0,
-        .iov = @ptrCast([*]std.os.iovec, &iov),
+        .iov = @ptrCast(&iov),
         .iovlen = 1,
         .control = &control[0],
         .controllen = control.len,
@@ -28,18 +28,19 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
 
     var rc: usize = 0;
     while (true) {
-        rc = linux.recvmsg(fd, @ptrCast(*std.x.os.Socket.Message, &msg), linux.MSG.DONTWAIT | linux.MSG.CMSG_CLOEXEC);
+        rc = linux.recvmsg(fd, @ptrCast(&msg), linux.MSG.DONTWAIT | linux.MSG.CMSG_CLOEXEC);
         switch (linux.getErrno(rc)) {
             .SUCCESS => break,
             linux.E.INTR => continue,
             linux.E.INVAL => unreachable,
             linux.E.FAULT => unreachable,
-            linux.E.AGAIN => if (std.event.Loop.instance) |loop| {
-                loop.waitUntilFdReadable(fd);
-                continue;
-            } else {
-                return error.WouldBlock;
-            },
+            // linux.E.AGAIN => if (std.event.Loop.instance) |loop| {
+            //     loop.waitUntilFdReadable(fd);
+            //     continue;
+            // } else {
+            //     return error.WouldBlock;
+            // },
+            linux.E.AGAIN => return error.WouldBlock,
             linux.E.BADF => unreachable, // Always a race condition.
             linux.E.IO => return error.InputOutput,
             linux.E.ISDIR => return error.IsDir,
@@ -51,54 +52,54 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
     }
 
     // TOOD: we should not assume a single CMSG
-    var maybe_cmsg = cmsg_firsthdr(&msg);
+    const maybe_cmsg = cmsg_firsthdr(&msg);
     if (maybe_cmsg) |cmsg| {
         if (cmsg.cmsg_type == SCM_RIGHTS and cmsg.cmsg_level == linux.SOL.SOCKET) {
             var data: []i32 = undefined;
-            data.ptr = @ptrCast([*]i32, @alignCast(@alignOf(i32), cmsg_data(cmsg)));
+            data.ptr = @ptrCast(@alignCast(cmsg_data(cmsg)));
             data.len = (cmsg.cmsg_len - cmsg_len(0)) / @sizeOf(i32);
 
-            var writable = try fds.writableWithSize(data.len);
-            std.mem.copy(i32, writable, data);
+            const writable = try fds.writableWithSize(data.len);
+            std.mem.copyForwards(i32, writable, data);
             fds.update(data.len);
         }
     }
 
-    return @intCast(usize, rc);
+    return @intCast(rc);
 }
 
 pub fn sendMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
     var iov: os.iovec_const = undefined;
-    iov.iov_base = @ptrCast([*]u8, &buffer[0]);
+    iov.iov_base = @ptrCast(&buffer[0]);
     iov.iov_len = buffer.len;
 
     var control: [cmsg_space(MAX_FDS * @sizeOf(i32))]u8 = undefined;
-    var msg_hdr: *cmsghdr = @ptrCast(*cmsghdr, @alignCast(@alignOf(cmsghdr), &control[0]));
+    var msg_hdr: *cmsghdr = @ptrCast(@alignCast(&control[0]));
 
     // Copy fds from `fds` to control
-    var incoming_slice = fds.readableSlice(0);
+    const incoming_slice = fds.readableSlice(0);
     msg_hdr.cmsg_len = cmsg_len(@sizeOf(i32) * incoming_slice.len);
     msg_hdr.cmsg_type = SCM_RIGHTS;
     msg_hdr.cmsg_level = linux.SOL.SOCKET;
     var fds_ptr: []i32 = undefined;
     fds_ptr.len = MAX_FDS;
-    fds_ptr.ptr = @ptrCast([*]i32, @alignCast(@alignOf(i32), cmsg_data(msg_hdr)));
-    std.mem.copy(i32, fds_ptr, incoming_slice);
+    fds_ptr.ptr = @ptrCast(@alignCast(cmsg_data(msg_hdr)));
+    std.mem.copyForwards(i32, fds_ptr, incoming_slice);
     fds.discard(incoming_slice.len);
 
-    var msg = linux.msghdr_const{
+    const msg = linux.msghdr_const{
         .name = null,
         .namelen = 0,
-        .iov = @ptrCast([*]std.os.iovec_const, &iov),
+        .iov = @ptrCast(&iov),
         .iovlen = 1,
         .control = if (incoming_slice.len == 0) null else msg_hdr, // we'll need to change this when send file descriptor
-        .controllen = if (incoming_slice.len == 0) 0 else @truncate(u32, msg_hdr.cmsg_len), // we'll need to change this when we send file desricptor
+        .controllen = if (incoming_slice.len == 0) 0 else @truncate(msg_hdr.cmsg_len), // we'll need to change this when we send file desricptor
         .flags = 0,
         .__pad1 = 0,
         .__pad2 = 0,
     };
 
-    return try os.sendmsg(fd, msg, linux.MSG.NOSIGNAL);
+    return try os.sendmsg(fd, &msg, linux.MSG.NOSIGNAL);
 }
 
 // Probably not portable stuff is below
@@ -115,7 +116,7 @@ pub const cmsghdr = extern struct {
 // New implementation
 
 fn cmsg_align(size: usize) usize {
-    return (size + @sizeOf(usize) - 1) & ~(@intCast(usize, @sizeOf(usize) - 1));
+    return (size + @sizeOf(usize) - 1) & ~(@as(usize, @intCast(@sizeOf(usize) - 1)));
 }
 
 fn cmsg_len(size: usize) usize {
@@ -130,12 +131,13 @@ fn cmsg_data(cmsg: *cmsghdr) *u8 {
     // currently only written for x86_64 linux...compatibility coming later
     // in the case of x86_64 linux the header is 16 bytes which is itself
     // align(4) and therefore there is no padding between header and data
-    return @intToPtr(*u8, @ptrToInt(cmsg) + @sizeOf(cmsghdr));
+    return @ptrFromInt(@intFromPtr(cmsg) + @sizeOf(cmsghdr));
 }
 
 fn cmsg_firsthdr(msg: *linux.msghdr) ?*cmsghdr {
     if (msg.controllen < @sizeOf(cmsghdr)) {
         return null;
     }
-    return @ptrCast(*cmsghdr, @alignCast(@alignOf(cmsghdr), @alignCast(@alignOf(linux.msghdr), msg).control));
+
+    return @ptrCast(@alignCast(msg.control));
 }

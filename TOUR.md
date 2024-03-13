@@ -40,9 +40,6 @@ in terms of this repo).
 - `src/foxwhalectl/`: implementation of a command-line tool for inspecting and debugging
   the state of the compositor. It implements `fw_control.xml`.
 
-- `generator/`: this director contains code for generating `protocols.zig` from Wayland XML
-  files. Ostensibly this is also written in zig, but it is actually hacked together in python.
-
 - `procotols/`: contains custom protocols. The only custom protocol that currently exists
    is `fw_control.xml`. This provides a protocol implement both by the compositor and
    `foxwhalectl` that allows inspecting compositor state (for debugging purposes) but

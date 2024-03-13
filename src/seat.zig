@@ -8,5 +8,4 @@ pub const Seat = struct {
 
 const std = @import("std");
 const clients = @import("client.zig");
-const prot = @import("protocols.zig");
 const Stalloc = @import("stalloc.zig").Stalloc;

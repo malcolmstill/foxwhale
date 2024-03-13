@@ -19,24 +19,24 @@ pub fn Animation(comptime Targets: type) type {
 
         const Self = @This();
 
-        pub fn start(self: *Self) void {
-            switch (self.*) {
+        pub fn start(animation: *Self) void {
+            switch (animation.*) {
                 .property => |*p| p.start(),
                 .sequential => |*s| s.start(),
                 .parallel => |*p| p.start(),
             }
         }
 
-        pub fn update(self: *Self, t: f64) bool {
-            return switch (self.*) {
+        pub fn update(animation: *Self, t: f64) bool {
+            return switch (animation.*) {
                 .property => |*p| p.update(t),
                 .sequential => |*s| s.update(t),
                 .parallel => |*p| p.update(t),
             };
         }
 
-        pub fn deinit(self: *Self) void {
-            switch (self.*) {
+        pub fn deinit(animation: *Self) void {
+            switch (animation.*) {
                 .property => {},
                 .sequential => |*s| s.deinit(),
                 .parallel => |*p| p.deinit(),
@@ -48,36 +48,36 @@ pub fn Animation(comptime Targets: type) type {
             final_value: f32,
             start_time: f64 = 0.0,
             duration: f64,
-            easing: fn (f64) f64,
+            easing: *const fn (f64) f64,
             property: []const u8,
             target: Targets,
 
-            pub fn start(self: *Property) void {
-                self.start_time = now();
+            pub fn start(property: *Property) void {
+                property.start_time = now();
             }
 
-            pub fn update(self: *Property, t: f64) bool {
-                if (t < self.start_time) return false;
+            pub fn update(property: *Property, t: f64) bool {
+                if (t < property.start_time) return false;
 
-                if (self.duration <= 0.0 or t > self.start_time + self.duration) {
-                    self.set(self.final_value);
+                if (property.duration <= 0.0 or t > property.start_time + property.duration) {
+                    property.set(property.final_value);
                     return true;
                 }
 
-                const progress = self.easing((t - self.start_time) / self.duration);
-                const new_value = self.initial_value + (self.final_value - self.initial_value) * math.lossyCast(f32, progress);
+                const progress = property.easing((t - property.start_time) / property.duration);
+                const new_value = property.initial_value + (property.final_value - property.initial_value) * math.lossyCast(f32, progress);
 
-                self.set(new_value);
+                property.set(new_value);
 
                 return false;
             }
 
-            fn set(self: *Property, value: f32) void {
-                const info = @typeInfo(@TypeOf(@field(self.target, @tagName(self.target))));
+            fn set(property: *Property, value: f32) void {
+                const info = @typeInfo(@TypeOf(@field(property.target, @tagName(property.target))));
                 inline for (@typeInfo(info.Pointer.child).Struct.fields) |field| {
                     if (field.field_type != f32) continue;
-                    if (mem.eql(u8, self.property, field.name)) {
-                        @field(@field(self.target, @tagName(self.target)), field.name) = value;
+                    if (mem.eql(u8, property.property, field.name)) {
+                        @field(@field(property.target, @tagName(property.target)), field.name) = value;
                     }
                 }
             }
@@ -95,47 +95,47 @@ pub fn Animation(comptime Targets: type) type {
                 };
             }
 
-            pub fn deinit(self: *Sequential) void {
-                for (self.animations.items) |*a| {
+            pub fn deinit(sequential: *Sequential) void {
+                for (sequential.animations.items) |*a| {
                     a.deinit();
                 }
 
-                self.animations.deinit();
+                sequential.animations.deinit();
             }
 
-            pub fn start(self: *Sequential) void {
-                if (self.animations.items.len == 0) return;
-                self.animations.items[0].start();
+            pub fn start(sequential: *Sequential) void {
+                if (sequential.animations.items.len == 0) return;
+                sequential.animations.items[0].start();
             }
 
-            pub fn addParallel(self: *Sequential) !*Parallel {
-                var a = Parallel.init(self.alloc);
-                const a_ptr = try self.animations.addOne();
+            pub fn addParallel(sequential: *Sequential) !*Parallel {
+                const a = Parallel.init(sequential.alloc);
+                const a_ptr = try sequential.animations.addOne();
                 a_ptr.* = AnimationType{ .parallel = a };
                 return &(a_ptr.*.parallel);
             }
 
-            pub fn addSequential(self: *Sequential) !*Sequential {
-                var a = Sequential.init(self.alloc);
-                const a_ptr = try self.animations.addOne();
+            pub fn addSequential(sequential: *Sequential) !*Sequential {
+                const a = Sequential.init(sequential.alloc);
+                const a_ptr = try sequential.animations.addOne();
                 a_ptr.* = AnimationType{ .sequential = a };
                 return &(a_ptr.*.sequential);
             }
 
-            pub fn addProperty(self: *Sequential, a: Property) !void {
-                const a_ptr = try self.animations.addOne();
+            pub fn addProperty(sequential: *Sequential, a: Property) !void {
+                const a_ptr = try sequential.animations.addOne();
                 a_ptr.* = AnimationType{ .property = a };
             }
 
-            pub fn update(self: *Sequential, t: f64) bool {
-                const current_finished = self.animations.items[self.current].update(t);
+            pub fn update(sequential: *Sequential, t: f64) bool {
+                const current_finished = sequential.animations.items[sequential.current].update(t);
 
                 if (current_finished == false) return false;
 
-                if (self.current == self.animations.items.len - 1) return true;
+                if (sequential.current == sequential.animations.items.len - 1) return true;
 
-                self.current += 1;
-                self.animations.items[self.current].start();
+                sequential.current += 1;
+                sequential.animations.items[sequential.current].start();
 
                 return false;
             }
@@ -152,43 +152,43 @@ pub fn Animation(comptime Targets: type) type {
                 };
             }
 
-            pub fn deinit(self: *Parallel) void {
-                for (self.animations.items) |*a| {
+            pub fn deinit(parallel: *Parallel) void {
+                for (parallel.animations.items) |*a| {
                     a.deinit();
                 }
 
-                self.animations.deinit();
+                parallel.animations.deinit();
             }
 
-            pub fn start(self: *Parallel) void {
-                for (self.animations.items) |*a| {
+            pub fn start(parallel: *Parallel) void {
+                for (parallel.animations.items) |*a| {
                     a.start();
                 }
             }
 
-            pub fn addParallel(self: *Parallel) !*Parallel {
-                var a = Parallel.init(self.alloc);
-                const a_ptr = try self.animations.addOne();
+            pub fn addParallel(parallel: *Parallel) !*Parallel {
+                const a = Parallel.init(parallel.alloc);
+                const a_ptr = try parallel.animations.addOne();
                 a_ptr.* = AnimationType{ .parallel = a };
                 return &(a_ptr.*.parallel);
             }
 
-            pub fn addSequential(self: *Parallel) !*Sequential {
-                var a = Sequential.init(self.alloc);
-                const a_ptr = try self.animations.addOne();
+            pub fn addSequential(parallel: *Parallel) !*Sequential {
+                const a = Sequential.init(parallel.alloc);
+                const a_ptr = try parallel.animations.addOne();
                 a_ptr.* = AnimationType{ .sequential = a };
                 return &(a_ptr.*.sequential);
             }
 
-            pub fn addProperty(self: *Parallel, a: Property) !void {
-                const a_ptr = try self.animations.addOne();
+            pub fn addProperty(parallel: *Parallel, a: Property) !void {
+                const a_ptr = try parallel.animations.addOne();
                 a_ptr.* = AnimationType{ .property = a };
             }
 
-            pub fn update(self: *Parallel, t: f64) bool {
+            pub fn update(parallel: *Parallel, t: f64) bool {
                 var finished = true;
 
-                for (self.animations.items) |*a| {
+                for (parallel.animations.items) |*a| {
                     const sub_finished = a.update(t);
                     finished = finished and sub_finished;
                 }
@@ -202,7 +202,7 @@ pub fn Animation(comptime Targets: type) type {
 const testing = std.testing;
 
 test "Sequential Animations" {
-    var allocator = testing.allocator;
+    const allocator = testing.allocator;
 
     const Point = struct {
         x: f32,
@@ -257,7 +257,7 @@ test "Sequential Animations" {
 }
 
 test "Parallel Animations" {
-    var allocator = testing.allocator;
+    const allocator = testing.allocator;
 
     const Point = struct {
         x: f32,
@@ -313,5 +313,5 @@ test "Parallel Animations" {
 
 // seconds
 pub fn now() f64 {
-    return @intToFloat(f64, time.nanoTimestamp()) / 1_000_000_000.0;
+    return @as(f64, @floatFromInt(time.nanoTimestamp())) / 1_000_000_000.0;
 }
