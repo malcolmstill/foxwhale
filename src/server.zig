@@ -5,7 +5,6 @@ const os = std.os;
 const Event = @import("subsystem.zig").Event;
 const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
 const Client = @import("client.zig").Client;
-const Wire = @import("wl/wire.zig").Wire;
 
 const wl = @import("client.zig").wl;
 
@@ -15,9 +14,9 @@ const Region = @import("resource/region.zig").Region;
 const Positioner = @import("resource/positioner.zig").Positioner;
 const ShmPool = @import("resource/shm_pool.zig").ShmPool;
 const Output = @import("resource/output.zig").Output;
-const IterablePool = @import("datastructures/iterable_pool.zig").IterablePool;
-const SubsetPool = @import("datastructures/subset_pool.zig").SubsetPool;
-const BackendOutput = @import("backend/backend.zig").BackendOutput;
+const IterablePool = @import("foxwhale-iterable-pool").IterablePool;
+const SubsetPool = @import("foxwhale-subset-pool").SubsetPool;
+const BackendOutput = @import("foxwhale-backend").BackendOutput;
 const Move = @import("move.zig").Move;
 const Resize = @import("resize.zig").Resize;
 const xkbcommon = @import("xkb.zig");

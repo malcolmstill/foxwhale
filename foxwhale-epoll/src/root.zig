@@ -42,7 +42,7 @@ pub fn Epoll(comptime Subsystem: type, comptime SubsystemIterator: type, comptim
         pub fn wait(epoll: *Self, timeout: i32) Iterator {
             const n = os.epoll_wait(epoll.fd, epoll.events[0..], timeout);
 
-            return Iterator{
+            return .{
                 .epoll = epoll,
                 .n = n,
             };

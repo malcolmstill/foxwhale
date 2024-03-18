@@ -38,6 +38,12 @@
             // computed. This field and `url` are mutually exclusive.
             // .path = "foo",
         },
+        .foxwhale_epoll = .{ .path = "foxwhale-epoll" },
+        .foxwhale_pool = .{ .path = "foxwhale-pool" },
+        .foxwhale_subset_pool = .{ .path = "foxwhale-subset-pool" },
+        .foxwhale_iterable_pool = .{ .path = "foxwhale-iterable-pool" },
+        .foxwhale_wayland = .{ .path = "foxwhale-wayland" },
+        .foxwhale_backend = .{ .path = "foxwhale-backend" },
     },
 
     // Specifies the set of files and directories that are included in this package.

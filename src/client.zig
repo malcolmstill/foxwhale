@@ -3,7 +3,7 @@ const builtin = @import("builtin");
 const mem = std.mem;
 const math = std.math;
 const net = std.net;
-const epoll = @import("epoll.zig");
+const epoll = @import("foxwhale-epoll");
 const Event = @import("subsystem.zig").Event;
 const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
 
@@ -20,7 +20,7 @@ const ShmBuffer = @import("resource/shm_buffer.zig").ShmBuffer;
 const Renderer = @import("renderer.zig").Renderer;
 const Rectangle = @import("resource/rectangle.zig").Rectangle;
 const XdgConfigurations = @import("resource/window.zig").XdgConfigurations;
-const SubsetPool = @import("datastructures/subset_pool.zig").SubsetPool;
+const SubsetPool = @import("foxwhale-subset-pool").SubsetPool;
 const Move = @import("move.zig").Move;
 const Resize = @import("resize.zig").Resize;
 
@@ -28,7 +28,7 @@ const endian = builtin.cpu.arch.endian();
 
 const log = std.log.scoped(.client);
 
-pub const wl = @import("wl/protocols.zig").Wayland(.{
+pub const wl = @import("foxwhale-wayland").Wayland(.{
     .wl_surface = *Window,
     .wl_subsurface = *Window,
     .xdg_surface = *Window,

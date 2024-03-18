@@ -1,11 +1,11 @@
 const std = @import("std");
 const Server = @import("server.zig").Server;
-const Epoll = @import("epoll.zig").Epoll;
+const Epoll = @import("foxwhale-epoll").Epoll;
 const Subsystem = @import("subsystem.zig").Subsystem;
 const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
 const Event = @import("subsystem.zig").Event;
 const Target = @import("subsystem.zig").Target;
-const Backend = @import("backend/backend.zig").Backend;
+const Backend = @import("foxwhale-backend").Backend;
 const Renderer = @import("renderer.zig").Renderer;
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 
