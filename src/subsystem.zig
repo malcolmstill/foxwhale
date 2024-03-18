@@ -23,7 +23,7 @@ pub const Target = union(Subsystem) {
     pub fn iterator(target: Target) SubsystemIterator {
         return switch (target) {
             // inline else => |target| return try target.dispatch(event_type),
-            .server => |t| t.iterator(),
+            .server => |server| .{ .server = Server.Iterator.init(server) },
             .client => |client| .{ .client = Client.Iterator.init(client) },
             .backend => |backend| .{ .backend = Backend.Iterator.init(backend) },
         };
@@ -37,7 +37,7 @@ pub const SubsystemIterator = union(Subsystem) {
 
     pub fn next(it: *SubsystemIterator, events: u32) !?Event {
         return switch (it.*) {
-            .server => |*s| try s.next(events),
+            .server => |*s| .{ .server = try s.next(events) orelse return null },
             .client => |*c| .{ .client = try c.next(events) orelse return null },
             .backend => |*b| .{ .backend = try b.next(events) orelse return null },
         };

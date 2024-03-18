@@ -2,8 +2,6 @@ const std = @import("std");
 const mem = std.mem;
 const fs = std.fs;
 const os = std.os;
-const Event = @import("subsystem.zig").Event;
-const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
 const Client = @import("client.zig").Client;
 
 const wl = @import("client.zig").wl;
@@ -222,10 +220,6 @@ pub const Server = struct {
         try view.keyboard(time, button, action);
     }
 
-    pub fn iterator(server: *Server) SubsystemIterator {
-        return SubsystemIterator{ .server = Iterator.init(server) };
-    }
-
     pub const Iterator = struct {
         server: *Server,
         accepted: bool = false,
@@ -236,19 +230,17 @@ pub const Server = struct {
             };
         }
 
-        pub fn next(it: *Iterator, _: u32) !?Event {
+        pub fn next(it: *Iterator, _: u32) !?TargetEvent {
             if (it.accepted) return null;
 
             const conn = try it.server.server.accept();
 
             it.accepted = true;
 
-            return Event{
-                .server = Server.TargetEvent{
-                    .server = it.server,
-                    .event = ServerEvent{
-                        .client_connected = conn,
-                    },
+            return .{
+                .server = it.server,
+                .event = .{
+                    .client_connected = conn,
                 },
             };
         }
