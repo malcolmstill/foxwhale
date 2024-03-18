@@ -5,7 +5,6 @@ const os = std.os;
 const Event = @import("subsystem.zig").Event;
 const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
 const Client = @import("client.zig").Client;
-const Wire = @import("wl/wire.zig").Wire;
 
 const wl = @import("client.zig").wl;
 

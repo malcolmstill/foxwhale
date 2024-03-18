@@ -15,6 +15,7 @@ pub fn build(b: *std.Build) void {
     const pool = b.dependency("foxwhale_pool", .{ .target = target, .optimize = optimize });
     const subset_pool = b.dependency("foxwhale_subset_pool", .{ .target = target, .optimize = optimize });
     const iterable_pool = b.dependency("foxwhale_iterable_pool", .{ .target = target, .optimize = optimize });
+    const wayland = b.dependency("foxwhale_wayland", .{ .target = target, .optimize = optimize });
 
     const exe = b.addExecutable(.{
         .name = "foxwhale",
@@ -28,6 +29,7 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("foxwhale-pool", pool.module("foxwhale-pool"));
     exe.root_module.addImport("foxwhale-subset-pool", subset_pool.module("foxwhale-subset-pool"));
     exe.root_module.addImport("foxwhale-iterable-pool", iterable_pool.module("foxwhale-iterable-pool"));
+    exe.root_module.addImport("foxwhale-wayland", wayland.module("foxwhale-wayland"));
 
     exe.linkSystemLibrary("c");
     exe.linkSystemLibrary("gl");
@@ -68,7 +70,7 @@ pub fn build(b: *std.Build) void {
     const foxwhale_gen = b.dependency("foxwhale_gen", .{ .target = target, .optimize = optimize });
     const foxwhale_gen_exe = foxwhale_gen.artifact("foxwhale-gen");
 
-    const output_path = "src/wl/protocols.zig";
+    const output_path = "foxwhale-wayland/src/protocols.zig";
     const gen_cmd = b.addRunArtifact(foxwhale_gen_exe);
     gen_cmd.addArg("server");
     gen_cmd.addArg("--input-file");

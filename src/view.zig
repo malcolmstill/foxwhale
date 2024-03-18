@@ -1,5 +1,4 @@
 const std = @import("std");
-const prot = @import("wl/protocols.zig");
 const Focus = @import("focus.zig").Focus;
 const Window = @import("resource/window.zig").Window;
 const BackendOutput = @import("backend/backend.zig").BackendOutput;

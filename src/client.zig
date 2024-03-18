@@ -28,7 +28,7 @@ const endian = builtin.cpu.arch.endian();
 
 const log = std.log.scoped(.client);
 
-pub const wl = @import("wl/protocols.zig").Wayland(.{
+pub const wl = @import("foxwhale-wayland").Wayland(.{
     .wl_surface = *Window,
     .wl_subsurface = *Window,
     .xdg_surface = *Window,
