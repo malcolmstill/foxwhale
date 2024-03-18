@@ -72,7 +72,7 @@ pub const X11 = struct {
         sync_sent: bool,
 
         pub fn init(backend: *Backend, x11: *X11) Iterator {
-            return Iterator{
+            return .{
                 .backend = backend,
                 .x11 = x11,
                 .sync_sent = false,
