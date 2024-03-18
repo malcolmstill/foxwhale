@@ -44,6 +44,8 @@
         .foxwhale_iterable_pool = .{ .path = "foxwhale-iterable-pool" },
         .foxwhale_wayland = .{ .path = "foxwhale-wayland" },
         .foxwhale_backend = .{ .path = "foxwhale-backend" },
+        .foxwhale_animation = .{ .path = "foxwhale-animation" },
+        .foxwhale_ease = .{ .path = "foxwhale-ease" },
     },
 
     // Specifies the set of files and directories that are included in this package.

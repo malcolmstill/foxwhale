@@ -1,8 +1,10 @@
 const std = @import("std");
 const mem = std.mem;
-const animation = @import("animation.zig");
 const ArrayList = std.ArrayList;
-const Animation = @import("animation.zig").Animation;
+
+const Animation = @import("foxwhale-animation").Animation;
+const now = @import("foxwhale-animation").now;
+
 const Window = @import("resource/window.zig").Window;
 
 const AnimatableTypeTag = enum {
@@ -52,10 +54,10 @@ pub const AnimationList = struct {
 
     pub fn update(animation_list: *AnimationList) !void {
         var new_list = ArrayList(Animatable).init(animation_list.alloc);
-        const now = animation.now();
+        const time = now();
 
         for (animation_list.animations.items) |*a| {
-            const is_finished = a.update(now);
+            const is_finished = a.update(time);
 
             if (is_finished) {
                 a.deinit();

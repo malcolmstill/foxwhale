@@ -16,7 +16,7 @@ pub const Resize = struct {
     direction: wl.XdgToplevel.ResizeEdge,
 
     pub fn init(window: *Window, window_x: i32, window_y: i32, pointer_x: f64, pointer_y: f64, width: i32, height: i32, direction: wl.XdgToplevel.ResizeEdge) Resize {
-        return Resize{
+        return .{
             .window = window,
             .window_x = window_x,
             .window_y = window_y,
@@ -28,8 +28,8 @@ pub const Resize = struct {
         };
     }
 
-    pub fn resize(self: Resize, pointer_x: f64, pointer_y: f64) !void {
-        const window = self.window;
+    pub fn configure(resize: Resize, pointer_x: f64, pointer_y: f64) !void {
+        const window = resize.window;
         const client = window.client;
 
         const xdg_surface = window.xdg_surface orelse return;
@@ -41,40 +41,40 @@ pub const Resize = struct {
         try fbs.writer().writeInt(u32, @intFromEnum(wl.XdgToplevel.State.activated), endian);
         try fbs.writer().writeInt(u32, @intFromEnum(wl.XdgToplevel.State.resizing), endian);
 
-        try xdg_toplevel.sendConfigure(self.newWidth(pointer_x), self.newHeight(pointer_y), state[0..]);
+        try xdg_toplevel.sendConfigure(resize.newWidth(pointer_x), resize.newHeight(pointer_y), state[0..]);
         try xdg_surface.sendConfigure(client.nextSerial());
     }
 
-    fn newWidth(self: Resize, pointer_x: f64) i32 {
-        const dx = switch (self.direction) {
-            .bottom_right => pointer_x - self.pointer_x,
-            .right => pointer_x - self.pointer_x,
-            .top_right => pointer_x - self.pointer_x,
-            .bottom_left => self.pointer_x - pointer_x,
-            .left => self.pointer_x - pointer_x,
-            .top_left => self.pointer_x - pointer_x,
+    fn newWidth(resize: Resize, pointer_x: f64) i32 {
+        const dx = switch (resize.direction) {
+            .bottom_right => pointer_x - resize.pointer_x,
+            .right => pointer_x - resize.pointer_x,
+            .top_right => pointer_x - resize.pointer_x,
+            .bottom_left => resize.pointer_x - pointer_x,
+            .left => resize.pointer_x - pointer_x,
+            .top_left => resize.pointer_x - pointer_x,
             else => 0,
         };
 
-        return self.width + @as(i32, @intFromFloat(dx));
+        return resize.width + @as(i32, @intFromFloat(dx));
     }
 
-    fn newHeight(self: Resize, pointer_y: f64) i32 {
-        const dy = switch (self.direction) {
-            .bottom_right => pointer_y - self.pointer_y,
-            .bottom => pointer_y - self.pointer_y,
-            .bottom_left => pointer_y - self.pointer_y,
-            .top_right => self.pointer_y - pointer_y,
-            .top => self.pointer_y - pointer_y,
-            .top_left => self.pointer_y - pointer_y,
+    fn newHeight(resize: Resize, pointer_y: f64) i32 {
+        const dy = switch (resize.direction) {
+            .bottom_right => pointer_y - resize.pointer_y,
+            .bottom => pointer_y - resize.pointer_y,
+            .bottom_left => pointer_y - resize.pointer_y,
+            .top_right => resize.pointer_y - pointer_y,
+            .top => resize.pointer_y - pointer_y,
+            .top_left => resize.pointer_y - pointer_y,
             else => 0,
         };
 
-        return self.height + @as(i32, @intFromFloat(dy));
+        return resize.height + @as(i32, @intFromFloat(dy));
     }
 
-    pub fn offsetX(self: Resize, old_buffer_width: i32, new_buffer_width: i32) i32 {
-        return switch (self.direction) {
+    pub fn offsetX(resize: Resize, old_buffer_width: i32, new_buffer_width: i32) i32 {
+        return switch (resize.direction) {
             .bottom_left => old_buffer_width - new_buffer_width,
             .left => old_buffer_width - new_buffer_width,
             .top_left => old_buffer_width - new_buffer_width,
@@ -82,8 +82,8 @@ pub const Resize = struct {
         };
     }
 
-    pub fn offsetY(self: Resize, old_buffer_height: i32, new_buffer_height: i32) i32 {
-        return switch (self.direction) {
+    pub fn offsetY(resize: Resize, old_buffer_height: i32, new_buffer_height: i32) i32 {
+        return switch (resize.direction) {
             .top_right => old_buffer_height - new_buffer_height,
             .top => old_buffer_height - new_buffer_height,
             .top_left => old_buffer_height - new_buffer_height,
