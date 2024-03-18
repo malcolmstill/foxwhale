@@ -2,19 +2,19 @@ const std = @import("std");
 const X11 = @import("x11.zig").X11;
 const X11Output = @import("x11.zig").X11Output;
 
-const DRMBackend = @import("drm.zig").DRMBackend;
-const DRMOutput = @import("drm.zig").DRMOutput;
+// const DRMBackend = @import("drm.zig").DRMBackend;
+// const DRMOutput = @import("drm.zig").DRMOutput;
 const Event = @import("../subsystem.zig").Event;
 const SubsystemIterator = @import("../subsystem.zig").SubsystemIterator;
 
 pub const BackendType = enum {
     x11,
-    drm,
+    // drm,
 };
 
 pub const Backend = union(BackendType) {
     x11: X11,
-    drm: DRMBackend,
+    // drm: DRMBackend,
 
     pub const TargetEvent = struct {
         backend: *Backend,
@@ -63,19 +63,19 @@ pub const Backend = union(BackendType) {
 
     pub const Iterator = union(BackendType) {
         x11: X11.Iterator,
-        drm: DRMBackend.Iterator,
+        // drm: DRMBackend.Iterator,
 
         pub fn init(backend: *Backend) SubsystemIterator {
             return switch (backend.*) {
                 .x11 => |*b| .{ .backend = .{ .x11 = X11.Iterator.init(backend, b) } },
-                .drm => |*b| .{ .backend = .{ .drm = DRMBackend.Iterator.init(backend, b) } },
+                // .drm => |*b| .{ .backend = .{ .drm = DRMBackend.Iterator.init(backend, b) } },
             };
         }
 
         pub fn next(it: *Iterator, events: u32) !?Event {
             return switch (it.*) {
                 .x11 => |*i| try i.next(events),
-                .drm => |*i| try i.next(events),
+                // .drm => |*i| try i.next(events),
             };
         }
     };
@@ -83,7 +83,7 @@ pub const Backend = union(BackendType) {
     pub fn init(allocator: std.mem.Allocator, backend_type: BackendType) !Backend {
         return switch (backend_type) {
             .x11 => Backend{ .x11 = try X11.init(allocator) },
-            .drm => Backend{ .drm = try DRMBackend.init(allocator) },
+            // .drm => Backend{ .drm = try DRMBackend.init(allocator) },
             // BackendType.DRM => Self{ .DRM = try drm.new() },
         };
     }
@@ -91,7 +91,7 @@ pub const Backend = union(BackendType) {
     pub fn deinit(backend: *Backend) void {
         return switch (backend.*) {
             .x11 => |*o| o.deinit(),
-            .drm => |*o| o.deinit(),
+            // .drm => |*o| o.deinit(),
             // BackendType.DRM => |*drm_backend| drm_backend.deinit(),
         };
     }
@@ -99,7 +99,7 @@ pub const Backend = union(BackendType) {
     pub fn getFd(backend: *Backend) i32 {
         return switch (backend.*) {
             .x11 => |b| b.fd,
-            .drm => |b| b.fd,
+            // .drm => |b| b.fd,
             // BackendType.DRM => Self{ .DRM = try drm.new() },
         };
     }
@@ -107,7 +107,7 @@ pub const Backend = union(BackendType) {
     pub fn wait(backend: Backend) i32 {
         return switch (backend) {
             .x11 => |_| -1,
-            .drm => |_| -1,
+            // .drm => |_| -1,
             // BackendType.DRM => -1,
         };
     }
@@ -115,7 +115,7 @@ pub const Backend = union(BackendType) {
     pub fn name(backend: Backend) []const u8 {
         return switch (backend) {
             .x11 => "X11",
-            .drm => "DRM",
+            // .drm => "DRM",
             // BackendType.DRM => "DRM",
         };
     }
@@ -123,19 +123,19 @@ pub const Backend = union(BackendType) {
     pub fn newOutput(backend: *Backend, w: i16, h: i16) !BackendOutput {
         return switch (backend.*) {
             .x11 => |*x| .{ .x11 = try x.newOutput(w, h) },
-            .drm => |*x| .{ .drm = try x.newOutput(w, h) },
+            // .drm => |*x| .{ .drm = try x.newOutput(w, h) },
         };
     }
 };
 
 pub const BackendOutput = union(BackendType) {
     x11: *X11Output,
-    drm: *DRMOutput,
+    // drm: *DRMOutput,
 
     pub fn begin(backend_output: BackendOutput) !void {
         switch (backend_output) {
             .x11 => |o| o.begin(),
-            .drm => |o| o.begin(),
+            // .drm => |o| o.begin(),
             // BackendType.DRM => |drm_output| drm_output.begin(),
         }
     }
@@ -143,7 +143,7 @@ pub const BackendOutput = union(BackendType) {
     pub fn end(backend_output: BackendOutput) void {
         return switch (backend_output) {
             .x11 => |o| o.end(),
-            .drm => |o| o.end(),
+            // .drm => |o| o.end(),
             // BackendType.DRM => |drm_output| drm_output.end(),
         };
     }
@@ -151,7 +151,7 @@ pub const BackendOutput = union(BackendType) {
     pub fn swap(backend_output: *BackendOutput) !void {
         switch (backend_output.*) {
             .x11 => |o| try o.swap(),
-            .drm => |o| try o.swap(),
+            // .drm => |o| try o.swap(),
             // BackendType.DRM => |*drm_output| try drm_output.swap(),
         }
     }
@@ -159,7 +159,7 @@ pub const BackendOutput = union(BackendType) {
     pub fn isPageFlipScheduled(backend_output: *BackendOutput) bool {
         return switch (backend_output.*) {
             .x11 => false,
-            .drm => |d| d.isPageFlipScheduled(),
+            // .drm => |d| d.isPageFlipScheduled(),
             // BackendType.DRM => |drm_output| drm_output.isPageFlipScheduled(),
         };
     }
@@ -167,7 +167,7 @@ pub const BackendOutput = union(BackendType) {
     pub fn getWidth(backend_output: *BackendOutput) i32 {
         return switch (backend_output.*) {
             .x11 => |o| o.getWidth(),
-            .drm => |o| o.getWidth(),
+            // .drm => |o| o.getWidth(),
             // BackendType.DRM => |drm_output| drm_output.getWidth(),
         };
     }
@@ -175,7 +175,7 @@ pub const BackendOutput = union(BackendType) {
     pub fn getHeight(backend_output: *BackendOutput) i32 {
         return switch (backend_output.*) {
             .x11 => |o| o.getHeight(),
-            .drm => |o| o.getHeight(),
+            // .drm => |o| o.getHeight(),
             // BackendType.DRM => |drm_output| drm_output.getHeight(),
         };
     }
@@ -183,7 +183,7 @@ pub const BackendOutput = union(BackendType) {
     pub fn shouldClose(backend_output: BackendOutput) bool {
         return switch (backend_output) {
             .x11 => |o| o.shouldClose(),
-            .drm => |o| o.shouldClose(),
+            // .drm => |o| o.shouldClose(),
             // BackendType.DRM => |drm_output| drm_output.shouldClose(),
         };
     }
@@ -192,7 +192,7 @@ pub const BackendOutput = union(BackendType) {
     pub fn getFd(backend_output: *BackendOutput) i32 {
         return switch (backend_output.*) {
             .x11 => |o| o.getFd(),
-            .drm => |o| o.getFd(),
+            // .drm => |o| o.getFd(),
             // BackendType.DRM => |*drm_output| try drm_output.addToEpoll(),
         };
     }
@@ -200,7 +200,7 @@ pub const BackendOutput = union(BackendType) {
     pub fn deinit(backend_output: *BackendOutput) !void {
         return switch (backend_output.*) {
             .x11 => |o| o.deinit(),
-            .drm => |o| o.deinit(),
+            // .drm => |o| o.deinit(),
             // BackendType.DRM => |*drm_output| drm_output.deinit(),
         };
     }

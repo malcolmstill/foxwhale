@@ -1,7 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const mem = std.mem;
-const Pool = @import("pool.zig").Pool;
+const Pool = @import("foxwhale-pool").Pool;
 
 pub fn SubsetPool(comptime T: type, comptime U: type) type {
     return struct {

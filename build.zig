@@ -11,6 +11,11 @@ pub fn build(b: *std.Build) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const optimize = b.standardOptimizeOption(.{});
 
+    const epoll = b.dependency("foxwhale_epoll", .{ .target = target, .optimize = optimize });
+    const pool = b.dependency("foxwhale_pool", .{ .target = target, .optimize = optimize });
+    const subset_pool = b.dependency("foxwhale_subset_pool", .{ .target = target, .optimize = optimize });
+    const iterable_pool = b.dependency("foxwhale_iterable_pool", .{ .target = target, .optimize = optimize });
+
     const exe = b.addExecutable(.{
         .name = "foxwhale",
         .root_source_file = .{ .path = "src/main.zig" },
@@ -18,6 +23,11 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
         .single_threaded = true,
     });
+
+    exe.root_module.addImport("foxwhale-epoll", epoll.module("foxwhale-epoll"));
+    exe.root_module.addImport("foxwhale-pool", pool.module("foxwhale-pool"));
+    exe.root_module.addImport("foxwhale-subset-pool", subset_pool.module("foxwhale-subset-pool"));
+    exe.root_module.addImport("foxwhale-iterable-pool", iterable_pool.module("foxwhale-iterable-pool"));
 
     exe.linkSystemLibrary("c");
     exe.linkSystemLibrary("gl");

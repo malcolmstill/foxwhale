@@ -2,7 +2,7 @@ const std = @import("std");
 const Logind = @import("systemd.zig").Logind;
 const backend = @import("../backend.zig");
 
-const epoll = @import("../../epoll.zig");
+const epoll = @import("foxwhale-epoll");
 const Dispatchable = @import("../../epoll.zig").Dispatchable;
 const c = @cImport({
     @cInclude("libudev.h");
