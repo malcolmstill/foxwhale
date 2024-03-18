@@ -104,7 +104,7 @@ pub const Client = struct {
         };
     }
 
-    pub fn deinit(client: *Self) void {
+    pub fn deinit(client: *Client) void {
         std.os.close(client.conn.stream.handle);
 
         {
@@ -123,18 +123,18 @@ pub const Client = struct {
         client.objects.deinit();
     }
 
-    pub fn nextSerial(client: *Self) u32 {
+    pub fn nextSerial(client: *Client) u32 {
         client.serial += 1;
         return client.serial;
     }
 
-    pub fn nextServerId(client: *Self) u32 {
+    pub fn nextServerId(client: *Client) u32 {
         client.server_id += 1;
         return client.server_id;
     }
 
     // TODO: replace with IndexedPool
-    pub fn getObject(client: *Self, id: u32) ?wl.WlObject {
+    pub fn getObject(client: *Client, id: u32) ?wl.WlObject {
         var it = client.objects.iterator();
 
         while (it.next()) |object| {
