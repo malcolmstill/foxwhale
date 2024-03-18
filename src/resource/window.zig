@@ -10,10 +10,10 @@ const LinearFifo = std.fifo.LinearFifo;
 const LinearFifoBufferType = std.fifo.LinearFifoBufferType;
 const View = @import("../view.zig").View;
 const Mat4x4 = @import("../math.zig").Mat4x4;
-const Animatable = @import("../animatable.zig").Animatable;
-const AnimatableType = @import("../animatable.zig").AnimatableType;
+const Animatable = @import("foxwhale-animation").Animatable;
+const AnimatableType = @import("foxwhale-animation").AnimatableType;
 const RemoveError = @import("../client.zig").RemoveError;
-const ease = @import("../ease.zig");
+const ease = @import("foxwhale-ease");
 
 const wl = @import("../client.zig").wl;
 const endian = builtin.cpu.arch.endian();
@@ -168,29 +168,31 @@ pub const Window = struct {
     }
 
     pub fn firstCommit(_: *Window) !void {
-        // self.originX = @intToFloat(f32, self.width) / 2.0;
-        // self.originY = @intToFloat(f32, self.height) / 2.0;
-        // self.scaleX = 0.0;
-        // self.scaleY = 6.0 / @intToFloat(f32, self.height);
-
         // TODO: reinstate
-        // const seq = try compositor.COMPOSITOR.animations.addSequential();
-        // try seq.addProperty(Animatable.Property{
-        //     .initial_value = self.scaleX,
+
+        // window.originX = @as(f32, @floatFromInt(window.width)) / 2.0;
+        // window.originY = @as(f32, @floatFromInt(window.height)) / 2.0;
+        // window.scaleX = 0.0;
+        // window.scaleY = 6.0 / @as(f32, @floatFromInt(window.height));
+
+        // const seq = try window.client.server.animations.addSequential();
+
+        // try seq.addProperty(.{
+        //     .initial_value = window.scaleX,
         //     .final_value = 1.0,
         //     .easing = ease.OutExpo,
         //     .duration = 0.25,
         //     .property = "scaleX",
-        //     .target = AnimatableType{ .window = self },
+        //     .target = .{ .window = window },
         // });
 
-        // try seq.addProperty(Animatable.Property{
-        //     .initial_value = self.scaleY,
+        // try seq.addProperty(.{
+        //     .initial_value = window.scaleY,
         //     .final_value = 1.0,
         //     .easing = ease.OutExpo,
         //     .duration = 0.25,
         //     .property = "scaleY",
-        //     .target = AnimatableType{ .window = self },
+        //     .target = .{ .window = window },
         // });
 
         // seq.start();

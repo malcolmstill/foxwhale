@@ -12,9 +12,12 @@ const Region = @import("resource/region.zig").Region;
 const Positioner = @import("resource/positioner.zig").Positioner;
 const ShmPool = @import("resource/shm_pool.zig").ShmPool;
 const Output = @import("resource/output.zig").Output;
+
 const IterablePool = @import("foxwhale-iterable-pool").IterablePool;
 const SubsetPool = @import("foxwhale-subset-pool").SubsetPool;
 const BackendOutput = @import("foxwhale-backend").BackendOutput;
+
+const Animatable = @import("animatable.zig").Animatable;
 const Move = @import("move.zig").Move;
 const Resize = @import("resize.zig").Resize;
 const xkbcommon = @import("xkb.zig");
@@ -30,6 +33,7 @@ pub const Server = struct {
     // per-server resources:
     clients: IterablePool(Client, u8),
     outputs: IterablePool(Output, u5),
+    animations: IterablePool(Animatable, u8),
 
     // per-client resources:
     windows: SubsetPool(Window, u16),
@@ -77,8 +81,13 @@ pub const Server = struct {
         return .{
             .alloc = alloc,
             .server = try socket(),
+
+            // per-server
             .clients = try IterablePool(Client, u8).init(alloc, 255),
             .outputs = try IterablePool(Output, u5).init(alloc, 31),
+            .animations = try IterablePool(Animatable, u8).init(alloc, 255),
+
+            // per-client
             .windows = try SubsetPool(Window, u16).init(alloc, 1024),
             .regions = try SubsetPool(Region, u16).init(alloc, 1024),
             .positioners = try SubsetPool(Positioner, u16).init(alloc, 1024),
@@ -94,6 +103,9 @@ pub const Server = struct {
         server.server.stream.close();
 
         server.clients.deinit();
+        server.outputs.deinit();
+        server.animations.deinit();
+
         server.windows.deinit();
         server.regions.deinit();
         server.positioners.deinit();

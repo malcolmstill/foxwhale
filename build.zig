@@ -17,6 +17,8 @@ pub fn build(b: *std.Build) void {
     const iterable_pool = b.dependency("foxwhale_iterable_pool", .{ .target = target, .optimize = optimize });
     const wayland = b.dependency("foxwhale_wayland", .{ .target = target, .optimize = optimize });
     const backend = b.dependency("foxwhale_backend", .{ .target = target, .optimize = optimize });
+    const animation = b.dependency("foxwhale_animation", .{ .target = target, .optimize = optimize });
+    const ease = b.dependency("foxwhale_ease", .{ .target = target, .optimize = optimize });
 
     const exe = b.addExecutable(.{
         .name = "foxwhale",
@@ -32,6 +34,8 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("foxwhale-iterable-pool", iterable_pool.module("foxwhale-iterable-pool"));
     exe.root_module.addImport("foxwhale-wayland", wayland.module("foxwhale-wayland"));
     exe.root_module.addImport("foxwhale-backend", backend.module("foxwhale-backend"));
+    exe.root_module.addImport("foxwhale-animation", animation.module("foxwhale-animation"));
+    exe.root_module.addImport("foxwhale-ease", ease.module("foxwhale-ease"));
 
     exe.linkSystemLibrary("c");
     exe.linkSystemLibrary("gl");

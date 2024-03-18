@@ -2,7 +2,6 @@ const std = @import("std");
 const mem = std.mem;
 const math = std.math;
 const time = std.time;
-const easing = @import("ease.zig");
 const ArrayList = std.ArrayList;
 
 pub fn Animation(comptime Targets: type) type {
@@ -232,7 +231,7 @@ test "Sequential Animations" {
     try seq.animations.append(Anim{ .property = Anim.Property{
         .initial_value = 10.0,
         .final_value = 20.0,
-        .easing = easing.easeInOutSine,
+        .easing = inOutSine,
         .duration = 0.125,
         .property = "x",
         .target = x,
@@ -241,7 +240,7 @@ test "Sequential Animations" {
     try seq.animations.append(Anim{ .property = Anim.Property{
         .initial_value = 50.0,
         .final_value = 0.0,
-        .easing = easing.easeInOutSine,
+        .easing = inOutSine,
         .duration = 0.125,
         .property = "y",
         .target = x,
@@ -287,7 +286,7 @@ test "Parallel Animations" {
     try par.animations.append(Anim{ .property = Anim.Property{
         .initial_value = 10.0,
         .final_value = 20.0,
-        .easing = easing.easeInOutSine,
+        .easing = inOutSine,
         .duration = 0.125,
         .property = "x",
         .target = x,
@@ -296,7 +295,7 @@ test "Parallel Animations" {
     try par.animations.append(Anim{ .property = Anim.Property{
         .initial_value = 50.0,
         .final_value = 0.0,
-        .easing = easing.easeInOutSine,
+        .easing = inOutSine,
         .duration = 0.125,
         .property = "y",
         .target = x,
@@ -314,4 +313,8 @@ test "Parallel Animations" {
 // seconds
 pub fn now() f64 {
     return @as(f64, @floatFromInt(time.nanoTimestamp())) / 1_000_000_000.0;
+}
+
+fn inOutSine(x: f64) f64 {
+    return -(math.cos(math.pi * x) - 1.0) / 2.0;
 }
