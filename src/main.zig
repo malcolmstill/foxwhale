@@ -1,6 +1,6 @@
 const std = @import("std");
 const Server = @import("server.zig").Server;
-const Epoll = @import("epoll.zig").Epoll;
+const Epoll = @import("foxwhale-epoll").Epoll;
 const Subsystem = @import("subsystem.zig").Subsystem;
 const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
 const Event = @import("subsystem.zig").Event;
