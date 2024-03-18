@@ -4,8 +4,6 @@ const X11Output = @import("x11.zig").X11Output;
 
 // const DRMBackend = @import("drm.zig").DRMBackend;
 // const DRMOutput = @import("drm.zig").DRMOutput;
-const Event = @import("../subsystem.zig").Event;
-const SubsystemIterator = @import("../subsystem.zig").SubsystemIterator;
 
 pub const BackendType = enum {
     x11,
@@ -65,14 +63,14 @@ pub const Backend = union(BackendType) {
         x11: X11.Iterator,
         // drm: DRMBackend.Iterator,
 
-        pub fn init(backend: *Backend) SubsystemIterator {
+        pub fn init(backend: *Backend) Iterator {
             return switch (backend.*) {
-                .x11 => |*b| .{ .backend = .{ .x11 = X11.Iterator.init(backend, b) } },
+                .x11 => |*b| .{ .x11 = X11.Iterator.init(backend, b) },
                 // .drm => |*b| .{ .backend = .{ .drm = DRMBackend.Iterator.init(backend, b) } },
             };
         }
 
-        pub fn next(it: *Iterator, events: u32) !?Event {
+        pub fn next(it: *Iterator, events: u32) !?TargetEvent {
             return switch (it.*) {
                 .x11 => |*i| try i.next(events),
                 // .drm => |*i| try i.next(events),

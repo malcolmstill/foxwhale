@@ -25,7 +25,7 @@ pub const Target = union(Subsystem) {
             // inline else => |target| return try target.dispatch(event_type),
             .server => |target| target.iterator(),
             .client => |target| target.iterator(),
-            .backend => |target| Backend.Iterator.init(target),
+            .backend => |target| .{ .backend = Backend.Iterator.init(target) },
         };
     }
 };
@@ -39,7 +39,7 @@ pub const SubsystemIterator = union(Subsystem) {
         return switch (self.*) {
             .server => |*s| try s.next(events),
             .client => |*c| try c.next(events),
-            .backend => |*b| try b.next(events),
+            .backend => |*b| .{ .backend = try b.next(events) orelse return null },
         };
     }
 };

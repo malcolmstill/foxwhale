@@ -11,8 +11,8 @@ const c = @cImport({
     // @cInclude("xkbcommon/xkbcommon-x11.h");
 });
 
-const Event = @import("../subsystem.zig").Event;
 const Backend = @import("backend.zig").Backend;
+const TargetEvent = @import("backend.zig").Backend.TargetEvent;
 
 var previous_x: f64 = 0.0;
 var previous_y: f64 = 0.0;
@@ -79,7 +79,7 @@ pub const X11 = struct {
             };
         }
 
-        pub fn next(it: *Iterator, _: u32) !?Event {
+        pub fn next(it: *Iterator, _: u32) !?TargetEvent {
             if (c.xcb_poll_for_event(it.x11.conn)) |ev| {
                 const mask: usize = 0x80;
                 // std.log.info("event response type = {}", .{ev.*.response_type});
@@ -95,15 +95,13 @@ pub const X11 = struct {
                         // std.log.info("key press = {} keysym = {}", .{ press.detail, keysym });
 
                         return .{
-                            .backend = .{
-                                .backend = it.backend,
-                                .output = press.event,
-                                .event = .{
-                                    .key_press = .{
-                                        .time = press.time,
-                                        .button = adjusted_keycode,
-                                        .state = 1,
-                                    },
+                            .backend = it.backend,
+                            .output = press.event,
+                            .event = .{
+                                .key_press = .{
+                                    .time = press.time,
+                                    .button = adjusted_keycode,
+                                    .state = 1,
                                 },
                             },
                         };
@@ -117,15 +115,13 @@ pub const X11 = struct {
                         // const keysym = c.xkb_state_key_get_one_sym(it.x11.state, adjusted_keycode);
 
                         return .{
-                            .backend = .{
-                                .backend = it.backend,
-                                .output = press.event,
-                                .event = .{
-                                    .key_press = .{
-                                        .time = press.time,
-                                        .button = adjusted_keycode,
-                                        .state = 0,
-                                    },
+                            .backend = it.backend,
+                            .output = press.event,
+                            .event = .{
+                                .key_press = .{
+                                    .time = press.time,
+                                    .button = adjusted_keycode,
+                                    .state = 0,
                                 },
                             },
                         };
@@ -135,16 +131,14 @@ pub const X11 = struct {
                         // std.log.info("button press = {}x{} 0x{x}", .{ press.event_x, press.event_y, press.state });
 
                         return .{
-                            .backend = .{
-                                .backend = it.backend,
-                                .output = press.event,
-                                .event = .{
-                                    .button_press = .{
-                                        .x = press.event_x,
-                                        .y = press.event_y,
-                                        .button = buttonMap(press.detail),
-                                        .state = 1,
-                                    },
+                            .backend = it.backend,
+                            .output = press.event,
+                            .event = .{
+                                .button_press = .{
+                                    .x = press.event_x,
+                                    .y = press.event_y,
+                                    .button = buttonMap(press.detail),
+                                    .state = 1,
                                 },
                             },
                         };
@@ -154,16 +148,14 @@ pub const X11 = struct {
                         // std.log.info("button release = {}x{} 0x{x}", .{ press.event_x, press.event_y, press.state });
 
                         return .{
-                            .backend = .{
-                                .backend = it.backend,
-                                .output = press.event,
-                                .event = .{
-                                    .button_press = .{
-                                        .x = press.event_x,
-                                        .y = press.event_y,
-                                        .button = buttonMap(press.detail),
-                                        .state = 0,
-                                    },
+                            .backend = it.backend,
+                            .output = press.event,
+                            .event = .{
+                                .button_press = .{
+                                    .x = press.event_x,
+                                    .y = press.event_y,
+                                    .button = buttonMap(press.detail),
+                                    .state = 0,
                                 },
                             },
                         };
@@ -179,14 +171,12 @@ pub const X11 = struct {
                         previous_y = @as(f64, @floatFromInt(press.event_y));
 
                         return .{
-                            .backend = .{
-                                .backend = it.backend,
-                                .output = press.event,
-                                .event = .{
-                                    .mouse_move = .{
-                                        .dx = dx,
-                                        .dy = dy,
-                                    },
+                            .backend = it.backend,
+                            .output = press.event,
+                            .event = .{
+                                .mouse_move = .{
+                                    .dx = dx,
+                                    .dy = dy,
                                 },
                             },
                         };
@@ -208,14 +198,12 @@ pub const X11 = struct {
                         }
 
                         return .{
-                            .backend = .{
-                                .backend = it.backend,
-                                .output = configure.window,
-                                .event = .{
-                                    .resize = .{
-                                        .width = @intCast(configure.width),
-                                        .height = @intCast(configure.height),
-                                    },
+                            .backend = it.backend,
+                            .output = configure.window,
+                            .event = .{
+                                .resize = .{
+                                    .width = @intCast(configure.width),
+                                    .height = @intCast(configure.height),
                                 },
                             },
                         };
@@ -232,12 +220,10 @@ pub const X11 = struct {
                 defer it.sync_sent = true;
 
                 return .{
-                    .backend = .{
-                        .backend = it.backend,
-                        .output = it.x11.outputs.items[0].window_id,
-                        .event = .{
-                            .sync = 0,
-                        },
+                    .backend = it.backend,
+                    .output = it.x11.outputs.items[0].window_id,
+                    .event = .{
+                        .sync = 0,
                     },
                 };
             }
