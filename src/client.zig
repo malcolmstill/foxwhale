@@ -4,8 +4,6 @@ const mem = std.mem;
 const math = std.math;
 const net = std.net;
 const epoll = @import("foxwhale-epoll");
-const Event = @import("subsystem.zig").Event;
-const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
 
 const Window = @import("resource/window.zig").Window;
 const Region = @import("resource/region.zig").Region;
@@ -160,18 +158,15 @@ pub const Client = struct {
             return .{ .client = client };
         }
 
-        pub fn next(it: *Iterator, event_type: u32) !?Event {
+        pub fn next(it: *Iterator, event_type: u32) !?TargetEvent {
             if (it.state == .done) return null;
 
             if (event_type & std.os.linux.EPOLL.HUP > 0) {
                 it.state = .done;
-                return Event{
-                    .client = Client.TargetEvent{
-                        .client = it.client,
-                        .event = ClientEvent{
-                            .hangup = 0,
-                        },
-                    },
+
+                return .{
+                    .client = it.client,
+                    .event = .{ .hangup = 0 },
                 };
             }
 
@@ -182,12 +177,10 @@ pub const Client = struct {
 
             const event = it.client.wire.readEvent(Client, it.client, "getObject") catch |err| {
                 if (err == error.ClientSigbusd or builtin.mode != .Debug) {
-                    return Event{
-                        .client = Client.TargetEvent{
-                            .client = it.client,
-                            .event = ClientEvent{
-                                .err = 0,
-                            },
+                    return .{
+                        .client = it.client,
+                        .event = .{
+                            .err = 0,
                         },
                     };
                 } else {
@@ -196,11 +189,9 @@ pub const Client = struct {
             };
 
             if (event) |ev| {
-                return Event{
-                    .client = Client.TargetEvent{
-                        .client = it.client,
-                        .event = ClientEvent{ .message = ev },
-                    },
+                return .{
+                    .client = it.client,
+                    .event = ClientEvent{ .message = ev },
                 };
             } else {
                 try it.client.wire.finishRead();
@@ -208,10 +199,6 @@ pub const Client = struct {
             }
         }
     };
-
-    pub fn iterator(client: *Client) SubsystemIterator {
-        return .{ .client = Iterator.init(client) };
-    }
 
     pub fn register(client: *Client, object: wl.WlObject) !void {
         _ = try client.objects.create(object);
