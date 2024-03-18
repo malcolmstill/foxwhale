@@ -1,8 +1,7 @@
 const std = @import("std");
 const views = @import("../view.zig");
-const backends = @import("../backend/backend.zig");
 const View = @import("../view.zig").View;
-const BackendOutput = @import("../backend/backend.zig").BackendOutput;
+const BackendOutput = @import("foxwhale-backend").BackendOutput;
 const Server = @import("../server.zig").Server;
 
 pub const Output = struct {

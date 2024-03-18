@@ -5,7 +5,7 @@ const Subsystem = @import("subsystem.zig").Subsystem;
 const SubsystemIterator = @import("subsystem.zig").SubsystemIterator;
 const Event = @import("subsystem.zig").Event;
 const Target = @import("subsystem.zig").Target;
-const Backend = @import("backend/backend.zig").Backend;
+const Backend = @import("foxwhale-backend").Backend;
 const Renderer = @import("renderer.zig").Renderer;
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 

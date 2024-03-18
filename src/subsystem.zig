@@ -1,7 +1,7 @@
 const std = @import("std");
 const Server = @import("server.zig").Server;
 const Client = @import("client.zig").Client;
-const Backend = @import("backend/backend.zig").Backend;
+const Backend = @import("foxwhale-backend").Backend;
 
 pub const Subsystem = enum {
     server,

@@ -16,6 +16,7 @@ pub fn build(b: *std.Build) void {
     const subset_pool = b.dependency("foxwhale_subset_pool", .{ .target = target, .optimize = optimize });
     const iterable_pool = b.dependency("foxwhale_iterable_pool", .{ .target = target, .optimize = optimize });
     const wayland = b.dependency("foxwhale_wayland", .{ .target = target, .optimize = optimize });
+    const backend = b.dependency("foxwhale_backend", .{ .target = target, .optimize = optimize });
 
     const exe = b.addExecutable(.{
         .name = "foxwhale",
@@ -30,6 +31,7 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("foxwhale-subset-pool", subset_pool.module("foxwhale-subset-pool"));
     exe.root_module.addImport("foxwhale-iterable-pool", iterable_pool.module("foxwhale-iterable-pool"));
     exe.root_module.addImport("foxwhale-wayland", wayland.module("foxwhale-wayland"));
+    exe.root_module.addImport("foxwhale-backend", backend.module("foxwhale-backend"));
 
     exe.linkSystemLibrary("c");
     exe.linkSystemLibrary("gl");

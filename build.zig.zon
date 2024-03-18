@@ -43,6 +43,7 @@
         .foxwhale_subset_pool = .{ .path = "foxwhale-subset-pool" },
         .foxwhale_iterable_pool = .{ .path = "foxwhale-iterable-pool" },
         .foxwhale_wayland = .{ .path = "foxwhale-wayland" },
+        .foxwhale_backend = .{ .path = "foxwhale-backend" },
     },
 
     // Specifies the set of files and directories that are included in this package.
