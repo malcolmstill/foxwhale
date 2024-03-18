@@ -25,35 +25,14 @@ const View = @import("view.zig").View;
 
 const log = std.log.scoped(.server);
 
-// pub const ResourceType = enum(u8) {
-//     window,
-//     region,
-//     buffer,
-//     shm_pool,
-//     output,
-//     none,
-// };
-
-// pub const Resource = union(ResourceType) {
-//     window: *Window,
-//     region: *Region,
-//     buffer: *Buffer,
-//     shm_pool: *ShmPool,
-//     output: *Output,
-//     none: void,
-// };
-
-// pub const ResourceObject = struct {
-//     object: wl.WlObject,
-//     resource: Resource,
-// };
-
 pub const Server = struct {
     alloc: mem.Allocator,
     server: std.net.Server,
+
     // per-server resources:
     clients: IterablePool(Client, u8),
     outputs: IterablePool(Output, u5),
+
     // per-client resources:
     windows: SubsetPool(Window, u16),
     regions: SubsetPool(Region, u16),
@@ -82,7 +61,6 @@ pub const Server = struct {
     running: bool = true,
 
     const ClientNode = std.TailQueue(Client).Node;
-    const Self = @This();
 
     pub const TargetEvent = struct {
         server: *Server,
@@ -114,7 +92,7 @@ pub const Server = struct {
         };
     }
 
-    pub fn deinit(server: *Self) void {
+    pub fn deinit(server: *Server) void {
         server.server.stream.close();
 
         server.clients.deinit();
@@ -127,7 +105,7 @@ pub const Server = struct {
         server.objects.deinit();
     }
 
-    pub fn usage(server: *Self) void {
+    pub fn usage(server: *Server) void {
         std.debug.print("\n- Usage -------\n", .{});
         std.debug.print("  clients: {}   \n", .{server.clients.pool.count});
         std.debug.print("  outputs: {}   \n", .{server.outputs.pool.count});
@@ -139,7 +117,7 @@ pub const Server = struct {
         std.debug.print("---------------\n", .{});
     }
 
-    pub fn addClient(server: *Self, conn: std.net.Server.Connection) !*Client {
+    pub fn addClient(server: *Server, conn: std.net.Server.Connection) !*Client {
         var client = try server.clients.createPtr();
         errdefer server.clients.destroy(client);
 
@@ -150,7 +128,7 @@ pub const Server = struct {
         return client;
     }
 
-    pub fn removeClient(server: *Self, client: *Client) void {
+    pub fn removeClient(server: *Server, client: *Client) void {
         client.deinit();
         server.clients.destroy(client);
     }
@@ -159,7 +137,7 @@ pub const Server = struct {
     ///
     /// If this is the first output, the current view will be the first view
     /// of the output.
-    pub fn addOutput(server: *Self, backend_output: *BackendOutput) !*Output {
+    pub fn addOutput(server: *Server, backend_output: *BackendOutput) !*Output {
         const output = try Output.init(server, backend_output);
         const output_ptr = try server.outputs.create(output);
 
@@ -168,7 +146,7 @@ pub const Server = struct {
         return output_ptr;
     }
 
-    pub fn mouseClick(server: *Self, button: u32, action: u32) !void {
+    pub fn mouseClick(server: *Server, button: u32, action: u32) !void {
         // log.info("mouseClick: button={} action={}", .{ button, action });
         if (server.move) |_| {
             // Mouse raise cancels move
@@ -189,7 +167,7 @@ pub const Server = struct {
         try view.mouseClick(button, action);
     }
 
-    pub fn mouseMove(server: *Self, dx: f64, dy: f64) !void {
+    pub fn mouseMove(server: *Server, dx: f64, dy: f64) !void {
         const view = server.current_view orelse return;
         const width: f64 = @floatFromInt(view.backend_output.getWidth());
         const height: f64 = @floatFromInt(view.backend_output.getHeight());
@@ -224,14 +202,14 @@ pub const Server = struct {
         }
 
         if (server.resize) |resize| {
-            try resize.resize(server.pointer_x, server.pointer_y);
+            try resize.configure(server.pointer_x, server.pointer_y);
             return;
         }
 
         try view.updatePointer(server.pointer_x, server.pointer_y);
     }
 
-    pub fn keyboard(server: *Self, time: u32, button: u32, action: u32) !void {
+    pub fn keyboard(server: *Server, time: u32, button: u32, action: u32) !void {
         if (button == 224) server.running = false;
 
         server.xkb.updateKey(button, action);
