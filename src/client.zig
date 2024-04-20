@@ -103,7 +103,7 @@ pub const Client = struct {
     }
 
     pub fn deinit(client: *Client) void {
-        std.os.close(client.conn.stream.handle);
+        std.posix.close(client.conn.stream.handle);
 
         {
             // Release client's windows
