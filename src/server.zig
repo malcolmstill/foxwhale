@@ -260,7 +260,7 @@ pub const Server = struct {
 };
 
 fn socket() !std.net.Server {
-    _ = std.os.unlink("/run/user/1000/wayland-1") catch {};
+    _ = std.posix.unlink("/run/user/1000/wayland-1") catch {};
     const addr = try std.net.Address.initUnix("/run/user/1000/wayland-1");
 
     // var server = std.net.Server.init(.{});

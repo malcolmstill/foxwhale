@@ -17,7 +17,7 @@ pub const Xkb = struct {
     };
 
     pub fn getKeymap(self: *Self) !FdSize {
-        const xdg_runtime_dir = std.os.getenv("XDG_RUNTIME_DIR") orelse return error.NoXdgRuntimeDir;
+        const xdg_runtime_dir = std.posix.getenv("XDG_RUNTIME_DIR") orelse return error.NoXdgRuntimeDir;
 
         var filename: [128]u8 = [_]u8{0} ** 128;
         const random = "/XXXXXX";
@@ -37,12 +37,12 @@ pub const Xkb = struct {
                 keymap_string.len = size;
 
                 const fd: i32 = c.mkstemp(&filename[0]); // O_CLOEXEC?
-                try std.os.ftruncate(fd, size);
-                const data = try std.os.mmap(null, @intCast(size), std.os.linux.PROT.READ | std.os.linux.PROT.WRITE, std.os.linux.MAP{ .TYPE = .SHARED }, fd, 0);
+                try std.posix.ftruncate(fd, size);
+                const data = try std.posix.mmap(null, @intCast(size), std.os.linux.PROT.READ | std.os.linux.PROT.WRITE, std.os.linux.MAP{ .TYPE = .SHARED }, fd, 0);
 
                 std.mem.copyForwards(u8, data, keymap_string);
 
-                std.os.munmap(data);
+                std.posix.munmap(data);
 
                 return FdSize{
                     .fd = fd,

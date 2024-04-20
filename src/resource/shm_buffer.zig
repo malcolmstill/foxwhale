@@ -42,13 +42,13 @@ pub const ShmBuffer = struct {
     pub fn beginAccess(self: *Self) void {
         CURRENT_POOL_ADDRESS = self.shm_pool.data.ptr;
         CURRENT_POOL_SIZE = self.shm_pool.data.len;
-        _ = linux.sigaction(os.SIG.BUS, &sigbus_handler_action, null);
+        _ = linux.sigaction(std.posix.SIG.BUS, &sigbus_handler_action, null);
     }
 
     pub fn endAccess(_: *Self) !void {
         defer {
             SIGBUS_ERROR = false;
-            _ = linux.sigaction(os.SIG.BUS, &sigbus_handler_reset, null);
+            _ = linux.sigaction(std.posix.SIG.BUS, &sigbus_handler_reset, null);
         }
         if (SIGBUS_ERROR) {
             return error.ClientSigbusd;
@@ -65,13 +65,13 @@ var SIGBUS_ERROR = false;
 var CURRENT_POOL_ADDRESS: [*]align(4096) u8 = undefined;
 var CURRENT_POOL_SIZE: usize = 0;
 
-const sigbus_handler_action = os.Sigaction{
+const sigbus_handler_action = std.posix.Sigaction{
     .handler = .{ .sigaction = sigbusHandler },
     .mask = linux.empty_sigset,
     .flags = linux.SA.RESETHAND,
 };
 
-const sigbus_handler_reset = os.Sigaction{
+const sigbus_handler_reset = std.posix.Sigaction{
     .handler = .{ .sigaction = null },
     .mask = linux.empty_sigset,
     .flags = linux.SA.RESETHAND,
@@ -84,7 +84,7 @@ const sigbus_handler_reset = os.Sigaction{
 // See: https://github.com/wayland-project/wayland/blob/11623e8fddb924c7ae317f2eabac23785ae5e8d5/src/wayland-shm.c#L514
 fn sigbusHandler(
     _: i32, // sig
-    _: *const os.siginfo_t, // info
+    _: *const std.posix.siginfo_t, // info
     _: ?*const anyopaque, // data
 ) callconv(.C) void {
     SIGBUS_ERROR = true;

@@ -20,7 +20,7 @@
             // When updating this field to a new URL, be sure to delete the corresponding
             // `hash`, otherwise you are communicating that you expect to find the old hash at
             // the new URL.
-            .url = "https://github.com/malcolmstill/foxwhale-gen/archive/21c0f17c7d2258fcdf0819866d4cf4c784f00213.tar.gz",
+            .url = "https://github.com/malcolmstill/foxwhale-gen/archive/0c38a27dc8caeab6ef81de7e590883735be1f895.tar.gz",
 
             // This is computed from the file contents of the directory of files that is
             // obtained after fetching `url` and applying the inclusion rules given by
@@ -31,7 +31,7 @@
             // obtain a package matching this `hash`.
             //
             // Uses the [multihash](https://multiformats.io/multihash/) format.
-            .hash = "122006b5217a03a29dab5ffc6040814e9cf3da85de6553177d72cd00a7d61584634b",
+            .hash = "1220ac6e83e8026049eadbf421e3b834232247872c561c133c220b7610f9f9408ed4",
 
             // When this is provided, the package is found in a directory relative to the
             // build root. In this case the package's hash is irrelevant and therefore not

@@ -15,7 +15,7 @@ pub const ShmPool = struct {
     const Self = @This();
 
     pub fn init(client: *Client, fd: i32, wl_shm_pool: wl.WlShmPool, size: i32) !ShmPool {
-        const data = try os.mmap(null, @intCast(size), linux.PROT.READ | linux.PROT.WRITE, linux.MAP{ .TYPE = .SHARED }, fd, 0);
+        const data = try std.posix.mmap(null, @intCast(size), linux.PROT.READ | linux.PROT.WRITE, linux.MAP{ .TYPE = .SHARED }, fd, 0);
 
         return ShmPool{
             .client = client,
@@ -26,16 +26,16 @@ pub const ShmPool = struct {
     }
 
     pub fn deinit(self: *Self) void {
-        os.munmap(self.data);
-        os.close(self.fd);
+        std.posix.munmap(self.data);
+        std.posix.close(self.fd);
 
         self.fd = -1;
     }
 
     pub fn resize(self: *Self, size: i32) !void {
-        os.munmap(self.data);
+        std.posix.munmap(self.data);
 
-        self.data = try os.mmap(null, @intCast(size), linux.PROT.READ | linux.PROT.WRITE, linux.MAP{ .TYPE = .SHARED }, self.fd, 0);
+        self.data = try std.posix.mmap(null, @intCast(size), linux.PROT.READ | linux.PROT.WRITE, linux.MAP{ .TYPE = .SHARED }, self.fd, 0);
     }
 
     pub fn incrementRefCount(self: *Self) void {

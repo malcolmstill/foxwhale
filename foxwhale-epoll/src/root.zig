@@ -24,7 +24,7 @@ pub fn Epoll(comptime Subsystem: type, comptime SubsystemIterator: type, comptim
         const Self = @This();
 
         pub fn init(alloc: mem.Allocator) !Self {
-            const epfd = try os.epoll_create1(linux.EPOLL.CLOEXEC);
+            const epfd = try std.posix.epoll_create1(linux.EPOLL.CLOEXEC);
             const targets = std.AutoHashMap(i32, Target).init(alloc);
 
             return .{
@@ -35,12 +35,12 @@ pub fn Epoll(comptime Subsystem: type, comptime SubsystemIterator: type, comptim
         }
 
         pub fn deinit(epoll: *Self) void {
-            os.close(epoll.fd);
+            std.posix.close(epoll.fd);
             epoll.targets.deinit();
         }
 
         pub fn wait(epoll: *Self, timeout: i32) Iterator {
-            const n = os.epoll_wait(epoll.fd, epoll.events[0..], timeout);
+            const n = std.posix.epoll_wait(epoll.fd, epoll.events[0..], timeout);
 
             return .{
                 .epoll = epoll,
@@ -84,7 +84,7 @@ pub fn Epoll(comptime Subsystem: type, comptime SubsystemIterator: type, comptim
                 },
             };
 
-            try os.epoll_ctl(epoll.fd, linux.EPOLL.CTL_ADD, fd, &ev);
+            try std.posix.epoll_ctl(epoll.fd, linux.EPOLL.CTL_ADD, fd, &ev);
         }
 
         pub fn removeFd(epoll: *Self, fd: i32) !void {
@@ -95,7 +95,7 @@ pub fn Epoll(comptime Subsystem: type, comptime SubsystemIterator: type, comptim
                 },
             };
 
-            try os.epoll_ctl(epoll.fd, linux.EPOLL.CTL_DEL, fd, &ev);
+            try std.posix.epoll_ctl(epoll.fd, linux.EPOLL.CTL_DEL, fd, &ev);
         }
     };
 }

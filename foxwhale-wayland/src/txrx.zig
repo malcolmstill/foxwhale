@@ -8,7 +8,7 @@ const FdBuffer = LinearFifo(i32, LinearFifoBufferType{ .Static = MAX_FDS });
 pub const MAX_FDS = 28;
 
 pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
-    var iov: os.iovec = undefined;
+    var iov: std.posix.iovec = undefined;
     iov.iov_base = @ptrCast(&buffer[0]);
     iov.iov_len = buffer.len;
 
@@ -29,7 +29,7 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
     var rc: usize = 0;
     while (true) {
         rc = linux.recvmsg(fd, @ptrCast(&msg), linux.MSG.DONTWAIT | linux.MSG.CMSG_CLOEXEC);
-        switch (linux.getErrno(rc)) {
+        switch (std.posix.errno(rc)) {
             .SUCCESS => break,
             linux.E.INTR => continue,
             linux.E.INVAL => unreachable,
@@ -69,7 +69,7 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
 }
 
 pub fn sendMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
-    var iov: os.iovec_const = undefined;
+    var iov: std.posix.iovec_const = undefined;
     iov.iov_base = @ptrCast(&buffer[0]);
     iov.iov_len = buffer.len;
 
@@ -99,7 +99,7 @@ pub fn sendMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
         .__pad2 = 0,
     };
 
-    return try os.sendmsg(fd, &msg, linux.MSG.NOSIGNAL);
+    return try std.posix.sendmsg(fd, &msg, linux.MSG.NOSIGNAL);
 }
 
 // Probably not portable stuff is below
