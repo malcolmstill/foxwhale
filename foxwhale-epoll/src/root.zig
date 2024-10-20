@@ -5,11 +5,11 @@ const linux = os.linux;
 
 pub fn Epoll(comptime Subsystem: type, comptime SubsystemIterator: type, comptime Event: type, comptime Target: type) type {
     const EventTagType = switch (@typeInfo(Event)) {
-        .Union => |info| info.tag_type orelse @compileError("Expected tag type"),
+        .@"union" => |info| info.tag_type orelse @compileError("Expected tag type"),
         else => @compileError("Event type must be union"),
     };
     const TargetTagType = switch (@typeInfo(Target)) {
-        .Union => |info| info.tag_type orelse @compileError("Expected tag type"),
+        .@"union" => |info| info.tag_type orelse @compileError("Expected tag type"),
         else => @compileError("Event type must be union"),
     };
     if (EventTagType != Subsystem) @compileError("Subsystem must match Event tag");

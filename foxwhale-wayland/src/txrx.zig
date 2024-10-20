@@ -9,8 +9,8 @@ pub const MAX_FDS = 28;
 
 pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
     var iov: std.posix.iovec = undefined;
-    iov.iov_base = @ptrCast(&buffer[0]);
-    iov.iov_len = buffer.len;
+    iov.base = @ptrCast(&buffer[0]);
+    iov.len = buffer.len;
 
     var control: [cmsg_space(MAX_FDS * @sizeOf(i32))]u8 = undefined;
 
@@ -70,8 +70,8 @@ pub fn recvMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
 
 pub fn sendMsg(fd: i32, buffer: []u8, fds: *FdBuffer) !usize {
     var iov: std.posix.iovec_const = undefined;
-    iov.iov_base = @ptrCast(&buffer[0]);
-    iov.iov_len = buffer.len;
+    iov.base = @ptrCast(&buffer[0]);
+    iov.len = buffer.len;
 
     var control: [cmsg_space(MAX_FDS * @sizeOf(i32))]u8 = undefined;
     var msg_hdr: *cmsghdr = @ptrCast(@alignCast(&control[0]));

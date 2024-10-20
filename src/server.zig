@@ -62,7 +62,7 @@ pub const Server = struct {
 
     running: bool = true,
 
-    const ClientNode = std.TailQueue(Client).Node;
+    const ClientNode = std.DoublyLinkedList(Client).Node;
 
     pub const TargetEvent = struct {
         server: *Server,

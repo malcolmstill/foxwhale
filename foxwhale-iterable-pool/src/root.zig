@@ -12,7 +12,7 @@ pub fn IterablePool(comptime T: type, comptime U: type) type {
 
         const Self = @This();
 
-        const Tq = std.TailQueue(void);
+        const Tq = std.DoublyLinkedList(void);
 
         pub const Handle = U;
 
